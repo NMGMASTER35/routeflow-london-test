@@ -14,6 +14,49 @@
       font-family: 'Inter', sans-serif;
       background-color: #ffffff;
       color: #111;
+      .menu-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* space between account and hamburger */
+}
+
+.menu-item {
+  position: relative; /* Needed to position dropdown below */
+}
+
+.menu-item button {
+  background: none;
+  border: none;
+  font-size: 1.2em;
+  cursor: pointer;
+}
+
+.dropdown {
+  display: none;
+  position: absolute;
+  top: 100%; /* directly below the button */
+  left: 0;
+  background: white;
+  border: 1px solid #ccc;
+  min-width: 120px;
+  z-index: 10;
+}
+
+.menu-item:hover .dropdown,
+.menu-item:focus-within .dropdown {
+  display: block;
+}
+
+.dropdown a {
+  display: block;
+  padding: 8px 12px;
+  color: black;
+  text-decoration: none;
+}
+
+.dropdown a:hover {
+  background: #f0f0f0;
+}
     }
     header {
       display: flex;
@@ -208,6 +251,13 @@
     footer small {
       color: #888;
     }
+    .center-logo {
+  width: 120px;  /* change to your desired width */
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
   </style>
 </head>
 <body>
@@ -216,26 +266,28 @@
   <img src="Routeflow London permanent logo.png" alt="RouteFlow London Logo" style="height:40px;">
   <strong>RouteFlow London</strong>
 </div>
-    <div class="hamburger" onclick="toggleDropdown()"><i class="fas fa-bars"></i></div>
-    <div class="account-icon">
-    <i class="fa-regular fa-id-badge fa-lg" style="color: #ff0000;"></i>
-      <div class="account-dropdown">
-        <a href="#">Login</a>
-        <a href="#">Sign Up</a>
-      </div>
+    <div class="menu-bar">
+  <div class="menu-item account">
+    <button>Account</button>
+    <div class="dropdown">
+      <!-- Account dropdown content -->
+      <a href="#">Profile</a>
+      <a href="#">Settings</a>
     </div>
-    <div class="dropdown" id="dropdown">
-      <a href="#">Live Map</a>
-      <a href="#">Routes</a>
-      <a href="#">Bus Profiles</a>
-      <a href="#">History</a>
-      <a href="#">Community</a>
-      <a href="#">Blog</a>
+  </div>
+  <div class="menu-item hamburger">
+    <button>☰</button>
+    <div class="dropdown">
+      <!-- Hamburger dropdown content -->
+      <a href="#">Link 1</a>
+      <a href="#">Link 2</a>
     </div>
+  </div>
+</div>
   </header>
 
   <section class="hero">
-   <img src="Routeflow London permanent logo.png" alt="RouteFlow London Logo">
+   <img src="logo.png" alt="RouteFlow London Logo" class="center-logo">
     <h1>Welcome to RouteFlow London!!</h1>
     <p>London Travel. Reimagined.</p>
     <input type="text" placeholder="Search by route, stop, or bus..." />
