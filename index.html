@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,88 +13,79 @@
       font-family: 'Inter', sans-serif;
       background-color: #ffffff;
       color: #111;
-      .menu-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px; /* space between account and hamburger */
-}
-   .popout-menu {
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: 250px;
-  height: 100vh;
-  background: rgba(255, 0, 0, 0.6); /* 60% transparent red */
-  box-shadow: -4px 0 20px rgba(0,0,0,0.2);
-  z-index: 1000;
-  display: none;
-  flex-direction: column;
-  padding: 2rem 1rem;
-  gap: 1.5rem;
-  transform: translateX(100%);
-  transition: transform 0.3s;
-}
-.popout-menu.active {
-  display: flex;
-  transform: translateX(0);
-}
-.popout-menu a {
-  color: #fff;
-  font-weight: bold;
-  text-decoration: none;
-  font-size: 1.2rem;
-  transition: color 0.2s;
-}
-      .menu-bar {
-  display: flex;
-  align-items: center;
-  gap: 4px; /* tighter spacing */
-}
-.menu-item button {
-  margin: 0;
-  padding: 0 4px;
-}
-.popout-menu a:hover {
-  color: #ffdede;
-}
-
-.menu-item {
-  position: relative; /* Needed to position dropdown below */
-}
-
-.menu-item button {
-  background: none;
-  border: none;
-  font-size: 1.2em;
-  cursor: pointer;
-}
-
-.dropdown {
-  display: none;
-  position: absolute;
-  top: 100%; /* directly below the button */
-  left: 0;
-  background: white;
-  border: 1px solid #ccc;
-  min-width: 120px;
-  z-index: 10;
-}
-
-.menu-item:hover .dropdown,
-.menu-item:focus-within .dropdown {
-  display: block;
-}
-
-.dropdown a {
-  display: block;
-  padding: 8px 12px;
-  color: black;
-  text-decoration: none;
-}
-
-.dropdown a:hover {
-  background: #f0f0f0;
-}
+    }
+    .menu-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .popout-menu {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 250px;
+      height: 100vh;
+      background: rgba(255, 0, 0, 0.6);
+      box-shadow: -4px 0 20px rgba(0,0,0,0.2);
+      z-index: 1000;
+      display: none;
+      flex-direction: column;
+      padding: 2rem 1rem;
+      gap: 1.5rem;
+      transform: translateX(100%);
+      transition: transform 0.3s;
+    }
+    .popout-menu.active {
+      display: flex;
+      transform: translateX(0);
+    }
+    .popout-menu a {
+      color: #fff;
+      font-weight: bold;
+      text-decoration: none;
+      font-size: 1.2rem;
+      transition: color 0.2s;
+    }
+    .popout-menu a:hover {
+      color: #ffdede;
+    }
+    .menu-item {
+      position: relative;
+      display: inline-block;
+    }
+    .menu-item button {
+      background: none;
+      border: none;
+      font-size: 1.2em;
+      cursor: pointer;
+      margin: 0;
+      padding: 0 4px;
+    }
+    .dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background: white;
+      border: 1px solid #ccc;
+      min-width: 120px;
+      z-index: 10;
+      flex-direction: column;
+      border-radius: 4px;
+      padding: 0;
+    }
+    .menu-item:hover .dropdown,
+    .menu-item:focus-within .dropdown {
+      display: block;
+    }
+    .dropdown a {
+      display: block;
+      padding: 8px 12px;
+      color: black;
+      text-decoration: none;
+    }
+    .dropdown a:hover {
+      background: #f0f0f0;
     }
     header {
       display: flex;
@@ -114,12 +104,6 @@
       align-items: center;
       gap: 0.5rem;
       transition: opacity 0.3s ease, transform 0.3s ease;
-    }
-    .logo-placeholder {
-      width: 40px;
-      height: 40px;
-      background-color: #d32f2f;
-      border-radius: 5px;
     }
     .account-icon {
       position: relative;
@@ -158,33 +142,6 @@
       display: block;
       font-size: 1.5rem;
       cursor: pointer;
-    }
-    .dropdown {
-      display: none;
-      flex-direction: column;
-      background-color: #000;
-      position: absolute;
-      top: 70px;
-      right: 4rem;
-      border: 1px solid #444;
-      padding: 1rem;
-      border-radius: 4px;
-    }
-    .dropdown a {
-      color: #fff;
-      text-decoration: none;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-      padding: 0.5rem;
-      border-radius: 4px;
-    }
-    .dropdown a:hover {
-      background-color: #eee;
-      color: #000;
-    }
-    .dropdown a:active {
-      background-color: #d32f2f;
-      color: #fff;
     }
     .hero {
       text-align: center;
@@ -291,46 +248,46 @@
       color: #888;
     }
     .center-logo {
-  width: 120px;  /* change to your desired width */
-  max-width: 100%;
-  height: auto;
-  display: block;
-  margin: 0 auto;
-}
+      width: 120px;
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
   </style>
 </head>
 <body>
   <header>
     <div class="logo">
-  <img src="Routeflow London permanent logo.png" alt="RouteFlow London Logo" style="height:40px;">
-  <strong>RouteFlow London</strong>
-</div>
-    <div class="popout-menu" id="popoutMenu">
-  <a href="#">Home</a>
-  <a href="#">Profile</a>
-  <a href="#">Settings</a>
-  <a href="#">Logout</a>
-</div>
-  <div class="menu-item hamburger">
-  <button id="hamburgerBtn" aria-label="Open menu">
-    <i class="fa-solid fa-bars" style="color: #ff0000;"></i>
-  </button>
-</div>
-  </div>
-</div>
-    <div class="menu-item account">
-  <button>
-    <i class="fa-regular fa-user" style="color: #ff1900;"></i> Account
-  </button>
-  <div class="dropdown">
-    <a href="#">Profile</a>
-    <a href="#">Settings</a>
-  </div>
-</div>
+      <img src="Routeflow London permanent logo.png" alt="RouteFlow London Logo" style="height:40px;">
+      <strong>RouteFlow London</strong>
+    </div>
+    <div class="menu-bar">
+      <div class="hamburger">
+        <button id="hamburgerBtn" aria-label="Open menu">
+          <i class="fa-solid fa-bars" style="color: #ff0000;"></i>
+        </button>
+      </div>
+      <div class="menu-item account">
+        <button>
+          <i class="fa-regular fa-user" style="color: #ff1900;"></i> Account
+        </button>
+        <div class="dropdown">
+          <a href="#">Profile</a>
+          <a href="#">Settings</a>
+        </div>
+      </div>
+    </div>
+    <nav class="popout-menu" id="popoutMenu">
+      <a href="#">Home</a>
+      <a href="#">Profile</a>
+      <a href="#">Settings</a>
+      <a href="#">Logout</a>
+    </nav>
   </header>
 
   <section class="hero">
-   <img src="logo.png" alt="RouteFlow London Logo" class="center-logo">
+    <img src="logo.png" alt="RouteFlow London Logo" class="center-logo">
     <h1>Welcome to RouteFlow London!!</h1>
     <p>London Travel. Reimagined.</p>
     <input type="text" placeholder="Search by route, stop, or bus..." />
@@ -360,7 +317,7 @@
 
   <section class="about">
     <h2>About RouteFlow London</h2>
-    <p>RouteFlow London is a next-generation platform for exploring London's iconic bus network. Track vehicles live, explore rare workings, dive into historical data, and connect with the enthusiast community — all in one place.</p>
+    <p>RouteFlow London is a next-generation platform for exploring London's iconic bus network. Track vehicles live, explore rare workings, dive into historical data, and connect with the enthusiast community.</p>
   </section>
 
   <footer>
@@ -379,6 +336,7 @@
   </footer>
 
   <script>
+    // Hide/show logo on scroll
     let lastScrollTop = 0;
     window.addEventListener("scroll", function () {
       const logo = document.querySelector(".logo");
@@ -393,11 +351,7 @@
       lastScrollTop = st <= 0 ? 0 : st;
     }, false);
 
-    function toggleDropdown() {
-      const dropdown = document.getElementById("dropdown");
-      dropdown.style.display = dropdown.style.display === "flex" ? "none" : "flex";
-    }
-
+    // Newsletter form functionality
     document.getElementById('newsletter-form').addEventListener('submit', function (e) {
       e.preventDefault();
       const email = document.getElementById('email').value;
@@ -410,27 +364,24 @@
       this.reset();
     });
 
-document.querySelector('.menu-btn').onclick = function () {
-  document.querySelector('.popout-menu').classList.toggle('active');
-};
-    <script>
-  document.getElementById('hamburgerBtn').onclick = function (e) {
-    e.stopPropagation(); // Prevent click from bubbling up
-    document.getElementById('popoutMenu').classList.toggle('active');
-  };
-  // Optional: Close menu when clicking outside
-  document.addEventListener('click', function(e) {
-    const menu = document.getElementById('popoutMenu');
-    const btn = document.getElementById('hamburgerBtn');
-    if (
-      menu.classList.contains('active') &&
-      !menu.contains(e.target) &&
-      !btn.contains(e.target)
-    ) {
-      menu.classList.remove('active');
-    }
-  });
-</script>
+    // Hamburger menu toggle
+    document.getElementById('hamburgerBtn').onclick = function (e) {
+      e.stopPropagation();
+      document.getElementById('popoutMenu').classList.toggle('active');
+    };
+
+    // Close popout menu when clicking outside
+    document.addEventListener('click', function(e) {
+      const menu = document.getElementById('popoutMenu');
+      const btn = document.getElementById('hamburgerBtn');
+      if (
+        menu.classList.contains('active') &&
+        !menu.contains(e.target) &&
+        !btn.contains(e.target)
+      ) {
+        menu.classList.remove('active');
+      }
+    });
   </script>
 </body>
 </html>
