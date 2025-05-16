@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,8 +7,308 @@
   <title>RouteFlow London</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background-color: #ffffff;
+      color: #111;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      background-color: #000;
+      color: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      transition: transform 0.3s ease;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .logo-placeholder {
+      width: 40px;
+      height: 40px;
+      background-color: #d32f2f;
+      border-radius: 5px;
+    }
+    .account-icon {
+      position: relative;
+      cursor: pointer;
+    }
+    .account-icon img {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+    }
+    .account-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 40px;
+      background-color: #000;
+      border: 1px solid #444;
+      padding: 1rem;
+      border-radius: 4px;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .account-dropdown a {
+      text-align: center;
+      background-color: #d32f2f;
+      color: #fff;
+      padding: 0.5rem 1rem;
+      text-decoration: none;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    .account-icon:hover .account-dropdown {
+      display: flex;
+    }
+    .hamburger {
+      display: block;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    .dropdown {
+      display: none;
+      flex-direction: column;
+      background-color: #000;
+      position: absolute;
+      top: 70px;
+      right: 4rem;
+      border: 1px solid #444;
+      padding: 1rem;
+      border-radius: 4px;
+    }
+    .dropdown a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      padding: 0.5rem;
+      border-radius: 4px;
+    }
+    .dropdown a:hover {
+      background-color: #eee;
+      color: #000;
+    }
+    .dropdown a:active {
+      background-color: #d32f2f;
+      color: #fff;
+    }
+    .hero {
+      text-align: center;
+      padding: 4rem 2rem;
+      background: #f7f7f7;
+    }
+    .hero h1 {
+      font-size: 3rem;
+      margin-bottom: 0.5rem;
+      color: #d32f2f;
+    }
+    .hero p {
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+    }
+    .hero input[type="text"] {
+      padding: 0.8rem;
+      width: 300px;
+      max-width: 90%;
+      margin-bottom: 1rem;
+      border: 2px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+    .buttons a {
+      padding: 0.8rem 1.5rem;
+      text-decoration: none;
+      font-weight: bold;
+      border-radius: 4px;
+      transition: background-color 0.2s ease, transform 0.1s ease;
+    }
+    .buttons a:active {
+      transform: scale(0.96);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+    .explore {
+      background-color: #d32f2f;
+      color: #fff;
+    }
+    .learn {
+      background-color: #eee;
+      color: #000;
+    }
+    .carousel {
+      padding: 2rem;
+      background: #f0f0f0;
+      text-align: center;
+    }
+    .carousel-images {
+      display: flex;
+      overflow-x: auto;
+      gap: 1rem;
+      padding-top: 1rem;
+    }
+    .carousel-images img {
+      height: 200px;
+      border-radius: 8px;
+    }
+    .newsletter {
+      padding: 2rem;
+      text-align: center;
+      background: #fff;
+    }
+    .about {
+      text-align: center;
+      padding: 3rem 2rem;
+      background: #fff;
+    }
+    .about h2 {
+      font-size: 2rem;
+      color: #d32f2f;
+    }
+    .about p {
+      font-size: 1rem;
+      max-width: 600px;
+      margin: 1rem auto;
+    }
+    footer {
+      background-color: #111;
+      color: #fff;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+    footer .footer-links a {
+      color: #ccc;
+      margin: 0 0.5rem;
+      text-decoration: none;
+    }
+    footer .social-icons a {
+      color: #ccc;
+      margin: 0 0.5rem;
+      font-size: 1.2rem;
+      text-decoration: none;
+    }
+    footer small {
+      color: #888;
+    }
+  </style>
 </head>
 <body>
-  <!-- Content loaded from canvas already embedded here -->
+  <header>
+    <div class="logo"><div class="logo-placeholder"></div><strong>RouteFlow London</strong></div>
+    <div class="hamburger" onclick="toggleDropdown()"><i class="fas fa-bars"></i></div>
+    <div class="account-icon">
+      <img src="images/user-icon.png" alt="Account Icon">
+      <div class="account-dropdown">
+        <a href="#">Login</a>
+        <a href="#">Sign Up</a>
+      </div>
+    </div>
+    <div class="dropdown" id="dropdown">
+      <a href="#">Live Map</a>
+      <a href="#">Routes</a>
+      <a href="#">Bus Profiles</a>
+      <a href="#">History</a>
+      <a href="#">Community</a>
+      <a href="#">Blog</a>
+    </div>
+  </header>
+
+  <section class="hero">
+    <h1>Live Tracking, Built from Scratch</h1>
+    <p>Experience London's buses in real time like never before.</p>
+    <input type="text" placeholder="Search by route, stop, or bus..." />
+    <div class="buttons">
+      <a class="explore" href="#">Explore Map</a>
+      <a class="learn" href="#">Learn More</a>
+    </div>
+  </section>
+
+  <section class="carousel">
+    <h2 style="color: #d32f2f;">New London Buses</h2>
+    <div class="carousel-images">
+      <img src="images/bus1.jpg" alt="Bus 1" />
+      <img src="images/bus2.jpg" alt="Bus 2" />
+      <img src="images/bus3.jpg" alt="Bus 3" />
+    </div>
+  </section>
+
+  <section class="newsletter">
+    <h2 style="color: #d32f2f;">Subscribe to Our Newsletter</h2>
+    <form id="newsletter-form">
+      <input type="email" id="email" placeholder="Enter your email" required />
+      <button type="submit">Subscribe</button>
+    </form>
+    <p id="response-message" style="color: green; margin-top: 0.5rem;"></p>
+  </section>
+
+  <section class="about">
+    <h2>About RouteFlow London</h2>
+    <p>RouteFlow London is a next-generation platform for exploring London's iconic bus network. Track vehicles live, explore rare workings, dive into historical data, and connect with the enthusiast community — all in one place.</p>
+  </section>
+
+  <footer>
+    <div class="footer-links">
+      <a href="#">About</a> |
+      <a href="#">Privacy</a> |
+      <a href="#">Terms</a> |
+      <a href="#">Contact</a>
+    </div>
+    <div class="social-icons">
+      <a href="#"><i class="fab fa-discord"></i></a>
+      <a href="#"><i class="fab fa-twitter"></i></a>
+      <a href="#"><i class="fab fa-github"></i></a>
+    </div>
+    <small>Made for London. Built from scratch.</small>
+  </footer>
+
+  <script>
+    let lastScrollTop = 0;
+    window.addEventListener("scroll", function () {
+      const logo = document.querySelector(".logo");
+      let st = window.pageYOffset || document.documentElement.scrollTop;
+      if (st > lastScrollTop) {
+        logo.style.opacity = "0";
+        logo.style.transform = "translateY(-20px)";
+      } else {
+        logo.style.opacity = "1";
+        logo.style.transform = "translateY(0px)";
+      }
+      lastScrollTop = st <= 0 ? 0 : st;
+    }, false);
+
+    function toggleDropdown() {
+      const dropdown = document.getElementById("dropdown");
+      dropdown.style.display = dropdown.style.display === "flex" ? "none" : "flex";
+    }
+
+    document.getElementById('newsletter-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const blob = new Blob([`Email\n${email}`], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'newsletter_signups.csv';
+      link.click();
+      document.getElementById('response-message').textContent = 'You have been subscribed!';
+      this.reset();
+    });
+  </script>
 </body>
 </html>
