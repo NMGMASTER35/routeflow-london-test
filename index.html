@@ -19,6 +19,24 @@
   align-items: center;
   gap: 10px; /* space between account and hamburger */
 }
+      /* Example CSS for pop-out menu */
+.popout-menu {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 250px;                  /* adjust width as needed */
+  height: 100vh;
+  background: rgba(255, 0, 0, 0.6); /* 60% transparent red */
+  box-shadow: -4px 0 20px rgba(0,0,0,0.2);
+  z-index: 1000;
+  display: none;                 /* Hidden by default */
+  transition: transform 0.3s;
+  transform: translateX(100%);
+}
+.popout-menu.active {
+  display: block;
+  transform: translateX(0);
+}
 
 .menu-item {
   position: relative; /* Needed to position dropdown below */
@@ -269,7 +287,7 @@
     <div class="menu-bar">
   <div class="menu-item account">
 <button>
-  <i class="fa-regular fa-user" style="color: #ff1900;"></i> Account
+  <i class="fa-regular fa-user" style="color: #ff1900;"style="margin-left: 0;"></i> Account
 </button>
     <div class="dropdown">
       <!-- Account dropdown content -->
@@ -279,7 +297,7 @@
   </div>
   <div class="menu-item hamburger">
     <button>
-<i class="fa-solid fa-bars" style="color: #ff0000;"></i>
+<i class="fa-solid fa-bars" style="color: #ff0000;" style="margin-right: 8px;"></i>
     </button>
     <div class="dropdown">
       <!-- Hamburger dropdown content -->
@@ -370,6 +388,10 @@
       document.getElementById('response-message').textContent = 'You have been subscribed!';
       this.reset();
     });
+
+document.querySelector('.menu-btn').onclick = function () {
+  document.querySelector('.popout-menu').classList.toggle('active');
+};
   </script>
 </body>
 </html>
