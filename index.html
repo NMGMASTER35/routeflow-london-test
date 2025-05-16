@@ -3,297 +3,589 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" href="New_Routflow_London_Logo.png" type="image/png">
-  <title>RouteFlow London</title>
+  <link rel="icon" href="favicon-rfl.png" type="image/png">
+  <title>RouteFlow</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    body {
+    :root {
+      --primary: #d32f2f;
+      --primary-dark: #b71c1c;
+      --background: #fff;
+      --background-dark: #121212;
+      --foreground: #111;
+      --foreground-dark: #fafafa;
+      --header-bg: #000;
+      --header-bg-dark: #1a1a1a;
+      --menu-blur: blur(16px);
+    }
+    html, body {
       margin: 0;
-      font-family: 'Inter', sans-serif;
-      background-color: #ffffff;
-      color: #111;
-    }
-    .menu-bar {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .popout-menu {
-      position: fixed;
-      top: 0;
-      right: 0;
-      width: 250px;
-      height: 100vh;
-      background: rgba(255, 0, 0, 0.6);
-      box-shadow: -4px 0 20px rgba(0,0,0,0.2);
-      z-index: 1000;
-      display: none;
-      flex-direction: column;
-      padding: 2rem 1rem;
-      gap: 1.5rem;
-      transform: translateX(100%);
-      transition: transform 0.3s;
-    }
-    .popout-menu.active {
-      display: flex;
-      transform: translateX(0);
-    }
-    .popout-menu a {
-      color: #fff;
-      font-weight: bold;
-      text-decoration: none;
-      font-size: 1.2rem;
-      transition: color 0.2s;
-    }
-    .popout-menu a:hover {
-      color: #ffdede;
-    }
-    .menu-item {
-      position: relative;
-      display: inline-block;
-    }
-    .menu-item button {
-      background: none;
-      border: none;
-      font-size: 1.2em;
-      cursor: pointer;
-      margin: 0;
-      padding: 0 4px;
-    }
-    .dropdown {
-      display: none;
-      position: absolute;
-      top: 100%;
-      left: 0;
-      background: white;
-      border: 1px solid #ccc;
-      min-width: 120px;
-      z-index: 10;
-      flex-direction: column;
-      border-radius: 4px;
       padding: 0;
+      font-family: 'Inter', sans-serif;
+      background: var(--background);
+      color: var(--foreground);
+      transition: background 0.3s, color 0.3s;
     }
-    .menu-item:hover .dropdown,
-    .menu-item:focus-within .dropdown {
-      display: block;
-    }
-    .dropdown a {
-      display: block;
-      padding: 8px 12px;
-      color: black;
-      text-decoration: none;
-    }
-    .dropdown a:hover {
-      background: #f0f0f0;
+    body.dark {
+      background: var(--background-dark);
+      color: var(--foreground-dark);
     }
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 1rem 2rem;
-      background-color: #000;
+      padding: 1.2rem 2.2rem;
+      background: var(--header-bg);
       color: #fff;
       position: sticky;
       top: 0;
-      z-index: 10;
-      transition: transform 0.3s ease;
+      z-index: 40;
+      transition: background 0.3s;
+    }
+    body.dark header {
+      background: var(--header-bg-dark);
     }
     .logo {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      transition: opacity 0.3s ease, transform 0.3s ease;
+      gap: 0.8rem;
     }
-    .account-icon {
-      position: relative;
-      cursor: pointer;
+    .logo img {
+      height: 42px;
     }
-    .account-icon img {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-    }
-    .account-dropdown {
-      display: none;
-      position: absolute;
-      right: 0;
-      top: 40px;
-      background-color: #000;
-      border: 1px solid #444;
-      padding: 1rem;
-      border-radius: 4px;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-    .account-dropdown a {
-      text-align: center;
-      background-color: #d32f2f;
-      color: #fff;
-      padding: 0.5rem 1rem;
-      text-decoration: none;
-      border-radius: 4px;
-      font-weight: bold;
-    }
-    .account-icon:hover .account-dropdown {
+    .menu-bar {
       display: flex;
+      align-items: center;
+      gap: 1.2rem;
     }
     .hamburger {
       display: block;
-      font-size: 1.5rem;
+      background: none;
+      border: none;
+      font-size: 2rem;
+      color: var(--primary);
+      padding: 0.3rem 0.7rem;
+      border-radius: 8px;
       cursor: pointer;
+      transition: background 0.2s;
     }
+    .hamburger:hover, .hamburger:focus {
+      background: rgba(255,0,0,0.08);
+    }
+    .account-icon {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .account-icon button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.07rem;
+      color: #fff;
+      position: relative;
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+    .account-icon button:hover, .account-icon button:focus {
+      background: rgba(255,0,0,0.13);
+    }
+    .account-icon:hover .account-dropdown, .account-icon:focus-within .account-dropdown {
+      display: flex;
+    }
+    .account-icon button .fa-user {
+      font-size: 1.5rem;
+      color: var(--primary);
+      transition: transform 0.2s;
+    }
+    .account-icon button:hover .fa-user {
+      transform: scale(1.13);
+    }
+    .account-icon button .tooltip {
+      visibility: hidden;
+      opacity: 0;
+      background: #222;
+      color: #fff;
+      text-align: center;
+      border-radius: 4px;
+      padding: 2px 10px;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      top: -32px;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      z-index: 90;
+    }
+    .account-icon button:hover .tooltip, .account-icon button:focus .tooltip {
+      visibility: visible;
+      opacity: 1;
+    }
+    .account-dropdown {
+      display: none;
+      flex-direction: column;
+      gap: 0.5rem;
+      position: absolute;
+      right: 0;
+      top: 110%;
+      min-width: 150px;
+      background: #fff;
+      color: #111;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 0.7rem 0.7rem;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.11);
+      z-index: 99;
+      animation: dropdownFadeIn 0.23s;
+    }
+    body.dark .account-dropdown {
+      background: #181818;
+      color: #fafafa;
+      border: 1px solid #444;
+    }
+    .account-dropdown a {
+      text-decoration: none;
+      color: inherit;
+      font-weight: 600;
+      padding: 0.5rem 0.7rem;
+      border-radius: 6px;
+      transition: background 0.17s, color 0.17s;
+    }
+    .account-dropdown a:hover, .account-dropdown a:focus {
+      background: var(--primary);
+      color: #fff;
+    }
+    @keyframes dropdownFadeIn {
+      from { opacity:0; transform: translateY(-10px);}
+      to { opacity:1; transform: translateY(0);}
+    }
+    /* Popout/Hamburger Menu */
+    .popout-menu {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 310px;
+      height: 100vh;
+      background: rgba(255, 0, 0, 0.68);
+      backdrop-filter: var(--menu-blur);
+      box-shadow: -6px 0 36px rgba(0,0,0,0.17);
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      padding: 2rem 1.2rem 2rem 1.2rem;
+      gap: 1.6rem;
+      transform: translateX(100%);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 0.33s cubic-bezier(.23,.93,.41,.98), opacity 0.23s;
+    }
+    .popout-menu.active {
+      transform: translateX(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .popout-menu .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      background: rgba(0,0,0,0.15);
+      border: none;
+      color: #fff;
+      font-size: 1.1rem;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-bottom: 0.8rem;
+      font-weight: 600;
+      transition: background 0.15s;
+    }
+    .popout-menu .back-btn:hover {
+      background: rgba(0,0,0,0.24);
+    }
+    .popout-menu a {
+      color: #fff;
+      font-weight: 700;
+      text-decoration: none;
+      font-size: 1.22rem;
+      padding: 0.5rem 0.7rem;
+      border-radius: 6px;
+      transition: background 0.2s, color 0.2s;
+      background: none;
+      display: block;
+    }
+    .popout-menu a:hover, .popout-menu a:focus {
+      background: #fff2;
+      color: #fffbe6;
+      text-decoration: underline;
+    }
+    /* Responsive Menu Hide/Show */
+    @media (min-width: 900px) {
+      .hamburger { display: none; }
+      .popout-menu { display: none !important; }
+    }
+    /* Hero Section */
     .hero {
       text-align: center;
-      padding: 4rem 2rem;
+      padding: 4.7rem 2rem 3.2rem 2rem;
       background: #f7f7f7;
+      margin-bottom: 1.5rem;
+    }
+    body.dark .hero { background: #19191a; }
+    .center-logo {
+      width: 110px;
+      max-width: 100%;
+      height: auto;
+      margin: 0 auto 1.2rem;
+      display: block;
     }
     .hero h1 {
-      font-size: 3rem;
-      margin-bottom: 0.5rem;
-      color: #d32f2f;
+      font-size: 2.7rem;
+      margin-bottom: 0.3rem;
+      color: var(--primary);
+      font-weight: 800;
     }
     .hero p {
-      font-size: 1.2rem;
-      margin-bottom: 2rem;
+      font-size: 1.13rem;
+      margin-bottom: 2.1rem;
+      color: #555;
+      font-weight: 500;
     }
     .hero input[type="text"] {
       padding: 0.8rem;
-      width: 300px;
-      max-width: 90%;
-      margin-bottom: 1rem;
+      width: 290px;
+      max-width: 92%;
+      margin-bottom: 1.1rem;
       border: 2px solid #ccc;
-      border-radius: 4px;
+      border-radius: 5px;
       font-size: 1rem;
+      outline: none;
+      transition: border 0.2s;
+    }
+    .hero input[type="text"]:focus {
+      border: 2px solid var(--primary);
     }
     .buttons {
       display: flex;
       justify-content: center;
-      gap: 1rem;
+      gap: 1.2rem;
+      margin-top: 1rem;
     }
     .buttons a {
-      padding: 0.8rem 1.5rem;
+      padding: 0.9rem 1.7rem;
       text-decoration: none;
       font-weight: bold;
-      border-radius: 4px;
-      transition: background-color 0.2s ease, transform 0.1s ease;
-    }
-    .buttons a:active {
-      transform: scale(0.96);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      border-radius: 7px;
+      font-size: 1.05rem;
+      transition: background 0.18s, transform 0.13s, box-shadow 0.17s;
+      box-shadow: 0 2px 10px 0 rgba(211,47,47,0.04);
+      cursor: pointer;
+      border: none;
+      outline: none;
+      display: inline-block;
     }
     .explore {
-      background-color: #d32f2f;
+      background: var(--primary);
       color: #fff;
     }
+    .explore:hover, .explore:focus {
+      background: var(--primary-dark);
+      transform: scale(1.045);
+      box-shadow: 0 6px 20px rgba(211,47,47,0.13);
+    }
     .learn {
-      background-color: #eee;
+      background: #eee;
       color: #000;
     }
+    .learn:hover, .learn:focus {
+      background: #fff;
+      color: var(--primary);
+      transform: scale(1.035);
+    }
+    /* Carousel */
     .carousel {
-      padding: 2rem;
+      padding: 2.2rem 0;
       background: #f0f0f0;
       text-align: center;
+      margin-bottom: 1.7rem;
+    }
+    body.dark .carousel { background: #202023; }
+    .carousel-container {
+      margin: 0 auto;
+      max-width: 640px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 6px 30px rgba(0,0,0,0.09);
+      padding: 1.6rem 1rem 2.1rem 1rem;
+      position: relative;
+      overflow: hidden;
+      min-height: 260px;
+    }
+    body.dark .carousel-container { background: #222; }
+    .carousel-title {
+      color: var(--primary);
+      font-weight: bold;
+      font-size: 1.37rem;
+      margin-bottom: 1.2rem;
     }
     .carousel-images {
       display: flex;
-      overflow-x: auto;
-      gap: 1rem;
-      padding-top: 1rem;
+      align-items: center;
+      justify-content: center;
+      gap: 0.8rem;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+      margin-bottom: 0.7rem;
     }
     .carousel-images img {
-      height: 200px;
+      height: 190px;
+      width: 270px;
       border-radius: 8px;
+      object-fit: cover;
+      box-shadow: 0 4px 18px #0001;
+      background: #eee;
+      transition: box-shadow 0.25s;
+      flex-shrink: 0;
     }
+    .carousel-images img.active {
+      box-shadow: 0 8px 24px #d32f2f22, 0 1.5px 10px #0003;
+      border: 2.5px solid var(--primary);
+    }
+    .carousel-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 37px;
+      height: 37px;
+      font-size: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 7;
+      opacity: 0.93;
+      transition: background 0.2s, opacity 0.18s;
+    }
+    .carousel-arrow:hover, .carousel-arrow:focus { background: var(--primary-dark); opacity: 1;}
+    .carousel-arrow.left { left: 10px; }
+    .carousel-arrow.right { right: 10px; }
+    .carousel-caption {
+      font-size: 1.03rem;
+      margin-top: 0.3rem;
+      color: #444;
+      font-weight: 500;
+      min-height: 30px;
+    }
+    body.dark .carousel-caption { color: #f9b9b9;}
+    /* Newsletter */
     .newsletter {
-      padding: 2rem;
-      text-align: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       background: #fff;
+      padding: 3.2rem 1.2rem;
+      margin-bottom: 2.1rem;
     }
+    body.dark .newsletter { background: #19191a; }
+    .newsletter-box {
+      background: #fff8f8;
+      border: 1.5px solid #ffeaea;
+      border-radius: 13px;
+      box-shadow: 0 2px 12px #d32f2f11;
+      padding: 2.1rem 2.3rem;
+      max-width: 410px;
+      width: 100%;
+      text-align: center;
+      margin: 0 auto;
+    }
+    body.dark .newsletter-box {
+      background: #231617;
+      border: 1.5px solid #b71c1c;
+    }
+    .newsletter-box h2 {
+      margin-top: 0;
+      margin-bottom: 0.8rem;
+      color: var(--primary);
+      font-size: 1.23rem;
+      font-weight: bold;
+    }
+    .newsletter-box p {
+      color: #333;
+      font-size: 0.97rem;
+      margin-bottom: 1.3rem;
+    }
+    body.dark .newsletter-box p { color: #ffbbbb; }
+    .newsletter-box form {
+      display: flex;
+      gap: 0.7rem;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 0.7rem;
+    }
+    .newsletter-box input[type="email"] {
+      padding: 0.7rem 1rem;
+      border-radius: 6px;
+      border: 1.4px solid #bbb;
+      font-size: 1rem;
+      outline: none;
+      transition: border 0.2s;
+      width: 70%;
+      min-width: 0;
+    }
+    .newsletter-box input[type="email"]:focus {
+      border-color: var(--primary);
+    }
+    .newsletter-box button {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 0.7rem 1.2rem;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background 0.17s, transform 0.13s;
+    }
+    .newsletter-box button:hover, .newsletter-box button:focus {
+      background: var(--primary-dark);
+      transform: scale(1.04);
+    }
+    .newsletter-box .response {
+      color: #22b022;
+      font-size: 1rem;
+      margin-top: 0.6rem;
+      min-height: 1.2rem;
+    }
+    /* About */
     .about {
       text-align: center;
-      padding: 3rem 2rem;
+      padding: 3.2rem 2rem;
       background: #fff;
+      margin-bottom: 1.7rem;
     }
+    body.dark .about { background: #19191a; }
     .about h2 {
       font-size: 2rem;
-      color: #d32f2f;
+      color: var(--primary);
+      font-weight: 800;
     }
     .about p {
-      font-size: 1rem;
-      max-width: 600px;
-      margin: 1rem auto;
+      font-size: 1.09rem;
+      max-width: 620px;
+      margin: 1.2rem auto;
+      color: #444;
     }
+    body.dark .about p { color: #ffbbbb; }
+    /* Footer */
     footer {
-      background-color: #111;
+      background: #111;
       color: #fff;
-      padding: 2rem;
+      padding: 2.5rem 1rem 2.2rem 1rem;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 1rem;
+      gap: 1.2rem;
+      margin-top: 2rem;
     }
-    footer .footer-links a {
+    .footer-links a {
       color: #ccc;
-      margin: 0 0.5rem;
+      margin: 0 0.7rem;
       text-decoration: none;
+      font-weight: 600;
+      transition: color 0.16s;
     }
-    footer .social-icons a {
+    .footer-links a:hover, .footer-links a:focus {
+      color: var(--primary);
+      text-decoration: underline;
+    }
+    .social-icons a {
       color: #ccc;
-      margin: 0 0.5rem;
+      margin: 0 0.7rem;
       font-size: 1.2rem;
       text-decoration: none;
+      transition: color 0.16s;
+    }
+    .social-icons a:hover, .social-icons a:focus {
+      color: var(--primary);
     }
     footer small {
-      color: #888;
+      color: #b5b5b5;
+      margin-top: 0.8rem;
+      font-size: 0.95rem;
     }
-    .center-logo {
-      width: 120px;
-      max-width: 100%;
-      height: auto;
-      display: block;
-      margin: 0 auto;
+    /* Theme Toggle */
+    .theme-toggle {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 1.4rem;
+      margin-left: 1.1rem;
+      cursor: pointer;
+      transition: color 0.2s;
+      outline: none;
+    }
+    .theme-toggle:hover, .theme-toggle:focus {
+      color: var(--primary);
+    }
+    @media (max-width: 700px) {
+      .carousel-container { min-height: 210px; }
+      .carousel-images img { height: 120px; width: 180px;}
+      .about, .hero { padding: 2.1rem 0.7rem;}
+      .newsletter-box { padding: 1.1rem 0.7rem;}
     }
   </style>
 </head>
 <body>
   <header>
     <div class="logo">
-      <img src="Routeflow London permanent logo.png" alt="RouteFlow London Logo" style="height:40px;">
-      <strong>RouteFlow London</strong>
+      <img src="Routeflow London permanent logo.png" alt="RouteFlow London Logo">
+      <strong>RouteFlow</strong>
     </div>
     <div class="menu-bar">
-      <div class="hamburger">
-        <button id="hamburgerBtn" aria-label="Open menu">
-          <i class="fa-solid fa-bars" style="color: #ff0000;"></i>
+      <button class="hamburger" id="hamburgerBtn" aria-label="Open menu">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <div class="account-icon">
+        <button aria-label="Account">
+          <i class="fa-regular fa-user"></i>
+          <span style="font-size:1rem;display:none;" class="acc-label">Account</span>
+          <span class="tooltip">My Account</span>
         </button>
-      </div>
-      <div class="menu-item account">
-        <button>
-          <i class="fa-regular fa-user" style="color: #ff1900;"></i> Account
-        </button>
-        <div class="dropdown">
+        <div class="account-dropdown">
           <a href="#">Profile</a>
           <a href="#">Settings</a>
           <a href="#">Logout</a>
         </div>
       </div>
+      <button class="theme-toggle" id="themeToggle" title="Toggle dark/light mode">
+        <i class="fa-regular fa-moon"></i>
+      </button>
     </div>
     <nav class="popout-menu" id="popoutMenu">
+      <button class="back-btn" id="menuBackBtn"><i class="fa-solid fa-arrow-left"></i> Back</button>
       <a href="#">Home</a>
       <a href="#">Personal Dashboard</a>
       <a href="#">Live Tracking</a>
-      <a href="#">Jouney Planning</a>
+      <a href="#">Journey Planning</a>
       <a href="#">Routes</a>
-      <a href="#">Withdrwn Routes</a>
+      <a href="#">Withdrawn Routes</a>
       <a href="#">Disruptions</a>
-      <a href="#">Routes</a>
+      <a href="#">Fleet</a>
     </nav>
   </header>
-
   <section class="hero">
     <img src="logo.png" alt="RouteFlow London Logo" class="center-logo">
-    <h1>Welcome to RouteFlow London!!</h1>
+    <h1>Welcome to RouteFlow London!</h1>
     <p>London Travel. Reimagined.</p>
     <input type="text" placeholder="Search by route, stop, or bus..." />
     <div class="buttons">
@@ -301,30 +593,38 @@
       <a class="learn" href="#">Learn More</a>
     </div>
   </section>
-
   <section class="carousel">
-    <h2 style="color: #d32f2f;">New London Buses</h2>
-    <div class="carousel-images">
-      <img src="images/bus1.jpg" alt="Bus 1" />
-      <img src="images/bus2.jpg" alt="Bus 2" />
-      <img src="images/bus3.jpg" alt="Bus 3" />
+    <div class="carousel-container">
+      <div class="carousel-title">New London Buses</div>
+      <button class="carousel-arrow left" id="carouselPrev" aria-label="Previous bus"><i class="fa-solid fa-angle-left"></i></button>
+      <div class="carousel-images" id="carouselImages">
+        <img src="images/bus1.jpg" alt="Bus 1" data-caption="New Routemaster 38" class="active"/>
+        <img src="images/bus2.jpg" alt="Bus 2" data-caption="Electric Bus 507"/>
+        <img src="images/bus3.jpg" alt="Bus 3" data-caption="Heritage Routemaster"/>
+      </div>
+      <button class="carousel-arrow right" id="carouselNext" aria-label="Next bus"><i class="fa-solid fa-angle-right"></i></button>
+      <div class="carousel-caption" id="carouselCaption">New Routemaster 38</div>
     </div>
   </section>
-
   <section class="newsletter">
-    <h2 style="color: #d32f2f;">Subscribe to Our Newsletter</h2>
-    <form id="newsletter-form">
-      <input type="email" id="email" placeholder="Enter your email" required />
-      <button type="submit">Subscribe</button>
-    </form>
-    <p id="response-message" style="color: green; margin-top: 0.5rem;"></p>
+    <div class="newsletter-box">
+      <h2>Get updates on new features and sightings</h2>
+      <p>Sign up for our newsletter to get the latest on live tracking, rare sightings, and London bus news.</p>
+      <form id="newsletter-form">
+        <input type="email" id="email" placeholder="Enter your email" required />
+        <button type="submit">Subscribe</button>
+      </form>
+      <div class="response" id="response-message"></div>
+    </div>
   </section>
-
   <section class="about">
     <h2>About RouteFlow London</h2>
-    <p>RouteFlow London is a next-generation platform for exploring London's iconic bus network. Track vehicles live, explore rare workings, dive into historical data, and connect with the enthusiast community.</p>
+    <p>
+      RouteFlow London is a next-generation platform for exploring London's iconic bus network.
+      Track vehicles live, explore rare workings, dive into historical data, and connect with the enthusiast community.
+      Built from scratch for London's unique transit scene.
+    </p>
   </section>
-
   <footer>
     <div class="footer-links">
       <a href="#">About</a> |
@@ -333,60 +633,92 @@
       <a href="#">Contact</a>
     </div>
     <div class="social-icons">
-      <a href="#"><i class="fa-brands fa-discord" style="color: #ff0000;"></i></a>
-      <a href="#"><i class="fab fa-tiktok" style="color: #ff0000;"></i></a>
-      <a href="#"><i class="fab fa-instagram" style="color: #ff0000;"></i></a>
+      <a href="#"><i class="fa-brands fa-discord"></i></a>
+      <a href="#"><i class="fab fa-tiktok"></i></a>
+      <a href="#"><i class="fab fa-instagram"></i></a>
     </div>
     <small>Made for London. Built from scratch.</small>
   </footer>
-
   <script>
-    // Hide/show logo on scroll
-    let lastScrollTop = 0;
-    window.addEventListener("scroll", function () {
-      const logo = document.querySelector(".logo");
-      let st = window.pageYOffset || document.documentElement.scrollTop;
-      if (st > lastScrollTop) {
-        logo.style.opacity = "0";
-        logo.style.transform = "translateY(-20px)";
-      } else {
-        logo.style.opacity = "1";
-        logo.style.transform = "translateY(0px)";
+    // Hamburger menu open/close
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const popoutMenu = document.getElementById('popoutMenu');
+    const menuBackBtn = document.getElementById('menuBackBtn');
+    hamburgerBtn.onclick = function(e) {
+      e.stopPropagation();
+      popoutMenu.classList.add('active');
+    }
+    menuBackBtn.onclick = function() {
+      popoutMenu.classList.remove('active');
+    }
+    document.addEventListener('click', function(e) {
+      if (
+        popoutMenu.classList.contains('active') &&
+        !popoutMenu.contains(e.target) &&
+        e.target !== hamburgerBtn
+      ) {
+        popoutMenu.classList.remove('active');
       }
-      lastScrollTop = st <= 0 ? 0 : st;
-    }, false);
-
-    // Newsletter form functionality
+    });
+    // Carousel logic
+    const carouselImages = document.querySelectorAll('#carouselImages img');
+    const carouselCaption = document.getElementById('carouselCaption');
+    let currentIndex = 0;
+    function showCarousel(idx) {
+      carouselImages.forEach((img, i) => {
+        img.classList.toggle('active', i === idx);
+      });
+      carouselCaption.textContent = carouselImages[idx].dataset.caption || '';
+    }
+    document.getElementById('carouselPrev').onclick = function() {
+      currentIndex = (currentIndex - 1 + carouselImages.length) % carouselImages.length;
+      showCarousel(currentIndex);
+    }
+    document.getElementById('carouselNext').onclick = function() {
+      currentIndex = (currentIndex + 1) % carouselImages.length;
+      showCarousel(currentIndex);
+    }
+    // Swipe support for carousel
+    let startX = null;
+    document.getElementById('carouselImages').addEventListener('touchstart', e => {
+      startX = e.touches[0].clientX;
+    });
+    document.getElementById('carouselImages').addEventListener('touchend', e => {
+      if (startX === null) return;
+      let diff = e.changedTouches[0].clientX - startX;
+      if (diff > 50) document.getElementById('carouselPrev').click();
+      else if (diff < -50) document.getElementById('carouselNext').click();
+      startX = null;
+    });
+    // Newsletter form
     document.getElementById('newsletter-form').addEventListener('submit', function (e) {
       e.preventDefault();
       const email = document.getElementById('email').value;
-      const blob = new Blob([`Email\n${email}`], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = 'newsletter_signups.csv';
-      link.click();
-      document.getElementById('response-message').textContent = 'You have been subscribed!';
+      const message = document.getElementById('response-message');
+      // For demo, just show message
+      message.textContent = 'You have been subscribed!';
       this.reset();
+      setTimeout(() => message.textContent = '', 4000);
     });
-
-    // Hamburger menu toggle
-    document.getElementById('hamburgerBtn').onclick = function (e) {
-      e.stopPropagation();
-      document.getElementById('popoutMenu').classList.toggle('active');
-    };
-
-    // Close popout menu when clicking outside
-    document.addEventListener('click', function(e) {
-      const menu = document.getElementById('popoutMenu');
-      const btn = document.getElementById('hamburgerBtn');
-      if (
-        menu.classList.contains('active') &&
-        !menu.contains(e.target) &&
-        !btn.contains(e.target)
-      ) {
-        menu.classList.remove('active');
+    // Theme toggle
+    const themeToggle = document.getElementById('themeToggle');
+    function setTheme(dark) {
+      document.body.classList.toggle('dark', dark);
+      themeToggle.innerHTML = dark
+        ? '<i class="fa-solid fa-sun"></i>'
+        : '<i class="fa-regular fa-moon"></i>';
+      localStorage.setItem('rfl-theme', dark ? 'dark' : 'light');
+    }
+    themeToggle.onclick = function() {
+      setTheme(!document.body.classList.contains('dark'));
+    }
+    // Auto-load theme
+    (function() {
+      const userPref = localStorage.getItem('rfl-theme');
+      if (userPref === 'dark' || (userPref !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        setTheme(true);
       }
-    });
+    })();
   </script>
 </body>
 </html>
