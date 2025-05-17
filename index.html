@@ -1,117 +1,173 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>RouteFlow London</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png">
+  <title>Routeflow London</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
-  <!-- Include Inter font for consistency -->
-  <link href="https://fonts.googleapis.com/css?family=Inter:400,600,800&display=swap" rel="stylesheet">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-  <!-- Header -->
   <header>
     <div class="logo">
-      <img src="logo.svg" alt="RouteFlow London Logo">
-      <span>RouteFlow London</span>
+      <img src="images/Routeflow London permanent logo.png" alt="RouteFlow London Logo">
+      <strong>RouteFlow London</strong>
     </div>
-    <nav class="main-nav">
-      <a href="#">Home</a>
-      <a href="#">Fleet</a>
-      <a href="#">Sightings</a>
-      <a href="#">Blog</a>
-      <a href="#">About</a>
-    </nav>
-    <button class="hamburger" aria-label="Open menu">&#9776;</button>
+    <div class="menu-bar">
+     <nav class="main-nav">
+  <a href="index.html">Home</a>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="tracking.html">Tracking</a>
+  <a href="planning.html">Planning</a>
+  <a href="routes.html">Routes</a>
+  <a href="withdrawn.html">Withdrawn</a>
+  <a href="disruptions.html">Disruptions</a>
+  <a href="fleet.html">Fleet</a>
+</nav>
+      <button class="hamburger" id="hamburgerBtn" aria-label="Open menu">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <div class="account-icon" id="profileMenu">
+        <button aria-label="Account" id="profileIcon">
+          <i class="fa-regular fa-user"></i>
+        </button>
+        <div class="account-dropdown" id="dropdownContent"></div>
+      </div>
+    </div>
+    <nav class="popout-menu" id="popoutMenu">
+  <button class="back-btn" id="menuBackBtn"><i class="fa-solid fa-arrow-left"></i> Back</button>
+  <a href="index.html">Home</a>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="tracking.html">Tracking</a>
+  <a href="planning.html">Planning</a>
+  <a href="routes.html">Routes</a>
+  <a href="withdrawn.html">Withdrawn</a>
+  <a href="disruptions.html">Disruptions</a>
+  <a href="fleet.html">Fleet</a>
+</nav>
   </header>
 
-  <!-- Popout Mobile Menu -->
-  <nav class="popout-menu" id="mobileMenu">
-    <button class="back-btn">&larr; Close</button>
-    <a href="#">Home</a>
-    <a href="#">Fleet</a>
-    <a href="#">Sightings</a>
-    <a href="#">Blog</a>
-    <a href="#">About</a>
-  </nav>
+  <!-- Login/Signup Modal -->
+  <!-- Login/Signup Modal -->
+<div id="authModal" class="modal" aria-modal="true" role="dialog">
+  <div class="modal-content">
+    <span class="close" id="closeModal" title="Close">&times;</span>
+    <!-- Login Form -->
+    <div id="loginFormContainer">
+      <h2>Login</h2>
+      <form id="loginForm" autocomplete="off">
+        <input type="email" id="loginEmail" placeholder="Email" required autocomplete="username">
+        <input type="password" id="loginPassword" placeholder="Password" required autocomplete="current-password">
+        <button type="submit">Login</button>
+        <button type="button" class="google-login">Sign in with Google</button>
+        <p><a href="#" class="reset-password">Forgot Password?</a></p>
+        <div class="error-message" id="loginError" style="display:none;"></div>
+      </form>
+      <p>Don't have an account? <a href="#" id="showSignup">Sign up</a></p>
+    </div>
+    <!-- Signup Form -->
+    <div id="signupFormContainer" style="display:none;">
+      <h2>Sign Up</h2>
+      <form id="signupForm" autocomplete="off">
+        <input type="email" id="signupEmail" placeholder="Email" required autocomplete="username">
+        <input type="password" id="signupPassword" placeholder="Password" required autocomplete="new-password">
+        <button type="submit">Sign Up</button>
+        <button type="button" class="google-login">Sign Up with Google</button>
+        <p><a href="#" class="reset-password">Forgot Password?</a></p>
+        <div class="error-message" id="signupError" style="display:none;"></div>
+      </form>
+      <p>Already have an account? <a href="#" id="showLogin">Login</a></p>
+    </div>
+  </div>
+</div>
 
-  <!-- Hero Section -->
-  <section class="hero">
-    <img class="hero-logo" src="hero.svg" alt="RouteFlow Logo">
-    <h1>Real-time London Bus Tracking</h1>
-    <p class="hero-subtitle">Rare sightings, fleet profiles, and more. Built for London.</p>
-    <form class="hero-search">
-      <input type="text" placeholder="Search buses, routes, or operators...">
-      <button type="submit">&#128269;</button>
-    </form>
-    <div class="hero-buttons">
-      <a href="#" class="explore">Explore Now</a>
-      <a href="#" class="learn">Learn More</a>
+  <!-- Main Content -->
+  <section class="landing-hero">
+    <div class="hero-card">
+      <img src="images/Routeflow London permanent logo.png" alt="RouteFlow London Logo" class="hero-logo" />
+      <h1>Welcome to RouteFlow London!</h1>
+      <p class="hero-subtitle">London Travel. Reimagined.</p>
+      <form class="hero-search" onsubmit="return false;">
+        <input type="text" placeholder="Search by route, stop, or bus..." />
+        <button type="submit"><i class="fa fa-search"></i></button>
+      </form>
+      <div class="hero-buttons">
+        <a class="explore" href="#">Explore Map</a>
+        <a class="learn" href="#">Learn More</a>
+      </div>
     </div>
   </section>
-
-  <!-- Carousel Example -->
   <section class="carousel">
-    <div class="carousel-images">
-      <img src="bus1.jpg" alt="Bus 1" class="active">
-      <img src="bus2.jpg" alt="Bus 2">
-      <img src="bus3.jpg" alt="Bus 3">
-      <!-- etc. -->
+    <div class="carousel-container">
+      <div class="carousel-title">New London Buses</div>
+      <button class="carousel-arrow left" id="carouselPrev" aria-label="Previous bus"><i class="fa-solid fa-angle-left"></i></button>
+      <div class="carousel-images" id="carouselImages">
+        <img src="https://static.wikia.nocookie.net/bus-routes-in-london/images/3/34/TUK-3087_on_381.png" alt="Bus 1" data-caption="Electroliner | Route 381" class="active"/>
+        <img src="https://static.wikia.nocookie.net/bus-routes-in-london/images/e/e2/WSE2933.jpg" alt="Bus 2" data-caption="Electroliner Kite | Route 153"/>
+        <img src="https://static.wikia.nocookie.net/bus-routes-in-london/images/2/25/80403_on_SL3.webp" alt="Bus 3" data-caption="Enviro 400ev | Route SL3"/>
+        <img src="https://static.wikia.nocookie.net/bus-routes-in-london/images/e/e0/EBD19_on_Route_320.jpg" alt="Bus 4" data-caption="BD11 | Route 320"/>
+      </div>
+      <button class="carousel-arrow right" id="carouselNext" aria-label="Next bus"><i class="fa-solid fa-angle-right"></i></button>
+      <div class="carousel-caption" id="carouselCaption">Electroliner | Route 381</div>
     </div>
-    <!-- Optional: Add carousel arrows/buttons if you have JS for navigation -->
   </section>
-
-  <!-- Newsletter Signup -->
   <section class="newsletter">
     <div class="newsletter-box">
-      <h2>Stay Updated</h2>
-      <p>Subscribe for the latest news and rare bus sightings.</p>
-      <form>
-        <input type="email" placeholder="Your email">
+      <h2>Get updates on new features and sightings</h2>
+      <p>Sign up for our newsletter to get the latest on live tracking, rare sightings, and London bus news.</p>
+      <form id="newsletter-form">
+        <input type="email" id="email" placeholder="Enter your email" required />
         <button type="submit">Subscribe</button>
       </form>
-      <div class="response"></div>
+      <div class="response" id="response-message"></div>
     </div>
   </section>
-
-  <!-- About Section -->
   <section class="about">
     <h2>About RouteFlow London</h2>
     <p>
-      RouteFlow London offers real-time tracking, rare bus sightings, and detailed fleet profiles—built from scratch, for Londoners and enthusiasts everywhere.
+      RouteFlow London is a next-generation platform for exploring London's iconic bus network.
+      Track vehicles live, explore rare workings, dive into historical data, and connect with the enthusiast community.
+      Built from scratch for London's unique transit scene.
     </p>
   </section>
-
-  <!-- Blog Preview Cards -->
-  <section class="blog-preview">
-    <div class="blog-card">
-      <div class="blog-date">May 10, 2025</div>
-      <h3>Big Red Bus: History and Legacy</h3>
-      <p>Discover how London's iconic buses became a world symbol...</p>
+  <section id="blog">
+    <h2>Latest Blog Posts</h2>
+    <div class="blog-preview">
+      <article class="blog-card">
+        <span class="blog-date">May 2025</span>
+        <h3>Hidden Buses of Zone 6</h3>
+        <p>A journey to London's farthest reaches, hunting for rare bus gems and snap-worthy moments.</p>
+      </article>
+      <article class="blog-card">
+        <span class="blog-date">April 2025</span>
+        <h3>Fleet Tech Upgrades</h3>
+        <p>How TfL's newest buses are greener, smarter, and more connected than ever.</p>
+      </article>
+      <article class="blog-card">
+        <span class="blog-date">March 2025</span>
+        <h3>Meet the Enthusiasts</h3>
+        <p>Spotlight on the passionate community tracking London's bus history in real time.</p>
+      </article>
     </div>
-    <div class="blog-card">
-      <div class="blog-date">Apr 22, 2025</div>
-      <h3>Fleet Upgrades in 2025</h3>
-      <p>See what’s new and improved on London’s busiest routes...</p>
-    </div>
-    <!-- More blog cards as needed -->
   </section>
-
-  <!-- Footer -->
   <footer>
     <div class="footer-links">
-      <a href="#">Privacy</a>
-      <a href="#">Terms</a>
+      <a href="#">About</a> |
+      <a href="#">Privacy</a> |
+      <a href="#">Terms</a> |
       <a href="#">Contact</a>
     </div>
     <div class="social-icons">
-      <a href="#" aria-label="Twitter">🐦</a>
-      <a href="#" aria-label="Instagram">📸</a>
-      <!-- More as needed -->
+      <a href="https://discord.gg/qVf3nN4Mgq"><i class="fa-brands fa-discord"></i></a>
+      <a href="https://www.tiktok.com/@the_bus_father"><i class="fab fa-tiktok"></i></a>
+      <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo"><i class="fab fa-instagram"></i></a>
     </div>
-    <small>&copy; 2025 RouteFlow London</small>
+    <small>Made for London. Built from scratch.</small>
   </footer>
-
-  <!-- Optional: JS for mobile menu, carousel, etc. -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="main.js"></script>
 </body>
 </html>
