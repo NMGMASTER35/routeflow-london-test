@@ -690,6 +690,18 @@
       .carousel-container { min-height: 120px; }
       .carousel-images img { height: 80px; width: 120px;}
     }
+    button {
+  padding: 10px;
+  margin: 10px 0;
+  background-color: #4285F4;
+  color: white;
+  border: none;
+  border-radius: 4px;
+}
+
+#google-login {
+  background-color: #DB4437; /* Google red */
+}
   </style>
 </head>
 <body>
@@ -743,6 +755,8 @@
           <input type="email" id="loginEmail" placeholder="Email" required autocomplete="username">
           <input type="password" id="loginPassword" placeholder="Password" required autocomplete="current-password">
           <button type="submit">Login</button>
+          <button id="google-login">Sign in with Google</button>
+          <p><a href="#" id="reset-password">Forgot Password?</a></p>
           <div class="error-message" id="loginError" style="display:none;"></div>
         </form>
         <p>Don't have an account? <a href="#" id="showSignup">Sign up</a></p>
@@ -754,6 +768,8 @@
           <input type="email" id="signupEmail" placeholder="Email" required autocomplete="username">
           <input type="password" id="signupPassword" placeholder="Password" required autocomplete="new-password">
           <button type="submit">Sign Up</button>
+          <button id="google-login">Sign in with Google</button>
+          <p><a href="#" id="reset-password">Forgot Password?</a></p>
           <div class="error-message" id="signupError" style="display:none;"></div>
         </form>
         <p>Already have an account? <a href="#" id="showLogin">Login</a></p>
@@ -1059,6 +1075,34 @@
         }
       });
     });
+    const googleButton = document.getElementById("google-login");
+const provider = new firebase.auth.GoogleAuthProvider();
+
+googleButton.addEventListener("click", () => {
+  firebase.auth().signInWithPopup(provider)
+    .then((result) => {
+      alert("Google sign-in successful!");
+      window.location.href = "dashboard.html"; // redirect after login
+    })
+    .catch((error) => {
+      alert("Google sign-in error: " + error.message);
+    });
+});
+    const resetLink = document.getElementById("reset-password");
+
+resetLink.addEventListener("click", () => {
+  const email = prompt("Enter your email to reset your password:");
+  if (email) {
+    firebase.auth().sendPasswordResetEmail(email)
+      .then(() => {
+        alert("Password reset email sent!");
+      })
+      .catch((error) => {
+        alert("Reset error: " + error.message);
+      });
+  }
+});
+
   </script>
 </body>
 </html>
