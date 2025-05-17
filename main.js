@@ -31,14 +31,12 @@ document.addEventListener('click', function(e) {
 });
 
 // Carousel logic
-const carouselImages = document.querySelectorAll('#carouselImages img');
-const carouselCaption = document.getElementById('carouselCaption');
+const carouselItems = document.querySelectorAll('#carouselImages .carousel-item');
 let currentIndex = 0;
 function showCarousel(idx) {
-  carouselImages.forEach((img, i) => {
-    img.classList.toggle('active', i === idx);
+  carouselItems.forEach((item, i) => {
+    item.classList.toggle('active', i === idx);
   });
-  carouselCaption.textContent = carouselImages[idx].dataset.caption || '';
 }
 document.getElementById('carouselPrev').onclick = function() {
   currentIndex = (currentIndex - 1 + carouselImages.length) % carouselImages.length;
