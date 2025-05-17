@@ -226,86 +226,138 @@
       text-decoration: underline;
     }
     /* Responsive Menu Hide/Show */
-@media (min-width: 900px) {
-  .popout-menu { display: none !important; }
-}
-    /* Hero Section */
-    .hero {
+    @media (min-width: 900px) {
+      .popout-menu { display: none !important; }
+    }
+    /* Landing Hero Section */
+    .landing-hero {
+      min-height: 90vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #fff9f9 0%, #ffeaea 100%);
+      padding: 3vw 1vw;
+    }
+    body.dark .landing-hero {
+      background: linear-gradient(135deg, #1a1a1a 0%, #2a1717 100%);
+    }
+    .hero-card {
+      background: #fff;
+      border-radius: 22px;
+      box-shadow: 0 10px 36px #d32f2f22, 0 2px 12px #0001;
+      padding: 3.5rem 2.2rem 2.6rem 2.2rem;
+      max-width: 430px;
+      width: 100%;
       text-align: center;
-      padding: 4.7rem 2rem 3.2rem 2rem;
-      background: #f7f7f7;
-      margin-bottom: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: box-shadow 0.2s;
+      border: 1.5px solid #ffd6d6;
     }
-    body.dark .hero { background: #19191a; }
-    .center-logo {
-      width: 110px;
-      max-width: 100%;
+    body.dark .hero-card {
+      background: #19191a;
+      border: 1.5px solid #b71c1c;
+      box-shadow: 0 10px 36px #d32f2f55, 0 2px 12px #0004;
+    }
+    .hero-logo {
+      width: 120px;
       height: auto;
-      margin: 0 auto 1.2rem;
-      display: block;
+      margin-bottom: 1.8rem;
     }
-    .hero h1 {
-      font-size: 2.7rem;
-      margin-bottom: 0.3rem;
-      color: var(--primary);
+    .hero-card h1 {
+      font-size: 2.61rem;
       font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 0.45rem;
     }
-    .hero p {
+    .hero-subtitle {
       font-size: 1.13rem;
-      margin-bottom: 2.1rem;
-      color: #555;
+      color: #444;
       font-weight: 500;
+      margin-bottom: 1.4rem;
     }
-    .hero input[type="text"] {
-      padding: 0.8rem;
-      width: 290px;
-      max-width: 92%;
-      margin-bottom: 1.1rem;
-      border: 2px solid #ccc;
-      border-radius: 5px;
+    body.dark .hero-subtitle {
+      color: #ffbbbb;
+    }
+    .hero-search {
+      display: flex;
+      width: 100%;
+      max-width: 330px;
+      margin: 0 auto 1.5rem auto;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1.5px solid #ffd6d6;
+      background: #fff;
+    }
+    body.dark .hero-search {
+      background: #231617;
+      border: 1.5px solid #b71c1c;
+    }
+    .hero-search input[type="text"] {
+      flex: 1;
+      padding: 0.77rem 1rem;
+      border: none;
       font-size: 1rem;
       outline: none;
-      transition: border 0.2s;
+      background: transparent;
+      color: inherit;
     }
-    .hero input[type="text"]:focus {
-      border: 2px solid var(--primary);
-    }
-    .buttons {
-      display: flex;
-      justify-content: center;
-      gap: 1.2rem;
-      margin-top: 1rem;
-    }
-    .buttons a {
-      padding: 0.9rem 1.7rem;
-      text-decoration: none;
-      font-weight: bold;
-      border-radius: 7px;
-      font-size: 1.05rem;
-      transition: background 0.18s, transform 0.13s, box-shadow 0.17s;
-      box-shadow: 0 2px 10px 0 rgba(211,47,47,0.04);
+    .hero-search button {
+      background: var(--primary);
+      border: none;
+      color: #fff;
+      padding: 0 18px;
+      font-size: 1.25rem;
       cursor: pointer;
+      transition: background 0.18s;
+    }
+    .hero-search button:hover, .hero-search button:focus {
+      background: var(--primary-dark);
+    }
+    .hero-buttons {
+      display: flex;
+      gap: 1.1rem;
+      justify-content: center;
+      margin-top: 1.2rem;
+    }
+    .hero-buttons .explore, .hero-buttons .learn {
+      padding: 0.97rem 2.1rem;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 1.08rem;
       border: none;
       outline: none;
-      display: inline-block;
+      text-decoration: none;
+      box-shadow: 0 1.5px 7px 0 rgba(211,47,47,0.05);
+      transition: background 0.18s, color 0.18s, transform 0.13s;
+      cursor: pointer;
     }
-    .explore {
+    .hero-buttons .explore {
       background: var(--primary);
       color: #fff;
     }
-    .explore:hover, .explore:focus {
+    .hero-buttons .explore:hover, .hero-buttons .explore:focus {
       background: var(--primary-dark);
-      transform: scale(1.045);
-      box-shadow: 0 6px 20px rgba(211,47,47,0.13);
+      transform: scale(1.05);
     }
-    .learn {
-      background: #eee;
-      color: #000;
-    }
-    .learn:hover, .learn:focus {
-      background: #fff;
+    .hero-buttons .learn {
+      background: #ffeaea;
       color: var(--primary);
-      transform: scale(1.035);
+    }
+    .hero-buttons .learn:hover, .hero-buttons .learn:focus {
+      background: #fff;
+      color: var(--primary-dark);
+      transform: scale(1.04);
+    }
+    @media (max-width: 700px) {
+      .hero-card {
+        padding: 1.6rem 0.6rem 1.2rem 0.6rem;
+        max-width: 95vw;
+      }
+      .landing-hero {
+        padding: 0;
+      }
     }
     /* Carousel */
     .carousel {
@@ -485,6 +537,59 @@
       color: #444;
     }
     body.dark .about p { color: #ffbbbb; }
+    /* Blog Cards */
+    .blog-preview {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      justify-content: center;
+      margin-top: 2.1rem;
+    }
+    .blog-card {
+      background: #fff;
+      color: #222;
+      box-shadow: 0 4px 18px #d32f2f1a;
+      border-radius: 13px;
+      padding: 2rem 1.3rem 1.2rem 1.3rem;
+      max-width: 320px;
+      min-width: 270px;
+      flex: 1 1 270px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      transition: box-shadow 0.18s, transform 0.15s;
+      border: 1.5px solid #ffd6d6;
+    }
+    body.dark .blog-card {
+      background: #19191a;
+      color: #fafafa;
+      border: 1.5px solid #b71c1c;
+      box-shadow: 0 4px 18px #d32f2f3c;
+    }
+    .blog-card:hover, .blog-card:focus-within {
+      box-shadow: 0 8px 28px #d32f2f36, 0 2px 10px #0002;
+      transform: translateY(-4px) scale(1.025);
+    }
+    .blog-date {
+      font-size: 0.97rem;
+      color: var(--primary);
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+    }
+    .blog-card h3 {
+      font-size: 1.23rem;
+      font-weight: 800;
+      margin: 0.15rem 0 0.6rem 0;
+    }
+    .blog-card p {
+      font-size: 1.07rem;
+      color: #444;
+      margin: 0;
+      font-weight: 500;
+    }
+    body.dark .blog-card p {
+      color: #ffbbbb;
+    }
     /* Footer */
     footer {
       background: #111;
@@ -582,16 +687,23 @@
       <a href="#">Fleet</a>
     </nav>
   </header>
-  <section class="hero">
-    <img src="Routeflow London permanent logo.png" alt="RouteFlow London Logo" class="center-logo">
-    <h1>Welcome to RouteFlow London!</h1>
-    <p>London Travel. Reimagined.</p>
-    <input type="text" placeholder="Search by route, stop, or bus..." />
-    <div class="buttons">
-      <a class="explore" href="#">Explore Map</a>
-      <a class="learn" href="#">Learn More</a>
+  <!-- Landing Hero Section Start -->
+  <section class="landing-hero">
+    <div class="hero-card">
+      <img src="Routeflow London permanent logo.png" alt="RouteFlow London Logo" class="hero-logo" />
+      <h1>Welcome to RouteFlow London!</h1>
+      <p class="hero-subtitle">London Travel. Reimagined.</p>
+      <form class="hero-search" onsubmit="return false;">
+        <input type="text" placeholder="Search by route, stop, or bus..." />
+        <button type="submit"><i class="fa fa-search"></i></button>
+      </form>
+      <div class="hero-buttons">
+        <a class="explore" href="#">Explore Map</a>
+        <a class="learn" href="#">Learn More</a>
+      </div>
     </div>
   </section>
+  <!-- Landing Hero Section End -->
   <section class="carousel">
     <div class="carousel-container">
       <div class="carousel-title">New London Buses</div>
@@ -600,12 +712,12 @@
         <img src="https://static.wikia.nocookie.net/bus-routes-in-london/images/3/34/TUK-3087_on_381.png/revision/latest?cb=20250502090835" alt="Bus 1" data-caption="Electroliner | Route 381" class="active"/>
         <img src="https://static.wikia.nocookie.net/bus-routes-in-london/images/e/e2/WSE2933.jpg/revision/latest?cb=20250202105312" alt="Bus 2" data-caption="Electroliner Kite | Route 153"/>
         <img src="https://static.wikia.nocookie.net/bus-routes-in-london/images/2/25/80403_on_SL3.webp/revision/latest?cb=20250515113448" alt="Bus 3" data-caption="Enviro 400ev | Route SL3"/>
-         <img src="https://i.ytimg.com/vi/PrdhnXITeWw/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLD-hc4EA-ZEsyK_7KyixInfPdwKmw" alt="Bus 3" data-caption="Enviro 100ev | Route W12"/>
-         <img src="https://static.wikia.nocookie.net/bus-routes-in-london/images/e/e0/EBD19_on_Route_320.jpg/revision/latest?cb=20250113040555" alt="Bus 3" data-caption="BD11 | Route 320"/>
-         <img src="https://southwarknews.co.uk/wp-content/uploads/2024/07/An-image-of-the-new-ie-Tram-bus-which-will-soon-operate-on-Route-358.-Photo-from-Go-Ahead-Mark-Lyons-scaled.jpg" alt="Bus 3" data-caption="Irizar ie Tram Bus | Route 358"/>
+        <img src="https://i.ytimg.com/vi/PrdhnXITeWw/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLD-hc4EA-ZEsyK_7KyixInfPdwKmw" alt="Bus 4" data-caption="Enviro 10"/>
+        <img src="https://static.wikia.nocookie.net/bus-routes-in-london/images/e/e0/EBD19_on_Route_320.jpg/revision/latest?cb=20250113040555" alt="Bus 5" data-caption="BD11 | Route 320"/>
+        <img src="https://southwarknews.co.uk/wp-content/uploads/2024/07/An-image-of-the-new-ie-Tram-bus-which-will-soon-operate-on-Route-358.-Photo-from-Go-Ahead-Mark-Lyons-scaled.jpg" alt="Bus 6" data-caption="ie Tram | Route 358"/>
       </div>
       <button class="carousel-arrow right" id="carouselNext" aria-label="Next bus"><i class="fa-solid fa-angle-right"></i></button>
-      <div class="carousel-caption" id="carouselCaption">New Routemaster 38</div>
+      <div class="carousel-caption" id="carouselCaption">Electroliner | Route 381</div>
     </div>
   </section>
   <section class="newsletter">
@@ -628,27 +740,26 @@
     </p>
   </section>
   <!-- Blog Preview -->
-    <section id="blog">
-      <h2>Latest Blog Posts</h2>
-      <div class="blog-preview">
-        <article class="blog-card">
-          <span class="blog-date">May 2025</span>
-          <h3>Hidden Buses of Zone 6</h3>
-          <p>A journey to London's farthest reaches, hunting for rare bus gems and snap-worthy moments.</p>
-        </article>
-        <article class="blog-card">
-          <span class="blog-date">April 2025</span>
-          <h3>Fleet Tech Upgrades</h3>
-          <p>How TfL's newest buses are greener, smarter, and more connected than ever.</p>
-        </article>
-        <article class="blog-card">
-          <span class="blog-date">March 2025</span>
-          <h3>Meet the Enthusiasts</h3>
-          <p>Spotlight on the passionate community tracking London's bus history in real time.</p>
-        </article>
-      </div>
-    </section>
-
+  <section id="blog">
+    <h2>Latest Blog Posts</h2>
+    <div class="blog-preview">
+      <article class="blog-card">
+        <span class="blog-date">May 2025</span>
+        <h3>Hidden Buses of Zone 6</h3>
+        <p>A journey to London's farthest reaches, hunting for rare bus gems and snap-worthy moments.</p>
+      </article>
+      <article class="blog-card">
+        <span class="blog-date">April 2025</span>
+        <h3>Fleet Tech Upgrades</h3>
+        <p>How TfL's newest buses are greener, smarter, and more connected than ever.</p>
+      </article>
+      <article class="blog-card">
+        <span class="blog-date">March 2025</span>
+        <h3>Meet the Enthusiasts</h3>
+        <p>Spotlight on the passionate community tracking London's bus history in real time.</p>
+      </article>
+    </div>
+  </section>
   <footer>
     <div class="footer-links">
       <a href="#">About</a> |
