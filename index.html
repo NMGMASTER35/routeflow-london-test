@@ -771,6 +771,54 @@
     });
     // Always show dark mode (no toggle)
     document.body.classList.add('dark');
+    const loginForm = document.getElementById("login-form");
+
+loginForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const email = document.getElementById("login-email").value;
+  const password = document.getElementById("login-password").value;
+
+  firebase.auth().signInWithEmailAndPassword(email, password)
+    .then((userCredential) => {
+      alert("Logged in!");
+      // Redirect to a protected page
+      window.location.href = "dashboard.html";
+    })
+    .catch((error) => {
+      alert("Error: " + error.message);
+    });
+});
+const signupForm = document.getElementById("signup-form");
+
+signupForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const email = document.getElementById("signup-email").value;
+  const password = document.getElementById("signup-password").value;
+
+  firebase.auth().createUserWithEmailAndPassword(email, password)
+    .then((userCredential) => {
+      alert("Signed up!");
+      window.location.href = "login.html";
+    })
+    .catch((error) => {
+      alert("Error: " + error.message);
+    });
+});
   </script>
+  <!-- Add to the <head> of your signup/login page -->
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDuedLuagA4IXc9ZMG9wvoak-sRrhtFZfo",
+  authDomain: "routeflow-london.firebaseapp.com",
+  projectId: "routeflow-london",
+  storageBucket: "routeflow-london.firebasestorage.app",
+  messagingSenderId: "368346241440",
+  appId: "1:368346241440:web:7cc87d551420459251ecc5"
+};
+  firebase.initializeApp(firebaseConfig);
+</script>
+
 </body>
 </html>
