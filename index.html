@@ -309,8 +309,387 @@
       margin-bottom: 12px;
       font-size: 0.99rem;
     }
-    /* ... rest of your app's CSS... (hero, carousel, etc.) ... */
-    /* Keep your other original styles here */
+   /* Landing Hero Section */
+    .landing-hero {
+      min-height: 90vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1a1a1a 0%, #2a1717 100%);
+      padding: 3vw 1vw;
+    }
+    .hero-card {
+      background: #19191a;
+      border-radius: 22px;
+      box-shadow: 0 10px 36px #d32f2f55, 0 2px 12px #0004;
+      padding: 3.5rem 2.2rem 2.6rem 2.2rem;
+      max-width: 430px;
+      width: 100%;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: box-shadow 0.2s;
+      border: 1.5px solid #b71c1c;
+    }
+    .hero-logo {
+      width: 120px;
+      height: auto;
+      margin-bottom: 1.8rem;
+    }
+    .hero-card h1 {
+      font-size: 2.61rem;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 0.45rem;
+    }
+    .hero-subtitle {
+      font-size: 1.13rem;
+      color: #ffbbbb;
+      font-weight: 500;
+      margin-bottom: 1.4rem;
+    }
+    .hero-search {
+      display: flex;
+      width: 100%;
+      max-width: 330px;
+      margin: 0 auto 1.5rem auto;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1.5px solid #b71c1c;
+      background: #231617;
+    }
+    .hero-search input[type="text"] {
+      flex: 1;
+      padding: 0.77rem 1rem;
+      border: none;
+      font-size: 1rem;
+      outline: none;
+      background: transparent;
+      color: inherit;
+    }
+    .hero-search button {
+      background: var(--primary);
+      border: none;
+      color: #fff;
+      padding: 0 18px;
+      font-size: 1.25rem;
+      cursor: pointer;
+      transition: background 0.18s;
+    }
+    .hero-search button:hover, .hero-search button:focus {
+      background: var(--primary-dark);
+    }
+    .hero-buttons {
+      display: flex;
+      gap: 1.1rem;
+      justify-content: center;
+      margin-top: 1.2rem;
+    }
+    .hero-buttons .explore, .hero-buttons .learn {
+      padding: 0.97rem 2.1rem;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 1.08rem;
+      border: none;
+      outline: none;
+      text-decoration: none;
+      box-shadow: 0 1.5px 7px 0 rgba(211,47,47,0.05);
+      transition: background 0.18s, color 0.18s, transform 0.13s;
+      cursor: pointer;
+    }
+    .hero-buttons .explore {
+      background: var(--primary);
+      color: #fff;
+    }
+    .hero-buttons .explore:hover, .hero-buttons .explore:focus {
+      background: var(--primary-dark);
+      transform: scale(1.05);
+    }
+    .hero-buttons .learn {
+      background: #ffeaea;
+      color: var(--primary);
+    }
+    .hero-buttons .learn:hover, .hero-buttons .learn:focus {
+      background: #fff;
+      color: var(--primary-dark);
+      transform: scale(1.04);
+    }
+    @media (max-width: 700px) {
+      .hero-card {
+        padding: 1.6rem 0.6rem 1.2rem 0.6rem;
+        max-width: 95vw;
+      }
+      .landing-hero {
+        padding: 0;
+      }
+    }
+    /* Carousel */
+    .carousel {
+      padding: 2.2rem 0;
+      background: #202023;
+      text-align: center;
+      margin-bottom: 1.7rem;
+    }
+    .carousel-container {
+      margin: 0 auto;
+      max-width: 640px;
+      background: #222;
+      border-radius: 12px;
+      box-shadow: 0 6px 30px rgba(0,0,0,0.13);
+      padding: 1.3rem 1rem 1.6rem 1rem;
+      position: relative;
+      overflow: hidden;
+      min-height: 210px;
+    }
+    .carousel-title {
+      color: var(--primary);
+      font-weight: bold;
+      font-size: 1.19rem;
+      margin-bottom: .7rem;
+    }
+    .carousel-images {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.8rem;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+      margin-bottom: 0.7rem;
+      position: relative;
+      width: 100%;
+      height: 135px;
+    }
+    .carousel-images img {
+      height: 135px;
+      width: 200px;
+      border-radius: 8px;
+      object-fit: cover;
+      box-shadow: 0 4px 18px #0002;
+      background: #222;
+      transition: opacity 0.4s, transform 0.4s;
+      flex-shrink: 0;
+      position: absolute;
+      top: 0; left: 50%;
+      opacity: 0;
+      transform: translateX(-50%) scale(0.96);
+      z-index: 0;
+      pointer-events: none;
+    }
+    .carousel-images img.active {
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+      z-index: 1;
+      pointer-events: auto;
+      border: 2.5px solid var(--primary);
+      box-shadow: 0 8px 24px #d32f2f22, 0 1.5px 10px #0003;
+    }
+    .carousel-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 33px;
+      height: 33px;
+      font-size: 1.05rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 7;
+      opacity: 0.93;
+      transition: background 0.2s, opacity 0.18s;
+    }
+    .carousel-arrow.left { left: 10px; }
+    .carousel-arrow.right { right: 10px; }
+    .carousel-caption {
+      font-size: .98rem;
+      margin-top: 0.2rem;
+      color: #f9b9b9;
+      font-weight: 500;
+      min-height: 24px;
+    }
+    /* Newsletter */
+    .newsletter {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #19191a;
+      padding: 3.2rem 1.2rem;
+      margin-bottom: 2.1rem;
+    }
+    .newsletter-box {
+      background: #231617;
+      border: 1.5px solid #b71c1c;
+      border-radius: 13px;
+      box-shadow: 0 2px 12px #d32f2f11;
+      padding: 2.1rem 2.3rem;
+      max-width: 410px;
+      width: 100%;
+      text-align: center;
+      margin: 0 auto;
+    }
+    .newsletter-box h2 {
+      margin-top: 0;
+      margin-bottom: 0.8rem;
+      color: var(--primary);
+      font-size: 1.23rem;
+      font-weight: bold;
+    }
+    .newsletter-box p {
+      color: #ffbbbb;
+      font-size: 0.97rem;
+      margin-bottom: 1.3rem;
+    }
+    .newsletter-box form {
+      display: flex;
+      gap: 0.7rem;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 0.7rem;
+    }
+    .newsletter-box input[type="email"] {
+      padding: 0.7rem 1rem;
+      border-radius: 6px;
+      border: 1.4px solid #bbb;
+      font-size: 1rem;
+      outline: none;
+      transition: border 0.2s;
+      width: 70%;
+      min-width: 0;
+    }
+    .newsletter-box input[type="email"]:focus {
+      border-color: var(--primary);
+    }
+    .newsletter-box button {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 0.7rem 1.2rem;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background 0.17s, transform 0.13s;
+    }
+    .newsletter-box button:hover, .newsletter-box button:focus {
+      background: var(--primary-dark);
+      transform: scale(1.04);
+    }
+    .newsletter-box .response {
+      color: #22b022;
+      font-size: 1rem;
+      margin-top: 0.6rem;
+      min-height: 1.2rem;
+    }
+    /* About */
+    .about {
+      text-align: center;
+      padding: 3.2rem 2rem;
+      background: #19191a;
+      margin-bottom: 1.7rem;
+    }
+    .about h2 {
+      font-size: 2rem;
+      color: var(--primary);
+      font-weight: 800;
+    }
+    .about p {
+      font-size: 1.09rem;
+      max-width: 620px;
+      margin: 1.2rem auto;
+      color: #ffbbbb;
+    }
+    /* Blog Cards */
+    .blog-preview {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      justify-content: center;
+      margin-top: 2.1rem;
+    }
+    .blog-card {
+      background: #19191a;
+      color: #fafafa;
+      box-shadow: 0 4px 18px #d32f2f3c;
+      border-radius: 13px;
+      padding: 2rem 1.3rem 1.2rem 1.3rem;
+      max-width: 320px;
+      min-width: 270px;
+      flex: 1 1 270px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      transition: box-shadow 0.18s, transform 0.15s;
+      border: 1.5px solid #b71c1c;
+    }
+    .blog-card:hover, .blog-card:focus-within {
+      box-shadow: 0 8px 28px #d32f2f36, 0 2px 10px #0002;
+      transform: translateY(-4px) scale(1.025);
+    }
+    .blog-date {
+      font-size: 0.97rem;
+      color: var(--primary);
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+    }
+    .blog-card h3 {
+      font-size: 1.23rem;
+      font-weight: 800;
+      margin: 0.15rem 0 0.6rem 0;
+    }
+    .blog-card p {
+      font-size: 1.07rem;
+      color: #ffbbbb;
+      margin: 0;
+      font-weight: 500;
+    }
+    /* Footer */
+    footer {
+      background: #111;
+      color: #fff;
+      padding: 2.5rem 1rem 2.2rem 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.2rem;
+      margin-top: 2rem;
+    }
+    .footer-links a {
+      color: #ccc;
+      margin: 0 0.7rem;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.16s;
+    }
+    .footer-links a:hover, .footer-links a:focus {
+      color: var(--primary);
+      text-decoration: underline;
+    }
+    .social-icons a {
+      color: #ccc;
+      margin: 0 0.7rem;
+      font-size: 1.2rem;
+      text-decoration: none;
+      transition: color 0.16s;
+    }
+    .social-icons a:hover, .social-icons a:focus {
+      color: var(--primary);
+    }
+    footer small {
+      color: #b5b5b5;
+      margin-top: 0.8rem;
+      font-size: 0.95rem;
+    }
+    @media (max-width: 900px) {
+      .main-nav { display: none; }
+      .hamburger { display: block; }
+      .carousel-container { min-height: 120px; }
+      .carousel-images img { height: 80px; width: 120px;}
+    }
   </style>
 </head>
 <body>
