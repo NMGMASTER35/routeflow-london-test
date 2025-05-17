@@ -29,35 +29,6 @@ document.addEventListener('click', function(e) {
     popoutMenu.classList.remove('active');
   }
 });
-
-// Carousel logic
-const carouselItems = document.querySelectorAll('#carouselImages .carousel-item');
-let currentIndex = 0;
-function showCarousel(idx) {
-  carouselItems.forEach((item, i) => {
-    item.classList.toggle('active', i === idx);
-  });
-}
-document.getElementById('carouselPrev').onclick = function() {
-  currentIndex = (currentIndex - 1 + carouselImages.length) % carouselImages.length;
-  showCarousel(currentIndex);
-}
-document.getElementById('carouselNext').onclick = function() {
-  currentIndex = (currentIndex + 1) % carouselImages.length;
-  showCarousel(currentIndex);
-}
-// Swipe support for carousel
-let startX = null;
-document.getElementById('carouselImages').addEventListener('touchstart', e => {
-  startX = e.touches[0].clientX;
-});
-document.getElementById('carouselImages').addEventListener('touchend', e => {
-  if (startX === null) return;
-  let diff = e.changedTouches[0].clientX - startX;
-  if (diff > 50) document.getElementById('carouselPrev').click();
-  else if (diff < -50) document.getElementById('carouselNext').click();
-  startX = null;
-});
 // Newsletter form
 document.getElementById('newsletter-form').addEventListener('submit', function (e) {
   e.preventDefault();
