@@ -214,7 +214,50 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
   });
+const slideContainer = document.querySelector('.carousel-slide');
+const images = document.querySelectorAll('.carousel-slide img');
+const prevBtn = document.querySelector('.carousel-btn.prev');
+const nextBtn = document.querySelector('.carousel-btn.next');
+const dotsContainer = document.querySelector('.carousel-dots');
 
+let currentIndex = 0;
+
+// Create dots
+images.forEach((_, index) => {
+  const dot = document.createElement('span');
+  dot.addEventListener('click', () => goToSlide(index));
+  dotsContainer.appendChild(dot);
+});
+
+function updateCarousel() {
+  slideContainer.style.transform = `translateX(-${currentIndex * 100}%)`;
+  Array.from(dotsContainer.children).forEach(dot => dot.classList.remove('active'));
+  dotsContainer.children[currentIndex].classList.add('active');
+}
+
+function goToSlide(index) {
+  currentIndex = index;
+  updateCarousel();
+}
+
+function nextSlide() {
+  currentIndex = (currentIndex + 1) % images.length;
+  updateCarousel();
+}
+
+function prevSlide() {
+  currentIndex = (currentIndex - 1 + images.length) % images.length;
+  updateCarousel();
+}
+
+nextBtn.addEventListener('click', nextSlide);
+prevBtn.addEventListener('click', prevSlide);
+
+// Auto-play (optional)
+setInterval(nextSlide, 5000); // Change slide every 5 seconds
+
+// Init
+updateCarousel();
   document.querySelectorAll('.reset-password').forEach(link => {
     link.addEventListener('click', function(e) {
       e.preventDefault();
