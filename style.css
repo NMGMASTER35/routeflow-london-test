@@ -421,16 +421,20 @@
       text-align: center;
       margin-bottom: 1.7rem;
     }
+.carousel {
+  width: 800px;   /* Increase this value as needed */
+  height: 400px;  /* Increase this value as needed */
+}
     .carousel-container {
       margin: 0 auto;
-      max-width: 640px;
+      max-width: 900px;
       background: #222;
       border-radius: 12px;
       box-shadow: 0 6px 30px rgba(0,0,0,0.13);
       padding: 1.3rem 1rem 1.6rem 1rem;
       position: relative;
       overflow: hidden;
-      min-height: 210px;
+      min-height: 500px;
     }
     .carousel-title {
       color: var(--primary);
