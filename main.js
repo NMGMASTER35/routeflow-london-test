@@ -129,10 +129,15 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 }
     // Settings
-    if (e.target.id === 'settingsBtn') {
-      e.preventDefault();
-      alert('Settings are not available yet.');
-    }
+ if (e.target.id === 'settingBtn') {
+  e.preventDefault();
+  const user = firebase.auth().currentUser;
+  if (user) {
+    window.location.href = 'settings.html';
+  } else {
+    alert("Not signed in");
+  }
+}
     // Switch to Signup
     if (e.target.id === 'showSignup') {
       e.preventDefault();
