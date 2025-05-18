@@ -728,15 +728,20 @@
   }
 }
 :root {
+  --primary: #d32f2f;
+  --primary-dark: #b71c1c;
   --background-light: #ffffff;
   --foreground-light: #000000;
   --background-dark: #121212;
   --foreground-dark: #fafafa;
+  --border-radius: 8px;
 }
 
 body {
   background-color: var(--background-light);
   color: var(--foreground-light);
+  font-family: 'Inter', sans-serif;
+  margin: 0;
   transition: background-color 0.3s, color 0.3s;
 }
 
@@ -745,10 +750,38 @@ body.dark-mode {
   color: var(--foreground-dark);
 }
 
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: var(--primary);
+  color: #fff;
+}
+
+header .logo img {
+  height: 38px;
+}
+
 .settings-container {
   max-width: 800px;
   margin: 2rem auto;
-  padding: 1rem;
+  padding: 1.5rem;
+  background: #f9f9f9;
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.settings-container h1 {
+  text-align: center;
+  margin-bottom: 1rem;
+  font-size: 2rem;
+}
+
+.settings-container .description {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #666;
 }
 
 .setting-item {
@@ -756,6 +789,69 @@ body.dark-mode {
   align-items: center;
   justify-content: space-between;
   margin: 1rem 0;
+  padding: 0.5rem 1rem;
+  background: #fff;
+  border-radius: var(--border-radius);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.setting-item label {
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.setting-item .dropdown {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: var(--border-radius);
+  outline: none;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 25px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-switch .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: var(--border-radius);
+}
+
+.toggle-switch .slider:before {
+  position: absolute;
+  content: "";
+  height: 19px;
+  width: 19px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+.toggle-switch input:checked + .slider {
+  background-color: var(--primary);
+}
+
+.toggle-switch input:checked + .slider:before {
+  transform: translateX(24px);
 }
 
 
