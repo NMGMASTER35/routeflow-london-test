@@ -1,31 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png">
-  <title>Routeflow London</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings | RouteFlow London</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <!-- Navigation Bar -->
   <header>
     <div class="logo">
       <img src="images/Routeflow London permanent logo.png" alt="RouteFlow London Logo">
       <strong>RouteFlow London</strong>
     </div>
     <div class="menu-bar">
-     <nav class="main-nav">
-  <a href="index.html">Home</a>
-  <a href="dashboard.html">Dashboard</a>
-  <a href="tracking.html">Tracking</a>
-  <a href="planning.html">Planning</a>
-  <a href="routes.html">Routes</a>
-  <a href="withdrawn.html">Withdrawn</a>
-  <a href="disruptions.html">Disruptions</a>
-  <a href="fleet.html">Fleet</a>
-</nav>
+      <nav class="main-nav">
+        <a href="index.html">Home</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="tracking.html">Tracking</a>
+        <a href="setting.html" class="active">Settings</a>
+      </nav>
       <button class="hamburger" id="hamburgerBtn" aria-label="Open menu">
         <i class="fa-solid fa-bars"></i>
       </button>
@@ -37,55 +31,36 @@
       </div>
     </div>
     <nav class="popout-menu" id="popoutMenu">
-  <button class="back-btn" id="menuBackBtn"><i class="fa-solid fa-arrow-left"></i> Back</button>
-  <a href="index.html">Home</a>
-  <a href="dashboard.html">Dashboard</a>
-  <a href="tracking.html">Tracking</a>
-  <a href="planning.html">Planning</a>
-  <a href="routes.html">Routes</a>
-  <a href="withdrawn.html">Withdrawn</a>
-  <a href="disruptions.html">Disruptions</a>
-  <a href="fleet.html">Fleet</a>
-</nav>
+      <button class="back-btn" id="menuBackBtn"><i class="fa-solid fa-arrow-left"></i> Back</button>
+      <a href="index.html">Home</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="tracking.html">Tracking</a>
+      <a href="setting.html" class="active">Settings</a>
+    </nav>
   </header>
-
-  <!-- Login/Signup Modal -->
-  <!-- Login/Signup Modal -->
-<div id="authModal" class="modal" aria-modal="true" role="dialog">
-  <div class="modal-content">
-    <span class="close" id="closeModal" title="Close">&times;</span>
-    <!-- Login Form -->
-    <div id="loginFormContainer">
-      <h2>Login</h2>
-      <form id="loginForm" autocomplete="off">
-        <input type="email" id="loginEmail" placeholder="Email" required autocomplete="username">
-        <input type="password" id="loginPassword" placeholder="Password" required autocomplete="current-password">
-        <button type="submit">Login</button>
-       <button class="google-btn">
-  <i class="fa-brands fa-google" style="color: #ffffff; margin-right: 8px;"></i>
-  Sign in with Google
-</button>
-        <p><a href="#" class="reset-password">Forgot Password?</a></p>
-        <div class="error-message" id="loginError" style="display:none;"></div>
-      </form>
-      <p>Don't have an account? <a href="#" id="showSignup">Sign up</a></p>
+  
+  <!-- Settings Content -->
+  <main class="settings-container">
+    <h1>Settings</h1>
+    
+    <!-- Theme Toggle -->
+    <div class="setting-item">
+      <label for="themeToggle">Theme:</label>
+      <input type="checkbox" id="themeToggle">
+      <span id="themeLabel">Light Mode</span>
     </div>
-    <!-- Signup Form -->
-    <div id="signupFormContainer" style="display:none;">
-      <h2>Sign Up</h2>
-      <form id="signupForm" autocomplete="off">
-        <input type="email" id="signupEmail" placeholder="Email" required autocomplete="username">
-        <input type="password" id="signupPassword" placeholder="Password" required autocomplete="new-password">
-        <button type="submit">Sign Up</button>
-<button class="google-btn">
-  <i class="fa-brands fa-google" style="color: #ffffff; margin-right: 8px;"></i>
-  Sign Up with Google
-</button>
-        <p><a href="#" class="reset-password">Forgot Password?</a></p>
-        <div class="error-message" id="signupError" style="display:none;"></div>
-      </form>
-      <p>Already have an account? <a href="#" id="showLogin">Login</a></p>
+    
+    <!-- Language Selector -->
+    <div class="setting-item">
+      <label for="languageSelector">Language:</label>
+      <select id="languageSelector">
+        <option value="en">English</option>
+        <option value="es">Spanish</option>
+        <option value="fr">French</option>
+      </select>
     </div>
-  </div>
-</div>
+  </main>
+  
+  <script src="main.js"></script>
+</body>
 </html>
