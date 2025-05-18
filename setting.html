@@ -2,85 +2,219 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Settings | RouteFlow London</title>
-  <link rel="stylesheet" href="style.css">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <title>Settings – RouteFlow London</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="settings.css">
 </head>
 <body>
-  <!-- Navigation Bar -->
-  <header>
-    <div class="logo">
-      <img src="images/Routeflow London permanent logo.png" alt="RouteFlow London Logo">
-      <strong>RouteFlow London</strong>
-    </div>
-    <div class="menu-bar">
-      <nav class="main-nav">
-        <a href="index.html">Home</a>
-        <a href="dashboard.html">Dashboard</a>
-        <a href="tracking.html">Tracking</a>
-        <a href="setting.html" class="active">Settings</a>
-      </nav>
-      <button class="hamburger" id="hamburgerBtn" aria-label="Open menu">
-        <i class="fa-solid fa-bars"></i>
-      </button>
-      <div class="account-icon" id="profileMenu">
-        <button aria-label="Account" id="profileIcon">
-          <i class="fa-regular fa-user"></i>
-        </button>
-        <div class="account-dropdown" id="dropdownContent"></div>
-      </div>
-    </div>
-    <nav class="popout-menu" id="popoutMenu">
-      <button class="back-btn" id="menuBackBtn"><i class="fa-solid fa-arrow-left"></i> Back</button>
-      <a href="index.html">Home</a>
-      <a href="dashboard.html">Dashboard</a>
-      <a href="tracking.html">Tracking</a>
-      <a href="setting.html" class="active">Settings</a>
-    </nav>
-  </header>
-  
-  <!-- Settings Content -->
-  <main class="settings-container">
+  <main id="settings">
     <h1>Settings</h1>
-    <p class="description">Customize your RouteFlow experience below.</p>
 
-    <!-- Theme Toggle -->
-    <div class="setting-item">
-      <label for="themeToggle">
-        <i class="fa-solid fa-moon"></i> Theme
-      </label>
-      <label class="toggle-switch">
-        <input type="checkbox" id="themeToggle">
-        <span class="slider"></span>
-      </label>
-      <span id="themeLabel">Light Mode</span>
-    </div>
+    <!-- 🔐 Account Settings -->
+    <section>
+      <h2>🔐 Account Settings</h2>
+      <form id="account-form">
+        <label>
+          Username:
+          <input type="text" id="username" autocomplete="username">
+          <button type="button" onclick="saveSetting('username')">Change</button>
+        </label>
+        <label>
+          Email:
+          <input type="email" id="email" autocomplete="email">
+          <button type="button" onclick="saveSetting('email')">Change</button>
+        </label>
+        <label>
+          Password:
+          <input type="password" id="password" autocomplete="new-password">
+          <button type="button" onclick="changePassword()">Change</button>
+        </label>
+        <label>
+          Two-Factor Authentication:
+          <select id="twofa" onchange="saveSetting('twofa')">
+            <option value="off">Off</option>
+            <option value="on">On</option>
+          </select>
+        </label>
+        <button type="button" class="danger" onclick="openModal('delete-account-modal')">Delete Account</button>
+      </form>
+    </section>
 
-    <!-- Language Selector -->
-    <div class="setting-item">
-      <label for="languageSelector">
-        <i class="fa-solid fa-language"></i> Language
-      </label>
-      <select id="languageSelector" class="dropdown">
-        <option value="en">English</option>
-        <option value="es">Spanish</option>
-        <option value="fr">French</option>
-      </select>
-    </div>
+    <!-- 🎨 Personalization -->
+    <section>
+      <h2>🎨 Personalization</h2>
+      <form id="personalization-form">
+        <label>
+          Theme:
+          <select id="theme" onchange="saveSetting('theme')">
+            <option value="system">System</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </label>
+        <label>
+          Map View Style:
+          <select id="map-style" onchange="saveSetting('mapStyle')">
+            <option value="default">Default</option>
+            <option value="satellite">Satellite</option>
+            <option value="night">Night Mode</option>
+          </select>
+        </label>
+        <label>
+          Default Landing Page:
+          <select id="landing-page" onchange="saveSetting('landingPage')">
+            <option value="dashboard">Dashboard</option>
+            <option value="map">Map</option>
+            <option value="profile">Profile</option>
+          </select>
+        </label>
+        <label>
+          Home Bus Stop / Area:
+          <input type="text" id="home-stop" placeholder="Enter stop or area" onblur="saveSetting('homeStop')">
+        </label>
+      </form>
+    </section>
 
-    <!-- Notification Preferences -->
-    <div class="setting-item">
-      <label for="notifications">
-        <i class="fa-solid fa-bell"></i> Notifications
-      </label>
-      <label class="toggle-switch">
-        <input type="checkbox" id="notifications">
-        <span class="slider"></span>
-      </label>
-    </div>
+    <!-- 📣 Notifications -->
+    <section>
+      <h2>📣 Notifications</h2>
+      <form id="notifications-form">
+        <fieldset>
+          <legend>Enable/Disable:</legend>
+          <label><input type="checkbox" id="alert-rare" onchange="saveSetting('alertRare')"> Rare sightings alerts</label>
+          <label><input type="checkbox" id="alert-route" onchange="saveSetting('alertRoute')"> Route disruptions</label>
+          <label><input type="checkbox" id="alert-achievements" onchange="saveSetting('alertAchievements')"> New achievement unlocks</label>
+          <label><input type="checkbox" id="alert-friend" onchange="saveSetting('alertFriend')"> Friend activity</label>
+        </fieldset>
+        <fieldset>
+          <legend>Choose delivery method:</legend>
+          <label><input type="radio" name="delivery" value="email" onchange="saveSetting('delivery')"> Email</label>
+          <label><input type="radio" name="delivery" value="push" onchange="saveSetting('delivery')"> Push notification</label>
+          <label><input type="radio" name="delivery" value="inapp" onchange="saveSetting('delivery')"> In-app only</label>
+        </fieldset>
+      </form>
+    </section>
+
+    <!-- 🚌 Transit Preferences -->
+    <section>
+      <h2>🚌 Transit Preferences</h2>
+      <form id="transit-form">
+        <label>
+          Preferred mode:
+          <select id="transport-mode" onchange="saveSetting('transportMode')">
+            <option value="bus">Bus only</option>
+            <option value="bus-train">Bus + Train</option>
+            <option value="night">Night services</option>
+          </select>
+        </label>
+        <label>
+          Default direction:
+          <select id="direction" onchange="saveSetting('direction')">
+            <option value="inbound">Inbound</option>
+            <option value="outbound">Outbound</option>
+          </select>
+        </label>
+        <label>
+          Exclude routes/types:
+          <input type="text" id="exclude-routes" placeholder="e.g. school buses" onblur="saveSetting('excludeRoutes')">
+        </label>
+        <label>
+          <input type="checkbox" id="realtime-countdown" onchange="saveSetting('realtimeCountdown')">
+          Enable real-time arrival countdowns
+        </label>
+      </form>
+    </section>
+
+    <!-- 🛡️ Privacy & Security -->
+    <section>
+      <h2>🛡️ Privacy & Security</h2>
+      <form id="privacy-form">
+        <label>
+          <input type="checkbox" id="public-profile" onchange="saveSetting('publicProfile')">
+          Make profile public
+        </label>
+        <label>
+          <input type="checkbox" id="hide-rare" onchange="saveSetting('hideRare')">
+          Hide rare sightings from others
+        </label>
+        <label>
+          Blocked users:
+          <input type="text" id="blocked-users" placeholder="Comma separated usernames" onblur="saveSetting('blockedUsers')">
+        </label>
+        <button type="button" onclick="exportData()">Export account data</button>
+        <label>
+          Activity history visibility:
+          <select id="activity-visibility" onchange="saveSetting('activityVisibility')">
+            <option value="private">Only you</option>
+            <option value="friends">Friends</option>
+            <option value="public">Public</option>
+          </select>
+        </label>
+      </form>
+    </section>
+
+    <!-- 🧪 Experimental Features / Beta Access -->
+    <section>
+      <h2>🧪 Experimental Features / Beta Access</h2>
+      <form id="beta-form">
+        <label>
+          <input type="checkbox" id="beta-access" onchange="saveSetting('betaAccess')">
+          Enable early access to beta features
+        </label>
+        <a href="https://github.com/NMGMASTER35/routeflow-london/issues/new?labels=feedback" target="_blank">Submit feedback on beta features</a>
+      </form>
+    </section>
+
+    <!-- 🧰 App / Device Settings -->
+    <section>
+      <h2>🧰 App / Device Settings</h2>
+      <form id="device-form">
+        <button type="button" onclick="manageDevices()">Manage devices/sessions</button>
+        <label>
+          <input type="checkbox" id="location-tracking" onchange="saveSetting('locationTracking')">
+          Enable location tracking
+        </label>
+        <label>
+          Language / Locale:
+          <select id="locale" onchange="saveSetting('locale')">
+            <option value="en">English</option>
+            <option value="en-GB">English (UK)</option>
+            <option value="fr">Français</option>
+            <!-- add more as needed -->
+          </select>
+        </label>
+        <label>
+          Default unit:
+          <select id="unit" onchange="saveSetting('unit')">
+            <option value="km">Kilometres (km)</option>
+            <option value="mi">Miles (mi)</option>
+          </select>
+        </label>
+      </form>
+    </section>
+
+    <!-- 📞 Support & Feedback -->
+    <section>
+      <h2>📞 Support & Feedback</h2>
+      <ul>
+        <li><a href="help.html" target="_blank">Help Center / FAQ</a></li>
+        <li><a href="https://github.com/NMGMASTER35/routeflow-london/issues/new?labels=bug" target="_blank">Report a Bug</a></li>
+        <li><a href="https://github.com/NMGMASTER35/routeflow-london/issues/new?labels=feature" target="_blank">Submit a Feature Request</a></li>
+        <li><a href="mailto:support@routeflow.london">Contact Support</a></li>
+      </ul>
+    </section>
   </main>
-  
-  <script src="main.js"></script>
+
+  <!-- Delete Account Modal -->
+  <div id="delete-account-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title" style="display:none;">
+    <div class="modal-content">
+      <h3 id="delete-modal-title">Confirm Account Deletion</h3>
+      <p>This action is irreversible. Are you sure you want to delete your account?</p>
+      <button class="danger" onclick="deleteAccount()">Yes, delete my account</button>
+      <button onclick="closeModal('delete-account-modal')">Cancel</button>
+    </div>
+  </div>
+
+  <script src="settings.js"></script>
 </body>
 </html>
