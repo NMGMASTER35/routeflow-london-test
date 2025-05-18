@@ -310,5 +310,37 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log(`Language changed to: ${selectedLanguage}`);
     // TODO: Implement language change functionality
   });
-});
+});document.addEventListener("DOMContentLoaded", () => {
+  const themeToggle = document.getElementById("themeToggle");
+  const themeLabel = document.getElementById("themeLabel");
+  const notificationsToggle = document.getElementById("notifications");
 
+  // Load saved theme
+  const savedTheme = localStorage.getItem("theme") || "light";
+  document.body.classList.toggle("dark-mode", savedTheme === "dark");
+  themeToggle.checked = savedTheme === "dark";
+  themeLabel.textContent = savedTheme === "dark" ? "Dark Mode" : "Light Mode";
+
+  // Toggle theme
+  themeToggle.addEventListener("change", () => {
+    const isDarkMode = themeToggle.checked;
+    document.body.classList.toggle("dark-mode", isDarkMode);
+    localStorage.setItem("theme", isDarkMode ? "dark" : "light");
+    themeLabel.textContent = isDarkMode ? "Dark Mode" : "Light Mode";
+  });
+
+  // Notifications Toggle
+  notificationsToggle.addEventListener("change", () => {
+    const isEnabled = notificationsToggle.checked;
+    console.log(`Notifications are now ${isEnabled ? "enabled" : "disabled"}`);
+    // TODO: Implement backend or localStorage to save this preference
+  });
+
+  // Language Selector
+  const languageSelector = document.getElementById("languageSelector");
+  languageSelector.addEventListener("change", () => {
+    const selectedLanguage = languageSelector.value;
+    console.log(`Language changed to: ${selectedLanguage}`);
+    // TODO: Implement language change functionality
+  });
+});
