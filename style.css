@@ -727,4 +727,36 @@
     opacity: 1;
   }
 }
+:root {
+  --background-light: #ffffff;
+  --foreground-light: #000000;
+  --background-dark: #121212;
+  --foreground-dark: #fafafa;
+}
+
+body {
+  background-color: var(--background-light);
+  color: var(--foreground-light);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+body.dark-mode {
+  background-color: var(--background-dark);
+  color: var(--foreground-dark);
+}
+
+.settings-container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 1rem;
+}
+
+.setting-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 1rem 0;
+}
+
+
 
