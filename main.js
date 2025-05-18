@@ -119,12 +119,15 @@ document.addEventListener('DOMContentLoaded', function () {
         renderDropdown(null);
       });
     }
-    // Profile
-    if (e.target.id === 'profileBtn') {
-      e.preventDefault();
-      const user = firebase.auth().currentUser;
-      alert(user ? 'Email: ' + user.email : "Not signed in");
-    }
+   if (e.target.id === 'profileBtn') {
+  e.preventDefault();
+  const user = firebase.auth().currentUser;
+  if (user) {
+    window.location.href = 'profile.html';
+  } else {
+    alert("Not signed in");
+  }
+}
     // Settings
     if (e.target.id === 'settingsBtn') {
       e.preventDefault();
