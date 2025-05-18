@@ -285,3 +285,30 @@ updateCarousel();
     });
   });
 });
+document.addEventListener("DOMContentLoaded", () => {
+  const themeToggle = document.getElementById("themeToggle");
+  const themeLabel = document.getElementById("themeLabel");
+
+  // Load saved theme
+  const savedTheme = localStorage.getItem("theme") || "light";
+  document.body.classList.toggle("dark-mode", savedTheme === "dark");
+  themeToggle.checked = savedTheme === "dark";
+  themeLabel.textContent = savedTheme === "dark" ? "Dark Mode" : "Light Mode";
+
+  // Toggle theme
+  themeToggle.addEventListener("change", () => {
+    const isDarkMode = themeToggle.checked;
+    document.body.classList.toggle("dark-mode", isDarkMode);
+    localStorage.setItem("theme", isDarkMode ? "dark" : "light");
+    themeLabel.textContent = isDarkMode ? "Dark Mode" : "Light Mode";
+  });
+
+  // Language Selector
+  const languageSelector = document.getElementById("languageSelector");
+  languageSelector.addEventListener("change", () => {
+    const selectedLanguage = languageSelector.value;
+    console.log(`Language changed to: ${selectedLanguage}`);
+    // TODO: Implement language change functionality
+  });
+});
+
