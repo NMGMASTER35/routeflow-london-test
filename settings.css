@@ -1,1 +1,97 @@
-
+:root {
+  --color-bg: #fff;
+  --color-bg-alt: #f0f0f0;
+  --color-text: #181818;
+  --color-accent: #2962ff;
+  --color-danger: #d32f2f;
+}
+body[data-theme="dark"] {
+  --color-bg: #181818;
+  --color-bg-alt: #232323;
+  --color-text: #fafafa;
+  --color-accent: #82b1ff;
+  --color-danger: #ff5252;
+}
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: 'Segoe UI', Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+main#settings {
+  max-width: 700px;
+  margin: 32px auto;
+  padding: 24px;
+  background: var(--color-bg-alt);
+  border-radius: 10px;
+  box-shadow: 0 0 12px #0001;
+}
+section {
+  margin-bottom: 2em;
+}
+h1, h2 {
+  color: var(--color-accent);
+}
+label, legend {
+  display: block;
+  margin-bottom: 0.75em;
+}
+input[type="text"], input[type="email"], input[type="password"], select {
+  margin-left: .5em;
+  padding: 0.3em 0.7em;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+input[type="checkbox"], input[type="radio"] {
+  margin-right: .5em;
+}
+button, a.button {
+  margin: .5em 0.2em;
+  padding: 0.5em 1em;
+  border: none;
+  border-radius: 6px;
+  background: var(--color-accent);
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+  text-decoration: none;
+}
+button.danger {
+  background: var(--color-danger);
+}
+a {
+  color: var(--color-accent);
+}
+ul {
+  padding-left: 1.5em;
+}
+.modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: #0008;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.modal-content {
+  background: var(--color-bg);
+  color: var(--color-text);
+  padding: 2em;
+  border-radius: 10px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 2px 14px #0005;
+  text-align: center;
+}
+@media (max-width: 700px) {
+  main#settings {
+    padding: 8px;
+  }
+  .modal-content {
+    padding: 1em;
+  }
+}
