@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Settings | RouteFlow London</title>
   <link rel="stylesheet" href="style.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
   <!-- Navigation Bar -->
@@ -42,22 +43,41 @@
   <!-- Settings Content -->
   <main class="settings-container">
     <h1>Settings</h1>
-    
+    <p class="description">Customize your RouteFlow experience below.</p>
+
     <!-- Theme Toggle -->
     <div class="setting-item">
-      <label for="themeToggle">Theme:</label>
-      <input type="checkbox" id="themeToggle">
+      <label for="themeToggle">
+        <i class="fa-solid fa-moon"></i> Theme
+      </label>
+      <label class="toggle-switch">
+        <input type="checkbox" id="themeToggle">
+        <span class="slider"></span>
+      </label>
       <span id="themeLabel">Light Mode</span>
     </div>
-    
+
     <!-- Language Selector -->
     <div class="setting-item">
-      <label for="languageSelector">Language:</label>
-      <select id="languageSelector">
+      <label for="languageSelector">
+        <i class="fa-solid fa-language"></i> Language
+      </label>
+      <select id="languageSelector" class="dropdown">
         <option value="en">English</option>
         <option value="es">Spanish</option>
         <option value="fr">French</option>
       </select>
+    </div>
+
+    <!-- Notification Preferences -->
+    <div class="setting-item">
+      <label for="notifications">
+        <i class="fa-solid fa-bell"></i> Notifications
+      </label>
+      <label class="toggle-switch">
+        <input type="checkbox" id="notifications">
+        <span class="slider"></span>
+      </label>
     </div>
   </main>
   
