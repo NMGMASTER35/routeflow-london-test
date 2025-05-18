@@ -254,7 +254,7 @@ nextBtn.addEventListener('click', nextSlide);
 prevBtn.addEventListener('click', prevSlide);
 
 // Auto-play (optional)
-setInterval(nextSlide, 5000); // Change slide every 5 seconds
+setInterval(nextSlide, 10000); // Change slide every 5 seconds
 
 // Init
 updateCarousel();
