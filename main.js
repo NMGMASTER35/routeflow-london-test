@@ -52,7 +52,7 @@ function renderDropdown(user) {
   } else {
     dropdown.innerHTML = `
       <a href="profile.html" id="profileBtn">Profile</a>
-      <a href="#" id="settingsBtn">Settings</a>
+      <a href="setting.html" id="settingsBtn">Settings</a>
       <button id="logoutBtn" style="color:#f03e3e;">Logout</button>
     `;
   }
