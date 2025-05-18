@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', function () {
   e.preventDefault();
   const user = firebase.auth().currentUser;
   if (user) {
-    window.location.href = 'settings.html';
+    window.location.href = 'setting.html';
   } else {
     alert("Not signed in");
   }
