@@ -221,6 +221,9 @@ const nextBtn = document.querySelector('.carousel-btn.next');
 const dotsContainer = document.querySelector('.carousel-dots');
 
 let currentIndex = 0;
+  const captions = Array.from(images).map(img => img.dataset.caption);
+const captionEl = document.getElementById('carousel-caption'); // Make sure this exists in HTML
+
 
 // Create dots
 images.forEach((_, index) => {
