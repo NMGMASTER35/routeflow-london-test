@@ -1,421 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Profile | RouteFlow London</title>
-  <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
-  <style>
-    .edit-btn, .save-btn {
-      background: #4e8cff;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      padding: 0.5em 1.2em;
-      margin-top: 1em;
-      cursor: pointer;
-      font-size: 1em;
-      font-weight: 600;
-    }
-    .edit-btn:hover, .save-btn:hover {
-      background: #232946;
-    }
-    .editable {
-      background: #f4f8fc;
-      border: 1px solid #4e8cff;
-      border-radius: 5px;
-      padding: 0.3em 0.6em;
-      font-size: 1em;
-      margin-bottom: 0.5em;
-    }
-    .avatar-edit-label {
-      display: block;
-      margin-top: 0.5em;
-      cursor: pointer;
-      color: #4e8cff;
-      text-decoration: underline;
-      font-size: 0.95em;
-    }
-    input[type="file"] {
-      display: none;
-    }
-  </style>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-  <!-- HEADER/NAVBAR (as on index.html) -->
+  <!-- Navigation Bar -->
   <header>
     <div class="logo">
       <img src="images/Routeflow London permanent logo.png" alt="RouteFlow London Logo">
       <strong>RouteFlow London</strong>
     </div>
-    <div class="menu-bar">
-      <nav class="main-nav">
-        <a href="index.html">Home</a>
-        <a href="dashboard.html">Dashboard</a>
-        <a href="tracking.html">Tracking</a>
-        <a href="planning.html">Planning</a>
-        <a href="routes.html">Routes</a>
-        <a href="withdrawn.html">Withdrawn</a>
-        <a href="disruptions.html">Disruptions</a>
-        <a href="fleet.html">Fleet</a>
-      </nav>
-      <button class="hamburger" id="hamburgerBtn" aria-label="Open menu">
-        <i class="fa-solid fa-bars"></i>
-      </button>
-      <div class="account-icon" id="profileMenu">
-        <button aria-label="Account" id="profileIcon">
-          <i class="fa-regular fa-user"></i>
-        </button>
-        <div class="account-dropdown" id="dropdownContent"></div>
-      </div>
-    </div>
-    <nav class="popout-menu" id="popoutMenu">
-      <button class="back-btn" id="menuBackBtn"><i class="fa-solid fa-arrow-left"></i> Back</button>
+    <nav class="main-nav">
       <a href="index.html">Home</a>
       <a href="dashboard.html">Dashboard</a>
       <a href="tracking.html">Tracking</a>
-      <a href="planning.html">Planning</a>
-      <a href="routes.html">Routes</a>
-      <a href="withdrawn.html">Withdrawn</a>
-      <a href="disruptions.html">Disruptions</a>
-      <a href="fleet.html">Fleet</a>
+      <a href="profile.html" class="active">Profile</a>
     </nav>
   </header>
 
-  <!-- LOGIN/SIGNUP MODAL (matches index.html) -->
-  <div id="authModal" class="modal" aria-modal="true" role="dialog">
-    <div class="modal-content">
-      <span class="close" id="closeModal" title="Close">&times;</span>
-      <!-- Login Form -->
-      <div id="loginFormContainer">
-        <h2>Login</h2>
-        <form id="loginForm" autocomplete="off">
-          <input type="email" id="loginEmail" placeholder="Email" required autocomplete="username">
-          <input type="password" id="loginPassword" placeholder="Password" required autocomplete="current-password">
-          <button type="submit">Login</button>
-          <button class="google-btn">
-            <i class="fa-brands fa-google" style="color: #ffffff; margin-right: 8px;"></i>
-            Sign in with Google
-          </button>
-          <p><a href="#" class="reset-password">Forgot Password?</a></p>
-          <div class="error-message" id="loginError" style="display:none;"></div>
-        </form>
-        <p>Don't have an account? <a href="#" id="showSignup">Sign up</a></p>
+  <!-- Profile Content -->
+  <main class="profile-container">
+    <section class="profile-header">
+      <div class="profile-avatar">
+        <img src="images/default-avatar.png" alt="Profile Avatar">
+        <button class="edit-avatar-btn">Change Avatar</button>
       </div>
-      <!-- Signup Form -->
-      <div id="signupFormContainer" style="display:none;">
-        <h2>Sign Up</h2>
-        <form id="signupForm" autocomplete="off">
-          <input type="email" id="signupEmail" placeholder="Email" required autocomplete="username">
-          <input type="password" id="signupPassword" placeholder="Password" required autocomplete="new-password">
-          <button type="submit">Sign Up</button>
-          <button class="google-btn">
-            <i class="fa-brands fa-google" style="color: #ffffff; margin-right: 8px;"></i>
-            Sign Up with Google
-          </button>
-          <p><a href="#" class="reset-password">Forgot Password?</a></p>
-          <div class="error-message" id="signupError" style="display:none;"></div>
-        </form>
-        <p>Already have an account? <a href="#" id="showLogin">Login</a></p>
+      <div class="profile-details">
+        <h1>Alex Busfan</h1>
+        <p class="username">@busfan123</p>
+        <p class="bio">Avid bus enthusiast exploring London's iconic routes.</p>
+        <button class="edit-profile-btn">Edit Profile</button>
       </div>
-    </div>
-  </div>
+    </section>
 
-  <!-- PROFILE CONTENT -->
-  <main>
-    <div class="profile-container card" id="profile-content" style="display:none;">
-      <div class="profile-header">
-        <div style="position:relative; display:flex; flex-direction:column; align-items:center;">
-          <img src="assets/default-avatar.png" alt="Profile picture" class="profile-pic" id="profile-pic">
-          <label for="avatar-upload" class="avatar-edit-label" style="display:none;" id="avatarLabel">Change Avatar</label>
-          <input type="file" id="avatar-upload" accept="image/*">
+    <!-- Profile Info -->
+    <section class="profile-info">
+      <h2>Profile Summary</h2>
+      <div class="info-grid">
+        <div class="info-card">
+          <h3>Favorite Route</h3>
+          <p>Route 25</p>
         </div>
-        <div class="profile-info">
-          <h2 id="display-name"></h2>
-          <input type="text" class="editable" id="display-name-input" style="display:none;" maxlength="30" />
-          <div class="username" id="username"></div>
-          <div class="bio" id="bio"></div>
-          <input type="text" class="editable" id="bio-input" style="display:none;" maxlength="100" />
-          <div>
-            <span class="location" id="location"></span>
-            <input type="text" class="editable" id="location-input" style="display:none;" maxlength="40" />
-          </div>
-          <div>Member since <span id="join-date"></span></div>
-          <button class="edit-btn" id="editBtn">Edit Profile</button>
-          <button class="save-btn" id="saveBtn" style="display:none;">Save</button>
+        <div class="info-card">
+          <h3>Saved Stops</h3>
+          <p>Oxford Circus, Aldgate</p>
+        </div>
+        <div class="info-card">
+          <h3>Followers</h3>
+          <p>54</p>
+        </div>
+        <div class="info-card">
+          <h3>Following</h3>
+          <p>22</p>
         </div>
       </div>
-
-      <div class="profile-stats">
-        <h3>Transit Profile Summary</h3>
-        <table>
-          <tr>
-            <td>Favorite Route/Stop:</td>
-            <td id="favorite-route"></td>
-          </tr>
-          <tr>
-            <td>Most Viewed Bus Model:</td>
-            <td id="most-viewed-model"></td>
-          </tr>
-          <tr>
-            <td>Most Tracked Bus Route:</td>
-            <td id="most-tracked-route"></td>
-          </tr>
-          <tr>
-            <td>Last Sighting Logged:</td>
-            <td id="last-sighting"></td>
-          </tr>
-          <tr>
-            <td>Dashboard:</td>
-            <td><a href="dashboard.html">View Full Dashboard &rarr;</a></td>
-          </tr>
-        </table>
-      </div>
-
-      <div class="quick-actions">
-        <h3>Quick Actions</h3>
-        <button class="btn primary" onclick="location.href='achievements.html'">Achievements</button>
-        <button class="btn primary" onclick="location.href='settings.html'">Settings</button>
-        <button class="btn primary" onclick="location.href='saved.html'">Saved Stops/Routes</button>
-        <button class="btn primary" onclick="location.href='log-sighting.html'">Log New Sighting</button>
-        <button class="btn primary" onclick="location.href='fleet.html'">Fleet Encyclopedia</button>
-      </div>
-
-      <div class="saved-content">
-        <h3>Saved Content & Watchlist</h3>
-        <ul>
-          <li><strong>Saved Routes:</strong> <span id="saved-routes"></span></li>
-          <li><strong>Saved Bus Stops:</strong> <span id="saved-stops"></span></li>
-          <li><strong>Watchlist for Rare Sightings:</strong> <span id="watchlist"></span></li>
-          <li><strong>Recently Viewed Buses:</strong> <span id="recent-buses"></span></li>
-        </ul>
-      </div>
-
-      <div class="social-section">
-        <h3>Community & Social</h3>
-        <ul>
-          <li><strong>Followers:</strong> <span id="followers-count"></span></li>
-          <li><strong>Following:</strong> <span id="following-count"></span></li>
-          <li><strong>Recent Posts:</strong> <span id="recent-posts"></span></li>
-          <li><strong>Shared Photos:</strong> <span id="shared-photos"></span></li>
-          <li>
-            <strong>Social Links:</strong>
-            <span class="social-links"></span>
-          </li>
-          <li><strong>Comments/Feedback:</strong> <span id="feedback"></span></li>
-        </ul>
-      </div>
-    </div>
-
-    <div id="not-logged-in" style="text-align:center; margin-top:3em; display:none;">
-      <h2>Please log in to view your profile.</h2>
-      <a href="login.html" class="btn primary">Login</a>
-    </div>
+    </section>
   </main>
 
-  <!-- FOOTER (matches index.html) -->
-  <footer>
-    <div class="footer-links">
-      <a href="#">About</a> |
-      <a href="#">Privacy</a> |
-      <a href="#">Terms</a> |
-      <a href="#">Contact</a>
-    </div>
-    <div class="social-icons">
-      <a href="https://discord.gg/qVf3nN4Mgq"><i class="fa-brands fa-discord"></i></a>
-      <a href="https://www.tiktok.com/@the_bus_father"><i class="fab fa-tiktok"></i></a>
-      <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo"><i class="fab fa-instagram"></i></a>
-    </div>
-    <small>Made for London. Built from scratch.</small>
-  </footer>
-
-  <!-- PROFILE JS: User data, editable fields, and logic -->
-  <script>
-    // Example: Get user UID after authentication
-    // In reality, replace this with your real auth system!
-    let loggedIn = true; // simulate login
-    let uid = "123";  // try changing to "999" to see a different profile
-
-    // Mock user database
-    const userDb = {
-      "123": {
-        displayName: "Alex Busfan",
-        username: "busfan123",
-        email: "alex@example.com",
-        joinDate: "2024-07-12",
-        location: "Camden, London",
-        bio: "Obsessed with double-deckers. 🚌",
-        avatar: "assets/users/alex.jpg",
-        favoriteRoute: "88 - Camden Town to Clapham",
-        mostViewedModel: "Enviro400H City",
-        mostTrackedRoute: "12 - Dulwich to Oxford Circus",
-        lastSighting: "2025-05-16 09:23 | SN16 OGT (Route 12)",
-        savedRoutes: ["88", "12", "25"],
-        savedStops: ["Camden Town", "Piccadilly Circus"],
-        watchlist: ["Borismaster #LTZ 1234", "RML 2760"],
-        recentBuses: ["SN16 OGT", "LTZ 1234", "LJ61 CPY"],
-        followers: 221,
-        following: 89,
-        recentPosts: ['"Caught the Borismaster in the wild!"'],
-        sharedPhotos: ["gallery.html"],
-        discord: "https://discord.gg/yourserver",
-        tiktok: "https://tiktok.com/@yourprofile",
-        instagram: "https://instagram.com/yourprofile",
-        feedback: '"Love the real-time updates!"'
-      },
-      "999": {
-        displayName: "Jamie Enthusiast",
-        username: "jamieenth",
-        email: "jamie@example.com",
-        joinDate: "2023-04-20",
-        location: "Stratford, London",
-        bio: "London bus hunter & rare spotter.",
-        avatar: "assets/users/jamie.jpg",
-        favoriteRoute: "25 - Ilford to Oxford Circus",
-        mostViewedModel: "Wright Gemini 3",
-        mostTrackedRoute: "25 - Ilford to Oxford Circus",
-        lastSighting: "2025-05-17 15:10 | LTZ 9999 (Route 25)",
-        savedRoutes: ["25", "8", "205"],
-        savedStops: ["Ilford", "Stratford"],
-        watchlist: ["Borismaster #LTZ 9999", "RML 2456"],
-        recentBuses: ["LTZ 9999", "SN16 OGT"],
-        followers: 54,
-        following: 22,
-        recentPosts: ['"Spotted a rare RML near Aldwych!"'],
-        sharedPhotos: ["gallery.html"],
-        discord: "https://discord.gg/yourserver",
-        tiktok: "https://tiktok.com/@yourprofile2",
-        instagram: "https://instagram.com/yourprofile2",
-        feedback: '"Great app! Helped me track my favorite buses."'
-      }
-    };
-
-    // Load profile from localStorage if exists, else from mock DB
-    function loadProfile(uid) {
-      let data = localStorage.getItem("profile_" + uid);
-      if (data) {
-        return JSON.parse(data);
-      }
-      return userDb[uid] || null;
-    }
-
-    // Save profile to localStorage
-    function saveProfile(uid, profile) {
-      localStorage.setItem("profile_" + uid, JSON.stringify(profile));
-    }
-
-    // Render profile based on current user
-    function renderProfile() {
-      if (!loggedIn || !uid) {
-        document.getElementById('profile-content').style.display = 'none';
-        document.getElementById('not-logged-in').style.display = '';
-        return;
-      }
-      let user = loadProfile(uid);
-      if (!user) {
-        document.getElementById('profile-content').style.display = 'none';
-        document.getElementById('not-logged-in').style.display = '';
-        return;
-      }
-      document.getElementById('profile-content').style.display = '';
-      document.getElementById('not-logged-in').style.display = 'none';
-      document.getElementById('profile-pic').src = user.avatar;
-      document.getElementById('display-name').textContent = user.displayName;
-      document.getElementById('display-name-input').value = user.displayName;
-      document.getElementById('username').textContent = '@' + user.username;
-      document.getElementById('bio').textContent = user.bio;
-      document.getElementById('bio-input').value = user.bio;
-      document.getElementById('location').textContent = user.location;
-      document.getElementById('location-input').value = user.location;
-      document.getElementById('join-date').textContent = user.joinDate;
-      document.getElementById('favorite-route').textContent = user.favoriteRoute;
-      document.getElementById('most-viewed-model').textContent = user.mostViewedModel;
-      document.getElementById('most-tracked-route').textContent = user.mostTrackedRoute;
-      document.getElementById('last-sighting').textContent = user.lastSighting;
-      document.getElementById('saved-routes').textContent = user.savedRoutes.join(', ');
-      document.getElementById('saved-stops').textContent = user.savedStops.join(', ');
-      document.getElementById('watchlist').textContent = user.watchlist.join(', ');
-      document.getElementById('recent-buses').textContent = user.recentBuses.join(', ');
-      document.getElementById('followers-count').textContent = user.followers;
-      document.getElementById('following-count').textContent = user.following;
-      document.getElementById('recent-posts').textContent = user.recentPosts[0];
-      document.getElementById('shared-photos').innerHTML = `[<a href="${user.sharedPhotos[0]}">View Gallery</a>]`;
-      document.querySelector('.social-links').innerHTML = `
-        <a href="${user.discord}" target="_blank">Discord</a>
-        <a href="${user.tiktok}" target="_blank">TikTok</a>
-        <a href="${user.instagram}" target="_blank">Instagram</a>
-      `;
-      document.getElementById('feedback').textContent = user.feedback;
-    }
-
-    // Editing logic
-    document.addEventListener('DOMContentLoaded', function() {
-      renderProfile();
-      const editBtn = document.getElementById('editBtn');
-      const saveBtn = document.getElementById('saveBtn');
-      const displayName = document.getElementById('display-name');
-      const displayNameInput = document.getElementById('display-name-input');
-      const bio = document.getElementById('bio');
-      const bioInput = document.getElementById('bio-input');
-      const location = document.getElementById('location');
-      const locationInput = document.getElementById('location-input');
-      const avatarLabel = document.getElementById('avatarLabel');
-      const avatarUpload = document.getElementById('avatar-upload');
-      const profilePic = document.getElementById('profile-pic');
-
-      // Show edit fields
-      editBtn.onclick = function() {
-        editBtn.style.display = "none";
-        saveBtn.style.display = "";
-        displayName.style.display = "none";
-        displayNameInput.style.display = "";
-        bio.style.display = "none";
-        bioInput.style.display = "";
-        location.style.display = "none";
-        locationInput.style.display = "";
-        avatarLabel.style.display = "";
-      };
-
-      // Save edits
-      saveBtn.onclick = function() {
-        let user = loadProfile(uid);
-        user.displayName = displayNameInput.value.trim();
-        user.bio = bioInput.value.trim();
-        user.location = locationInput.value.trim();
-        // Avatar is handled below
-        saveProfile(uid, user);
-        editBtn.style.display = "";
-        saveBtn.style.display = "none";
-        displayName.style.display = "";
-        displayNameInput.style.display = "none";
-        bio.style.display = "";
-        bioInput.style.display = "none";
-        location.style.display = "";
-        locationInput.style.display = "none";
-        avatarLabel.style.display = "none";
-        renderProfile();
-      };
-
-      // Handle avatar upload
-      avatarLabel.onclick = function() { avatarUpload.click(); };
-      avatarUpload.onchange = function(e) {
-        const file = e.target.files[0];
-        if (file && file.type.startsWith("image/")) {
-          const reader = new FileReader();
-          reader.onload = function(evt) {
-            let user = loadProfile(uid);
-            user.avatar = evt.target.result;
-            saveProfile(uid, user);
-            profilePic.src = evt.target.result;
-          };
-          reader.readAsDataURL(file);
-        }
-      };
-    });
-  </script>
   <script src="main.js"></script>
 </body>
 </html>
