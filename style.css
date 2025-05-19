@@ -55,17 +55,17 @@
       background: var(--primary);
       color: #fff;
     }
-    .hamburger {
-      display: block;
-      background: none;
-      border: none;
-      font-size: 1.55rem;
-      color: var(--primary);
-      padding: 0.24rem 0.7rem;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
+.hamburger {
+  display: block;
+  background: none;
+  border: none;
+  font-size: 1.55rem;
+  color: #FFFFFF; /* Change to white */
+  padding: 0.24rem 0.7rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
     .hamburger:hover, .hamburger:focus {
       background: rgba(255,255,255);
     }
