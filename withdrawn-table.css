@@ -1,0 +1,97 @@
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #f7f8fa;
+  margin: 0;
+  padding: 32px;
+}
+
+h1 {
+  text-align: center;
+  color: #2d3a4a;
+  margin-bottom: 32px;
+  letter-spacing: 1px;
+}
+
+.bubble-table {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #fff;
+  box-shadow: 0 2px 18px rgba(0,0,0,0.08);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.bubble-table thead {
+  background: #2d3a4a;
+}
+
+.bubble-table th, .bubble-table td {
+  padding: 16px 12px;
+  text-align: center;
+  border-bottom: 1px solid #e6e9ef;
+}
+
+.bubble-table th {
+  color: #fff;
+  font-size: 1.1em;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+.bubble-table tr:last-child td {
+  border-bottom: none;
+}
+
+.bubble {
+  display: inline-block;
+  padding: 6px 18px;
+  border-radius: 22px;
+  background: linear-gradient(90deg,#a7e0f9 0%, #f6c3e5 100%);
+  color: #21314a;
+  font-weight: 500;
+  font-size: 1em;
+  margin: 2px 1px;
+  box-shadow: 0 1px 4px rgba(66,66,120,0.10);
+  transition: background 0.2s;
+}
+
+.bubble-link a {
+  color: #0356b4;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.bubble-link a:hover {
+  text-decoration: underline;
+  background: #e1eaff;
+  border-radius: 22px;
+  padding: 4px 14px;
+}
+
+@media (max-width: 900px) {
+  .bubble-table,
+  .bubble-table thead,
+  .bubble-table tbody,
+  .bubble-table th,
+  .bubble-table td,
+  .bubble-table tr {
+    display: block;
+  }
+  .bubble-table tr {
+    margin-bottom: 24px;
+    border-bottom: 2px solid #dbe5ed;
+  }
+  .bubble-table td, .bubble-table th {
+    text-align: left;
+    padding: 10px 16px;
+    position: relative;
+  }
+  .bubble-table th {
+    background: #2d3a4a;
+    color: #fff;
+    padding: 16px 16px;
+  }
+}
