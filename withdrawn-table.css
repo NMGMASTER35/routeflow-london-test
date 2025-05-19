@@ -12,37 +12,29 @@ h1 {
   letter-spacing: 1px;
 }
 
-.bubble-table {
+.bubble-table-lined {
   width: 100%;
   max-width: 1100px;
   margin: 0 auto;
-  border-collapse: separate;
-  border-spacing: 0;
+  border-collapse: collapse;
   background: #fff;
   box-shadow: 0 2px 18px rgba(0,0,0,0.08);
   border-radius: 12px;
   overflow: hidden;
 }
 
-.bubble-table thead {
-  background: #2d3a4a;
-}
-
-.bubble-table th, .bubble-table td {
-  padding: 16px 12px;
+.bubble-table-lined th, .bubble-table-lined td {
+  border: 1.5px solid #d2d6dc;
+  padding: 14px 10px;
   text-align: center;
-  border-bottom: 1px solid #e6e9ef;
 }
 
-.bubble-table th {
+.bubble-table-lined th {
+  background: #2d3a4a;
   color: #fff;
   font-size: 1.1em;
-  letter-spacing: 1px;
   font-weight: 600;
-}
-
-.bubble-table tr:last-child td {
-  border-bottom: none;
+  letter-spacing: 1px;
 }
 
 .bubble {
@@ -56,6 +48,13 @@ h1 {
   margin: 2px 1px;
   box-shadow: 0 1px 4px rgba(66,66,120,0.10);
   transition: background 0.2s;
+}
+
+.bubble.route-number {
+  background: #e02020;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 1px 5px rgba(224,32,32,0.13);
 }
 
 .bubble-link a {
@@ -72,24 +71,24 @@ h1 {
 }
 
 @media (max-width: 900px) {
-  .bubble-table,
-  .bubble-table thead,
-  .bubble-table tbody,
-  .bubble-table th,
-  .bubble-table td,
-  .bubble-table tr {
+  .bubble-table-lined,
+  .bubble-table-lined thead,
+  .bubble-table-lined tbody,
+  .bubble-table-lined th,
+  .bubble-table-lined td,
+  .bubble-table-lined tr {
     display: block;
   }
-  .bubble-table tr {
+  .bubble-table-lined tr {
     margin-bottom: 24px;
     border-bottom: 2px solid #dbe5ed;
   }
-  .bubble-table td, .bubble-table th {
+  .bubble-table-lined td, .bubble-table-lined th {
     text-align: left;
     padding: 10px 16px;
     position: relative;
   }
-  .bubble-table th {
+  .bubble-table-lined th {
     background: #2d3a4a;
     color: #fff;
     padding: 16px 16px;
