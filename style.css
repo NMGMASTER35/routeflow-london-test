@@ -715,3 +715,32 @@ body.dark-mode .btn:hover {
 .text-center { text-align: center; }
 .mt-2 { margin-top: 2rem; }
 .mb-1 { margin-bottom: 1rem; }
+.account-dropdown a,
+.account-dropdown button {
+  display: block;
+  width: 90%;
+  margin: 0.4rem auto;
+  padding: 0.6rem 0.9rem;
+  background: var(--accent-blue);
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--transition), transform var(--transition);
+}
+
+.account-dropdown a:hover,
+.account-dropdown button:hover {
+  background: var(--accent-blue-dark);
+  transform: scale(1.04);
+}
+
+/* Fix for signout button being too big */
+.account-dropdown button {
+  width: 90%;
+  box-sizing: border-box;
+}
