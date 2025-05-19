@@ -2,219 +2,492 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Settings – RouteFlow London</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="stylesheet" href="settings.css">
+  <title>Settings — RouteFlow London</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+:root {
+  --color-bg: #fff;
+  --color-bg-alt: #f0f0f0;
+  --color-text: #181818;
+  --color-accent: #2962ff;
+  --color-danger: #d32f2f;
+}
+body[data-theme="dark"] {
+  --color-bg: #181818;
+  --color-bg-alt: #232323;
+  --color-text: #fafafa;
+  --color-accent: #82b1ff;
+  --color-danger: #ff5252;
+}
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: 'Segoe UI', Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+main#settings {
+  max-width: 700px;
+  margin: 32px auto;
+  padding: 24px;
+  background: var(--color-bg-alt);
+  border-radius: 10px;
+  box-shadow: 0 0 12px #0001;
+}
+section {
+  margin-bottom: 2em;
+}
+h1, h2 {
+  color: var(--color-accent);
+}
+label, legend {
+  display: block;
+  margin-bottom: 0.75em;
+}
+input[type="text"], input[type="email"], input[type="password"], select {
+  margin-left: .5em;
+  padding: 0.3em 0.7em;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+input[type="checkbox"], input[type="radio"] {
+  margin-right: .5em;
+}
+button, a.button {
+  margin: .5em 0.2em;
+  padding: 0.5em 1em;
+  border: none;
+  border-radius: 6px;
+  background: var(--color-accent);
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+  text-decoration: none;
+}
+button.danger {
+  background: var(--color-danger);
+}
+a {
+  color: var(--color-accent);
+}
+ul {
+  padding-left: 1.5em;
+}
+.modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: #0008;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.modal-content {
+  background: var(--color-bg);
+  color: var(--color-text);
+  padding: 2em;
+  border-radius: 10px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 2px 14px #0005;
+  text-align: center;
+}
+@media (max-width: 700px) {
+  main#settings { padding: 8px; }
+  .modal-content { padding: 1em; }
+}
+  </style>
 </head>
 <body>
-  <main id="settings">
-    <h1>Settings</h1>
+<main id="settings">
+  <h1>Settings</h1>
 
-    <!-- 🔐 Account Settings -->
-    <section>
-      <h2>🔐 Account Settings</h2>
-      <form id="account-form">
-        <label>
-          Username:
-          <input type="text" id="username" autocomplete="username">
-          <button type="button" onclick="saveSetting('username')">Change</button>
-        </label>
-        <label>
-          Email:
-          <input type="email" id="email" autocomplete="email">
-          <button type="button" onclick="saveSetting('email')">Change</button>
-        </label>
-        <label>
-          Password:
-          <input type="password" id="password" autocomplete="new-password">
-          <button type="button" onclick="changePassword()">Change</button>
-        </label>
-        <label>
-          Two-Factor Authentication:
-          <select id="twofa" onchange="saveSetting('twofa')">
-            <option value="off">Off</option>
-            <option value="on">On</option>
-          </select>
-        </label>
-        <button type="button" class="danger" onclick="openModal('delete-account-modal')">Delete Account</button>
-      </form>
-    </section>
+  <!-- Profile Section -->
+  <section>
+    <h2>Profile</h2>
+    <label>
+      Username
+      <input type="text" id="username" autocomplete="username" onchange="saveSetting('username')">
+    </label>
+    <label>
+      Email
+      <input type="email" id="email" autocomplete="email" onchange="saveSetting('email')">
+    </label>
+    <label>
+      2FA (code or app)
+      <input type="text" id="twofa" onchange="saveSetting('twofa')">
+    </label>
+    <label>
+      Change Password
+      <div style="display:flex;gap:0.5em;">
+        <input type="password" id="password" placeholder="New password" style="flex:1;">
+        <button type="button" onclick="changePassword()">Change</button>
+      </div>
+    </label>
+  </section>
 
-    <!-- 🎨 Personalization -->
-    <section>
-      <h2>🎨 Personalization</h2>
-      <form id="personalization-form">
-        <label>
-          Theme:
-          <select id="theme" onchange="saveSetting('theme')">
-            <option value="system">System</option>
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-          </select>
-        </label>
-        <label>
-          Map View Style:
-          <select id="map-style" onchange="saveSetting('mapStyle')">
-            <option value="default">Default</option>
-            <option value="satellite">Satellite</option>
-            <option value="night">Night Mode</option>
-          </select>
-        </label>
-        <label>
-          Default Landing Page:
-          <select id="landing-page" onchange="saveSetting('landingPage')">
-            <option value="dashboard">Dashboard</option>
-            <option value="map">Map</option>
-            <option value="profile">Profile</option>
-          </select>
-        </label>
-        <label>
-          Home Bus Stop / Area:
-          <input type="text" id="home-stop" placeholder="Enter stop or area" onblur="saveSetting('homeStop')">
-        </label>
-      </form>
-    </section>
+  <!-- Preferences Section -->
+  <section>
+    <h2>Preferences</h2>
+    <label>
+      Theme
+      <select id="theme" onchange="saveSetting('theme')">
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+        <option value="system">System</option>
+      </select>
+    </label>
+    <label>
+      Map Style
+      <select id="map-style" onchange="saveSetting('mapStyle')">
+        <option value="standard">Standard</option>
+        <option value="night">Night</option>
+        <option value="satellite">Satellite</option>
+      </select>
+    </label>
+    <label>
+      Landing Page
+      <select id="landing-page" onchange="saveSetting('landingPage')">
+        <option value="home">Home</option>
+        <option value="map">Map</option>
+        <option value="profile">Profile</option>
+      </select>
+    </label>
+    <label>
+      Home Stop (code or name)
+      <input type="text" id="home-stop" onchange="saveSetting('homeStop')">
+    </label>
+    <label>
+      Locale
+      <select id="locale" onchange="saveSetting('locale')">
+        <option value="en-GB">English (UK)</option>
+        <option value="en-US">English (US)</option>
+        <option value="fr-FR">French</option>
+        <option value="es-ES">Spanish</option>
+        <!-- Add more as needed -->
+      </select>
+    </label>
+    <label>
+      Unit
+      <select id="unit" onchange="saveSetting('unit')">
+        <option value="metric">Metric</option>
+        <option value="imperial">Imperial</option>
+      </select>
+    </label>
+  </section>
 
-    <!-- 📣 Notifications -->
-    <section>
-      <h2>📣 Notifications</h2>
-      <form id="notifications-form">
-        <fieldset>
-          <legend>Enable/Disable:</legend>
-          <label><input type="checkbox" id="alert-rare" onchange="saveSetting('alertRare')"> Rare sightings alerts</label>
-          <label><input type="checkbox" id="alert-route" onchange="saveSetting('alertRoute')"> Route disruptions</label>
-          <label><input type="checkbox" id="alert-achievements" onchange="saveSetting('alertAchievements')"> New achievement unlocks</label>
-          <label><input type="checkbox" id="alert-friend" onchange="saveSetting('alertFriend')"> Friend activity</label>
-        </fieldset>
-        <fieldset>
-          <legend>Choose delivery method:</legend>
-          <label><input type="radio" name="delivery" value="email" onchange="saveSetting('delivery')"> Email</label>
-          <label><input type="radio" name="delivery" value="push" onchange="saveSetting('delivery')"> Push notification</label>
-          <label><input type="radio" name="delivery" value="inapp" onchange="saveSetting('delivery')"> In-app only</label>
-        </fieldset>
-      </form>
-    </section>
+  <!-- Alerts Section -->
+  <section>
+    <h2>Alerts</h2>
+    <label><input type="checkbox" id="alert-rare" onchange="saveSetting('alertRare')">Rare bus sightings</label>
+    <label><input type="checkbox" id="alert-route" onchange="saveSetting('alertRoute')">Route changes</label>
+    <label><input type="checkbox" id="alert-achievements" onchange="saveSetting('alertAchievements')">Achievements</label>
+    <label><input type="checkbox" id="alert-friend" onchange="saveSetting('alertFriend')">Friend activity</label>
+    <fieldset style="border:0;padding:0;margin:0;">
+      <legend>Delivery:</legend>
+      <label><input type="radio" name="delivery" value="push" onchange="saveSetting('delivery')">Push</label>
+      <label><input type="radio" name="delivery" value="email" onchange="saveSetting('delivery')">Email</label>
+      <label><input type="radio" name="delivery" value="sms" onchange="saveSetting('delivery')">SMS</label>
+    </fieldset>
+  </section>
 
-    <!-- 🚌 Transit Preferences -->
-    <section>
-      <h2>🚌 Transit Preferences</h2>
-      <form id="transit-form">
-        <label>
-          Preferred mode:
-          <select id="transport-mode" onchange="saveSetting('transportMode')">
-            <option value="bus">Bus only</option>
-            <option value="bus-train">Bus + Train</option>
-            <option value="night">Night services</option>
-          </select>
-        </label>
-        <label>
-          Default direction:
-          <select id="direction" onchange="saveSetting('direction')">
-            <option value="inbound">Inbound</option>
-            <option value="outbound">Outbound</option>
-          </select>
-        </label>
-        <label>
-          Exclude routes/types:
-          <input type="text" id="exclude-routes" placeholder="e.g. school buses" onblur="saveSetting('excludeRoutes')">
-        </label>
-        <label>
-          <input type="checkbox" id="realtime-countdown" onchange="saveSetting('realtimeCountdown')">
-          Enable real-time arrival countdowns
-        </label>
-      </form>
-    </section>
+  <!-- Travel & Map Section -->
+  <section>
+    <h2>Travel & Map</h2>
+    <label>
+      Transport Mode
+      <select id="transport-mode" onchange="saveSetting('transportMode')">
+        <option value="bus">Bus</option>
+        <option value="train">Train</option>
+        <option value="tube">Tube</option>
+        <option value="dlr">DLR</option>
+        <option value="tram">Tram</option>
+        <option value="river">River</option>
+        <!-- Add more as needed -->
+      </select>
+    </label>
+    <label>
+      Direction
+      <select id="direction" onchange="saveSetting('direction')">
+        <option value="any">Any</option>
+        <option value="inbound">Inbound</option>
+        <option value="outbound">Outbound</option>
+      </select>
+    </label>
+    <label>
+      Exclude Routes
+      <input type="text" id="exclude-routes" placeholder="Comma-separated" onchange="saveSetting('excludeRoutes')">
+    </label>
+    <label>
+      <input type="checkbox" id="realtime-countdown" onchange="saveSetting('realtimeCountdown')">
+      Enable real-time countdown
+    </label>
+  </section>
 
-    <!-- 🛡️ Privacy & Security -->
-    <section>
-      <h2>🛡️ Privacy & Security</h2>
-      <form id="privacy-form">
-        <label>
-          <input type="checkbox" id="public-profile" onchange="saveSetting('publicProfile')">
-          Make profile public
-        </label>
-        <label>
-          <input type="checkbox" id="hide-rare" onchange="saveSetting('hideRare')">
-          Hide rare sightings from others
-        </label>
-        <label>
-          Blocked users:
-          <input type="text" id="blocked-users" placeholder="Comma separated usernames" onblur="saveSetting('blockedUsers')">
-        </label>
-        <button type="button" onclick="exportData()">Export account data</button>
-        <label>
-          Activity history visibility:
-          <select id="activity-visibility" onchange="saveSetting('activityVisibility')">
-            <option value="private">Only you</option>
-            <option value="friends">Friends</option>
-            <option value="public">Public</option>
-          </select>
-        </label>
-      </form>
-    </section>
+  <!-- Privacy Section -->
+  <section>
+    <h2>Privacy</h2>
+    <label><input type="checkbox" id="public-profile" onchange="saveSetting('publicProfile')">Public profile</label>
+    <label><input type="checkbox" id="hide-rare" onchange="saveSetting('hideRare')">Hide rare buses from profile</label>
+    <label>
+      Blocked Users
+      <input type="text" id="blocked-users" placeholder="Comma-separated usernames" onchange="saveSetting('blockedUsers')">
+    </label>
+    <label>
+      Activity Visibility
+      <select id="activity-visibility" onchange="saveSetting('activityVisibility')">
+        <option value="everyone">Everyone</option>
+        <option value="friends">Friends only</option>
+        <option value="private">Only me</option>
+      </select>
+    </label>
+    <label>
+      <input type="checkbox" id="location-tracking" onchange="saveSetting('locationTracking')">
+      Enable location tracking
+    </label>
+  </section>
 
-    <!-- 🧪 Experimental Features / Beta Access -->
-    <section>
-      <h2>🧪 Experimental Features / Beta Access</h2>
-      <form id="beta-form">
-        <label>
-          <input type="checkbox" id="beta-access" onchange="saveSetting('betaAccess')">
-          Enable early access to beta features
-        </label>
-        <a href="https://github.com/NMGMASTER35/routeflow-london/issues/new?labels=feedback" target="_blank">Submit feedback on beta features</a>
-      </form>
-    </section>
+  <!-- Advanced Section -->
+  <section>
+    <h2>Advanced</h2>
+    <button type="button" onclick="manageDevices()">Manage Devices & Sessions</button>
+    <button type="button" onclick="exportData()">Export Account Data</button>
+    <button type="button" class="danger" onclick="openModal('delete-account-modal')">Delete Account</button>
+  </section>
 
-    <!-- 🧰 App / Device Settings -->
-    <section>
-      <h2>🧰 App / Device Settings</h2>
-      <form id="device-form">
-        <button type="button" onclick="manageDevices()">Manage devices/sessions</button>
-        <label>
-          <input type="checkbox" id="location-tracking" onchange="saveSetting('locationTracking')">
-          Enable location tracking
-        </label>
-        <label>
-          Language / Locale:
-          <select id="locale" onchange="saveSetting('locale')">
-            <option value="en">English</option>
-            <option value="en-GB">English (UK)</option>
-            <option value="fr">Français</option>
-            <!-- add more as needed -->
-          </select>
-        </label>
-        <label>
-          Default unit:
-          <select id="unit" onchange="saveSetting('unit')">
-            <option value="km">Kilometres (km)</option>
-            <option value="mi">Miles (mi)</option>
-          </select>
-        </label>
-      </form>
-    </section>
+  <!-- Support & Feedback Section (Placeholder) -->
+  <section>
+    <h2>Support & Feedback</h2>
+    <!-- PLACEHOLDER: Add your support & feedback content here -->
+    <p>Coming soon: support and feedback tools.</p>
+  </section>
+</main>
 
-    <!-- 📞 Support & Feedback -->
-    <section>
-      <h2>📞 Support & Feedback</h2>
-      <ul>
-        <li><a href="help.html" target="_blank">Help Center / FAQ</a></li>
-        <li><a href="https://github.com/NMGMASTER35/routeflow-london/issues/new?labels=bug" target="_blank">Report a Bug</a></li>
-        <li><a href="https://github.com/NMGMASTER35/routeflow-london/issues/new?labels=feature" target="_blank">Submit a Feature Request</a></li>
-        <li><a href="mailto:support@routeflow.london">Contact Support</a></li>
-      </ul>
-    </section>
-  </main>
-
-  <!-- Delete Account Modal -->
-  <div id="delete-account-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title" style="display:none;">
-    <div class="modal-content">
-      <h3 id="delete-modal-title">Confirm Account Deletion</h3>
-      <p>This action is irreversible. Are you sure you want to delete your account?</p>
-      <button class="danger" onclick="deleteAccount()">Yes, delete my account</button>
-      <button onclick="closeModal('delete-account-modal')">Cancel</button>
-    </div>
+<!-- Delete Account Modal -->
+<div class="modal" id="delete-account-modal" style="display:none;">
+  <div class="modal-content">
+    <h3>Delete Account?</h3>
+    <p>This action is <b>permanent</b> and cannot be undone. Are you sure?</p>
+    <button onclick="deleteAccount()" class="danger">Yes, delete my account</button>
+    <button onclick="closeModal('delete-account-modal')">Cancel</button>
   </div>
+</div>
 
-  <script src="settings.js"></script>
+<script>
+// --- Utility Functions ---
+function openModal(id) {
+  document.getElementById(id).style.display = 'flex';
+}
+function closeModal(id) {
+  document.getElementById(id).style.display = 'none';
+}
+
+// --- Saving Settings ---
+function saveSetting(key) {
+  let value;
+  switch (key) {
+    case 'username':
+      value = document.getElementById('username').value;
+      break;
+    case 'email':
+      value = document.getElementById('email').value;
+      break;
+    case 'twofa':
+      value = document.getElementById('twofa').value;
+      break;
+    case 'theme':
+      value = document.getElementById('theme').value;
+      document.body.setAttribute('data-theme', value);
+      break;
+    case 'mapStyle':
+      value = document.getElementById('map-style').value;
+      break;
+    case 'landingPage':
+      value = document.getElementById('landing-page').value;
+      break;
+    case 'homeStop':
+      value = document.getElementById('home-stop').value;
+      break;
+    case 'alertRare':
+      value = document.getElementById('alert-rare').checked;
+      break;
+    case 'alertRoute':
+      value = document.getElementById('alert-route').checked;
+      break;
+    case 'alertAchievements':
+      value = document.getElementById('alert-achievements').checked;
+      break;
+    case 'alertFriend':
+      value = document.getElementById('alert-friend').checked;
+      break;
+    case 'delivery':
+      value = document.querySelector('input[name="delivery"]:checked')?.value || '';
+      break;
+    case 'transportMode':
+      value = document.getElementById('transport-mode').value;
+      break;
+    case 'direction':
+      value = document.getElementById('direction').value;
+      break;
+    case 'excludeRoutes':
+      value = document.getElementById('exclude-routes').value;
+      break;
+    case 'realtimeCountdown':
+      value = document.getElementById('realtime-countdown').checked;
+      break;
+    case 'publicProfile':
+      value = document.getElementById('public-profile').checked;
+      break;
+    case 'hideRare':
+      value = document.getElementById('hide-rare').checked;
+      break;
+    case 'blockedUsers':
+      value = document.getElementById('blocked-users').value;
+      break;
+    case 'activityVisibility':
+      value = document.getElementById('activity-visibility').value;
+      break;
+    case 'locationTracking':
+      value = document.getElementById('location-tracking').checked;
+      break;
+    case 'locale':
+      value = document.getElementById('locale').value;
+      break;
+    case 'unit':
+      value = document.getElementById('unit').value;
+      break;
+    default:
+      return;
+  }
+  // Save to localStorage for instant demo effect
+  localStorage.setItem(key, JSON.stringify(value));
+  // TODO: Replace localStorage with backend API call for real global persistence
+}
+
+// --- Load Settings ---
+function loadSettings() {
+  const keys = [
+    'username', 'email', 'twofa', 'theme', 'mapStyle', 'landingPage', 'homeStop',
+    'alertRare', 'alertRoute', 'alertAchievements', 'alertFriend', 'delivery',
+    'transportMode', 'direction', 'excludeRoutes', 'realtimeCountdown',
+    'publicProfile', 'hideRare', 'blockedUsers', 'activityVisibility',
+    'locationTracking', 'locale', 'unit'
+  ];
+  keys.forEach(key => {
+    const val = localStorage.getItem(key);
+    if (val !== null) {
+      switch (key) {
+        case 'username':
+          document.getElementById('username').value = JSON.parse(val);
+          break;
+        case 'email':
+          document.getElementById('email').value = JSON.parse(val);
+          break;
+        case 'twofa':
+          document.getElementById('twofa').value = JSON.parse(val);
+          break;
+        case 'theme':
+          document.getElementById('theme').value = JSON.parse(val);
+          document.body.setAttribute('data-theme', JSON.parse(val));
+          break;
+        case 'mapStyle':
+          document.getElementById('map-style').value = JSON.parse(val);
+          break;
+        case 'landingPage':
+          document.getElementById('landing-page').value = JSON.parse(val);
+          break;
+        case 'homeStop':
+          document.getElementById('home-stop').value = JSON.parse(val);
+          break;
+        case 'alertRare':
+          document.getElementById('alert-rare').checked = JSON.parse(val);
+          break;
+        case 'alertRoute':
+          document.getElementById('alert-route').checked = JSON.parse(val);
+          break;
+        case 'alertAchievements':
+          document.getElementById('alert-achievements').checked = JSON.parse(val);
+          break;
+        case 'alertFriend':
+          document.getElementById('alert-friend').checked = JSON.parse(val);
+          break;
+        case 'delivery':
+          let delivery = JSON.parse(val);
+          if (delivery) {
+            let radio = document.querySelector(`input[name="delivery"][value="${delivery}"]`);
+            if (radio) radio.checked = true;
+          }
+          break;
+        case 'transportMode':
+          document.getElementById('transport-mode').value = JSON.parse(val);
+          break;
+        case 'direction':
+          document.getElementById('direction').value = JSON.parse(val);
+          break;
+        case 'excludeRoutes':
+          document.getElementById('exclude-routes').value = JSON.parse(val);
+          break;
+        case 'realtimeCountdown':
+          document.getElementById('realtime-countdown').checked = JSON.parse(val);
+          break;
+        case 'publicProfile':
+          document.getElementById('public-profile').checked = JSON.parse(val);
+          break;
+        case 'hideRare':
+          document.getElementById('hide-rare').checked = JSON.parse(val);
+          break;
+        case 'blockedUsers':
+          document.getElementById('blocked-users').value = JSON.parse(val);
+          break;
+        case 'activityVisibility':
+          document.getElementById('activity-visibility').value = JSON.parse(val);
+          break;
+        case 'locationTracking':
+          document.getElementById('location-tracking').checked = JSON.parse(val);
+          break;
+        case 'locale':
+          document.getElementById('locale').value = JSON.parse(val);
+          break;
+        case 'unit':
+          document.getElementById('unit').value = JSON.parse(val);
+          break;
+      }
+    }
+  });
+}
+
+// --- Special Actions ---
+function changePassword() {
+  let newPassword = document.getElementById('password').value;
+  if (!newPassword || newPassword.length < 6) {
+    alert("Password must be at least 6 characters.");
+    return;
+  }
+  // TODO: Call backend API to change password securely
+  document.getElementById('password').value = '';
+  alert("Password changed (demo only).");
+}
+
+function deleteAccount() {
+  closeModal('delete-account-modal');
+  // TODO: Call backend API to delete account
+  alert("Account deleted (demo only).");
+}
+
+function exportData() {
+  // TODO: Call backend API to export data; here we just demo
+  alert("Exporting your account data... (demo only)");
+}
+
+function manageDevices() {
+  // TODO: Show/manage logged-in devices popup or page
+  alert("Device/session management coming soon!");
+}
+
+// --- On Load ---
+window.onload = loadSettings;
+</script>
 </body>
 </html>
