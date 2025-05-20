@@ -8,122 +8,72 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
-	<link rel="stylesheet" href="withdrawn-table.css">
+  <link rel="stylesheet" href="withdrawn-table.css">
+  <style>
+    /* Enhanced search and filter styling */
+    .filters-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 20px auto;
+      justify-content: center;
+    }
+    .filters-container input, .filters-container select {
+      padding: 8px;
+      border-radius: 12px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+    table.bubble-table-lined {
+      border-collapse: collapse;
+      width: 100%;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+    table.bubble-table-lined th, table.bubble-table-lined td {
+      padding: 10px;
+      border: 1px solid #e0e0e0;
+      text-align: left;
+    }
+    table.bubble-table-lined thead {
+      background-color: #f5f5f5;
+    }
+    #searchInput {
+      width: 50%;
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 20px;
+      border: 1px solid #ccc;
+      margin-bottom: 20px;
+    }
+  </style>
 </head>
-  <body>
-  <header>
-    <div class="logo">
-      <img src="images/Routeflow London permanent logo.png" alt="RouteFlow London Logo">
-      <strong>RouteFlow London</strong>
-    </div>
-    <div class="menu-bar">
-     <nav class="main-nav">
-  <a href="index.html">Home</a>
-  <a href="dashboard.html">Dashboard</a>
-  <a href="tracking.html">Tracking</a>
-  <a href="planning.html">Planning</a>
-  <a href="routes.html">Routes</a>
-  <a href="withdrawn.html">Withdrawn</a>
-  <a href="disruptions.html">Disruptions</a>
-  <a href="fleet.html">Fleet</a>
-</nav>
-      <button class="hamburger" id="hamburgerBtn" aria-label="Open menu">
-        <i class="fa-solid fa-bars"></i>
-      </button>
-      <div class="account-icon" id="profileMenu">
-        <button aria-label="Account" id="profileIcon">
-          <i class="fa-regular fa-user"></i>
-        </button>
-        <div class="account-dropdown" id="dropdownContent"></div>
-      </div>
-    </div>
-    <nav class="popout-menu" id="popoutMenu">
-  <button class="back-btn" id="menuBackBtn"><i class="fa-solid fa-arrow-left"></i> Back</button>
-  <a href="index.html">Home</a>
-  <a href="dashboard.html">Dashboard</a>
-  <a href="tracking.html">Tracking</a>
-  <a href="planning.html">Planning</a>
-  <a href="routes.html">Routes</a>
-  <a href="withdrawn.html">Withdrawn</a>
-  <a href="disruptions.html">Disruptions</a>
-  <a href="fleet.html">Fleet</a>
-</nav>
-  </header>
-
-  <!-- Login/Signup Modal -->
-  <!-- Login/Signup Modal -->
-<div id="authModal" class="modal" aria-modal="true" role="dialog">
-  <div class="modal-content">
-    <span class="close" id="closeModal" title="Close">&times;</span>
-    <!-- Login Form -->
-    <div id="loginFormContainer">
-      <h2>Login</h2>
-      <form id="loginForm" autocomplete="off">
-        <input type="email" id="loginEmail" placeholder="Email" required autocomplete="username">
-        <input type="password" id="loginPassword" placeholder="Password" required autocomplete="current-password">
-        <button type="submit">Login</button>
-        <button type="button" class="google-login">Sign in with Google</button>
-        <p><a href="#" class="reset-password">Forgot Password?</a></p>
-        <div class="error-message" id="loginError" style="display:none;"></div>
-      </form>
-      <p>Don't have an account? <a href="#" id="showSignup">Sign up</a></p>
-    </div>
-    <!-- Signup Form -->
-    <div id="signupFormContainer" style="display:none;">
-      <h2>Sign Up</h2>
-      <form id="signupForm" autocomplete="off">
-        <input type="email" id="signupEmail" placeholder="Email" required autocomplete="username">
-        <input type="password" id="signupPassword" placeholder="Password" required autocomplete="new-password">
-        <button type="submit">Sign Up</button>
-        <button type="button" class="google-login">Sign Up with Google</button>
-        <p><a href="#" class="reset-password">Forgot Password?</a></p>
-        <div class="error-message" id="signupError" style="display:none;"></div>
-      </form>
-      <p>Already have an account? <a href="#" id="showLogin">Login</a></p>
-    </div>
-  </div>
-</div>
-
 <body>
-  <!-- Header -->
-  <!-- ... -->
   <main style="padding: 3rem 1rem; text-align: center;">
     <h1>Withdrawn Routes</h1>
-    <p>The London's Withdrawn Bus Routes page is a comprehensive archive that documents bus routes in London that have been discontinued over the years. Each entry provides key details such as the route number, start and destination points, the launch and withdrawal dates, the final operator of the service, and any replacement routes, often with links for further reference. This page offers a valuable glimpse into the history and evolution of London’s bus network, reflecting changes brought about by shifts in passenger needs, urban development, and transport policy. It serves as an important resource for transport enthusiasts, historians, and anyone interested in the legacy of London's public transportation system.</p>
-	<tbody>
-  <tbody>
-<table class="bubble-table-lined">
- 
-<p>
-  The <strong>London's Withdrawn Bus Routes</strong> page is a comprehensive archive that documents bus routes in London that have been discontinued over the years.
-  Each entry provides key details such as the route number, start and destination points, the launch and withdrawal dates, the final operator of the service,
-  and any replacement routes. This page offers a valuable glimpse into the history and evolution of London’s bus network, reflecting changes brought about by
-  shifts in passenger needs, urban development, and transport policy. It serves as an important resource for transport enthusiasts, historians, and anyone interested
-  in the legacy of London's public transportation system.
-</p>
-<input type="text" id="searchInput" onkeyup="searchTable()" placeholder="Search for routes..." style="margin-bottom: 15px; padding: 5px; width: 50%;">
-<script>
-function searchTable() {
-  var input = document.getElementById("searchInput");
-  var filter = input.value.toUpperCase();
-  var table = document.getElementsByTagName("table")[0];
-  var tr = table.getElementsByTagName("tr");
+    <p>Explore London's discontinued bus routes using advanced filters below.</p>
+    
+    <div class="filters-container">
+      <input type="text" id="searchInput" placeholder="Search routes...">
+      <input type="text" id="filterStart" placeholder="Start location">
+      <input type="text" id="filterEnd" placeholder="End location">
+      <select id="filterOperator">
+        <option value="">All Operators</option>
+        <option value="Arriva London">Arriva London</option>
+        <option value="London General">London General</option>
+        <option value="Stagecoach London">Stagecoach London</option>
+        <!-- Add more operators dynamically if needed -->
+      </select>
+    </div>
 
-  for (var i = 1; i < tr.length; i++) {
-    tr[i].style.display = "none";
-    var td = tr[i].getElementsByTagName("td");
-    for (var j = 0; j < td.length; j++) {
-      if (td[j] && td[j].innerText.toUpperCase().indexOf(filter) > -1) {
-        tr[i].style.display = "";
-        break;
-      }
-    }
-  }
-}
-</script>
-<table class="wikitable" style="width:100%;">
-
-<tbody><tr>
+    <table class="bubble-table-lined" id="routesTable">
+      <thead>
+        <tr>
+          <th>Route</th><th>Start</th><th>End</th><th>Launch Date</th><th>Withdrawal Date</th><th>Operator</th><th>Replaced By</th>
+        </tr>
+      </thead>
+      <tbody>
 <th><b>Route</b>
 </th>
 <th><b>Start</b>
@@ -6177,17 +6127,40 @@ function searchTable() {
 <td><a href="/wiki/London_Sovereign_RATP_Group" title="London Sovereign RATP Group">London Sovereign</a>
 </td>
 <td>Renumbered to <a href="/wiki/London_Buses_Route_SL9" class="mw-redirect" title="London Buses Route SL9">SL9</a>.
-</td></tr></tbody></table>
-  
-  <!-- Add remaining rows here as needed, following the same pattern -->
-</tbody>
-  <!-- Continue following this pattern for each row -->
-</tbody>
+</td>
+      </tbody>
+    </table>
   </main>
-  <!-- Footer -->
-  <!-- ... -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-  <script src="main.js"></script>
+  <script>
+    function searchTable() {
+      let input = document.getElementById("searchInput").value.toUpperCase();
+      let startFilter = document.getElementById("filterStart").value.toUpperCase();
+      let endFilter = document.getElementById("filterEnd").value.toUpperCase();
+      let operatorFilter = document.getElementById("filterOperator").value.toUpperCase();
+      let table = document.getElementById("routesTable");
+      let tr = table.getElementsByTagName("tr");
+
+      for (let i = 1; i < tr.length; i++) {
+        let tds = tr[i].getElementsByTagName("td");
+        let match = true;
+
+        if (tds.length > 0) {
+          const rowText = Array.from(tds).map(td => td.innerText.toUpperCase());
+
+          if (input && !rowText.some(text => text.includes(input))) match = false;
+          if (startFilter && !rowText[1].includes(startFilter)) match = false;
+          if (endFilter && !rowText[2].includes(endFilter)) match = false;
+          if (operatorFilter && !rowText[5].includes(operatorFilter)) match = false;
+
+          tr[i].style.display = match ? "" : "none";
+        }
+      }
+    }
+
+    document.getElementById("searchInput").addEventListener("keyup", searchTable);
+    document.getElementById("filterStart").addEventListener("keyup", searchTable);
+    document.getElementById("filterEnd").addEventListener("keyup", searchTable);
+    document.getElementById("filterOperator").addEventListener("change", searchTable);
+  </script>
 </body>
 </html>
