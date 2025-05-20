@@ -1,7 +1,208 @@
-<nav class="main-nav">
-  <a href="index.html" class="active">Home</a>
-  <a href="about.html">About</a>
-  <a href="blog.html">Blog</a>
-  <a href="contact.html">Contact</a>
-  <button class="theme-toggle" onclick="toggleTheme()">Toggle Mode</button>
-</nav>
+<header class="navbar">
+  <div class="navbar__container">
+    <div class="navbar__logo">
+      <img src="images/Routeflow London permanent logo.png" alt="RouteFlow London Logo">
+      <strong>RouteFlow London</strong>
+    </div>
+
+    <nav class="navbar__links desktop-only">
+      <a href="index.html">Home</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="tracking.html">Tracking</a>
+      <a href="planning.html">Planning</a>
+      <a href="routes.html">Routes</a>
+      <a href="withdrawn.html">Withdrawn</a>
+      <a href="disruptions.html">Disruptions</a>
+      <a href="fleet.html">Fleet</a>
+    </nav>
+
+    <div class="navbar__controls">
+      <button class="hamburger" id="hamburgerBtn" aria-label="Open menu">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <div class="account-menu">
+        <button aria-label="Account" id="profileIcon">
+          <i class="fa-regular fa-user"></i>
+        </button>
+        <div class="account-dropdown" id="dropdownContent">
+          <!-- User account options go here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile popout nav -->
+  <nav class="mobile-menu" id="popoutMenu">
+    <button class="back-btn" id="menuBackBtn" aria-label="Close menu">
+      <i class="fa-solid fa-arrow-left"></i> Back
+    </button>
+    <a href="index.html">Home</a>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="tracking.html">Tracking</a>
+    <a href="planning.html">Planning</a>
+    <a href="routes.html">Routes</a>
+    <a href="withdrawn.html">Withdrawn</a>
+    <a href="disruptions.html">Disruptions</a>
+    <a href="fleet.html">Fleet</a>
+  </nav>
+</header>
+<style>
+.navbar {
+  background-color: #fff;
+  border-bottom: 1px solid #ddd;
+  padding: 0.5rem 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 999;
+}
+
+.navbar__container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.navbar__logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.navbar__links a {
+  margin: 0 0.75rem;
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+}
+
+.desktop-only {
+  display: flex;
+}
+
+.hamburger {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+}
+
+.mobile-menu {
+  display: none;
+  flex-direction: column;
+  background: #fff;
+  position: absolute;
+  top: 60px;
+  left: 0;
+  right: 0;
+  padding: 1rem;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.mobile-menu a {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #eee;
+}
+
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none;
+  }
+
+  .mobile-menu {
+    display: flex;
+  }
+}
+</style>
+<script>
+  // Util: Clear error messages
+  function clearFormMessages() {
+    document.getElementById('loginError').style.display = 'none';
+    document.getElementById('signupError').style.display = 'none';
+  }
+
+  // Util: Close modal
+  function closeModal() {
+    document.getElementById('authModal').style.display = 'none';
+    clearFormMessages();
+  }
+
+  // Handle modal switching and events
+  document.addEventListener('click', function (e) {
+    if (e.target.id === 'showSignup') {
+      e.preventDefault();
+      document.getElementById('loginFormContainer').style.display = 'none';
+      document.getElementById('signupFormContainer').style.display = '';
+      clearFormMessages();
+    }
+    if (e.target.id === 'showLogin') {
+      e.preventDefault();
+      document.getElementById('loginFormContainer').style.display = '';
+      document.getElementById('signupFormContainer').style.display = 'none';
+      clearFormMessages();
+    }
+    if (e.target.id === 'closeModal' || e.target === document.getElementById('authModal')) {
+      closeModal();
+    }
+  });
+
+  // ESC key to close modal
+  document.addEventListener('keydown', function(event) {
+    if (event.key === "Escape") {
+      closeModal();
+    }
+  });
+
+  // Login with email/password
+  document.getElementById('loginForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    clearFormMessages();
+
+    firebase.auth().signInWithEmailAndPassword(email, password)
+      .then(() => {
+        closeModal();
+        window.location.href = "dashboard.html";
+      })
+      .catch((error) => {
+        const loginError = document.getElementById('loginError');
+        loginError.textContent = error.message;
+        loginError.style.display = 'block';
+      });
+  });
+
+  // Signup with email/password
+  document.getElementById('signupForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const email = document.getElementById('signupEmail').value.trim();
+    const password = document.getElementById('signupPassword').value;
+    clearFormMessages();
+
+    firebase.auth().createUserWithEmailAndPassword(email, password)
+      .then(() => {
+        closeModal();
+        window.location.href = "dashboard.html";
+      })
+      .catch((error) => {
+        const signupError = document.getElementById('signupError');
+        signupError.textContent = error.message;
+        signupError.style.display = 'block';
+      });
+  });
+
+  // Google sign-in (login + signup, no email/password needed)
+  document.querySelectorAll('.google-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      const provider = new firebase.auth.GoogleAuthProvider();
+      firebase.auth().signInWithPopup(provider)
+        .then(() => {
+          closeModal();
+          window.location.href = "dashboard.html";
+        })
+        .catch((error) => {
+          alert("Google sign-in error: " + error.message);
+        });
+    });
+  });
+</script>
+
