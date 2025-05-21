@@ -45,8 +45,84 @@
     <a href="disruptions.html">Disruptions</a>
     <a href="fleet.html">Fleet</a>
   </nav>
+  <div id="authModal" class="modal" aria-modal="true" role="dialog">
+  <div class="modal-content">
+    <span class="close" id="closeModal" title="Close">&times;</span>
+    <!-- Login Form -->
+    <div id="loginFormContainer">
+      <h2>Login</h2>
+      <form id="loginForm" autocomplete="off">
+        <input type="email" id="loginEmail" placeholder="Email" required autocomplete="username">
+        <input type="password" id="loginPassword" placeholder="Password" required autocomplete="current-password">
+        <button type="submit">Login</button>
+        <button type="button" class="google-login">Sign in with Google</button>
+        <p><a href="#" class="reset-password">Forgot Password?</a></p>
+        <div class="error-message" id="loginError" style="display:none;"></div>
+      </form>
+      <p>Don't have an account? <a href="#" id="showSignup">Sign up</a></p>
+    </div>
+    <!-- Signup Form -->
+    <div id="signupFormContainer" style="display:none;">
+      <h2>Sign Up</h2>
+      <form id="signupForm" autocomplete="off">
+        <input type="email" id="signupEmail" placeholder="Email" required autocomplete="username">
+        <input type="password" id="signupPassword" placeholder="Password" required autocomplete="new-password">
+        <button type="submit">Sign Up</button>
+        <button type="button" class="google-login">Sign Up with Google</button>
+        <p><a href="#" class="reset-password">Forgot Password?</a></p>
+        <div class="error-message" id="signupError" style="display:none;"></div>
+      </form>
+      <p>Already have an account? <a href="#" id="showLogin">Login</a></p>
+    </div>
+  </div>
+</div>
 </header>
 <style>
+.logo img {
+  height: 40px; /* Or your preferred size */
+  width: auto;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.6);
+}
+
+.modal-content {
+  background-color: #fff;
+  margin: 10% auto;
+  padding: 2rem;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 400px;
+}
+
+body {
+  background-color: #b30000;
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
+
+.main-nav a {
+  color: white;
+  text-decoration: none;
+  padding: 10px 15px;
+}
+
+.main-nav a:hover {
+  background-color: blue;
+}
+
+.main-nav a.active {
+  background-color: grey;
+}
+
 .navbar {
   background-color: #fff;
   border-bottom: 1px solid #ddd;
@@ -111,6 +187,42 @@
     display: flex;
   }
 }
+.account-dropdown {
+  display: none;
+  flex-direction: column;
+  background: white;
+  padding: 10px;
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 1000;
+}
+
+.account-dropdown button {
+  display: block;
+  width: 100%;
+  margin: 5px 0;
+  text-align: left;
+  padding: 10px;
+  background: none;
+  border: none;
+}
+
+.account-icon:hover .account-dropdown {
+  display: flex;
+}
+.google-btn {
+  background-color: #4285F4;
+  color: white;
+  border: none;
+  padding: 10px;
+  width: 100%;
+  margin-top: 10px;
+}
+.google-btn:hover {
+  background-color: #357ae8;
+}
+
 </style>
 <script>
   // Util: Clear error messages
@@ -204,5 +316,11 @@
         });
     });
   });
+  document.querySelectorAll('.main-nav a').forEach(link => {
+  if (link.href === window.location.href) {
+    link.classList.add('active');
+  }
+});
+
 </script>
 
