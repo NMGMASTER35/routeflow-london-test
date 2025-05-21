@@ -11,54 +11,47 @@
 </head>
 <body>
   <header>
-    <header class="navbar">
-  <div class="navbar__container">
-    <div class="navbar__logo">
+    <div class="logo">
       <img src="images/Routeflow London permanent logo.png" alt="RouteFlow London Logo">
       <strong>RouteFlow London</strong>
     </div>
-
-    <nav class="navbar__links desktop-only">
-      <a href="index.html">Home</a>
-      <a href="dashboard.html">Dashboard</a>
-      <a href="tracking.html">Tracking</a>
-      <a href="planning.html">Planning</a>
-      <a href="routes.html">Routes</a>
-      <a href="withdrawn.html">Withdrawn</a>
-      <a href="disruptions.html">Disruptions</a>
-      <a href="fleet.html">Fleet</a>
-    </nav>
-
-    <div class="navbar__controls">
+    <div class="menu-bar">
+     <nav class="main-nav">
+  <a href="index.html">Home</a>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="tracking.html">Tracking</a>
+  <a href="planning.html">Planning</a>
+  <a href="routes.html">Routes</a>
+  <a href="withdrawn.html">Withdrawn</a>
+  <a href="disruptions.html">Disruptions</a>
+  <a href="fleet.html">Fleet</a>
+</nav>
       <button class="hamburger" id="hamburgerBtn" aria-label="Open menu">
         <i class="fa-solid fa-bars"></i>
       </button>
-      <div class="account-menu">
+      <div class="account-icon" id="profileMenu">
         <button aria-label="Account" id="profileIcon">
           <i class="fa-regular fa-user"></i>
         </button>
-        <div class="account-dropdown" id="dropdownContent">
-          <!-- User account options go here -->
-        </div>
+        <div class="account-dropdown" id="dropdownContent"></div>
       </div>
     </div>
-  </div>
+    <nav class="popout-menu" id="popoutMenu">
+  <button class="back-btn" id="menuBackBtn"><i class="fa-solid fa-arrow-left"></i> Back</button>
+  <a href="index.html">Home</a>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="tracking.html">Tracking</a>
+  <a href="planning.html">Planning</a>
+  <a href="routes.html">Routes</a>
+  <a href="withdrawn.html">Withdrawn</a>
+  <a href="disruptions.html">Disruptions</a>
+  <a href="fleet.html">Fleet</a>
+</nav>
+  </header>
 
-  <!-- Mobile popout nav -->
-  <nav class="mobile-menu" id="popoutMenu">
-    <button class="back-btn" id="menuBackBtn" aria-label="Close menu">
-      <i class="fa-solid fa-arrow-left"></i> Back
-    </button>
-    <a href="index.html">Home</a>
-    <a href="dashboard.html">Dashboard</a>
-    <a href="tracking.html">Tracking</a>
-    <a href="planning.html">Planning</a>
-    <a href="routes.html">Routes</a>
-    <a href="withdrawn.html">Withdrawn</a>
-    <a href="disruptions.html">Disruptions</a>
-    <a href="fleet.html">Fleet</a>
-  </nav>
-  <div id="authModal" class="modal" aria-modal="true" role="dialog">
+  <!-- Login/Signup Modal -->
+  <!-- Login/Signup Modal -->
+<div id="authModal" class="modal" aria-modal="true" role="dialog">
   <div class="modal-content">
     <span class="close" id="closeModal" title="Close">&times;</span>
     <!-- Login Form -->
@@ -68,7 +61,10 @@
         <input type="email" id="loginEmail" placeholder="Email" required autocomplete="username">
         <input type="password" id="loginPassword" placeholder="Password" required autocomplete="current-password">
         <button type="submit">Login</button>
-        <button type="button" class="google-login">Sign in with Google</button>
+       <button class="google-btn">
+  <i class="fa-brands fa-google" style="color: #ffffff; margin-right: 8px;"></i>
+  Sign in with Google
+</button>
         <p><a href="#" class="reset-password">Forgot Password?</a></p>
         <div class="error-message" id="loginError" style="display:none;"></div>
       </form>
@@ -81,7 +77,10 @@
         <input type="email" id="signupEmail" placeholder="Email" required autocomplete="username">
         <input type="password" id="signupPassword" placeholder="Password" required autocomplete="new-password">
         <button type="submit">Sign Up</button>
-        <button type="button" class="google-login">Sign Up with Google</button>
+<button class="google-btn">
+  <i class="fa-brands fa-google" style="color: #ffffff; margin-right: 8px;"></i>
+  Sign Up with Google
+</button>
         <p><a href="#" class="reset-password">Forgot Password?</a></p>
         <div class="error-message" id="signupError" style="display:none;"></div>
       </form>
@@ -89,253 +88,7 @@
     </div>
   </div>
 </div>
-</header>
-<style>
-.logo img {
-  height: 40px; /* Or your preferred size */
-  width: auto;
-}
 
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 999;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0,0,0,0.6);
-}
-
-.modal-content {
-  background-color: #fff;
-  margin: 10% auto;
-  padding: 2rem;
-  border-radius: 10px;
-  width: 90%;
-  max-width: 400px;
-}
-
-body {
-  background-color: #b30000;
-  margin: 0;
-  font-family: Arial, sans-serif;
-}
-
-.main-nav a {
-  color: white;
-  text-decoration: none;
-  padding: 10px 15px;
-}
-
-.main-nav a:hover {
-  background-color: blue;
-}
-
-.main-nav a.active {
-  background-color: grey;
-}
-
-.navbar {
-  background-color: #fff;
-  border-bottom: 1px solid #ddd;
-  padding: 0.5rem 1rem;
-  position: sticky;
-  top: 0;
-  z-index: 999;
-}
-
-.navbar__container {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.navbar__logo {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.navbar__links a {
-  margin: 0 0.75rem;
-  text-decoration: none;
-  color: #333;
-  font-weight: 500;
-}
-
-.desktop-only {
-  display: flex;
-}
-
-.hamburger {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-}
-
-.mobile-menu {
-  display: none;
-  flex-direction: column;
-  background: #fff;
-  position: absolute;
-  top: 60px;
-  left: 0;
-  right: 0;
-  padding: 1rem;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-
-.mobile-menu a {
-  padding: 0.75rem 0;
-  border-bottom: 1px solid #eee;
-}
-
-@media (max-width: 768px) {
-  .desktop-only {
-    display: none;
-  }
-
-  .mobile-menu {
-    display: flex;
-  }
-}
-.account-dropdown {
-  display: none;
-  flex-direction: column;
-  background: white;
-  padding: 10px;
-  position: absolute;
-  right: 0;
-  top: 100%;
-  z-index: 1000;
-}
-
-.account-dropdown button {
-  display: block;
-  width: 100%;
-  margin: 5px 0;
-  text-align: left;
-  padding: 10px;
-  background: none;
-  border: none;
-}
-
-.account-icon:hover .account-dropdown {
-  display: flex;
-}
-.google-btn {
-  background-color: #4285F4;
-  color: white;
-  border: none;
-  padding: 10px;
-  width: 100%;
-  margin-top: 10px;
-}
-.google-btn:hover {
-  background-color: #357ae8;
-}
-
-</style>
-<script>
-  // Util: Clear error messages
-  function clearFormMessages() {
-    document.getElementById('loginError').style.display = 'none';
-    document.getElementById('signupError').style.display = 'none';
-  }
-
-  // Util: Close modal
-  function closeModal() {
-    document.getElementById('authModal').style.display = 'none';
-    clearFormMessages();
-  }
-
-  // Handle modal switching and events
-  document.addEventListener('click', function (e) {
-    if (e.target.id === 'showSignup') {
-      e.preventDefault();
-      document.getElementById('loginFormContainer').style.display = 'none';
-      document.getElementById('signupFormContainer').style.display = '';
-      clearFormMessages();
-    }
-    if (e.target.id === 'showLogin') {
-      e.preventDefault();
-      document.getElementById('loginFormContainer').style.display = '';
-      document.getElementById('signupFormContainer').style.display = 'none';
-      clearFormMessages();
-    }
-    if (e.target.id === 'closeModal' || e.target === document.getElementById('authModal')) {
-      closeModal();
-    }
-  });
-
-  // ESC key to close modal
-  document.addEventListener('keydown', function(event) {
-    if (event.key === "Escape") {
-      closeModal();
-    }
-  });
-
-  // Login with email/password
-  document.getElementById('loginForm').addEventListener('submit', function (e) {
-    e.preventDefault();
-    const email = document.getElementById('loginEmail').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    clearFormMessages();
-
-    firebase.auth().signInWithEmailAndPassword(email, password)
-      .then(() => {
-        closeModal();
-        window.location.href = "dashboard.html";
-      })
-      .catch((error) => {
-        const loginError = document.getElementById('loginError');
-        loginError.textContent = error.message;
-        loginError.style.display = 'block';
-      });
-  });
-
-  // Signup with email/password
-  document.getElementById('signupForm').addEventListener('submit', function (e) {
-    e.preventDefault();
-    const email = document.getElementById('signupEmail').value.trim();
-    const password = document.getElementById('signupPassword').value;
-    clearFormMessages();
-
-    firebase.auth().createUserWithEmailAndPassword(email, password)
-      .then(() => {
-        closeModal();
-        window.location.href = "dashboard.html";
-      })
-      .catch((error) => {
-        const signupError = document.getElementById('signupError');
-        signupError.textContent = error.message;
-        signupError.style.display = 'block';
-      });
-  });
-
-  // Google sign-in (login + signup, no email/password needed)
-  document.querySelectorAll('.google-btn').forEach(btn => {
-    btn.addEventListener('click', function(e) {
-      e.preventDefault();
-      const provider = new firebase.auth.GoogleAuthProvider();
-      firebase.auth().signInWithPopup(provider)
-        .then(() => {
-          closeModal();
-          window.location.href = "dashboard.html";
-        })
-        .catch((error) => {
-          alert("Google sign-in error: " + error.message);
-        });
-    });
-  });
-  document.querySelectorAll('.main-nav a').forEach(link => {
-  if (link.href === window.location.href) {
-    link.classList.add('active');
-  }
-});
-
-</script>
   <!-- Main Content -->
   <section class="landing-hero">
     <div class="hero-card">
