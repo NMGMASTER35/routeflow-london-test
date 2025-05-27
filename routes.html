@@ -83,40 +83,127 @@
   </div>
 
   <!-- ROUTES SECTION -->
-  <main style="padding: 3rem 1rem; text-align: center;">
-    <h1>Routes</h1>
-    <p>Explore London bus routes below:</p>
-    <ul id="routesList" style="list-style: none; padding: 0; margin-top: 2rem;"></ul>
-  </main>
+ <title>London Bus Routes</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+      background: #f4f4f4;
+    }
+    h1 {
+      text-align: center;
+    }
+    input, select {
+      padding: 0.5rem;
+      margin: 1rem 0;
+      width: 300px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 0.5rem;
+      text-align: left;
+    }
+    tr:hover {
+      background: #f1f1f1;
+      cursor: pointer;
+    }
+    #details {
+      margin-top: 2rem;
+      padding: 1rem;
+      background: white;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>London Bus Routes</h1>
+  <input type="text" id="searchInput" placeholder="Search by route number or name...">
+  <select id="modeFilter">
+    <option value="">All Modes</option>
+    <option value="bus">Bus</option>
+  </select>
+  <table>
+    <thead>
+      <tr>
+        <th>Route No.</th>
+        <th>Start</th>
+        <th>Destination</th>
+        <th>Mode</th>
+      </tr>
+    </thead>
+    <tbody id="routeTable"></tbody>
+  </table>
 
-  <!-- SCRIPTS -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-  <script src="main.js"></script>
+  <div id="details"></div>
 
-  <!-- Fetch and display bus routes -->
   <script>
-    fetch("http://127.0.0.1:5000/api/routes")
-      .then(response => response.json())
-      .then(data => {
-        const list = document.getElementById("routesList");
-        if (!data.length) {
-          list.innerHTML = "<li>No routes available.</li>";
-          return;
-        }
+    const API_KEY = "f17d0725d1654338ab02a361fe41abad";
+    const ENDPOINT = `https://api.tfl.gov.uk/Line/Mode/bus/Route?app_key=${API_KEY}`;
 
-        data.forEach(route => {
-          const item = document.createElement("li");
-          item.style.padding = "0.5rem";
-          item.style.borderBottom = "1px solid #ccc";
-          item.textContent = `${route.line_id}: ${route.line_name} (${route.mode_name})`;
-          list.appendChild(item);
-        });
+    const routeTable = document.getElementById("routeTable");
+    const searchInput = document.getElementById("searchInput");
+    const modeFilter = document.getElementById("modeFilter");
+    const detailsBox = document.getElementById("details");
+
+    let routes = [];
+
+    function renderTable(data) {
+      routeTable.innerHTML = "";
+      data.forEach(route => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${route.id}</td>
+          <td>${route.routeSections?.[0]?.originationName || "-"}</td>
+          <td>${route.routeSections?.[0]?.destinationName || "-"}</td>
+          <td>${route.modeName}</td>
+        `;
+        row.addEventListener("click", () => showDetails(route));
+        routeTable.appendChild(row);
+      });
+    }
+
+    function showDetails(route) {
+      detailsBox.style.display = "block";
+      detailsBox.innerHTML = `
+        <h2>Route ${route.id}</h2>
+        <p><strong>From:</strong> ${route.routeSections?.[0]?.originationName}</p>
+        <p><strong>To:</strong> ${route.routeSections?.[0]?.destinationName}</p>
+        <p><strong>Mode:</strong> ${route.modeName}</p>
+        <p><strong>Description:</strong> ${route.description || "No description available."}</p>
+      `;
+    }
+
+    function applyFilters() {
+      const search = searchInput.value.toLowerCase();
+      const mode = modeFilter.value;
+
+      const filtered = routes.filter(route => {
+        const matchesSearch = route.id.toLowerCase().includes(search) ||
+                              route.name.toLowerCase().includes(search);
+        const matchesMode = !mode || route.modeName === mode;
+        return matchesSearch && matchesMode;
+      });
+
+      renderTable(filtered);
+    }
+
+    searchInput.addEventListener("input", applyFilters);
+    modeFilter.addEventListener("change", applyFilters);
+
+    fetch(ENDPOINT)
+      .then(res => res.json())
+      .then(data => {
+        routes = data;
+        renderTable(routes);
       })
-      .catch(error => {
-        console.error("Error loading routes:", error);
-        document.getElementById("routesList").innerHTML =
-          "<li style='color:red;'>Error loading routes. Is the server running?</li>";
+      .catch(err => {
+        routeTable.innerHTML = `<tr><td colspan="4">Failed to load routes.</td></tr>`;
+        console.error(err);
       });
   </script>
 </body>
