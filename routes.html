@@ -83,7 +83,7 @@
   </div>
 
   <!-- ROUTES SECTION -->
- <title>London Bus Routes</title>
+<title>London Bus Routes</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -93,12 +93,6 @@
     h1 {
       text-align: center;
       margin-bottom: 1rem;
-    }
-    input, select {
-      padding: 0.6rem;
-      margin: 1rem 0;
-      width: 300px;
-      font-size: 1rem;
     }
     details {
       background: white;
@@ -140,17 +134,13 @@
     #modalContent h2 {
       margin-top: 0;
     }
-    #modalContent button {
-      margin-top: 1rem;
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
+    .direction-btn {
+      margin-bottom: 1rem;
     }
   </style>
 </head>
 <body>
   <h1>London Bus Routes</h1>
-  <input type="text" id="searchInput" placeholder="Search by route number or name...">
-  <select id="modeFilter"></select>
   <div id="routeGroups"></div>
 
   <dialog id="detailsModal">
@@ -163,8 +153,6 @@
     const ROUTE_ENDPOINT = `https://api.tfl.gov.uk/Line/Mode/bus/Route?app_key=${API_KEY}`;
 
     const routeGroups = document.getElementById("routeGroups");
-    const searchInput = document.getElementById("searchInput");
-    const modeFilter = document.getElementById("modeFilter");
     const detailsModal = document.getElementById("detailsModal");
     const modalContent = document.getElementById("modalContent");
 
@@ -209,7 +197,7 @@
           <tbody></tbody>
         `;
         const tbody = table.querySelector("tbody");
-        groups[group].forEach(route => {
+        groups[group].sort((a, b) => a.id.localeCompare(b.id, undefined, {numeric: true})).forEach(route => {
           const row = document.createElement("tr");
           row.innerHTML = `
             <td>${route.id}</td>
@@ -226,37 +214,32 @@
     }
 
     function showDetails(route) {
-      fetch(`https://api.tfl.gov.uk/Line/${route.id}/StopPoints?app_key=${API_KEY}`)
-        .then(res => res.json())
-        .then(stops => {
-          fetch(`https://api.tfl.gov.uk/Line/${route.id}/Arrivals?app_key=${API_KEY}`)
-            .then(res => res.json())
-            .then(arrivals => {
-              const buses = arrivals.length ? [...new Set(arrivals.map(a => a.vehicleRegistration))] : [];
-              modalContent.innerHTML = `
-                <h2>Route ${route.id}</h2>
-                <p><strong>From:</strong> ${route.routeSections?.[0]?.originationName}</p>
-                <p><strong>To:</strong> ${route.routeSections?.[0]?.destinationName}</p>
-                <h3>Stops</h3>
-                <ul>${stops.map(stop => `<li>${stop.commonName}</li>`).join("")}</ul>
-                <h3>Active Buses</h3>
-                <ul>${buses.length ? buses.map(reg => `<li>${reg}</li>`).join("") : "<li>No active vehicles found.</li>"}</ul>
-                <button onclick="window.location.href='routes/${route.id}.html'">More Info</button>
-              `;
-              detailsModal.showModal();
-            });
-        });
-    }
+      let direction = 0;
 
-    function applyFilters() {
-      const search = searchInput.value.toLowerCase();
-      const mode = modeFilter.value;
-      const filtered = routes.filter(route => {
-        return (!mode || route.modeName === mode) &&
-               (route.id.toLowerCase().includes(search) ||
-                route.name.toLowerCase().includes(search));
-      });
-      renderGroupedRoutes(filtered);
+      function updateDetails() {
+        fetch(`https://api.tfl.gov.uk/Line/${route.id}/Route/sequence/${direction}?app_key=${API_KEY}`)
+          .then(res => res.json())
+          .then(sequence => {
+            fetch(`https://api.tfl.gov.uk/Line/${route.id}/Arrivals?app_key=${API_KEY}`)
+              .then(res => res.json())
+              .then(arrivals => {
+                const buses = arrivals.length ? [...new Set(arrivals.map(a => a.vehicleRegistration).filter(Boolean))] : [];
+                modalContent.innerHTML = `
+                  <h2>Route ${route.id}</h2>
+                  <p><strong>Direction:</strong> ${sequence.direction}</p>
+                  <button class="direction-btn" onclick="(${updateDetails.toString()})(${direction === 0 ? 1 : 0})">Switch Direction</button>
+                  <h3>Stops</h3>
+                  <ul>${sequence.stopPointSequences?.[0]?.stopPoint.map(p => `<li>${p.name}</li>`).join("") || "<li>No stops found</li>"}</ul>
+                  <h3>Active Buses</h3>
+                  <ul>${buses.length ? buses.map(reg => `<li>${reg}</li>`).join("") : "<li>No active vehicles found.</li>"}</ul>
+                  <button onclick="window.location.href='routes/${route.id}.html'">More Info</button>
+                `;
+              });
+          });
+      }
+
+      updateDetails();
+      detailsModal.showModal();
     }
 
     fetch(ROUTE_ENDPOINT)
@@ -264,13 +247,7 @@
       .then(data => {
         routes = data;
         renderGroupedRoutes(routes);
-        const modes = [...new Set(data.map(r => r.modeName))];
-        modeFilter.innerHTML = `<option value="">All Modes</option>` +
-          modes.map(m => `<option value="${m}">${m[0].toUpperCase() + m.slice(1)}</option>`).join("");
       });
-
-    searchInput.addEventListener("input", applyFilters);
-    modeFilter.addEventListener("change", applyFilters);
   </script>
 </body>
 </html>
