@@ -98,6 +98,10 @@
       margin: 1rem 0;
       width: 300px;
     }
+    summary {
+      cursor: pointer;
+      font-weight: bold;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -107,104 +111,151 @@
       border: 1px solid #ccc;
       padding: 0.5rem;
       text-align: left;
+      text-transform: capitalize;
     }
     tr:hover {
       background: #f1f1f1;
       cursor: pointer;
     }
-    #details {
-      margin-top: 2rem;
+    dialog {
+      width: 70%;
+      border: none;
+      border-radius: 8px;
       padding: 1rem;
-      background: white;
-      display: none;
+    }
+    dialog::backdrop {
+      background: rgba(0,0,0,0.4);
     }
   </style>
 </head>
 <body>
   <h1>London Bus Routes</h1>
   <input type="text" id="searchInput" placeholder="Search by route number or name...">
-  <select id="modeFilter">
-    <option value="">All Modes</option>
-    <option value="bus">Bus</option>
-  </select>
-  <table>
-    <thead>
-      <tr>
-        <th>Route No.</th>
-        <th>Start</th>
-        <th>Destination</th>
-        <th>Mode</th>
-      </tr>
-    </thead>
-    <tbody id="routeTable"></tbody>
-  </table>
+  <select id="modeFilter"></select>
+  <div id="routeGroups"></div>
 
-  <div id="details"></div>
+  <dialog id="detailsModal">
+    <button onclick="document.getElementById('detailsModal').close()">Close</button>
+    <div id="modalContent"></div>
+  </dialog>
 
   <script>
     const API_KEY = "f17d0725d1654338ab02a361fe41abad";
-    const ENDPOINT = `https://api.tfl.gov.uk/Line/Mode/bus/Route?app_key=${API_KEY}`;
-
-    const routeTable = document.getElementById("routeTable");
+    const ROUTE_ENDPOINT = `https://api.tfl.gov.uk/Line/Mode/bus/Route?app_key=${API_KEY}`;
+    const routeGroups = document.getElementById("routeGroups");
     const searchInput = document.getElementById("searchInput");
     const modeFilter = document.getElementById("modeFilter");
-    const detailsBox = document.getElementById("details");
+    const detailsModal = document.getElementById("detailsModal");
+    const modalContent = document.getElementById("modalContent");
 
     let routes = [];
 
-    function renderTable(data) {
-      routeTable.innerHTML = "";
+    function groupRoute(routeId) {
+      if (/^[0-9]+$/.test(routeId)) {
+        const num = parseInt(routeId);
+        if (num < 100) return "1-99";
+        if (num < 200) return "100-199";
+        if (num < 300) return "200-299";
+        if (num < 400) return "300-399";
+        if (num < 500) return "400-499";
+        if (num < 600) return "500-599";
+        if (num < 700) return "600-699";
+        if (num < 900) return "700-899";
+        return "900-999";
+      } else if (/^[a-mA-M]/.test(routeId)) {
+        return "A-M";
+      } else if (/^[nN]/.test(routeId)) {
+        return "N";
+      } else {
+        return "P-X";
+      }
+    }
+
+    function renderGroupedRoutes(data) {
+      const groups = {};
       data.forEach(route => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${route.id}</td>
-          <td>${route.routeSections?.[0]?.originationName || "-"}</td>
-          <td>${route.routeSections?.[0]?.destinationName || "-"}</td>
-          <td>${route.modeName}</td>
+        const group = groupRoute(route.id);
+        if (!groups[group]) groups[group] = [];
+        groups[group].push(route);
+      });
+
+      routeGroups.innerHTML = "";
+      Object.keys(groups).sort().forEach(group => {
+        const section = document.createElement("details");
+        section.innerHTML = `<summary>Routes ${group}</summary>`;
+        const table = document.createElement("table");
+        table.innerHTML = `
+          <thead><tr><th>Route No.</th><th>Start</th><th>Destination</th><th>Mode</th></tr></thead>
+          <tbody></tbody>
         `;
-        row.addEventListener("click", () => showDetails(route));
-        routeTable.appendChild(row);
+        const tbody = table.querySelector("tbody");
+        groups[group].forEach(route => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${route.id}</td>
+            <td>${route.routeSections?.[0]?.originationName || "-"}</td>
+            <td>${route.routeSections?.[0]?.destinationName || "-"}</td>
+            <td>${route.modeName}</td>
+          `;
+          row.addEventListener("click", () => showDetails(route));
+          tbody.appendChild(row);
+        });
+        section.appendChild(table);
+        routeGroups.appendChild(section);
       });
     }
 
     function showDetails(route) {
-      detailsBox.style.display = "block";
-      detailsBox.innerHTML = `
-        <h2>Route ${route.id}</h2>
-        <p><strong>From:</strong> ${route.routeSections?.[0]?.originationName}</p>
-        <p><strong>To:</strong> ${route.routeSections?.[0]?.destinationName}</p>
-        <p><strong>Mode:</strong> ${route.modeName}</p>
-        <p><strong>Description:</strong> ${route.description || "No description available."}</p>
-      `;
+      fetch(`https://api.tfl.gov.uk/Line/${route.id}/Route?app_key=${API_KEY}`)
+        .then(res => res.json())
+        .then(routeDetails => {
+          const stops = routeDetails[0]?.routeSections?.map(sec => `
+            <p><strong>${sec.originationName} → ${sec.destinationName}</strong></p>
+            <ul>${sec.stationIntervals?.map(intv => `<li>${intv.stopPointSequences.map(sp => sp.stopPoint.map(p => `<li>${p.name}</li>`).join(""))}</li>`).join("")}</ul>
+          `).join("") || "<p>No stop data.</p>";
+
+          fetch(`https://api.tfl.gov.uk/Line/${route.id}/Arrivals?app_key=${API_KEY}`)
+            .then(res => res.json())
+            .then(arrivals => {
+              const buses = arrivals.length ? [...new Set(arrivals.map(a => a.vehicleRegistration))] : [];
+              modalContent.innerHTML = `
+                <h2>Route ${route.id}</h2>
+                <p><strong>From:</strong> ${route.routeSections?.[0]?.originationName}</p>
+                <p><strong>To:</strong> ${route.routeSections?.[0]?.destinationName}</p>
+                <p><strong>Mode:</strong> ${route.modeName}</p>
+                <p><strong>Description:</strong> ${route.description || "No description available."}</p>
+                <h3>Stops</h3>${stops}
+                <h3>Active Buses</h3>
+                <ul>${buses.length ? buses.map(reg => `<li>${reg}</li>`).join("") : "<li>No active vehicles found.</li>"}</ul>
+              `;
+              detailsModal.showModal();
+            });
+        });
     }
 
     function applyFilters() {
       const search = searchInput.value.toLowerCase();
       const mode = modeFilter.value;
-
       const filtered = routes.filter(route => {
-        const matchesSearch = route.id.toLowerCase().includes(search) ||
-                              route.name.toLowerCase().includes(search);
-        const matchesMode = !mode || route.modeName === mode;
-        return matchesSearch && matchesMode;
+        return (!mode || route.modeName === mode) &&
+               (route.id.toLowerCase().includes(search) ||
+                route.name.toLowerCase().includes(search));
       });
-
-      renderTable(filtered);
+      renderGroupedRoutes(filtered);
     }
 
-    searchInput.addEventListener("input", applyFilters);
-    modeFilter.addEventListener("change", applyFilters);
-
-    fetch(ENDPOINT)
+    fetch(ROUTE_ENDPOINT)
       .then(res => res.json())
       .then(data => {
         routes = data;
-        renderTable(routes);
-      })
-      .catch(err => {
-        routeTable.innerHTML = `<tr><td colspan="4">Failed to load routes.</td></tr>`;
-        console.error(err);
+        renderGroupedRoutes(routes);
+        const modes = [...new Set(data.map(r => r.modeName))];
+        modeFilter.innerHTML = `<option value="">All Modes</option>` +
+          modes.map(m => `<option value="${m}">${m[0].toUpperCase() + m.slice(1)}</option>`).join("");
       });
+
+    searchInput.addEventListener("input", applyFilters);
+    modeFilter.addEventListener("change", applyFilters);
   </script>
 </body>
 </html>
