@@ -87,25 +87,35 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 2rem;
       background: #f4f4f4;
+      padding: 2rem;
     }
     h1 {
       text-align: center;
+      margin-bottom: 1rem;
     }
     input, select {
-      padding: 0.5rem;
+      padding: 0.6rem;
       margin: 1rem 0;
       width: 300px;
+      font-size: 1rem;
+    }
+    details {
+      background: white;
+      margin-bottom: 1rem;
+      border-radius: 6px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      padding: 1rem;
     }
     summary {
-      cursor: pointer;
       font-weight: bold;
+      font-size: 1.1rem;
+      cursor: pointer;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      background: #fff;
+      margin-top: 1rem;
     }
     th, td {
       border: 1px solid #ccc;
@@ -119,12 +129,21 @@
     }
     dialog {
       width: 70%;
+      max-width: 800px;
+      padding: 2rem;
+      border-radius: 10px;
       border: none;
-      border-radius: 8px;
-      padding: 1rem;
     }
     dialog::backdrop {
-      background: rgba(0,0,0,0.4);
+      background: rgba(0, 0, 0, 0.4);
+    }
+    #modalContent h2 {
+      margin-top: 0;
+    }
+    #modalContent button {
+      margin-top: 1rem;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
     }
   </style>
 </head>
@@ -142,6 +161,7 @@
   <script>
     const API_KEY = "f17d0725d1654338ab02a361fe41abad";
     const ROUTE_ENDPOINT = `https://api.tfl.gov.uk/Line/Mode/bus/Route?app_key=${API_KEY}`;
+
     const routeGroups = document.getElementById("routeGroups");
     const searchInput = document.getElementById("searchInput");
     const modeFilter = document.getElementById("modeFilter");
@@ -206,14 +226,9 @@
     }
 
     function showDetails(route) {
-      fetch(`https://api.tfl.gov.uk/Line/${route.id}/Route?app_key=${API_KEY}`)
+      fetch(`https://api.tfl.gov.uk/Line/${route.id}/StopPoints?app_key=${API_KEY}`)
         .then(res => res.json())
-        .then(routeDetails => {
-          const stops = routeDetails[0]?.routeSections?.map(sec => `
-            <p><strong>${sec.originationName} → ${sec.destinationName}</strong></p>
-            <ul>${sec.stationIntervals?.map(intv => `<li>${intv.stopPointSequences.map(sp => sp.stopPoint.map(p => `<li>${p.name}</li>`).join(""))}</li>`).join("")}</ul>
-          `).join("") || "<p>No stop data.</p>";
-
+        .then(stops => {
           fetch(`https://api.tfl.gov.uk/Line/${route.id}/Arrivals?app_key=${API_KEY}`)
             .then(res => res.json())
             .then(arrivals => {
@@ -222,11 +237,11 @@
                 <h2>Route ${route.id}</h2>
                 <p><strong>From:</strong> ${route.routeSections?.[0]?.originationName}</p>
                 <p><strong>To:</strong> ${route.routeSections?.[0]?.destinationName}</p>
-                <p><strong>Mode:</strong> ${route.modeName}</p>
-                <p><strong>Description:</strong> ${route.description || "No description available."}</p>
-                <h3>Stops</h3>${stops}
+                <h3>Stops</h3>
+                <ul>${stops.map(stop => `<li>${stop.commonName}</li>`).join("")}</ul>
                 <h3>Active Buses</h3>
                 <ul>${buses.length ? buses.map(reg => `<li>${reg}</li>`).join("") : "<li>No active vehicles found.</li>"}</ul>
+                <button onclick="window.location.href='routes/${route.id}.html'">More Info</button>
               `;
               detailsModal.showModal();
             });
