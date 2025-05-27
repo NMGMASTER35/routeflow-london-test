@@ -83,7 +83,8 @@
   </div>
 
   <!-- ROUTES SECTION -->
-<title>London Bus Routes</title>
+
+  <title>London Bus Routes</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -92,7 +93,6 @@
     }
     h1 {
       text-align: center;
-      margin-bottom: 1rem;
     }
     details {
       background: white;
@@ -118,24 +118,29 @@
       text-transform: capitalize;
     }
     tr:hover {
-      background: #f1f1f1;
+      background: #eef;
       cursor: pointer;
     }
     dialog {
-      width: 70%;
+      width: 80%;
       max-width: 800px;
-      padding: 2rem;
-      border-radius: 10px;
       border: none;
+      border-radius: 10px;
+      padding: 2rem;
     }
     dialog::backdrop {
       background: rgba(0, 0, 0, 0.4);
     }
-    #modalContent h2 {
-      margin-top: 0;
-    }
     .direction-btn {
       margin-bottom: 1rem;
+      padding: 0.4rem 0.8rem;
+    }
+    ul {
+      padding-left: 1.2rem;
+    }
+    button {
+      cursor: pointer;
+      font-size: 1rem;
     }
   </style>
 </head>
@@ -151,31 +156,28 @@
   <script>
     const API_KEY = "f17d0725d1654338ab02a361fe41abad";
     const ROUTE_ENDPOINT = `https://api.tfl.gov.uk/Line/Mode/bus/Route?app_key=${API_KEY}`;
-
     const routeGroups = document.getElementById("routeGroups");
     const detailsModal = document.getElementById("detailsModal");
     const modalContent = document.getElementById("modalContent");
 
-    let routes = [];
-
     function groupRoute(routeId) {
       if (/^[0-9]+$/.test(routeId)) {
         const num = parseInt(routeId);
-        if (num < 100) return "1-99";
-        if (num < 200) return "100-199";
-        if (num < 300) return "200-299";
-        if (num < 400) return "300-399";
-        if (num < 500) return "400-499";
-        if (num < 600) return "500-599";
-        if (num < 700) return "600-699";
-        if (num < 900) return "700-899";
-        return "900-999";
+        if (num < 100) return "1–99";
+        if (num < 200) return "100–199";
+        if (num < 300) return "200–299";
+        if (num < 400) return "300–399";
+        if (num < 500) return "400–499";
+        if (num < 600) return "500–599";
+        if (num < 700) return "600–699";
+        if (num < 900) return "700–899";
+        return "900–999";
       } else if (/^[a-mA-M]/.test(routeId)) {
-        return "A-M";
+        return "A–M";
       } else if (/^[nN]/.test(routeId)) {
         return "N";
       } else {
-        return "P-X";
+        return "P–X";
       }
     }
 
@@ -193,28 +195,32 @@
         section.innerHTML = `<summary>Routes ${group}</summary>`;
         const table = document.createElement("table");
         table.innerHTML = `
-          <thead><tr><th>Route No.</th><th>Start</th><th>Destination</th><th>Mode</th></tr></thead>
+          <thead>
+            <tr><th>Route No.</th><th>Start</th><th>Destination</th><th>Mode</th></tr>
+          </thead>
           <tbody></tbody>
         `;
         const tbody = table.querySelector("tbody");
-        groups[group].sort((a, b) => a.id.localeCompare(b.id, undefined, {numeric: true})).forEach(route => {
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${route.id}</td>
-            <td>${route.routeSections?.[0]?.originationName || "-"}</td>
-            <td>${route.routeSections?.[0]?.destinationName || "-"}</td>
-            <td>${route.modeName}</td>
-          `;
-          row.addEventListener("click", () => showDetails(route));
-          tbody.appendChild(row);
-        });
+        groups[group]
+          .sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }))
+          .forEach(route => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td>${route.id}</td>
+              <td>${route.routeSections?.[0]?.originationName || "-"}</td>
+              <td>${route.routeSections?.[0]?.destinationName || "-"}</td>
+              <td>${route.modeName}</td>
+            `;
+            row.addEventListener("click", () => showDetails(route));
+            tbody.appendChild(row);
+          });
         section.appendChild(table);
         routeGroups.appendChild(section);
       });
     }
 
     function showDetails(route) {
-      let direction = 0;
+      let direction = "outbound";
 
       function updateDetails() {
         fetch(`https://api.tfl.gov.uk/Line/${route.id}/Route/sequence/${direction}?app_key=${API_KEY}`)
@@ -223,31 +229,41 @@
             fetch(`https://api.tfl.gov.uk/Line/${route.id}/Arrivals?app_key=${API_KEY}`)
               .then(res => res.json())
               .then(arrivals => {
-                const buses = arrivals.length ? [...new Set(arrivals.map(a => a.vehicleRegistration).filter(Boolean))] : [];
+                const buses = arrivals.length
+                  ? [...new Set(arrivals.map(a => a.vehicleRegistration).filter(Boolean))]
+                  : [];
+
+                const stopsList = sequence.stopPointSequences && sequence.stopPointSequences.length > 0
+                  ? sequence.stopPointSequences[0].stopPoint.map(p => `<li>${p.name}</li>`).join("")
+                  : "<li>No stops found</li>";
+
                 modalContent.innerHTML = `
                   <h2>Route ${route.id}</h2>
-                  <p><strong>Direction:</strong> ${sequence.direction}</p>
-                  <button class="direction-btn" onclick="(${updateDetails.toString()})(${direction === 0 ? 1 : 0})">Switch Direction</button>
+                  <p><strong>Direction:</strong> ${direction.charAt(0).toUpperCase() + direction.slice(1)}</p>
+                  <button class="direction-btn" id="switchDirectionBtn">Switch Direction</button>
                   <h3>Stops</h3>
-                  <ul>${sequence.stopPointSequences?.[0]?.stopPoint.map(p => `<li>${p.name}</li>`).join("") || "<li>No stops found</li>"}</ul>
+                  <ul>${stopsList}</ul>
                   <h3>Active Buses</h3>
                   <ul>${buses.length ? buses.map(reg => `<li>${reg}</li>`).join("") : "<li>No active vehicles found.</li>"}</ul>
                   <button onclick="window.location.href='routes/${route.id}.html'">More Info</button>
                 `;
+
+                document.getElementById("switchDirectionBtn").addEventListener("click", () => {
+                  direction = direction === "outbound" ? "inbound" : "outbound";
+                  updateDetails();
+                });
+
+                detailsModal.showModal();
               });
           });
       }
 
       updateDetails();
-      detailsModal.showModal();
     }
 
     fetch(ROUTE_ENDPOINT)
       .then(res => res.json())
-      .then(data => {
-        routes = data;
-        renderGroupedRoutes(routes);
-      });
+      .then(data => renderGroupedRoutes(data));
   </script>
 </body>
 </html>
