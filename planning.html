@@ -538,9 +538,9 @@ function signOut() {
     <h1>Journey Planning</h1>
     <p>Plan your journey across London. Feature coming soon!</p>
   </main>
-<style>
+  <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: #f4f6f8;
       margin: 0;
       padding: 20px;
@@ -550,22 +550,22 @@ function signOut() {
       color: #2e3b4e;
     }
     .planner-form {
-      max-width: 600px;
+      max-width: 700px;
       margin: auto;
       background: white;
-      padding: 20px;
-      border-radius: 10px;
+      padding: 25px;
+      border-radius: 12px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
     label {
       font-weight: bold;
-      margin-top: 10px;
+      margin-top: 15px;
       display: block;
     }
     .autocomplete {
       position: relative;
     }
-    input {
+    input, select {
       width: 100%;
       padding: 10px;
       margin-top: 5px;
@@ -579,9 +579,10 @@ function signOut() {
       right: 0;
       background: white;
       border: 1px solid #ccc;
-      z-index: 10;
-      max-height: 200px;
+      z-index: 1000;
+      max-height: 250px;
       overflow-y: auto;
+      border-radius: 0 0 6px 6px;
     }
     .suggestion {
       padding: 10px;
@@ -591,9 +592,9 @@ function signOut() {
       background: #f0f8ff;
     }
     button {
-      margin-top: 15px;
+      margin-top: 20px;
       width: 100%;
-      padding: 12px;
+      padding: 14px;
       background: #0078d4;
       color: white;
       border: none;
@@ -604,33 +605,49 @@ function signOut() {
     button:hover {
       background: #005fa3;
     }
+    .filters {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+    .filters div {
+      flex: 1;
+      padding-right: 10px;
+    }
     .journey-summary {
       margin-top: 30px;
-      max-width: 800px;
+      max-width: 900px;
       margin-left: auto;
       margin-right: auto;
     }
     .summary-card {
       background: white;
-      padding: 15px;
-      margin-bottom: 10px;
-      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 15px;
+      border-radius: 10px;
       cursor: pointer;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      transition: background 0.2s ease;
     }
     .summary-card:hover {
       background: #f0f8ff;
     }
     .details {
       margin-top: 10px;
-      font-size: 14px;
+      font-size: 15px;
       color: #333;
     }
     .step {
-      padding: 5px 0;
+      padding: 8px 0;
       border-bottom: 1px solid #eee;
     }
+    .icons {
+      font-size: 20px;
+      margin-right: 8px;
+    }
   </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
 </head>
 <body>
   <h1>RouteFlow London – Journey Planner</h1>
@@ -645,6 +662,31 @@ function signOut() {
     <div class="autocomplete">
       <input type="text" id="to" placeholder="Destination or postcode" oninput="suggestLocations(this, 'to')"/>
       <div id="to-suggestions" class="suggestions"></div>
+    </div>
+
+    <div class="filters">
+      <div>
+        <label for="mode">Mode of Transport:</label>
+        <select id="mode">
+          <option value="">Any</option>
+          <option value="tube">Tube</option>
+          <option value="bus">Bus</option>
+          <option value="walking">Walking</option>
+          <option value="overground">Overground</option>
+          <option value="national-rail">Train</option>
+        </select>
+      </div>
+      <div>
+        <label for="timeType">Time Type:</label>
+        <select id="timeType">
+          <option value="depart">Leave at</option>
+          <option value="arrive">Arrive by</option>
+        </select>
+      </div>
+      <div>
+        <label for="time">Time:</label>
+        <input type="datetime-local" id="time"/>
+      </div>
     </div>
 
     <button onclick="planJourney()">Plan Journey</button>
@@ -680,13 +722,18 @@ function signOut() {
     async function planJourney() {
       const from = document.getElementById("from").value;
       const to = document.getElementById("to").value;
+      const mode = document.getElementById("mode").value;
+      const timeType = document.getElementById("timeType").value;
+      const time = document.getElementById("time").value;
       const resultsDiv = document.getElementById("journeyResults");
       resultsDiv.innerHTML = "<p>Loading...</p>";
 
+      let url = `https://api.tfl.gov.uk/Journey/JourneyResults/${encodeURIComponent(from)}/to/${encodeURIComponent(to)}?app_key=${apiKey}`;
+      if (mode) url += `&mode=${mode}`;
+      if (time) url += `&${timeType}DateTime=${encodeURIComponent(time)}`;
+
       try {
-        const res = await fetch(
-          `https://api.tfl.gov.uk/Journey/JourneyResults/${encodeURIComponent(from)}/to/${encodeURIComponent(to)}?app_key=${apiKey}`
-        );
+        const res = await fetch(url);
         const data = await res.json();
 
         if (!data.journeys) {
@@ -698,11 +745,12 @@ function signOut() {
         data.journeys.forEach((journey, index) => {
           const card = document.createElement("div");
           card.className = "summary-card";
+          const icons = [...new Set(journey.legs.map(leg => getIcon(leg.mode.name)))].join(" ");
           card.innerHTML = `
             <strong>Option ${index + 1}</strong><br/>
+            ${icons}<br/>
             Duration: ${journey.duration} mins<br/>
-            Start: ${journey.startDateTime.slice(11, 16)} → End: ${journey.arrivalDateTime.slice(11, 16)}<br/>
-            Modes: ${[...new Set(journey.legs.map(leg => leg.mode.name))].join(", ")}
+            Start: ${journey.startDateTime.slice(11, 16)} → End: ${journey.arrivalDateTime.slice(11, 16)}
           `;
           card.onclick = () => showDetails(journey, card);
           resultsDiv.appendChild(card);
@@ -713,9 +761,20 @@ function signOut() {
       }
     }
 
+    function getIcon(mode) {
+      const map = {
+        walking: '<i class="fas fa-walking icons"></i>',
+        bus: '<i class="fas fa-bus icons"></i>',
+        tube: '<i class="fas fa-subway icons"></i>',
+        "national-rail": '<i class="fas fa-train icons"></i>',
+        overground: '<i class="fas fa-train icons"></i>',
+        default: '<i class="fas fa-question-circle icons"></i>'
+      };
+      return map[mode] || map.default;
+    }
+
     function showDetails(journey, card) {
       document.querySelectorAll(".details").forEach(el => el.remove());
-
       const detailDiv = document.createElement("div");
       detailDiv.className = "details";
 
@@ -735,3 +794,4 @@ function signOut() {
   </script>
 </body>
 </html>
+
