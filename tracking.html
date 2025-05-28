@@ -15,70 +15,522 @@
       <img src="images/Routeflow London permanent logo.png" alt="RouteFlow London Logo">
       <strong>RouteFlow London</strong>
     </div>
-    <div class="menu-bar">
-     <nav class="main-nav">
-  <a href="index.html">Home</a>
-  <a href="dashboard.html">Dashboard</a>
-  <a href="tracking.html">Tracking</a>
-  <a href="planning.html">Planning</a>
-  <a href="routes.html">Routes</a>
-  <a href="withdrawn.html">Withdrawn</a>
-  <a href="disruptions.html">Disruptions</a>
-  <a href="fleet.html">Fleet</a>
-</nav>
-      <button class="hamburger" id="hamburgerBtn" aria-label="Open menu">
+    <header class="navbar">
+  <div class="navbar__container">
+    <a href="index.html" class="navbar__logo" aria-label="RouteFlow London Home">
+      <img src="images/Routeflow London permanent logo.png" alt="RouteFlow London Logo" />
+      <strong>RouteFlow London</strong>
+    </a>
+    <nav class="navbar__links" id="navbarLinks">
+      <a href="index.html">Home</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="tracking.html">Tracking</a>
+      <a href="planning.html">Planning</a>
+      <a href="routes.html">Routes</a>
+      <a href="withdrawn.html">Withdrawn</a>
+      <a href="disruptions.html">Disruptions</a>
+      <a href="fleet.html">Fleet</a>
+    </nav>
+    <div class="navbar__controls">
+      <button class="hamburger" id="hamburgerBtn" aria-label="Open mobile menu">
         <i class="fa-solid fa-bars"></i>
       </button>
-      <div class="account-icon" id="profileMenu">
-        <button aria-label="Account" id="profileIcon">
+      <div class="account-menu" id="accountMenu">
+        <button aria-label="Account" id="profileIcon" type="button">
           <i class="fa-regular fa-user"></i>
         </button>
-        <div class="account-dropdown" id="dropdownContent"></div>
+        <div class="account-dropdown" id="dropdownContent">
+          <a href="profile.html">Profile</a>
+          <a href="settings.html">Settings</a>
+          <button onclick="openModal('login')" type="button">Login</button>
+          <button onclick="openModal('signup')" type="button">Sign Up</button>
+          <button onclick="signOut()" type="button">Sign out</button>
+        </div>
       </div>
     </div>
-    <nav class="popout-menu" id="popoutMenu">
-  <button class="back-btn" id="menuBackBtn"><i class="fa-solid fa-arrow-left"></i> Back</button>
-  <a href="index.html">Home</a>
-  <a href="dashboard.html">Dashboard</a>
-  <a href="tracking.html">Tracking</a>
-  <a href="planning.html">Planning</a>
-  <a href="routes.html">Routes</a>
-  <a href="withdrawn.html">Withdrawn</a>
-  <a href="disruptions.html">Disruptions</a>
-  <a href="fleet.html">Fleet</a>
-</nav>
-  </header>
+  </div>
+  <!-- Mobile nav drawer -->
+  <nav class="mobile-drawer" id="mobileDrawer" aria-label="Mobile Navigation">
+    <button class="close-drawer" id="closeDrawerBtn" aria-label="Close menu">
+      <i class="fa-solid fa-times"></i>
+    </button>
+    <a href="index.html">Home</a>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="tracking.html">Tracking</a>
+    <a href="planning.html">Planning</a>
+    <a href="routes.html">Routes</a>
+    <a href="withdrawn.html">Withdrawn</a>
+    <a href="disruptions.html">Disruptions</a>
+    <a href="fleet.html">Fleet</a>
+    <hr>
+    <a href="profile.html">Profile</a>
+    <a href="settings.html">Settings</a>
+    <button onclick="openModal('login')" type="button">Login</button>
+    <button onclick="openModal('signup')" type="button">Sign Up</button>
+    <button onclick="signOut()" type="button">Sign out</button>
+  </nav>
+  <div class="drawer-backdrop" id="drawerBackdrop"></div>
 
-  <!-- Login/Signup Modal -->
-  <!-- Login/Signup Modal -->
-<div id="authModal" class="modal" aria-modal="true" role="dialog">
-  <div class="modal-content">
-    <span class="close" id="closeModal" title="Close">&times;</span>
-    <!-- Login Form -->
-    <div id="loginFormContainer">
-      <h2>Login</h2>
-      <form id="loginForm" autocomplete="off">
-        <input type="email" id="loginEmail" placeholder="Email" required autocomplete="username">
-        <input type="password" id="loginPassword" placeholder="Password" required autocomplete="current-password">
-        <button type="submit">Login</button>
-        <button type="button" class="google-login">Sign in with Google</button>
-        <p><a href="#" class="reset-password">Forgot Password?</a></p>
-        <div class="error-message" id="loginError" style="display:none;"></div>
-      </form>
-      <p>Don't have an account? <a href="#" id="showSignup">Sign up</a></p>
+  <!-- Modal for login/signup/reset -->
+  <div id="authModal" class="modal" aria-modal="true" role="dialog">
+    <div class="modal-content">
+      <span class="close" id="closeModal" title="Close">&times;</span>
+      <!-- Login Form -->
+      <div id="loginFormContainer">
+        <h2>Login</h2>
+        <form id="loginForm" autocomplete="off">
+          <input type="email" id="loginEmail" placeholder="Email" required autocomplete="username">
+          <input type="password" id="loginPassword" placeholder="Password" required autocomplete="current-password">
+          <button type="submit">Login</button>
+          <button type="button" class="google-btn">Sign in with Google</button>
+          <p><a href="#" class="reset-password" id="showReset">Forgot Password?</a></p>
+          <div class="error-message" id="loginError" style="display:none;"></div>
+        </form>
+        <p>Don't have an account? <a href="#" id="showSignup">Sign up</a></p>
+      </div>
+      <!-- Signup Form -->
+      <div id="signupFormContainer" style="display:none;">
+        <h2>Sign Up</h2>
+        <form id="signupForm" autocomplete="off">
+          <input type="email" id="signupEmail" placeholder="Email" required autocomplete="username">
+          <input type="password" id="signupPassword" placeholder="Password" required autocomplete="new-password">
+          <button type="submit">Sign Up</button>
+          <button type="button" class="google-btn">Sign Up with Google</button>
+          <div class="error-message" id="signupError" style="display:none;"></div>
+        </form>
+        <p>Already have an account? <a href="#" id="showLogin">Login</a></p>
+      </div>
+      <!-- Reset Password Form -->
+      <div id="resetFormContainer" style="display:none;">
+        <h2>Reset Password</h2>
+        <form id="resetForm" autocomplete="off">
+          <input type="email" id="resetEmail" placeholder="Enter your email" required autocomplete="username">
+          <button type="submit">Send Reset Link</button>
+          <div class="error-message" id="resetError" style="display:none;"></div>
+        </form>
+        <p>Remembered? <a href="#" id="showLoginFromReset">Back to Login</a></p>
+      </div>
     </div>
-    <!-- Signup Form -->
-    <div id="signupFormContainer" style="display:none;">
-      <h2>Sign Up</h2>
-      <form id="signupForm" autocomplete="off">
-        <input type="email" id="signupEmail" placeholder="Email" required autocomplete="username">
-        <input type="password" id="signupPassword" placeholder="Password" required autocomplete="new-password">
-        <button type="submit">Sign Up</button>
-        <button type="button" class="google-login">Sign Up with Google</button>
-        <p><a href="#" class="reset-password">Forgot Password?</a></p>
-        <div class="error-message" id="signupError" style="display:none;"></div>
-      </form>
-      <p>Already have an account? <a href="#" id="showLogin">Login</a></p>
+  </div>
+</header>
+
+<style>
+.navbar {
+  background: #fff;
+  border-bottom: 1px solid #e5e5e5;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+.navbar__container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.7rem 2vw;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.2rem;
+}
+
+.navbar__logo {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+  color: #c62828;
+}
+.navbar__logo img {
+  height: 38px;
+}
+.navbar__logo strong {
+  font-size: 1.25rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+/* Desktop nav links */
+.navbar__links {
+  display: flex;
+  gap: 1rem;
+}
+.navbar__links a {
+  color: #333;
+  text-decoration: none;
+  padding: 0.45rem 0.9rem;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 1.05rem;
+  transition: background .18s, color .18s;
+}
+.navbar__links a.active,
+.navbar__links a:hover {
+  background: #2979ff;
+  color: #fff;
+}
+
+.navbar__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Hamburger button */
+.hamburger {
+  background: none;
+  border: none;
+  font-size: 1.55rem;
+  color: #c62828;
+  cursor: pointer;
+  display: none;
+}
+.account-menu {
+  position: relative;
+}
+.account-menu button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #333;
+  padding: 0.15rem 0.4rem;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.17s;
+}
+.account-menu button:hover {
+  background: #f0f0f0;
+}
+.account-dropdown {
+  display: none;
+  flex-direction: column;
+  position: absolute;
+  right: 0;
+  top: 125%;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 18px #0002;
+  min-width: 150px;
+  z-index: 10;
+  padding: 0.5rem 0;
+}
+.account-dropdown a,
+.account-dropdown button {
+  background: none;
+  border: none;
+  color: #333;
+  padding: 0.7rem 1rem;
+  text-align: left;
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.16s;
+}
+.account-dropdown a:hover,
+.account-dropdown button:hover {
+  background: #2979ff;
+  color: #fff;
+}
+.account-menu.open .account-dropdown {
+  display: flex;
+}
+
+/* Mobile Nav Drawer */
+.mobile-drawer {
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0;
+  width: 80vw;
+  max-width: 340px;
+  height: 100vh;
+  background: #fff;
+  box-shadow: 2px 0 32px #0005;
+  padding: 2rem 1.1rem 1.1rem 1.1rem;
+  z-index: 1200;
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(.7,.3,.3,1);
+  gap: 0.7rem;
+  overflow-y: auto;
+}
+.mobile-drawer.open {
+  transform: translateX(0);
+}
+.mobile-drawer a,
+.mobile-drawer button {
+  color: #333;
+  text-decoration: none;
+  padding: 0.75rem 0.7rem;
+  border-radius: 6px;
+  font-weight: 500;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 1.08rem;
+  transition: background .18s;
+  cursor: pointer;
+}
+.mobile-drawer a:hover,
+.mobile-drawer button:hover {
+  background: #2979ff;
+  color: #fff;
+}
+.mobile-drawer hr {
+  margin: 1rem 0;
+  border: none;
+  border-top: 1px solid #eee;
+}
+.close-drawer {
+  align-self: flex-end;
+  margin-bottom: 1.2rem;
+  color: #c62828;
+  font-size: 1.3rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* Drawer backdrop */
+.drawer-backdrop {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(30,30,30,0.28);
+  z-index: 1100;
+  transition: opacity 0.2s;
+}
+.drawer-backdrop.open {
+  display: block;
+  opacity: 1;
+}
+
+/* Responsive */
+@media (max-width: 950px) {
+  .navbar__links {
+    display: none;
+  }
+  .hamburger {
+    display: block;
+  }
+}
+
+/* Hide mobile drawer on desktop */
+@media (min-width: 951px) {
+  .mobile-drawer, .drawer-backdrop { display: none !important; }
+}
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 2000;
+  left: 0; top: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.38);
+}
+.modal-content {
+  background: #fff;
+  margin: 7% auto;
+  border-radius: 14px;
+  width: 94%;
+  max-width: 375px;
+  padding: 2.2rem 1.7rem 1.2rem 1.7rem;
+  position: relative;
+  box-shadow: 0 8px 44px #2979ff22;
+  color: #2d3a4a;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.close {
+  position: absolute;
+  right: 1.1rem;
+  top: 1.1rem;
+  font-size: 2rem;
+  color: #888;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color .18s;
+}
+.close:hover { color: #d32f2f; }
+/* Form elements */
+.modal-content input {
+  width: 100%;
+  margin: 0.5rem 0;
+  border-radius: 8px;
+  border: 1.5px solid #bbb;
+  padding: 0.8rem;
+  font-size: 1.07rem;
+  background: #fff;
+  color: #222;
+  transition: border .17s;
+}
+.modal-content input:focus {
+  outline: none;
+  border: 2px solid #2979ff;
+}
+.modal-content button[type="submit"], .google-btn {
+  width: 100%;
+  margin: 0.7rem 0 0.2rem 0;
+  background: #2979ff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.8rem 0;
+  font-size: 1.08rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .18s;
+}
+.modal-content button[type="submit"]:hover, .google-btn:hover {
+  background: #1565c0;
+}
+.google-btn {
+  background: #4285F4;
+  margin-bottom: 0.5rem;
+}
+.google-btn:hover {
+  background: #357ae8;
+}
+.error-message {
+  color: #d32f2f;
+  font-size: 0.98rem;
+  text-align: left;
+  margin-top: 0.4rem;
+}
+.reset-password {
+  color: #2979ff;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.98rem;
+  transition: color .18s;
+}
+.reset-password:hover { color: #d32f2f; }
+</style>
+
+<script>
+/* Account dropdown */
+document.getElementById('profileIcon').addEventListener('click', function(e) {
+  e.stopPropagation();
+  const menu = document.getElementById('accountMenu');
+  menu.classList.toggle('open');
+});
+document.addEventListener('click', function(e) {
+  document.getElementById('accountMenu').classList.remove('open');
+});
+
+/* Mobile drawer open/close */
+const hamburger = document.getElementById('hamburgerBtn');
+const drawer = document.getElementById('mobileDrawer');
+const backdrop = document.getElementById('drawerBackdrop');
+const closeBtn = document.getElementById('closeDrawerBtn');
+function openDrawer() {
+  drawer.classList.add('open');
+  backdrop.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeDrawer() {
+  drawer.classList.remove('open');
+  backdrop.classList.remove('open');
+  document.body.style.overflow = '';
+}
+hamburger.addEventListener('click', function(e) {
+  e.stopPropagation(); openDrawer();
+});
+closeBtn.addEventListener('click', closeDrawer);
+backdrop.addEventListener('click', closeDrawer);
+
+/* Highlight active nav link */
+const setActiveLink = (selector) => {
+  const links = document.querySelectorAll(selector);
+  const path = window.location.pathname.split('/').pop();
+  links.forEach(link => {
+    if (link.getAttribute('href') === path) {
+      link.classList.add('active');
+    }
+  });
+};
+setActiveLink('.navbar__links a');
+setActiveLink('.mobile-drawer a');
+
+/* Modal logic */
+function clearFormMessages() {
+  document.getElementById('loginError').style.display = 'none';
+  document.getElementById('signupError').style.display = 'none';
+  document.getElementById('resetError').style.display = 'none';
+}
+function openModal(mode) {
+  document.getElementById('authModal').style.display = 'block';
+  document.getElementById('loginFormContainer').style.display = (mode==='login') ? '' : 'none';
+  document.getElementById('signupFormContainer').style.display = (mode==='signup') ? '' : 'none';
+  document.getElementById('resetFormContainer').style.display = 'none';
+  clearFormMessages();
+}
+function closeModal() {
+  document.getElementById('authModal').style.display = 'none';
+  clearFormMessages();
+}
+document.getElementById('closeModal').onclick = closeModal;
+window.onclick = function(event) {
+  if (event.target === document.getElementById('authModal')) closeModal();
+};
+document.addEventListener('keydown', function(event) {
+  if (event.key === "Escape") closeModal();
+});
+
+/* Switch between forms */
+document.getElementById('showSignup').onclick = function(e) {
+  e.preventDefault(); openModal('signup');
+};
+document.getElementById('showLogin').onclick = function(e) {
+  e.preventDefault(); openModal('login');
+};
+document.getElementById('showLoginFromReset').onclick = function(e) {
+  e.preventDefault(); openModal('login');
+};
+document.getElementById('showReset').onclick = function(e) {
+  e.preventDefault();
+  document.getElementById('loginFormContainer').style.display = 'none';
+  document.getElementById('signupFormContainer').style.display = 'none';
+  document.getElementById('resetFormContainer').style.display = '';
+  clearFormMessages();
+};
+
+/* Dummy handlers for forms (replace with your own backend/auth logic) */
+document.getElementById('loginForm').onsubmit = function(e) {
+  e.preventDefault();
+  // Replace with actual login logic
+  closeModal();
+  alert('Logged in (demo)');
+};
+document.getElementById('signupForm').onsubmit = function(e) {
+  e.preventDefault();
+  // Replace with actual signup logic
+  closeModal();
+  alert('Signed up (demo)');
+};
+document.getElementById('resetForm').onsubmit = function(e) {
+  e.preventDefault();
+  // Replace with actual reset logic
+  closeModal();
+  alert('Password reset link sent (demo)');
+};
+document.querySelectorAll('.google-btn').forEach(btn => {
+  btn.onclick = function(e) {
+    e.preventDefault();
+    closeModal();
+    alert('Google sign-in (demo)');
+  };
+});
+
+/* Dummy sign out */
+function signOut() {
+  closeModal();
+  alert('Signed out (demo)');
+}
+</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     </div>
   </div>
 </div>
