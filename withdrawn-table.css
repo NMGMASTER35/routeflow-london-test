@@ -1,3 +1,5 @@
+/* Withdrawn Table - Modern Responsive Redesign */
+
 body {
   font-family: 'Segoe UI', Arial, sans-serif;
   background: #f7f8fa;
@@ -12,36 +14,58 @@ h1 {
   letter-spacing: 1px;
 }
 
-.bubble-table-lined {
-  width: 100%;
+/* Table Wrapper for Responsive Scroll */
+.table-responsive {
   max-width: 1100px;
   margin: 0 auto;
-  border-collapse: collapse;
   background: #fff;
-  box-shadow: 0 2px 18px rgba(0,0,0,0.08);
-  border-radius: 12px;
-  overflow: hidden;
+  border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.10);
+  overflow-x: auto;
 }
 
-.bubble-table-lined th, .bubble-table-lined td {
-  border: 1.5px solid #d2d6dc;
-  padding: 14px 10px;
+/* Main Table Styles */
+.withdrawn-table {
+  width: 100%;
+  min-width: 600px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.withdrawn-table th,
+.withdrawn-table td {
+  padding: 16px 14px;
   text-align: center;
+  border-bottom: 1.5px solid #e3e7ee;
+  font-size: 1.05em;
+  transition: background 0.2s;
 }
 
-.bubble-table-lined th {
-  background: #2d3a4a;
+.withdrawn-table th {
+  background: linear-gradient(90deg, #2d3a4a 80%, #3f4e62 100%);
   color: #fff;
-  font-size: 1.1em;
-  font-weight: 600;
-  letter-spacing: 1px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
 }
 
+.withdrawn-table tr:last-child td {
+  border-bottom: none;
+}
+
+.withdrawn-table tbody tr:hover {
+  background: #f1f6fb;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+/* Bubble Style for Route Number and Status */
 .bubble {
   display: inline-block;
   padding: 6px 18px;
   border-radius: 22px;
-  background: linear-gradient(90deg,#a7e0f9 0%, #f6c3e5 100%);
+  background: linear-gradient(90deg, #a7e0f9 0%, #f6c3e5 100%);
   color: #21314a;
   font-weight: 500;
   font-size: 1em;
@@ -51,46 +75,69 @@ h1 {
 }
 
 .bubble.route-number {
-  background: #e02020;
+  background: linear-gradient(90deg, #e02020 70%, #ef6d6d 100%);
   color: #fff;
   font-weight: 600;
   box-shadow: 0 1px 5px rgba(224,32,32,0.13);
 }
 
+/* Bubble links */
 .bubble-link a {
   color: #0356b4;
   text-decoration: none;
   font-weight: 600;
-}
-
-.bubble-link a:hover {
-  text-decoration: underline;
-  background: #e1eaff;
-  border-radius: 22px;
   padding: 4px 14px;
+  border-radius: 18px;
+  transition: background 0.18s, color 0.18s;
 }
 
+.bubble-link a:hover,
+.bubble-link a:focus {
+  background: #e1eaff;
+  color: #1d3557;
+  text-decoration: underline;
+  outline: none;
+}
+
+/* Responsive Table */
 @media (max-width: 900px) {
-  .bubble-table-lined,
-  .bubble-table-lined thead,
-  .bubble-table-lined tbody,
-  .bubble-table-lined th,
-  .bubble-table-lined td,
-  .bubble-table-lined tr {
-    display: block;
+  .table-responsive {
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+    max-width: 100vw;
   }
-  .bubble-table-lined tr {
+  .withdrawn-table {
+    min-width: 480px;
+    font-size: 0.97em;
+  }
+  .withdrawn-table th,
+  .withdrawn-table td {
+    padding: 12px 8px;
+  }
+}
+
+@media (max-width: 600px) {
+  body {
+    padding: 8px;
+  }
+  .table-responsive {
+    border-radius: 0;
+  }
+  .withdrawn-table {
+    min-width: 340px;
+    font-size: 0.93em;
+  }
+  h1 {
+    font-size: 1.25em;
     margin-bottom: 24px;
-    border-bottom: 2px solid #dbe5ed;
   }
-  .bubble-table-lined td, .bubble-table-lined th {
-    text-align: left;
-    padding: 10px 16px;
-    position: relative;
-  }
-  .bubble-table-lined th {
-    background: #2d3a4a;
-    color: #fff;
-    padding: 16px 16px;
-  }
+}
+
+/* Focus Styles for Accessibility */
+.withdrawn-table th:focus,
+.withdrawn-table td:focus,
+.bubble-link a:focus {
+  outline: 2px solid #2979ff;
+  outline-offset: 2px;
 }
