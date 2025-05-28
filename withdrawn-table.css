@@ -1,33 +1,39 @@
-/* Withdrawn Table - Modern Responsive Redesign */
+/* Global Reset & Box-Sizing */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
+/* Body Styling */
 body {
   font-family: 'Segoe UI', Arial, sans-serif;
   background: #f7f8fa;
-  margin: 0;
-  padding: 32px;
+  padding: 2vw;
 }
 
+/* Header */
 h1 {
   text-align: center;
   color: #2d3a4a;
   margin-bottom: 32px;
   letter-spacing: 1px;
+  font-size: 1.75em;
 }
 
-/* Table Wrapper for Responsive Scroll */
+/* Responsive Table Wrapper */
 .table-responsive {
-  max-width: 1100px;
+  max-width: 95vw;
   margin: 0 auto;
   background: #fff;
   border-radius: 16px;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.10);
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.10);
   overflow-x: auto;
 }
 
 /* Main Table Styles */
 .withdrawn-table {
   width: 100%;
-  min-width: 600px;
   border-collapse: separate;
   border-spacing: 0;
 }
@@ -57,10 +63,9 @@ h1 {
 .withdrawn-table tbody tr:hover {
   background: #f1f6fb;
   cursor: pointer;
-  transition: background 0.18s;
 }
 
-/* Bubble Style for Route Number and Status */
+/* Bubble Style */
 .bubble {
   display: inline-block;
   padding: 6px 18px;
@@ -70,18 +75,17 @@ h1 {
   font-weight: 500;
   font-size: 1em;
   margin: 2px 1px;
-  box-shadow: 0 1px 4px rgba(66,66,120,0.10);
-  transition: background 0.2s;
+  box-shadow: 0 1px 4px rgba(66, 66, 120, 0.10);
 }
 
 .bubble.route-number {
   background: linear-gradient(90deg, #e02020 70%, #ef6d6d 100%);
   color: #fff;
   font-weight: 600;
-  box-shadow: 0 1px 5px rgba(224,32,32,0.13);
+  box-shadow: 0 1px 5px rgba(224, 32, 32, 0.13);
 }
 
-/* Bubble links */
+/* Bubble Link Styles */
 .bubble-link a {
   color: #0356b4;
   text-decoration: none;
@@ -99,45 +103,30 @@ h1 {
   outline: none;
 }
 
-/* Responsive Table */
-@media (max-width: 900px) {
-  .table-responsive {
-    border-radius: 0;
-    box-shadow: none;
-    padding: 0;
-    max-width: 100vw;
-  }
-  .withdrawn-table {
-    min-width: 480px;
-    font-size: 0.97em;
-  }
-  .withdrawn-table th,
-  .withdrawn-table td {
-    padding: 12px 8px;
-  }
-}
-
-@media (max-width: 600px) {
-  body {
-    padding: 8px;
-  }
-  .table-responsive {
-    border-radius: 0;
-  }
-  .withdrawn-table {
-    min-width: 340px;
-    font-size: 0.93em;
-  }
-  h1 {
-    font-size: 1.25em;
-    margin-bottom: 24px;
-  }
-}
-
-/* Focus Styles for Accessibility */
+/* Accessibility Focus */
 .withdrawn-table th:focus,
 .withdrawn-table td:focus,
 .bubble-link a:focus {
   outline: 2px solid #2979ff;
   outline-offset: 2px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 900px) {
+  .withdrawn-table th,
+  .withdrawn-table td {
+    padding: 12px 8px;
+    font-size: 0.97em;
+  }
+}
+
+@media (max-width: 600px) {
+  h1 {
+    font-size: 1.25em;
+    margin-bottom: 24px;
+  }
+
+  .withdrawn-table {
+    font-size: 0.93em;
+  }
 }
