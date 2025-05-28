@@ -3,12 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Routes | Routeflow London</title>
   <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png">
+  <title>Routes | Routeflow London</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
-  
 </head>
 <body>
     <header class="navbar">
@@ -533,195 +532,270 @@ function signOut() {
 
   <!-- ROUTES SECTION -->
 
-  <title>London Bus Routes</title>
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>London Bus Route Explorer</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      padding: 2rem;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 1em;
+      color: #333;
     }
+
     h1 {
       text-align: center;
+      margin-bottom: 1em;
     }
-    details {
-      background: white;
-      margin-bottom: 1rem;
+
+    select {
+      margin: 0 auto 1em auto;
+      display: block;
+      padding: 0.5em;
       border-radius: 6px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      padding: 1rem;
+      border: 1px solid #ccc;
     }
-    summary {
-      font-weight: bold;
-      font-size: 1.1rem;
-      cursor: pointer;
-    }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 1rem;
+      background-color: #fff;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-bottom: 2em;
     }
+
     th, td {
-      border: 1px solid #ccc;
-      padding: 0.5rem;
-      text-align: left;
-      text-transform: capitalize;
+      padding: 0.75em;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
     }
+
+    th {
+      background-color: #2d3a4a;
+      color: white;
+    }
+
     tr:hover {
-      background: #eef;
+      background-color: #eef6ff;
       cursor: pointer;
     }
-    dialog {
-      width: 80%;
-      max-width: 800px;
+
+    .modal, .arrival-modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .modal-content, .arrival-content {
+      background-color: white;
+      padding: 1em;
+      border-radius: 8px;
+      max-height: 90vh;
+      overflow-y: auto;
+      width: 90%;
+      max-width: 600px;
+    }
+
+    .close {
+      float: right;
+      font-size: 1.2em;
+      cursor: pointer;
+    }
+
+    .direction-switch {
+      margin: 1em 0;
+    }
+
+    .btn {
+      padding: 0.5em 1em;
+      background: #2d3a4a;
+      color: white;
       border: none;
-      border-radius: 10px;
-      padding: 2rem;
-    }
-    dialog::backdrop {
-      background: rgba(0, 0, 0, 0.4);
-    }
-    .direction-btn {
-      margin-bottom: 1rem;
-      padding: 0.4rem 0.8rem;
-    }
-    ul {
-      padding-left: 1.2rem;
-    }
-    button {
+      border-radius: 4px;
       cursor: pointer;
-      font-size: 1rem;
+    }
+
+    .btn:hover {
+      background: #43566e;
+    }
+
+    @media (max-width: 600px) {
+      th, td {
+        font-size: 0.85em;
+        padding: 0.5em;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>London Bus Routes</h1>
-  <div id="routeGroups"></div>
+  <h1>London Bus Route Explorer</h1>
+  <select id="routeGroupSelect" onchange="filterRouteGroup()">
+    <option value="all">Show All Routes</option>
+    <option value="1-99">1-99</option>
+    <option value="100-199">100-199</option>
+    <option value="200-299">200-299</option>
+    <option value="300-399">300-399</option>
+    <option value="400-499">400-499</option>
+    <option value="500-599">500-599</option>
+    <option value="600-699">600-699</option>
+    <option value="900-999">900-999</option>
+    <option value="A-M">A-M</option>
+    <option value="N">N Routes</option>
+    <option value="P-X">P-X</option>
+  </select>
 
-  <dialog id="detailsModal">
-    <button onclick="document.getElementById('detailsModal').close()">Close</button>
-    <div id="modalContent"></div>
-  </dialog>
+  <table id="routes-table">
+    <thead>
+      <tr><th>Route</th><th>Mode</th><th>Details</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="modal" id="routeModal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('routeModal')">&times;</span>
+      <h2 id="routeTitle"></h2>
+      <div class="direction-switch">
+        <button class="btn" onclick="toggleDirection()">Switch Direction</button>
+      </div>
+      <table id="stopsTable">
+        <thead><tr><th>Stop Name</th><th>Platform</th><th>Live Info</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div style="margin-top: 1em">
+        <strong>Current Buses:</strong>
+        <ul id="vehicleList"></ul>
+      </div>
+      <button id="routePageBtn" class="btn" style="margin-top: 1em">More Details</button>
+    </div>
+  </div>
+
+  <div class="arrival-modal" id="arrivalModal">
+    <div class="arrival-content">
+      <span class="close" onclick="closeModal('arrivalModal')">&times;</span>
+      <h3>Live Arrivals</h3>
+      <ul id="arrivalList"></ul>
+    </div>
+  </div>
 
   <script>
-    const API_KEY = "f17d0725d1654338ab02a361fe41abad";
-    const ROUTE_ENDPOINT = `https://api.tfl.gov.uk/Line/Mode/bus/Route?app_key=${API_KEY}`;
-    const routeGroups = document.getElementById("routeGroups");
-    const detailsModal = document.getElementById("detailsModal");
-    const modalContent = document.getElementById("modalContent");
+    const API_KEY = 'f17d0725d1654338ab02a361fe41abad';
+    const BASE = 'https://api.tfl.gov.uk';
+    let allRoutes = [];
+    let currentDirection = 'inbound';
+    let currentRoute = '';
 
-    function groupRoute(routeId) {
-      if (/^[0-9]+$/.test(routeId)) {
-        const num = parseInt(routeId);
-        if (num < 100) return "1–99";
-        if (num < 200) return "100–199";
-        if (num < 300) return "200–299";
-        if (num < 400) return "300–399";
-        if (num < 500) return "400–499";
-        if (num < 600) return "500–599";
-        if (num < 700) return "600–699";
-        if (num < 900) return "700–899";
-        return "900–999";
-      } else if (/^[a-mA-M]/.test(routeId)) {
-        return "A–M";
-      } else if (/^[nN]/.test(routeId)) {
-        return "N";
-      } else {
-        return "P–X";
-      }
+    async function fetchRoutes() {
+      const res = await fetch(`${BASE}/Line/Mode/bus/Route?app_key=${API_KEY}`);
+      const data = await res.json();
+      allRoutes = data.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+      renderRoutes(allRoutes);
     }
 
-    function renderGroupedRoutes(data) {
-      const groups = {};
-      data.forEach(route => {
-        const group = groupRoute(route.id);
-        if (!groups[group]) groups[group] = [];
-        groups[group].push(route);
+    function filterRouteGroup() {
+      const val = document.getElementById('routeGroupSelect').value;
+      const filtered = allRoutes.filter(r => {
+        const name = r.name;
+        if (/^[0-9]+$/.test(name)) {
+          const num = parseInt(name);
+          if (val === '1-99') return num >= 1 && num <= 99;
+          if (val === '100-199') return num >= 100 && num <= 199;
+          if (val === '200-299') return num >= 200 && num <= 299;
+          if (val === '300-399') return num >= 300 && num <= 399;
+          if (val === '400-499') return num >= 400 && num <= 499;
+          if (val === '500-599') return num >= 500 && num <= 599;
+          if (val === '600-699') return num >= 600 && num <= 699;
+          if (val === '900-999') return num >= 900 && num <= 999;
+        } else if (/^[A-Ma-m]/.test(name)) return val === 'A-M';
+        else if (/^N/.test(name)) return val === 'N';
+        else if (/^[P-Xp-x]/.test(name)) return val === 'P-X';
+        return val === 'all';
       });
+      renderRoutes(filtered);
+    }
 
-      routeGroups.innerHTML = "";
-      Object.keys(groups).sort().forEach(group => {
-        const section = document.createElement("details");
-        section.innerHTML = `<summary>Routes ${group}</summary>`;
-        const table = document.createElement("table");
-        table.innerHTML = `
-          <thead>
-            <tr><th>Route No.</th><th>Start</th><th>Destination</th><th>Mode</th></tr>
-          </thead>
-          <tbody></tbody>
-        `;
-        const tbody = table.querySelector("tbody");
-        groups[group]
-          .sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }))
-          .forEach(route => {
-            const row = document.createElement("tr");
-            row.innerHTML = `
-              <td>${route.id}</td>
-              <td>${route.routeSections?.[0]?.originationName || "-"}</td>
-              <td>${route.routeSections?.[0]?.destinationName || "-"}</td>
-              <td>${route.modeName}</td>
-            `;
-            row.addEventListener("click", () => showDetails(route));
-            tbody.appendChild(row);
-          });
-        section.appendChild(table);
-        routeGroups.appendChild(section);
+    function renderRoutes(routes) {
+      const tbody = document.querySelector('#routes-table tbody');
+      tbody.innerHTML = '';
+      routes.forEach(route => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${route.name}</td><td>${route.modeName}</td><td><button class='btn' onclick="showRoute('${route.id}')">View</button></td>`;
+        tbody.appendChild(tr);
       });
     }
 
-    function showDetails(route) {
-      let direction = "outbound";
-
-      function updateDetails() {
-        fetch(`https://api.tfl.gov.uk/Line/${route.id}/Route/sequence/${direction}?app_key=${API_KEY}`)
-          .then(res => res.json())
-          .then(sequence => {
-            fetch(`https://api.tfl.gov.uk/Line/${route.id}/Arrivals?app_key=${API_KEY}`)
-              .then(res => res.json())
-              .then(arrivals => {
-                const buses = arrivals.length
-                  ? [...new Set(arrivals.map(a => a.vehicleRegistration).filter(Boolean))]
-                  : [];
-
-                const stopsList = sequence.stopPointSequences && sequence.stopPointSequences.length > 0
-                  ? sequence.stopPointSequences[0].stopPoint.map(p => `<li>${p.name}</li>`).join("")
-                  : "<li>No stops found</li>";
-
-                modalContent.innerHTML = `
-                  <h2>Route ${route.id}</h2>
-<<<<<<< Updated upstream
-                  <p><strong>Direction:</strong> ${direction.charAt(0).toUpperCase() + direction.slice(1)}</p>
-=======
-                  <p><strong>Direction:</strong> ${sequence.direction}</p>
->>>>>>> Stashed changes
-                  <button class="direction-btn" id="switchDirectionBtn">Switch Direction</button>
-                  <h3>Stops</h3>
-                  <ul>${stopsList}</ul>
-                  <h3>Active Buses</h3>
-                  <ul>${buses.length ? buses.map(reg => `<li>${reg}</li>`).join("") : "<li>No active vehicles found.</li>"}</ul>
-                  <button onclick="window.location.href='routes/${route.id}.html'">More Info</button>
-                `;
-
-                document.getElementById("switchDirectionBtn").addEventListener("click", () => {
-<<<<<<< Updated upstream
-                  direction = direction === "outbound" ? "inbound" : "outbound";
-=======
-                  direction = direction === 0 ? 1 : 0;
->>>>>>> Stashed changes
-                  updateDetails();
-                });
-
-                detailsModal.showModal();
-              });
-          });
-      }
-
-      updateDetails();
+    // All other functions remain unchanged (showRoute, loadStops, showArrivals, etc.)
+    async function showRoute(routeId) {
+      currentRoute = routeId;
+      currentDirection = 'inbound';
+      document.getElementById('routeTitle').textContent = `Route ${routeId.toUpperCase()}`;
+      document.getElementById('routePageBtn').onclick = () => {
+        window.open(`/routes/${routeId.toUpperCase()}.html`, '_blank');
+      };
+      await loadStops(routeId, currentDirection);
+      await loadVehicles(routeId);
+      document.getElementById('routeModal').style.display = 'flex';
     }
 
-    // Initial fetch and render
-    fetch(ROUTE_ENDPOINT)
-      .then(res => res.json())
-      .then(data => renderGroupedRoutes(data));
+    async function loadStops(routeId, direction) {
+      const res = await fetch(`${BASE}/Line/${routeId}/Route/Sequence/${direction}?app_key=${API_KEY}`);
+      const data = await res.json();
+      const tbody = document.querySelector('#stopsTable tbody');
+      tbody.innerHTML = '';
+      data.stopPointSequences[0].stopPoint.forEach(stop => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${stop.commonName}</td>
+          <td>${stop.stopLetter || '-'}</td>
+          <td><button class='btn' onclick="showArrivals('${stop.id}')">Live</button></td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function showArrivals(stopId) {
+      const res = await fetch(`${BASE}/StopPoint/${stopId}/Arrivals?app_key=${API_KEY}`);
+      const data = await res.json();
+      const list = document.getElementById('arrivalList');
+      list.innerHTML = '';
+      data.sort((a, b) => a.timeToStation - b.timeToStation).forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = `${item.lineName} to ${item.destinationName} - ${Math.round(item.timeToStation / 60)} min`;
+        list.appendChild(li);
+      });
+      document.getElementById('arrivalModal').style.display = 'flex';
+    }
+
+    async function loadVehicles(routeId) {
+      const res = await fetch(`${BASE}/Vehicle/Route?lineIds=${routeId}&app_key=${API_KEY}`);
+      const data = await res.json();
+      const list = document.getElementById('vehicleList');
+      list.innerHTML = '';
+      data.forEach(bus => {
+        const li = document.createElement('li');
+        li.textContent = bus.vehicleId || 'Unknown Reg';
+        list.appendChild(li);
+      });
+    }
+
+    function toggleDirection() {
+      currentDirection = currentDirection === 'inbound' ? 'outbound' : 'inbound';
+      loadStops(currentRoute, currentDirection);
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).style.display = 'none';
+    }
+
+    fetchRoutes();
   </script>
 </body>
 </html>
