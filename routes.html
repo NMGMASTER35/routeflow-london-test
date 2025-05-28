@@ -532,9 +532,9 @@ function signOut() {
 
   <!-- ROUTES SECTION -->
 
- <style>
+   <style>
     body { font-family: 'Segoe UI', sans-serif; background: #f6f7fa; margin: 0; padding: 1.5em; color: #222; }
-    h1 { text-align: center; margin: 1em 0 1.5em 0; }
+    h1 { text-align: center; margin: 1em 0 1.5em; }
     table { width: 100%; border-collapse: collapse; background: #fff; box-shadow: 0 2px 12px #0001; margin-bottom: 2em; }
     th, td { padding: 0.8em; text-align: center; border-bottom: 1px solid #eee; }
     th { background: #2d3a4a; color: #fff; }
@@ -543,7 +543,7 @@ function signOut() {
     .btn:hover { background: #1a2536; }
     .modal, .arrival-modal {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 10;
+      background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 3000;
     }
     .modal-content, .arrival-content {
       background: #fff; padding: 2em; border-radius: 8px; max-height: 92vh; width: 96vw; max-width: 600px; overflow-y: auto;
@@ -662,31 +662,44 @@ async function openRouteModal(routeId) {
   document.getElementById('routePageBtn').onclick = () => {
     window.open(`/routes/${routeId}.html`, '_blank');
   };
-  await Promise.all([
-    loadVehicleRegs(routeId),
-    loadStops(routeId, currentDirection, currentBranch)
-  ]);
+  await loadStops(routeId, currentDirection, currentBranch); // Ensure stops are loaded before vehicles
+  await loadVehicleRegs(routeId);
   document.getElementById('routeModal').style.display = 'flex';
 }
 
-// 4. Load active vehicle regs on the route
+// 4. Robust: Load active vehicle regs on the route by searching arrivals at all stops
 async function loadVehicleRegs(routeId) {
-  try {
-    const res = await fetch(`${BASE}/Vehicle/Route?lineIds=${routeId}&app_key=${API_KEY}`);
-    const data = await res.json();
-    const ul = document.getElementById('vehicleList');
-    ul.innerHTML = '';
-    if (!data || data.length === 0) {
-      ul.innerHTML = '<li>No active buses currently tracked.</li>';
-      return;
+  const stops = currentStopSequences[currentBranch]?.stopPoint || [];
+  const vehicleSet = new Set();
+  // Limit concurrent requests for performance
+  const maxConcurrent = 10;
+  let index = 0;
+  async function processNextBatch() {
+    const batch = stops.slice(index, index + maxConcurrent);
+    await Promise.all(batch.map(async stop => {
+      try {
+        const res = await fetch(`${BASE}/StopPoint/${stop.id}/Arrivals?app_key=${API_KEY}`);
+        const arrivals = await res.json();
+        arrivals.filter(a => a.lineId.toLowerCase() === routeId.toLowerCase()).forEach(a => {
+          if (a.vehicleId) vehicleSet.add(a.vehicleId);
+        });
+      } catch (e) {}
+    }));
+    index += maxConcurrent;
+    if (index < stops.length) {
+      await processNextBatch();
     }
-    data.forEach(bus => {
-      const li = document.createElement('li');
-      li.textContent = bus.vehicleId || bus.vrm || 'Unknown Reg';
-      ul.appendChild(li);
-    });
-  } catch (e) {
-    document.getElementById('vehicleList').innerHTML = '<li>Error loading vehicles.</li>';
+  }
+  await processNextBatch();
+  const ul = document.getElementById('vehicleList');
+  ul.innerHTML = '';
+  [...vehicleSet].forEach(vehicleId => {
+    const li = document.createElement('li');
+    li.textContent = vehicleId;
+    ul.appendChild(li);
+  });
+  if (vehicleSet.size === 0) {
+    ul.innerHTML = '<li>No active buses currently tracked.</li>';
   }
 }
 
@@ -705,7 +718,7 @@ async function loadStops(routeId, direction, branchId = 0) {
     stops.forEach(stop => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${stop.commonName}</td>
+        <td>${stop.name}</td>
         <td>${stop.stopLetter || '-'}</td>
         <td><button class='btn' onclick="showArrivals(event, '${stop.id}')">Live</button></td>
       `;
@@ -730,7 +743,7 @@ async function showArrivals(ev, stopId) {
       data.sort((a, b) => a.timeToStation - b.timeToStation)
         .forEach(item => {
           const li = document.createElement('li');
-          li.textContent = `${item.lineName} to ${item.destinationName} - ${Math.round(item.timeToStation/60)} min`;
+          li.textContent = `${item.lineName} to ${item.destinationName} - ${Math.round(item.timeToStation/60)} min at ${item.stationName}`;
           list.appendChild(li);
         });
     }
@@ -746,6 +759,7 @@ window.showArrivals = showArrivals;
 async function toggleDirection() {
   currentDirection = (currentDirection === 'inbound') ? 'outbound' : 'inbound';
   await loadStops(currentRouteId, currentDirection, currentBranch);
+  await loadVehicleRegs(currentRouteId);
 }
 window.toggleDirection = toggleDirection;
 
