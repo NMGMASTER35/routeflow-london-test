@@ -642,6 +642,33 @@ function signOut() {
       border-radius: 10px;
       margin-top: 20px;
     }
+	.more-info {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, opacity 0.3s ease;
+      opacity: 0;
+      margin-top: 10px;
+      padding-left: 10px;
+      border-left: 2px solid #ccc;
+      font-size: 0.95rem;
+    }
+
+    .card.expanded .more-info {
+      max-height: 500px;
+      opacity: 1;
+    }
+
+    .toggle-more {
+      display: inline-block;
+      margin-top: 10px;
+      color: #0074d9;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .step-detail {
+      margin-top: 5px;
+    }
   </style>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 </head>
@@ -830,6 +857,95 @@ function signOut() {
         'national-rail': 'fa-train'
       };
       return icons[mode] || 'fa-map-signs';
+    }
+	<script>
+    const apiKey = "f17d0725d1654338ab02a361fe41abad";
+
+    let map = L.map('map').setView([51.5074, -0.1278], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    function updatePageTitle(from, to) {
+      document.title = from && to ? `From ${from} to ${to} – RouteFlow` : "RouteFlow London – Smart Journey Planner";
+    }
+
+    async function planJourney() {
+      const from = document.getElementById("from").value;
+      const to = document.getElementById("to").value;
+      if (!from || !to) return;
+
+      updatePageTitle(from, to);
+
+      const url = `https://api.tfl.gov.uk/Journey/JourneyResults/${encodeURIComponent(from)}/to/${encodeURIComponent(to)}?app_key=${apiKey}`;
+
+      const res = await fetch(url);
+      const data = await res.json();
+      const results = document.getElementById("journeyResults");
+
+      if (!data.journeys) {
+        results.innerHTML = "<p>No results found.</p>";
+        return;
+      }
+
+      results.innerHTML = "";
+      map.eachLayer(layer => {
+        if (layer instanceof L.Marker || layer instanceof L.Polyline) {
+          map.removeLayer(layer);
+        }
+      });
+
+      data.journeys.forEach((journey, idx) => {
+        const card = document.createElement("div");
+        card.className = "card";
+
+        let fare = journey.fare?.totalCost != null ? `<div class='fare'>Fare: £${(journey.fare.totalCost / 100).toFixed(2)}</div>` : "";
+
+        let totalDistance = 0;
+        let totalEmissions = 0;
+        const emissionRates = {
+          walking: 0,
+          bus: 0.102,
+          tube: 0.056,
+          overground: 0.041,
+          'national-rail': 0.041,
+          default: 0.1
+        };
+
+        let stepsHtml = "";
+
+        journey.legs.forEach((leg, i) => {
+          const distance = leg.distance || 0;
+          const mode = leg.mode.name;
+          const emissionFactor = emissionRates[mode] ?? emissionRates.default;
+          totalDistance += distance;
+          totalEmissions += distance * emissionFactor;
+
+          if (mode === "walking") {
+            stepsHtml += `<div class="step-detail"><i class="fas fa-walking"></i> Walk for ${(distance / 1000).toFixed(2)} km (${leg.duration} min)</div>`;
+          } else {
+            const line = leg.routeOptions?.[0]?.name || "";
+            stepsHtml += `<div class="step-detail"><i class="fas fa-train"></i> ${mode.charAt(0).toUpperCase() + mode.slice(1)} ${line} (${leg.duration} min)</div>`;
+          }
+        });
+
+        const emissionsDisplay = `<div>Distance: ${(totalDistance / 1000).toFixed(1)} km<br>Estimated Emissions: ${totalEmissions.toFixed(2)} kg CO₂</div>`;
+
+        card.innerHTML = `
+          <strong>Option ${idx + 1}</strong><br>
+          Duration: ${journey.duration} min<br>
+          Start: ${journey.startDateTime.slice(11, 16)} – End: ${journey.arrivalDateTime.slice(11, 16)}
+          ${fare}
+          ${emissionsDisplay}
+          <div class="toggle-more" onclick="this.parentElement.classList.toggle('expanded')">
+            ${journey.legs.some(leg => leg.mode.name === 'walking') ? 'View walking segments and steps' : 'View journey steps'}
+          </div>
+          <div class="more-info">${stepsHtml}</div>
+        `;
+
+        results.appendChild(card);
+      });
     }
   </script>
 </body>
