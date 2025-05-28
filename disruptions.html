@@ -543,7 +543,7 @@ function signOut() {
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script src="main.js"></script>
 </body>
-<style>
+  <style>
     body {
       background: #ffffff;
       color: #000000;
@@ -672,9 +672,19 @@ function signOut() {
     });
 
     // Initial loads
-    fetchAndRender(`https://api.tfl.gov.uk/Line/Mode/tube,dlr,overground/elizabeth-line/Status?app_key=${appKey}`, 'train-grid');
-    fetchAndRender(`https://api.tfl.gov.uk/Line/Mode/bus/Status?app_key=${appKey}`, 'bus-grid', () => true, (a, b) => parseInt(a.name) - parseInt(b.name));
+    fetchAndRender(
+      `https://api.tfl.gov.uk/Line/Mode/tube,dlr,overground,elizabeth-line/Status?app_key=${appKey}`,
+      'train-grid'
+    );
+
+    fetchAndRender(
+      `https://api.tfl.gov.uk/Line/Mode/bus/Status?app_key=${appKey}`,
+      'bus-grid',
+      () => true,
+      (a, b) => parseInt(a.name) - parseInt(b.name)
+    );
   </script>
 </body>
 </html>
+
 
