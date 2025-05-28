@@ -532,138 +532,55 @@ function signOut() {
 
   <!-- ROUTES SECTION -->
 
- <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>London Bus Route Explorer</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f4f4f4;
-      margin: 0;
-      padding: 1em;
-      color: #333;
-    }
-
-    h1 {
-      text-align: center;
-      margin-bottom: 1em;
-    }
-
-    select {
-      margin: 0 auto 1em auto;
-      display: block;
-      padding: 0.5em;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background-color: #fff;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      margin-bottom: 2em;
-    }
-
-    th, td {
-      padding: 0.75em;
-      text-align: center;
-      border-bottom: 1px solid #ddd;
-    }
-
-    th {
-      background-color: #2d3a4a;
-      color: white;
-    }
-
-    tr:hover {
-      background-color: #eef6ff;
-      cursor: pointer;
-    }
-
+ <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #f6f7fa; margin: 0; padding: 1.5em; color: #222; }
+    h1 { text-align: center; margin: 1em 0 1.5em 0; }
+    table { width: 100%; border-collapse: collapse; background: #fff; box-shadow: 0 2px 12px #0001; margin-bottom: 2em; }
+    th, td { padding: 0.8em; text-align: center; border-bottom: 1px solid #eee; }
+    th { background: #2d3a4a; color: #fff; }
+    tr:hover { background: #eef6ff; cursor: pointer; }
+    .btn { padding: 0.45em 1em; background: #2d3a4a; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    .btn:hover { background: #1a2536; }
     .modal, .arrival-modal {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background-color: rgba(0,0,0,0.5);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 10;
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 10;
     }
-
     .modal-content, .arrival-content {
-      background-color: white;
-      padding: 1em;
-      border-radius: 8px;
-      max-height: 90vh;
-      overflow-y: auto;
-      width: 90%;
-      max-width: 600px;
+      background: #fff; padding: 2em; border-radius: 8px; max-height: 92vh; width: 96vw; max-width: 600px; overflow-y: auto;
+      position: relative;
     }
-
     .close {
-      float: right;
-      font-size: 1.2em;
-      cursor: pointer;
+      position: absolute; right: 1.3em; top: 1.1em;
+      font-size: 1.6em; color: #888; background: none; border: none; cursor: pointer;
     }
-
-    .direction-switch {
-      margin: 1em 0;
-    }
-
-    .btn {
-      padding: 0.5em 1em;
-      background: #2d3a4a;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    .btn:hover {
-      background: #43566e;
-    }
-
-    @media (max-width: 600px) {
-      th, td {
-        font-size: 0.85em;
-        padding: 0.5em;
-      }
+    .close:hover { color: #d32f2f; }
+    .direction-switch { margin: 1em 0; text-align: center; }
+    #vehicleList { margin-bottom: 1em; }
+    #vehicleList li { margin-bottom: .2em; }
+    #stopsTable { margin-bottom: 1em; }
+    @media (max-width: 650px) {
+      .modal-content, .arrival-content { padding: 0.7em; max-width: 99vw; }
+      th, td { font-size: 0.93em; padding: 0.4em; }
     }
   </style>
 </head>
 <body>
   <h1>London Bus Route Explorer</h1>
-  <select id="routeGroupSelect" onchange="filterRouteGroup()">
-    <option value="all">Show All Routes</option>
-    <option value="1-99">1-99</option>
-    <option value="100-199">100-199</option>
-    <option value="200-299">200-299</option>
-    <option value="300-399">300-399</option>
-    <option value="400-499">400-499</option>
-    <option value="500-599">500-599</option>
-    <option value="600-699">600-699</option>
-    <option value="900-999">900-999</option>
-    <option value="A-M">A-M</option>
-    <option value="N">N Routes</option>
-    <option value="P-X">P-X</option>
-  </select>
-
-  <table id="routes-table">
+  <table id="routesTable">
     <thead>
-      <tr><th>Route</th><th>Mode</th><th>Details</th></tr>
+      <tr><th>Route Number</th><th>Start</th><th>Destination</th></tr>
     </thead>
     <tbody></tbody>
   </table>
 
+  <!-- Route Modal -->
   <div class="modal" id="routeModal">
     <div class="modal-content">
-      <span class="close" onclick="closeModal('routeModal')">&times;</span>
+      <button class="close" onclick="closeModal('routeModal')">&times;</button>
       <h2 id="routeTitle"></h2>
+      <div><strong>Current Vehicles:</strong>
+        <ul id="vehicleList"></ul>
+      </div>
       <div class="direction-switch">
         <button class="btn" onclick="toggleDirection()">Switch Direction</button>
       </div>
@@ -671,131 +588,173 @@ function signOut() {
         <thead><tr><th>Stop Name</th><th>Platform</th><th>Live Info</th></tr></thead>
         <tbody></tbody>
       </table>
-      <div style="margin-top: 1em">
-        <strong>Current Buses:</strong>
-        <ul id="vehicleList"></ul>
-      </div>
-      <button id="routePageBtn" class="btn" style="margin-top: 1em">More Details</button>
+      <button id="routePageBtn" class="btn" style="margin-top: 1em">More Info</button>
     </div>
   </div>
 
+  <!-- Arrivals Modal -->
   <div class="arrival-modal" id="arrivalModal">
     <div class="arrival-content">
-      <span class="close" onclick="closeModal('arrivalModal')">&times;</span>
+      <button class="close" onclick="closeModal('arrivalModal')">&times;</button>
       <h3>Live Arrivals</h3>
       <ul id="arrivalList"></ul>
     </div>
   </div>
 
-  <script>
-    const API_KEY = 'f17d0725d1654338ab02a361fe41abad';
-    const BASE = 'https://api.tfl.gov.uk';
-    let allRoutes = [];
-    let currentDirection = 'inbound';
-    let currentRoute = '';
+<script>
+const API_KEY = 'f17d0725d1654338ab02a361fe41abad';
+const BASE = 'https://api.tfl.gov.uk';
 
-    async function fetchRoutes() {
-      const res = await fetch(`${BASE}/Line/Mode/bus/Route?app_key=${API_KEY}`);
-      const data = await res.json();
-      allRoutes = data.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
-      renderRoutes(allRoutes);
-    }
+let allRoutes = [];
+let routeMeta = {};
+let currentRouteId = null;
+let currentDirection = 'inbound';
+let currentBranch = 0;
+let currentStopSequences = [];
 
-    function filterRouteGroup() {
-      const val = document.getElementById('routeGroupSelect').value;
-      const filtered = allRoutes.filter(r => {
-        const name = r.name;
-        if (/^[0-9]+$/.test(name)) {
-          const num = parseInt(name);
-          if (val === '1-99') return num >= 1 && num <= 99;
-          if (val === '100-199') return num >= 100 && num <= 199;
-          if (val === '200-299') return num >= 200 && num <= 299;
-          if (val === '300-399') return num >= 300 && num <= 399;
-          if (val === '400-499') return num >= 400 && num <= 499;
-          if (val === '500-599') return num >= 500 && num <= 599;
-          if (val === '600-699') return num >= 600 && num <= 699;
-          if (val === '900-999') return num >= 900 && num <= 999;
-        } else if (/^[A-Ma-m]/.test(name)) return val === 'A-M';
-        else if (/^N/.test(name)) return val === 'N';
-        else if (/^[P-Xp-x]/.test(name)) return val === 'P-X';
-        return val === 'all';
-      });
-      renderRoutes(filtered);
-    }
-
-    function renderRoutes(routes) {
-      const tbody = document.querySelector('#routes-table tbody');
-      tbody.innerHTML = '';
-      routes.forEach(route => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${route.name}</td><td>${route.modeName}</td><td><button class='btn' onclick="showRoute('${route.id}')">View</button></td>`;
-        tbody.appendChild(tr);
-      });
-    }
-
-    // All other functions remain unchanged (showRoute, loadStops, showArrivals, etc.)
-    async function showRoute(routeId) {
-      currentRoute = routeId;
-      currentDirection = 'inbound';
-      document.getElementById('routeTitle').textContent = `Route ${routeId.toUpperCase()}`;
-      document.getElementById('routePageBtn').onclick = () => {
-        window.open(`/routes/${routeId.toUpperCase()}.html`, '_blank');
+// 1. Fetch all bus routes with start/destination data
+async function fetchRoutes() {
+  const res = await fetch(`${BASE}/Line/Mode/bus/Route?app_key=${API_KEY}`);
+  const data = await res.json();
+  allRoutes = data;
+  routeMeta = {};
+  data.forEach(item => {
+    if (item.routeSections && item.routeSections.length > 0) {
+      routeMeta[item.id] = {
+        start: item.routeSections[0].originationName,
+        end: item.routeSections[0].destinationName
       };
-      await loadStops(routeId, currentDirection);
-      await loadVehicles(routeId);
-      document.getElementById('routeModal').style.display = 'flex';
     }
+  });
+  renderRoutesTable();
+}
+fetchRoutes();
 
-    async function loadStops(routeId, direction) {
-      const res = await fetch(`${BASE}/Line/${routeId}/Route/Sequence/${direction}?app_key=${API_KEY}`);
-      const data = await res.json();
-      const tbody = document.querySelector('#stopsTable tbody');
-      tbody.innerHTML = '';
-      data.stopPointSequences[0].stopPoint.forEach(stop => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${stop.commonName}</td>
-          <td>${stop.stopLetter || '-'}</td>
-          <td><button class='btn' onclick="showArrivals('${stop.id}')">Live</button></td>`;
-        tbody.appendChild(tr);
-      });
+// 2. Render the table
+function renderRoutesTable() {
+  const tbody = document.querySelector('#routesTable tbody');
+  tbody.innerHTML = '';
+  const sorted = [...allRoutes].sort((a, b) => {
+    let an = parseInt(a.name), bn = parseInt(b.name);
+    if (!isNaN(an) && !isNaN(bn)) return an - bn;
+    return a.name.localeCompare(b.name);
+  });
+  for (const route of sorted) {
+    if (!routeMeta[route.id]) continue;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${route.name}</td>
+      <td>${routeMeta[route.id].start}</td>
+      <td>${routeMeta[route.id].end}</td>
+    `;
+    tr.addEventListener('click', () => openRouteModal(route.id));
+    tbody.appendChild(tr);
+  }
+}
+
+// 3. Modal logic
+async function openRouteModal(routeId) {
+  currentRouteId = routeId;
+  currentDirection = 'inbound';
+  currentBranch = 0;
+  document.getElementById('routeTitle').textContent =
+    `Route ${routeId} — ${routeMeta[routeId]?.start || ''} ↔ ${routeMeta[routeId]?.end || ''}`;
+  document.getElementById('routePageBtn').onclick = () => {
+    window.open(`/routes/${routeId}.html`, '_blank');
+  };
+  await Promise.all([
+    loadVehicleRegs(routeId),
+    loadStops(routeId, currentDirection, currentBranch)
+  ]);
+  document.getElementById('routeModal').style.display = 'flex';
+}
+
+// 4. Load active vehicle regs on the route
+async function loadVehicleRegs(routeId) {
+  try {
+    const res = await fetch(`${BASE}/Vehicle/Route?lineIds=${routeId}&app_key=${API_KEY}`);
+    const data = await res.json();
+    const ul = document.getElementById('vehicleList');
+    ul.innerHTML = '';
+    if (!data || data.length === 0) {
+      ul.innerHTML = '<li>No active buses currently tracked.</li>';
+      return;
     }
+    data.forEach(bus => {
+      const li = document.createElement('li');
+      li.textContent = bus.vehicleId || bus.vrm || 'Unknown Reg';
+      ul.appendChild(li);
+    });
+  } catch (e) {
+    document.getElementById('vehicleList').innerHTML = '<li>Error loading vehicles.</li>';
+  }
+}
 
-    async function showArrivals(stopId) {
-      const res = await fetch(`${BASE}/StopPoint/${stopId}/Arrivals?app_key=${API_KEY}`);
-      const data = await res.json();
-      const list = document.getElementById('arrivalList');
-      list.innerHTML = '';
-      data.sort((a, b) => a.timeToStation - b.timeToStation).forEach(item => {
-        const li = document.createElement('li');
-        li.textContent = `${item.lineName} to ${item.destinationName} - ${Math.round(item.timeToStation / 60)} min`;
-        list.appendChild(li);
-      });
-      document.getElementById('arrivalModal').style.display = 'flex';
+// 5. Load bus stops for route & direction
+async function loadStops(routeId, direction, branchId = 0) {
+  try {
+    const res = await fetch(`${BASE}/Line/${routeId}/Route/Sequence/${direction}?app_key=${API_KEY}`);
+    const data = await res.json();
+    currentStopSequences = data.stopPointSequences || [];
+    let stops = [];
+    if (currentStopSequences.length > 0) {
+      stops = currentStopSequences[branchId].stopPoint;
     }
+    const tbody = document.querySelector('#stopsTable tbody');
+    tbody.innerHTML = '';
+    stops.forEach(stop => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${stop.commonName}</td>
+        <td>${stop.stopLetter || '-'}</td>
+        <td><button class='btn' onclick="showArrivals(event, '${stop.id}')">Live</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (e) {
+    document.querySelector('#stopsTable tbody').innerHTML = '<tr><td colspan="3">Error loading stops.</td></tr>';
+  }
+}
 
-    async function loadVehicles(routeId) {
-      const res = await fetch(`${BASE}/Vehicle/Route?lineIds=${routeId}&app_key=${API_KEY}`);
-      const data = await res.json();
-      const list = document.getElementById('vehicleList');
-      list.innerHTML = '';
-      data.forEach(bus => {
-        const li = document.createElement('li');
-        li.textContent = bus.vehicleId || 'Unknown Reg';
-        list.appendChild(li);
-      });
+// 6. Show arrivals popup for a stop
+async function showArrivals(ev, stopId) {
+  ev.stopPropagation();
+  try {
+    const res = await fetch(`${BASE}/StopPoint/${stopId}/Arrivals?app_key=${API_KEY}`);
+    const data = await res.json();
+    const list = document.getElementById('arrivalList');
+    list.innerHTML = '';
+    if (!data || data.length === 0) {
+      list.innerHTML = '<li>No arrivals.</li>';
+    } else {
+      data.sort((a, b) => a.timeToStation - b.timeToStation)
+        .forEach(item => {
+          const li = document.createElement('li');
+          li.textContent = `${item.lineName} to ${item.destinationName} - ${Math.round(item.timeToStation/60)} min`;
+          list.appendChild(li);
+        });
     }
+    document.getElementById('arrivalModal').style.display = 'flex';
+  } catch (e) {
+    document.getElementById('arrivalList').innerHTML = '<li>Error fetching arrivals.</li>';
+    document.getElementById('arrivalModal').style.display = 'flex';
+  }
+}
+window.showArrivals = showArrivals;
 
-    function toggleDirection() {
-      currentDirection = currentDirection === 'inbound' ? 'outbound' : 'inbound';
-      loadStops(currentRoute, currentDirection);
-    }
+// 7. Switch route direction
+async function toggleDirection() {
+  currentDirection = (currentDirection === 'inbound') ? 'outbound' : 'inbound';
+  await loadStops(currentRouteId, currentDirection, currentBranch);
+}
+window.toggleDirection = toggleDirection;
 
-    function closeModal(id) {
-      document.getElementById(id).style.display = 'none';
-    }
+// 8. Close modal logic
+function closeModal(id) {
+  document.getElementById(id).style.display = 'none';
+}
+window.closeModal = closeModal;
 
-    fetchRoutes();
-  </script>
+</script>
 </body>
 </html>
