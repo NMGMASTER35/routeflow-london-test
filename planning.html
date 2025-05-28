@@ -538,50 +538,55 @@ function signOut() {
     <h1>Journey Planning</h1>
     <p>Plan your journey across London. Feature coming soon!</p>
   </main>
-  <style>
+<style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f4f6f8;
+      background: #e6ecf0;
       margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #001f3f;
+      color: white;
       padding: 20px;
-    }
-    h1 {
       text-align: center;
-      color: #2e3b4e;
     }
-    .planner-form {
-      max-width: 700px;
-      margin: auto;
+    header h1 {
+      margin: 0;
+      font-size: 2rem;
+    }
+    .container {
+      max-width: 900px;
+      margin: 30px auto;
       background: white;
-      padding: 25px;
+      padding: 30px;
       border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+    .form-group {
+      margin-bottom: 20px;
+      position: relative;
     }
     label {
-      font-weight: bold;
-      margin-top: 15px;
       display: block;
-    }
-    .autocomplete {
-      position: relative;
+      margin-bottom: 8px;
+      font-weight: bold;
     }
     input, select {
       width: 100%;
       padding: 10px;
-      margin-top: 5px;
       border: 1px solid #ccc;
       border-radius: 6px;
     }
     .suggestions {
       position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
       background: white;
+      width: 100%;
       border: 1px solid #ccc;
-      z-index: 1000;
-      max-height: 250px;
+      border-top: none;
+      max-height: 200px;
       overflow-y: auto;
+      z-index: 1000;
       border-radius: 0 0 6px 6px;
     }
     .suggestion {
@@ -589,122 +594,114 @@ function signOut() {
       cursor: pointer;
     }
     .suggestion:hover {
-      background: #f0f8ff;
+      background: #f1f1f1;
     }
-    button {
-      margin-top: 20px;
-      width: 100%;
-      padding: 14px;
-      background: #0078d4;
+    .button {
+      background: #0074d9;
       color: white;
+      padding: 14px;
       border: none;
-      font-weight: bold;
+      width: 100%;
       border-radius: 6px;
+      font-size: 16px;
       cursor: pointer;
+      transition: background 0.3s ease;
     }
-    button:hover {
+    .button:hover {
       background: #005fa3;
     }
-    .filters {
-      display: flex;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      margin-top: 20px;
-    }
-    .filters div {
-      flex: 1;
-      padding-right: 10px;
-    }
-    .journey-summary {
+    .results {
       margin-top: 30px;
-      max-width: 900px;
-      margin-left: auto;
-      margin-right: auto;
     }
-    .summary-card {
-      background: white;
+    .card {
+      background: #f9f9f9;
       padding: 20px;
       margin-bottom: 15px;
       border-radius: 10px;
+      border-left: 5px solid #0074d9;
       cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      transition: background 0.2s ease;
+      transition: background 0.3s ease;
     }
-    .summary-card:hover {
-      background: #f0f8ff;
+    .card:hover {
+      background: #e1f0ff;
     }
     .details {
-      margin-top: 10px;
-      font-size: 15px;
-      color: #333;
+      padding-top: 10px;
     }
     .step {
-      padding: 8px 0;
-      border-bottom: 1px solid #eee;
+      border-top: 1px dashed #ccc;
+      margin-top: 10px;
+      padding-top: 10px;
     }
-    .icons {
-      font-size: 20px;
-      margin-right: 8px;
+    .step i {
+      margin-right: 10px;
+      color: #0074d9;
+    }
+    .fare {
+      margin-top: 10px;
+      font-weight: bold;
+      color: #2d6a4f;
     }
   </style>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
 </head>
 <body>
-  <h1>RouteFlow London – Journey Planner</h1>
-  <div class="planner-form">
-    <label for="from">From:</label>
-    <div class="autocomplete">
-      <input type="text" id="from" placeholder="Start location or postcode" oninput="suggestLocations(this, 'from')"/>
+  <header>
+    <h1>RouteFlow London – Smart Journey Planner</h1>
+  </header>
+
+  <div class="container">
+    <div class="form-group">
+      <label for="from">Start Location or Postcode</label>
+      <input type="text" id="from" oninput="suggestLocations(this, 'from')"/>
       <div id="from-suggestions" class="suggestions"></div>
     </div>
 
-    <label for="to">To:</label>
-    <div class="autocomplete">
-      <input type="text" id="to" placeholder="Destination or postcode" oninput="suggestLocations(this, 'to')"/>
+    <div class="form-group">
+      <label for="to">End Location or Postcode</label>
+      <input type="text" id="to" oninput="suggestLocations(this, 'to')"/>
       <div id="to-suggestions" class="suggestions"></div>
     </div>
 
-    <div class="filters">
-      <div>
-        <label for="mode">Mode of Transport:</label>
-        <select id="mode">
-          <option value="">Any</option>
-          <option value="tube">Tube</option>
-          <option value="bus">Bus</option>
-          <option value="walking">Walking</option>
-          <option value="overground">Overground</option>
-          <option value="national-rail">Train</option>
-        </select>
-      </div>
-      <div>
-        <label for="timeType">Time Type:</label>
-        <select id="timeType">
-          <option value="depart">Leave at</option>
-          <option value="arrive">Arrive by</option>
-        </select>
-      </div>
-      <div>
-        <label for="time">Time:</label>
-        <input type="datetime-local" id="time"/>
-      </div>
+    <div class="form-group">
+      <label for="mode">Mode of Transport</label>
+      <select id="mode">
+        <option value="">Any</option>
+        <option value="bus">Bus</option>
+        <option value="tube">Tube</option>
+        <option value="overground">Overground</option>
+        <option value="national-rail">Train</option>
+        <option value="walking">Walking</option>
+      </select>
     </div>
 
-    <button onclick="planJourney()">Plan Journey</button>
-  </div>
+    <div class="form-group">
+      <label for="timeType">Leave or Arrive?</label>
+      <select id="timeType">
+        <option value="depart">Leave at</option>
+        <option value="arrive">Arrive by</option>
+      </select>
+    </div>
 
-  <div class="journey-summary" id="journeyResults"></div>
+    <div class="form-group">
+      <label for="time">Time</label>
+      <input type="datetime-local" id="time"/>
+    </div>
+
+    <button class="button" onclick="planJourney()">Plan My Journey</button>
+
+    <div class="results" id="journeyResults"></div>
+  </div>
 
   <script>
     const apiKey = "f17d0725d1654338ab02a361fe41abad";
 
-    async function suggestLocations(inputElem, field) {
-      const query = inputElem.value;
-      const suggestionBox = document.getElementById(`${field}-suggestions`);
-      suggestionBox.innerHTML = "";
+    async function suggestLocations(input, field) {
+      const value = input.value;
+      const box = document.getElementById(`${field}-suggestions`);
+      box.innerHTML = "";
+      if (value.length < 3) return;
 
-      if (query.length < 3) return;
-
-      const res = await fetch(`https://api.tfl.gov.uk/StopPoint/Search/${encodeURIComponent(query)}?modes=bus,tube&maxResults=6&app_key=${apiKey}`);
+      const res = await fetch(`https://api.tfl.gov.uk/StopPoint/Search/${value}?modes=bus,tube&maxResults=6&app_key=${apiKey}`);
       const data = await res.json();
 
       data.matches?.forEach(match => {
@@ -713,9 +710,9 @@ function signOut() {
         div.textContent = match.name;
         div.onclick = () => {
           document.getElementById(field).value = match.name;
-          suggestionBox.innerHTML = "";
+          box.innerHTML = "";
         };
-        suggestionBox.appendChild(div);
+        box.appendChild(div);
       });
     }
 
@@ -725,73 +722,70 @@ function signOut() {
       const mode = document.getElementById("mode").value;
       const timeType = document.getElementById("timeType").value;
       const time = document.getElementById("time").value;
-      const resultsDiv = document.getElementById("journeyResults");
-      resultsDiv.innerHTML = "<p>Loading...</p>";
+      const results = document.getElementById("journeyResults");
+      results.innerHTML = "<p>Loading...</p>";
 
-      let url = `https://api.tfl.gov.uk/Journey/JourneyResults/${encodeURIComponent(from)}/to/${encodeURIComponent(to)}?app_key=${apiKey}`;
+      let url = `https://api.tfl.gov.uk/Journey/JourneyResults/${from}/to/${to}?app_key=${apiKey}`;
       if (mode) url += `&mode=${mode}`;
-      if (time) url += `&${timeType}DateTime=${encodeURIComponent(time)}`;
+      if (time) url += `&${timeType}DateTime=${time}`;
 
-      try {
-        const res = await fetch(url);
-        const data = await res.json();
+      const res = await fetch(url);
+      const data = await res.json();
 
-        if (!data.journeys) {
-          resultsDiv.innerHTML = "<p>No journeys found. Check spelling or try another location.</p>";
-          return;
-        }
-
-        resultsDiv.innerHTML = "";
-        data.journeys.forEach((journey, index) => {
-          const card = document.createElement("div");
-          card.className = "summary-card";
-          const icons = [...new Set(journey.legs.map(leg => getIcon(leg.mode.name)))].join(" ");
-          card.innerHTML = `
-            <strong>Option ${index + 1}</strong><br/>
-            ${icons}<br/>
-            Duration: ${journey.duration} mins<br/>
-            Start: ${journey.startDateTime.slice(11, 16)} → End: ${journey.arrivalDateTime.slice(11, 16)}
-          `;
-          card.onclick = () => showDetails(journey, card);
-          resultsDiv.appendChild(card);
-        });
-      } catch (err) {
-        resultsDiv.innerHTML = "<p>Error fetching journey data. Try again later.</p>";
-        console.error(err);
+      if (!data.journeys) {
+        results.innerHTML = "<p>No results found.</p>";
+        return;
       }
+
+      results.innerHTML = "";
+
+      data.journeys.forEach((journey, idx) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        let fare = journey.fare?.totalCost != null ? `<div class='fare'>Fare: £${(journey.fare.totalCost / 100).toFixed(2)}</div>` : "";
+
+        card.innerHTML = `
+          <strong>Option ${idx + 1}</strong><br>
+          Duration: ${journey.duration} min<br>
+          Start: ${journey.startDateTime.slice(11, 16)} – End: ${journey.arrivalDateTime.slice(11, 16)}
+          ${fare}
+        `;
+        card.onclick = () => showJourneyDetails(journey, card);
+        results.appendChild(card);
+      });
     }
 
-    function getIcon(mode) {
-      const map = {
-        walking: '<i class="fas fa-walking icons"></i>',
-        bus: '<i class="fas fa-bus icons"></i>',
-        tube: '<i class="fas fa-subway icons"></i>',
-        "national-rail": '<i class="fas fa-train icons"></i>',
-        overground: '<i class="fas fa-train icons"></i>',
-        default: '<i class="fas fa-question-circle icons"></i>'
-      };
-      return map[mode] || map.default;
-    }
-
-    function showDetails(journey, card) {
-      document.querySelectorAll(".details").forEach(el => el.remove());
-      const detailDiv = document.createElement("div");
-      detailDiv.className = "details";
+    function showJourneyDetails(journey, container) {
+      document.querySelectorAll(".details").forEach(e => e.remove());
+      const details = document.createElement("div");
+      details.className = "details";
 
       journey.legs.forEach(leg => {
         const step = document.createElement("div");
         step.className = "step";
         step.innerHTML = `
-          <strong>${leg.mode.name}</strong>: ${leg.instruction.summary}<br/>
-          From ${leg.departurePoint.commonName} at ${leg.departureTime.slice(11,16)}<br/>
-          To ${leg.arrivalPoint.commonName} at ${leg.arrivalTime.slice(11,16)}
+          <i class="fas ${getIcon(leg.mode.name)}"></i>
+          <strong>${leg.mode.name.toUpperCase()}</strong>: ${leg.instruction.summary}<br>
+          <small>${leg.departureTime.slice(11, 16)} → ${leg.arrivalTime.slice(11, 16)}</small>
         `;
-        detailDiv.appendChild(step);
+        details.appendChild(step);
       });
 
-      card.appendChild(detailDiv);
+      container.appendChild(details);
+    }
+
+    function getIcon(mode) {
+      const icons = {
+        bus: 'fa-bus',
+        tube: 'fa-subway',
+        walking: 'fa-walking',
+        overground: 'fa-train',
+        'national-rail': 'fa-train'
+      };
+      return icons[mode] || 'fa-map-signs';
     }
   </script>
 </body>
 </html>
+
 
