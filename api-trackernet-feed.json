@@ -1,0 +1,136 @@
+{
+    "openapi": "3.0.1",
+    "info": {
+        "title": "Trackernet",
+        "version": "1.0"
+    },
+    "servers": [
+        {
+            "url": "https://api.tfl.gov.uk/trackernet"
+        }
+    ],
+    "paths": {
+        "/LineStatus": {
+            "get": {
+                "summary": "LineStatus",
+                "description": "Gets line status data",
+                "operationId": "linestatus",
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/LineStatus/IncidentsOnly": {
+            "get": {
+                "summary": "LineStatusIncidentsOnly",
+                "description": "LineStatusIncidentsOnly",
+                "operationId": "linestatusincidentsonly",
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/StationStatus": {
+            "get": {
+                "summary": "StationStatus",
+                "description": "StationStatus",
+                "operationId": "stationstatus",
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/StationStatus/IncidentsOnly": {
+            "get": {
+                "summary": "StationStatusIncidentsOnly",
+                "description": "StationStatusIncidentsOnly",
+                "operationId": "stationstatusincidentsonly",
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/PredictionDetailed/{line}/{station}": {
+            "get": {
+                "summary": "PredictionDetailed",
+                "description": "PredictionDetailed",
+                "operationId": "predictiondetailed",
+                "parameters": [
+                    {
+                        "name": "line",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "station",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/PredictionSummary/{line}": {
+            "get": {
+                "summary": "PredictionSummary",
+                "description": "PredictionSummary",
+                "operationId": "predictionsummary",
+                "parameters": [
+                    {
+                        "name": "line",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "apiKeyHeader": {
+                "type": "apiKey",
+                "name": "app_key",
+                "in": "header"
+            },
+            "apiKeyQuery": {
+                "type": "apiKey",
+                "name": "app_key",
+                "in": "query"
+            }
+        }
+    },
+    "security": [
+        {
+            "apiKeyHeader": []
+        },
+        {
+            "apiKeyQuery": []
+        }
+    ]
+}
