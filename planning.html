@@ -636,7 +636,14 @@ function signOut() {
       font-weight: bold;
       color: #2d6a4f;
     }
+    #map {
+      width: 100%;
+      height: 400px;
+      border-radius: 10px;
+      margin-top: 20px;
+    }
   </style>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 </head>
 <body>
   <header>
@@ -646,13 +653,13 @@ function signOut() {
   <div class="container">
     <div class="form-group">
       <label for="from">Start Location or Postcode</label>
-      <input type="text" id="from" oninput="suggestLocations(this, 'from')"/>
+      <input type="text" id="from" oninput="suggestLocations(this, 'from')" autocomplete="off"/>
       <div id="from-suggestions" class="suggestions"></div>
     </div>
 
     <div class="form-group">
       <label for="to">End Location or Postcode</label>
-      <input type="text" id="to" oninput="suggestLocations(this, 'to')"/>
+      <input type="text" id="to" oninput="suggestLocations(this, 'to')" autocomplete="off"/>
       <div id="to-suggestions" class="suggestions"></div>
     </div>
 
@@ -681,13 +688,40 @@ function signOut() {
       <input type="datetime-local" id="time"/>
     </div>
 
+    <div class="form-group">
+      <label for="accessibility">Accessibility Options</label>
+      <select id="accessibility">
+        <option value="">None</option>
+        <option value="stepFreeAccess">Step-Free Access</option>
+        <option value="escalator">Escalator</option>
+        <option value="lift">Lift</option>
+      </select>
+    </div>
+
     <button class="button" onclick="planJourney()">Plan My Journey</button>
 
+    <div id="map"></div>
     <div class="results" id="journeyResults"></div>
   </div>
 
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
     const apiKey = "f17d0725d1654338ab02a361fe41abad";
+
+    let map = L.map('map').setView([51.5074, -0.1278], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    function updatePageTitle(from, to) {
+      const title = document.getElementById("page-title");
+      if (from && to) {
+        title.textContent = `From ${from} to ${to} – RouteFlow`;
+      } else {
+        title.textContent = "RouteFlow London – Smart Journey Planner";
+      }
+    }
 
     async function suggestLocations(input, field) {
       const value = input.value;
@@ -695,7 +729,7 @@ function signOut() {
       box.innerHTML = "";
       if (value.length < 3) return;
 
-      const res = await fetch(`https://api.tfl.gov.uk/StopPoint/Search/${value}?modes=bus,tube&maxResults=6&app_key=${apiKey}`);
+      const res = await fetch(`https://api.tfl.gov.uk/StopPoint/Search/${value}?modes=bus,tube,overground,national-rail&maxResults=6&app_key=${apiKey}`);
       const data = await res.json();
 
       data.matches?.forEach(match => {
@@ -716,12 +750,17 @@ function signOut() {
       const mode = document.getElementById("mode").value;
       const timeType = document.getElementById("timeType").value;
       const time = document.getElementById("time").value;
+      const accessibility = document.getElementById("accessibility").value;
       const results = document.getElementById("journeyResults");
+
+      updatePageTitle(from, to);
+
       results.innerHTML = "<p>Loading...</p>";
 
       let url = `https://api.tfl.gov.uk/Journey/JourneyResults/${from}/to/${to}?app_key=${apiKey}`;
       if (mode) url += `&mode=${mode}`;
       if (time) url += `&${timeType}DateTime=${time}`;
+      if (accessibility) url += `&accessibilityPreference=${accessibility}`;
 
       const res = await fetch(url);
       const data = await res.json();
@@ -732,6 +771,11 @@ function signOut() {
       }
 
       results.innerHTML = "";
+      map.eachLayer(layer => {
+        if (layer instanceof L.Marker || layer instanceof L.Polyline) {
+          map.removeLayer(layer);
+        }
+      });
 
       data.journeys.forEach((journey, idx) => {
         const card = document.createElement("div");
@@ -763,6 +807,15 @@ function signOut() {
           <small>${leg.departureTime.slice(11, 16)} → ${leg.arrivalTime.slice(11, 16)}</small>
         `;
         details.appendChild(step);
+
+        if (leg.path?.lineString) {
+          const points = leg.path.lineString.split(' ').map(p => {
+            const [lat, lng] = p.split(',');
+            return [parseFloat(lat), parseFloat(lng)];
+          });
+          L.polyline(points, { color: '#0074d9' }).addTo(map);
+          map.fitBounds(L.polyline(points).getBounds());
+        }
       });
 
       container.appendChild(details);
@@ -781,5 +834,3 @@ function signOut() {
   </script>
 </body>
 </html>
-
-
