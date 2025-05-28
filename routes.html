@@ -532,9 +532,19 @@ function signOut() {
 
   <!-- ROUTES SECTION -->
 
-   <style>
+ <style>
     body { font-family: 'Segoe UI', sans-serif; background: #f6f7fa; margin: 0; padding: 1.5em; color: #222; }
     h1 { text-align: center; margin: 1em 0 1.5em; }
+    .controls-row { display: flex; gap: 1em; align-items: center; justify-content: flex-start; margin-bottom: 1.4em; flex-wrap: wrap;}
+    .search-bar { flex: 1 1 180px; }
+    #routeSearch {
+      width: 100%; font-size: 1.03em; padding: 0.5em 1em; border-radius: 6px;
+      border: 1.5px solid #bbb; background: #fff; color: #222;
+    }
+    #routeGroupSelect {
+      padding: 0.5em 1em; border-radius: 6px; border: 1.5px solid #bbb; font-size: 1.03em; background: #fff; color: #222;
+      min-width: 140px;
+    }
     table { width: 100%; border-collapse: collapse; background: #fff; box-shadow: 0 2px 12px #0001; margin-bottom: 2em; }
     th, td { padding: 0.8em; text-align: center; border-bottom: 1px solid #eee; }
     th { background: #2d3a4a; color: #fff; }
@@ -555,17 +565,55 @@ function signOut() {
     }
     .close:hover { color: #d32f2f; }
     .direction-switch { margin: 1em 0; text-align: center; }
-    #vehicleList { margin-bottom: 1em; }
-    #vehicleList li { margin-bottom: .2em; }
-    #stopsTable { margin-bottom: 1em; }
+    #vehicleTable { margin-bottom: 1.5em; border: 1px solid #eee; border-radius: 6px; overflow: hidden; font-size: 1em;}
+    #vehicleTable th, #vehicleTable td { border-bottom: 1px solid #f6f7fa; }
+    #vehicleTable th { background: #f6f7fa; color: #222; }
+    .platform-bubble {
+      display: inline-block;
+      background: #2d3a4a;
+      color: #fff;
+      border-radius: 1.3em;
+      font-size: 1em;
+      padding: 0.16em 0.8em;
+      margin-left: 0.5em;
+    }
+    .arrival-title { font-weight: bold; font-size: 1.2em; margin-bottom: 0.9em; }
+    .arrivals-table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+    .arrivals-table th, .arrivals-table td { padding: 0.5em; border-bottom: 1px solid #eee; }
+    .arrivals-table th { background: #f6f7fa; }
+    .empty-row { color: #888; font-style: italic; }
+    @media (max-width: 950px) {
+      .controls-row { flex-direction: column; align-items: stretch; gap: 0.6em;}
+      .search-bar, #routeGroupSelect { width: 100%; min-width: 0; }
+    }
     @media (max-width: 650px) {
       .modal-content, .arrival-content { padding: 0.7em; max-width: 99vw; }
       th, td { font-size: 0.93em; padding: 0.4em; }
+      .platform-bubble { font-size: 0.93em; padding: 0.14em 0.7em; }
     }
   </style>
 </head>
 <body>
   <h1>London Bus Route Explorer</h1>
+  <div class="controls-row">
+    <div class="search-bar">
+      <input type="text" id="routeSearch" placeholder="Search by route, start, or destination...">
+    </div>
+    <select id="routeGroupSelect">
+      <option value="all">Show All Routes</option>
+      <option value="1-99">1-99</option>
+      <option value="100-199">100-199</option>
+      <option value="200-299">200-299</option>
+      <option value="300-399">300-399</option>
+      <option value="400-499">400-499</option>
+      <option value="500-599">500-599</option>
+      <option value="600-699">600-699</option>
+      <option value="900-999">900-999</option>
+      <option value="A-M">A-M</option>
+      <option value="N">N Routes</option>
+      <option value="P-X">P-X</option>
+    </select>
+  </div>
   <table id="routesTable">
     <thead>
       <tr><th>Route Number</th><th>Start</th><th>Destination</th></tr>
@@ -579,7 +627,12 @@ function signOut() {
       <button class="close" onclick="closeModal('routeModal')">&times;</button>
       <h2 id="routeTitle"></h2>
       <div><strong>Current Vehicles:</strong>
-        <ul id="vehicleList"></ul>
+        <table id="vehicleTable">
+          <thead>
+            <tr><th>#</th><th>Vehicle ID</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
       </div>
       <div class="direction-switch">
         <button class="btn" onclick="toggleDirection()">Switch Direction</button>
@@ -596,8 +649,18 @@ function signOut() {
   <div class="arrival-modal" id="arrivalModal">
     <div class="arrival-content">
       <button class="close" onclick="closeModal('arrivalModal')">&times;</button>
-      <h3>Live Arrivals</h3>
-      <ul id="arrivalList"></ul>
+      <div class="arrival-title" id="arrivalTitle"></div>
+      <table class="arrivals-table">
+        <thead>
+          <tr>
+            <th>Line</th>
+            <th>Destination</th>
+            <th>Due (min)</th>
+            <th>Current Location</th>
+          </tr>
+        </thead>
+        <tbody id="arrivalList"></tbody>
+      </table>
     </div>
   </div>
 
@@ -607,12 +670,13 @@ const BASE = 'https://api.tfl.gov.uk';
 
 let allRoutes = [];
 let routeMeta = {};
+let filteredRoutes = [];
 let currentRouteId = null;
 let currentDirection = 'inbound';
 let currentBranch = 0;
 let currentStopSequences = [];
 
-// 1. Fetch all bus routes with start/destination data
+// Fetch all bus routes with start/destination data
 async function fetchRoutes() {
   const res = await fetch(`${BASE}/Line/Mode/bus/Route?app_key=${API_KEY}`);
   const data = await res.json();
@@ -626,15 +690,48 @@ async function fetchRoutes() {
       };
     }
   });
+  filteredRoutes = [...allRoutes];
   renderRoutesTable();
 }
 fetchRoutes();
 
-// 2. Render the table
+function filterByDropdown(val, routes) {
+  return routes.filter(r => {
+    const name = r.name;
+    if (/^[0-9]+$/.test(name)) {
+      const num = parseInt(name, 10);
+      if (val === '1-99') return num >= 1 && num <= 99;
+      if (val === '100-199') return num >= 100 && num <= 199;
+      if (val === '200-299') return num >= 200 && num <= 299;
+      if (val === '300-399') return num >= 300 && num <= 399;
+      if (val === '400-499') return num >= 400 && num <= 499;
+      if (val === '500-599') return num >= 500 && num <= 599;
+      if (val === '600-699') return num >= 600 && num <= 699;
+      if (val === '900-999') return num >= 900 && num <= 999;
+    } else if (/^[A-Ma-m]/.test(name)) return val === 'A-M';
+    else if (/^N/.test(name)) return val === 'N';
+    else if (/^[P-Xp-x]/.test(name)) return val === 'P-X';
+    return val === 'all';
+  });
+}
+
+function filterBySearch(term, routes) {
+  if (!term) return routes;
+  const lcTerm = term.toLowerCase();
+  return routes.filter(route => {
+    if (!routeMeta[route.id]) return false;
+    return (
+      route.name.toLowerCase().includes(lcTerm) ||
+      routeMeta[route.id].start.toLowerCase().includes(lcTerm) ||
+      routeMeta[route.id].end.toLowerCase().includes(lcTerm)
+    );
+  });
+}
+
 function renderRoutesTable() {
   const tbody = document.querySelector('#routesTable tbody');
   tbody.innerHTML = '';
-  const sorted = [...allRoutes].sort((a, b) => {
+  const sorted = [...filteredRoutes].sort((a, b) => {
     let an = parseInt(a.name), bn = parseInt(b.name);
     if (!isNaN(an) && !isNaN(bn)) return an - bn;
     return a.name.localeCompare(b.name);
@@ -652,7 +749,24 @@ function renderRoutesTable() {
   }
 }
 
-// 3. Modal logic
+// Filtering events
+document.getElementById('routeGroupSelect').addEventListener('change', function() {
+  applyFilters();
+});
+document.getElementById('routeSearch').addEventListener('input', function() {
+  applyFilters();
+});
+
+function applyFilters() {
+  const groupVal = document.getElementById('routeGroupSelect').value;
+  const searchVal = document.getElementById('routeSearch').value.trim();
+  let filtered = filterByDropdown(groupVal, allRoutes);
+  filtered = filterBySearch(searchVal, filtered);
+  filteredRoutes = filtered;
+  renderRoutesTable();
+}
+
+// Modal logic
 async function openRouteModal(routeId) {
   currentRouteId = routeId;
   currentDirection = 'inbound';
@@ -662,12 +776,12 @@ async function openRouteModal(routeId) {
   document.getElementById('routePageBtn').onclick = () => {
     window.open(`/routes/${routeId}.html`, '_blank');
   };
-  await loadStops(routeId, currentDirection, currentBranch); // Ensure stops are loaded before vehicles
+  await loadStops(routeId, currentDirection, currentBranch); // stops must be loaded first
   await loadVehicleRegs(routeId);
   document.getElementById('routeModal').style.display = 'flex';
 }
 
-// 4. Robust: Load active vehicle regs on the route by searching arrivals at all stops
+// Show all active vehicle regs in a table
 async function loadVehicleRegs(routeId) {
   const stops = currentStopSequences[currentBranch]?.stopPoint || [];
   const vehicleSet = new Set();
@@ -681,7 +795,9 @@ async function loadVehicleRegs(routeId) {
         const res = await fetch(`${BASE}/StopPoint/${stop.id}/Arrivals?app_key=${API_KEY}`);
         const arrivals = await res.json();
         arrivals.filter(a => a.lineId.toLowerCase() === routeId.toLowerCase()).forEach(a => {
-          if (a.vehicleId) vehicleSet.add(a.vehicleId);
+          if (a.vehicleId && !vehicleSet.has(a.vehicleId)) {
+            vehicleSet.add(a.vehicleId);
+          }
         });
       } catch (e) {}
     }));
@@ -691,19 +807,21 @@ async function loadVehicleRegs(routeId) {
     }
   }
   await processNextBatch();
-  const ul = document.getElementById('vehicleList');
-  ul.innerHTML = '';
-  [...vehicleSet].forEach(vehicleId => {
-    const li = document.createElement('li');
-    li.textContent = vehicleId;
-    ul.appendChild(li);
-  });
+  const tbody = document.querySelector('#vehicleTable tbody');
+  tbody.innerHTML = '';
   if (vehicleSet.size === 0) {
-    ul.innerHTML = '<li>No active buses currently tracked.</li>';
+    tbody.innerHTML = `<tr><td colspan="2" class="empty-row">No active buses currently tracked.</td></tr>`;
+    return;
+  }
+  let idx = 1;
+  for (const vehicleId of vehicleSet) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${idx++}</td><td>${vehicleId}</td>`;
+    tbody.appendChild(tr);
   }
 }
 
-// 5. Load bus stops for route & direction
+// Load bus stops for route & direction
 async function loadStops(routeId, direction, branchId = 0) {
   try {
     const res = await fetch(`${BASE}/Line/${routeId}/Route/Sequence/${direction}?app_key=${API_KEY}`);
@@ -719,8 +837,8 @@ async function loadStops(routeId, direction, branchId = 0) {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${stop.name}</td>
-        <td>${stop.stopLetter || '-'}</td>
-        <td><button class='btn' onclick="showArrivals(event, '${stop.id}')">Live</button></td>
+        <td>${stop.stopLetter ? `<span class="platform-bubble">${stop.stopLetter}</span>` : '-'}</td>
+        <td><button class='btn' onclick="showArrivals(event, '${stop.id}', '${stop.name}', '${stop.stopLetter || ''}')">Live</button></td>
       `;
       tbody.appendChild(tr);
     });
@@ -729,33 +847,39 @@ async function loadStops(routeId, direction, branchId = 0) {
   }
 }
 
-// 6. Show arrivals popup for a stop
-async function showArrivals(ev, stopId) {
+// Show arrivals popup for a stop (as table, with stationName as title, platformName as bubble)
+async function showArrivals(ev, stopId, stopName, stopLetter) {
   ev.stopPropagation();
   try {
     const res = await fetch(`${BASE}/StopPoint/${stopId}/Arrivals?app_key=${API_KEY}`);
     const data = await res.json();
-    const list = document.getElementById('arrivalList');
-    list.innerHTML = '';
+    document.getElementById('arrivalTitle').innerHTML = stopName +
+      (stopLetter ? `<span class="platform-bubble">${stopLetter}</span>` : '');
+    const tbody = document.getElementById('arrivalList');
+    tbody.innerHTML = '';
     if (!data || data.length === 0) {
-      list.innerHTML = '<li>No arrivals.</li>';
+      tbody.innerHTML = `<tr><td colspan="4" class="empty-row">No arrivals at this time.</td></tr>`;
     } else {
       data.sort((a, b) => a.timeToStation - b.timeToStation)
         .forEach(item => {
-          const li = document.createElement('li');
-          li.textContent = `${item.lineName} to ${item.destinationName} - ${Math.round(item.timeToStation/60)} min at ${item.stationName}`;
-          list.appendChild(li);
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${item.lineName}</td>
+            <td>${item.destinationName}</td>
+            <td>${Math.round(item.timeToStation/60)}</td>
+            <td>${item.currentLocation || '-'}</td>`;
+          tbody.appendChild(tr);
         });
     }
     document.getElementById('arrivalModal').style.display = 'flex';
   } catch (e) {
-    document.getElementById('arrivalList').innerHTML = '<li>Error fetching arrivals.</li>';
+    document.getElementById('arrivalTitle').textContent = stopName;
+    document.getElementById('arrivalList').innerHTML = '<tr><td colspan="4" class="empty-row">Error fetching arrivals.</td></tr>';
     document.getElementById('arrivalModal').style.display = 'flex';
   }
 }
 window.showArrivals = showArrivals;
 
-// 7. Switch route direction
+// Switch route direction
 async function toggleDirection() {
   currentDirection = (currentDirection === 'inbound') ? 'outbound' : 'inbound';
   await loadStops(currentRouteId, currentDirection, currentBranch);
@@ -763,7 +887,7 @@ async function toggleDirection() {
 }
 window.toggleDirection = toggleDirection;
 
-// 8. Close modal logic
+// Close modal logic
 function closeModal(id) {
   document.getElementById(id).style.display = 'none';
 }
