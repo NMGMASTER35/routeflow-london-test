@@ -551,11 +551,11 @@ function signOut() {
     tr:hover { background: #eef6ff; cursor: pointer; }
     .btn { padding: 0.45em 1em; background: #2d3a4a; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
     .btn:hover { background: #1a2536; }
-    .modal, .arrival-modal {
+    .modal, .arrival-modal, .reg-modal {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 3000;
     }
-    .modal-content, .arrival-content {
+    .modal-content, .arrival-content, .reg-content {
       background: #fff; padding: 2em; border-radius: 8px; max-height: 92vh; width: 96vw; max-width: 600px; overflow-y: auto;
       position: relative;
     }
@@ -578,16 +578,18 @@ function signOut() {
       margin-left: 0.5em;
     }
     .arrival-title { font-weight: bold; font-size: 1.2em; margin-bottom: 0.9em; }
-    .arrivals-table { width: 100%; border-collapse: collapse; margin: 1em 0; }
-    .arrivals-table th, .arrivals-table td { padding: 0.5em; border-bottom: 1px solid #eee; }
-    .arrivals-table th { background: #f6f7fa; }
+    .arrivals-table, .reg-table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+    .arrivals-table th, .arrivals-table td, .reg-table th, .reg-table td { padding: 0.5em; border-bottom: 1px solid #eee; }
+    .arrivals-table th, .reg-table th { background: #f6f7fa; }
     .empty-row { color: #888; font-style: italic; }
+    .reg-btn-link { color: #2979ff; cursor: pointer; border: none; background: none; text-decoration: underline; }
+    .reg-btn-link:hover { color: #2d3a4a; }
     @media (max-width: 950px) {
       .controls-row { flex-direction: column; align-items: stretch; gap: 0.6em;}
       .search-bar, #routeGroupSelect { width: 100%; min-width: 0; }
     }
     @media (max-width: 650px) {
-      .modal-content, .arrival-content { padding: 0.7em; max-width: 99vw; }
+      .modal-content, .arrival-content, .reg-content { padding: 0.7em; max-width: 99vw; }
       th, td { font-size: 0.93em; padding: 0.4em; }
       .platform-bubble { font-size: 0.93em; padding: 0.14em 0.7em; }
     }
@@ -656,10 +658,28 @@ function signOut() {
             <th>Line</th>
             <th>Destination</th>
             <th>Due (min)</th>
-            <th>Current Location</th>
+            <th>Reg</th>
           </tr>
         </thead>
         <tbody id="arrivalList"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Reg Modal -->
+  <div class="reg-modal" id="regModal">
+    <div class="reg-content">
+      <button class="close" onclick="closeModal('regModal')">&times;</button>
+      <div class="arrival-title" id="regTitle"></div>
+      <table class="reg-table">
+        <thead>
+          <tr>
+            <th>Stop Name</th>
+            <th>Platform</th>
+            <th>Due (min)</th>
+          </tr>
+        </thead>
+        <tbody id="regList"></tbody>
       </table>
     </div>
   </div>
@@ -749,7 +769,6 @@ function renderRoutesTable() {
   }
 }
 
-// Filtering events
 document.getElementById('routeGroupSelect').addEventListener('change', function() {
   applyFilters();
 });
@@ -785,6 +804,7 @@ async function openRouteModal(routeId) {
 async function loadVehicleRegs(routeId) {
   const stops = currentStopSequences[currentBranch]?.stopPoint || [];
   const vehicleSet = new Set();
+  const regRowMap = {}; // vehicleId: true
   // Limit concurrent requests for performance
   const maxConcurrent = 10;
   let index = 0;
@@ -816,7 +836,7 @@ async function loadVehicleRegs(routeId) {
   let idx = 1;
   for (const vehicleId of vehicleSet) {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${idx++}</td><td>${vehicleId}</td>`;
+    tr.innerHTML = `<td>${idx++}</td><td><button class="reg-btn-link" onclick="showBusStopsForReg(event, '${vehicleId}')">${vehicleId}</button></td>`;
     tbody.appendChild(tr);
   }
 }
@@ -866,7 +886,7 @@ async function showArrivals(ev, stopId, stopName, stopLetter) {
           tr.innerHTML = `<td>${item.lineName}</td>
             <td>${item.destinationName}</td>
             <td>${Math.round(item.timeToStation/60)}</td>
-            <td>${item.currentLocation || '-'}</td>`;
+            <td><button class="reg-btn-link" onclick="showBusStopsForReg(event, '${item.vehicleId}')">${item.vehicleId}</button></td>`;
           tbody.appendChild(tr);
         });
     }
@@ -878,6 +898,38 @@ async function showArrivals(ev, stopId, stopName, stopLetter) {
   }
 }
 window.showArrivals = showArrivals;
+
+// Show bus current and next stops for a reg
+async function showBusStopsForReg(ev, vehicleId) {
+  ev.stopPropagation();
+  document.getElementById('regTitle').textContent = `Bus: ${vehicleId}`;
+  const tbody = document.getElementById('regList');
+  tbody.innerHTML = `<tr><td colspan="3">Loading...</td></tr>`;
+  try {
+    const res = await fetch(`${BASE}/Vehicle/${vehicleId}/Arrivals?app_key=${API_KEY}`);
+    const data = await res.json();
+    tbody.innerHTML = '';
+    if (!data || data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="3" class="empty-row">No predictions available for this bus.</td></tr>`;
+    } else {
+      data.sort((a, b) => a.timeToStation - b.timeToStation)
+        .forEach(item => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${item.stationName}</td>
+            <td>${item.platformName ? `<span class="platform-bubble">${item.platformName}</span>` : '-'}</td>
+            <td>${Math.round(item.timeToStation/60)}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+    }
+    document.getElementById('regModal').style.display = 'flex';
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="3" class="empty-row">Error loading predictions for this bus.</td></tr>';
+    document.getElementById('regModal').style.display = 'flex';
+  }
+}
+window.showBusStopsForReg = showBusStopsForReg;
 
 // Switch route direction
 async function toggleDirection() {
@@ -892,7 +944,6 @@ function closeModal(id) {
   document.getElementById(id).style.display = 'none';
 }
 window.closeModal = closeModal;
-
 </script>
 </body>
 </html>
