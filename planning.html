@@ -538,7 +538,7 @@ function signOut() {
     <h1>Journey Planning</h1>
     <p>Plan your journey across London. Feature coming soon!</p>
   </main>
-  <style>
+<style>
     body {
       font-family: Arial, sans-serif;
       background: #f4f6f8;
@@ -562,12 +562,33 @@ function signOut() {
       margin-top: 10px;
       display: block;
     }
+    .autocomplete {
+      position: relative;
+    }
     input {
       width: 100%;
       padding: 10px;
       margin-top: 5px;
       border: 1px solid #ccc;
       border-radius: 6px;
+    }
+    .suggestions {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #ccc;
+      z-index: 10;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .suggestion {
+      padding: 10px;
+      cursor: pointer;
+    }
+    .suggestion:hover {
+      background: #f0f8ff;
     }
     button {
       margin-top: 15px;
@@ -596,7 +617,6 @@ function signOut() {
       border-radius: 8px;
       cursor: pointer;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      transition: background 0.2s ease;
     }
     .summary-card:hover {
       background: #f0f8ff;
@@ -616,10 +636,16 @@ function signOut() {
   <h1>RouteFlow London – Journey Planner</h1>
   <div class="planner-form">
     <label for="from">From:</label>
-    <input type="text" id="from" placeholder="e.g. King's Cross"/>
+    <div class="autocomplete">
+      <input type="text" id="from" placeholder="Start location or postcode" oninput="suggestLocations(this, 'from')"/>
+      <div id="from-suggestions" class="suggestions"></div>
+    </div>
 
     <label for="to">To:</label>
-    <input type="text" id="to" placeholder="e.g. London Bridge"/>
+    <div class="autocomplete">
+      <input type="text" id="to" placeholder="Destination or postcode" oninput="suggestLocations(this, 'to')"/>
+      <div id="to-suggestions" class="suggestions"></div>
+    </div>
 
     <button onclick="planJourney()">Plan Journey</button>
   </div>
@@ -628,6 +654,28 @@ function signOut() {
 
   <script>
     const apiKey = "f17d0725d1654338ab02a361fe41abad";
+
+    async function suggestLocations(inputElem, field) {
+      const query = inputElem.value;
+      const suggestionBox = document.getElementById(`${field}-suggestions`);
+      suggestionBox.innerHTML = "";
+
+      if (query.length < 3) return;
+
+      const res = await fetch(`https://api.tfl.gov.uk/StopPoint/Search/${encodeURIComponent(query)}?modes=bus,tube&maxResults=6&app_key=${apiKey}`);
+      const data = await res.json();
+
+      data.matches?.forEach(match => {
+        const div = document.createElement("div");
+        div.className = "suggestion";
+        div.textContent = match.name;
+        div.onclick = () => {
+          document.getElementById(field).value = match.name;
+          suggestionBox.innerHTML = "";
+        };
+        suggestionBox.appendChild(div);
+      });
+    }
 
     async function planJourney() {
       const from = document.getElementById("from").value;
@@ -666,7 +714,6 @@ function signOut() {
     }
 
     function showDetails(journey, card) {
-      // Close other open detail views
       document.querySelectorAll(".details").forEach(el => el.remove());
 
       const detailDiv = document.createElement("div");
