@@ -543,4 +543,131 @@ function signOut() {
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script src="main.js"></script>
 </body>
+ <style>
+    body {
+      background: #0e1014;
+      color: white;
+      font-family: 'Inter', sans-serif;
+      padding: 2rem;
+    }
+
+    h1 {
+      color: #e50914;
+      font-size: 2rem;
+    }
+
+    .section {
+      margin-bottom: 3rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+    }
+
+    .card {
+      background-color: #1e1e1e;
+      padding: 1rem;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .card:hover {
+      background-color: #2a2a2a;
+    }
+
+    .card.good {
+      border-left: 5px solid #28a745;
+    }
+
+    .card.bad {
+      border-left: 5px solid #e50914;
+    }
+
+    .card p {
+      margin: 0.5rem 0 0;
+      font-size: 0.9rem;
+    }
+
+    #bus-search {
+      margin-bottom: 1rem;
+      padding: 0.5rem;
+      width: 100%;
+      max-width: 400px;
+      border: none;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="section">
+    <h1>🚆 Train Disruptions</h1>
+    <div class="grid" id="train-grid">Loading...</div>
+  </div>
+
+  <div class="section">
+    <h1>🚌 Bus Disruptions</h1>
+    <input type="text" id="bus-search" placeholder="Search by route number...">
+    <div class="grid" id="bus-grid">Loading...</div>
+  </div>
+
+  <script>
+    const appKey = 'f17d0725d1654338ab02a361fe41abad';
+
+    async function fetchAndRender(url, containerId, filterFn = () => true) {
+      const container = document.getElementById(containerId);
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        container.innerHTML = '';
+
+        data.filter(filterFn).forEach(line => {
+          const status = line.lineStatuses?.[0]?.statusSeverityDescription || 'No status';
+          const isGood = status === 'Good Service';
+
+          const card = document.createElement('div');
+          card.className = `card ${isGood ? 'good' : 'bad'}`;
+          card.innerHTML = `
+            <strong>${line.name} ${isGood ? '' : '🚨'}</strong>
+            <p>${status}</p>
+          `;
+
+          if (!isGood && line.lineStatuses[0].reason) {
+            const detail = document.createElement('p');
+            detail.textContent = line.lineStatuses[0].reason;
+            detail.style.display = 'none';
+            card.appendChild(detail);
+
+            card.addEventListener('click', () => {
+              detail.style.display = detail.style.display === 'none' ? 'block' : 'none';
+            });
+          }
+
+          container.appendChild(card);
+        });
+      } catch (err) {
+        container.innerHTML = '<p>Error fetching data.</p>';
+        console.error(err);
+      }
+    }
+
+    function filterBusRoutes(searchTerm) {
+      fetchAndRender(`https://api.tfl.gov.uk/Line/Mode/bus/Status?app_key=${appKey}`, 'bus-grid', line =>
+        line.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    document.getElementById('bus-search').addEventListener('input', (e) => {
+      const searchTerm = e.target.value;
+      filterBusRoutes(searchTerm);
+    });
+
+    // Initial loads
+    fetchAndRender(`https://api.tfl.gov.uk/Line/Mode/national-rail/Status?app_key=${appKey}`, 'train-grid');
+    fetchAndRender(`https://api.tfl.gov.uk/Line/Mode/bus/Status?app_key=${appKey}`, 'bus-grid');
+  </script>
+</body>
+</html>
 </html>
