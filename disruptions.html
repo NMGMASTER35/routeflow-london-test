@@ -543,10 +543,10 @@ function signOut() {
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script src="main.js"></script>
 </body>
- <style>
+<style>
     body {
-      background: #0e1014;
-      color: white;
+      background: #ffffff;
+      color: #000000;
       font-family: 'Inter', sans-serif;
       padding: 2rem;
     }
@@ -567,7 +567,8 @@ function signOut() {
     }
 
     .card {
-      background-color: #1e1e1e;
+      background-color: #000000;
+      color: #ffffff;
       padding: 1rem;
       border-radius: 10px;
       cursor: pointer;
@@ -575,7 +576,7 @@ function signOut() {
     }
 
     .card:hover {
-      background-color: #2a2a2a;
+      background-color: #222222;
     }
 
     .card.good {
@@ -596,14 +597,14 @@ function signOut() {
       padding: 0.5rem;
       width: 100%;
       max-width: 400px;
-      border: none;
+      border: 1px solid #ccc;
       border-radius: 5px;
     }
   </style>
 </head>
 <body>
   <div class="section">
-    <h1>🚆 Train Disruptions</h1>
+    <h1>🚆 London Train Disruptions</h1>
     <div class="grid" id="train-grid">Loading...</div>
   </div>
 
@@ -616,14 +617,17 @@ function signOut() {
   <script>
     const appKey = 'f17d0725d1654338ab02a361fe41abad';
 
-    async function fetchAndRender(url, containerId, filterFn = () => true) {
+    async function fetchAndRender(url, containerId, filterFn = () => true, sortFn = null) {
       const container = document.getElementById(containerId);
       try {
         const res = await fetch(url);
         const data = await res.json();
         container.innerHTML = '';
 
-        data.filter(filterFn).forEach(line => {
+        let filteredData = data.filter(filterFn);
+        if (sortFn) filteredData.sort(sortFn);
+
+        filteredData.forEach(line => {
           const status = line.lineStatuses?.[0]?.statusSeverityDescription || 'No status';
           const isGood = status === 'Good Service';
 
@@ -654,8 +658,11 @@ function signOut() {
     }
 
     function filterBusRoutes(searchTerm) {
-      fetchAndRender(`https://api.tfl.gov.uk/Line/Mode/bus/Status?app_key=${appKey}`, 'bus-grid', line =>
-        line.name.toLowerCase().includes(searchTerm.toLowerCase())
+      fetchAndRender(
+        `https://api.tfl.gov.uk/Line/Mode/bus/Status?app_key=${appKey}`,
+        'bus-grid',
+        line => line.name.toLowerCase().includes(searchTerm.toLowerCase()),
+        (a, b) => parseInt(a.name) - parseInt(b.name)
       );
     }
 
@@ -665,9 +672,9 @@ function signOut() {
     });
 
     // Initial loads
-    fetchAndRender(`https://api.tfl.gov.uk/Line/Mode/national-rail/Status?app_key=${appKey}`, 'train-grid');
-    fetchAndRender(`https://api.tfl.gov.uk/Line/Mode/bus/Status?app_key=${appKey}`, 'bus-grid');
+    fetchAndRender(`https://api.tfl.gov.uk/Line/Mode/tube,dlr,overground/elizabeth-line/Status?app_key=${appKey}`, 'train-grid');
+    fetchAndRender(`https://api.tfl.gov.uk/Line/Mode/bus/Status?app_key=${appKey}`, 'bus-grid', () => true, (a, b) => parseInt(a.name) - parseInt(b.name));
   </script>
 </body>
 </html>
-</html>
+
