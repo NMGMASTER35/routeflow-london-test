@@ -740,19 +740,79 @@ function signOut() {
       }
     }
 
-    async function searchStops(query) {
-      showStatus('Searching for stops...');
-      try {
-        // Search for both bus and train/rail/overground/dlr stops
-        const url = `https://api.tfl.gov.uk/StopPoint/Search/${encodeURIComponent(query)}?modes=bus,tube,overground,dlr,tram,elizabeth-line,rail,national-rail&app_key=${API_KEY}`;
-        const res = await fetch(url);
-        const data = await res.json();
-        const matches = (data.matches || []).filter(m => m.id && m.name);
+    sync function searchStops(query) {
+  showStatus('Searching for stops...');
+  try {
+    // Search for stops of all types (bus, tube, etc.)
+    const url = `https://api.tfl.gov.uk/StopPoint/Search/${encodeURIComponent(query)}?modes=bus,tube,overground,dlr,tram,elizabeth-line,rail,national-rail&app_key=${API_KEY}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    let matches = (data.matches || []).filter(m => m.id && m.name);
 
-        if (!matches.length) {
-          showStatus('No stops found. Try another name or check spelling.');
-          return;
-        }
+    // Now, for each match, fetch the StopPoint details and extract actual child stops (for bus especially)
+    let allStops = [];
+    for (let match of matches) {
+      const stopRes = await fetch(`https://api.tfl.gov.uk/StopPoint/${match.id}?app_key=${API_KEY}`);
+      const stopData = await stopRes.json();
+      // If stopData has children, and any are bus stops, show those
+      if (stopData.children && stopData.children.length > 0) {
+        stopData.children
+          .filter(child => child.modes && child.modes.includes('bus'))
+          .forEach(child => {
+            allStops.push({
+              id: child.id,
+              name: child.commonName,
+              platform: child.stopLetter || child.platformName || '',
+              indicator: child.indicator || '',
+              modes: child.modes
+            });
+          });
+      } else if (stopData.modes && stopData.modes.includes('bus')) {
+        // If it's already a bus stop, add directly
+        allStops.push({
+          id: stopData.id,
+          name: stopData.commonName,
+          platform: stopData.stopLetter || stopData.platformName || '',
+          indicator: stopData.indicator || '',
+          modes: stopData.modes
+        });
+      }
+    }
+
+    // Remove duplicates by stop id
+    allStops = allStops.filter((s, i, arr) => arr.findIndex(ss => ss.id === s.id) === i);
+
+    if (!allStops.length) {
+      showStatus('No bus stops found. Try a more specific name.');
+      return;
+    }
+
+    resultsDiv.innerHTML = `<div class="section-title">Stops matching "<span style="color:#2979ff">${query}</span>"</div>` +
+      `<div class="stop-list">${allStops.map(stop => `
+        <div class="stop-item" tabindex="0" role="button" aria-pressed="false" data-stopid="${stop.id}" data-name="${stop.name}" data-platform="${stop.platform||stop.indicator}">
+          <span class="station">${stop.name}</span>
+          <span class="platform">${stop.platform ? `[${stop.platform}]` : (stop.indicator ? `[${stop.indicator}]` : '')}</span>
+          <span style="color:#bbb;font-size:.95em;">(${stop.modes ? stop.modes.join(', ') : ''})</span>
+        </div>
+      `).join('')}</div>`;
+
+    // Add click handlers to all stop-items
+    document.querySelectorAll('.stop-item').forEach(item => {
+      item.onclick = () => {
+        const stopId = item.getAttribute('data-stopid');
+        const name = item.getAttribute('data-name');
+        const plat = item.getAttribute('data-platform');
+        showArrivals(stopId, name, plat);
+      };
+      item.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') item.onclick(); };
+    });
+    detailsDiv.innerHTML = '';
+    vehicleDiv.innerHTML = '';
+    clearTimer();
+  } catch (e) {
+    showStatus('Failed to search stops. Please try again.');
+  }
+}
         resultsDiv.innerHTML = `<div class="section-title">Stops matching "<span style="color:#2979ff">${query}</span>"</div>` +
           `<div class="stop-list">${matches.map(stop => `
             <div class="stop-item" tabindex="0" role="button" aria-pressed="false" data-stopid="${stop.id}" data-name="${stop.name}" data-platform="${stop.stopPointIndicator||''}">
