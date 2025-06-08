@@ -533,94 +533,104 @@ function signOut() {
 <body>
 <head>
   <meta charset="UTF‑8">
-  <title>RouteFlow Tracker</title>
+  <title>RouteFlow London – Enhanced Tracker</title>
   <link rel="stylesheet" href="styles.css">
   <style>
-    .tracker-container { max-width: 800px; margin: auto; padding: 2em; font-family: sans-serif; }
-    .search-bar { display: flex; gap: 0.5em; margin-bottom: 1em; }
-    input, button { padding: 0.5em; font-size: 1em; }
-    .stop-list, .arrivals, .vehicle-info { margin-top: 1em; }
-    .stop-item { cursor: pointer; padding: 0.5em; border-bottom: 1px solid #ddd; }
-    .arrival { padding: 0.5em 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
-    .arrival span.reg { color: blue; text-decoration: underline; cursor: pointer; }
+    .tracker { max-width:800px; margin:2em auto; font-family:inherit; }
+    .search, .stop-list, .arrivals, .vehicle { margin-bottom:1.5em; }
+    .stop-item, .arrival { padding:0.5em; border-bottom:1px solid #ddd; cursor:pointer; }
+    .stop-item:hover, .arrival:hover { background:#f9f9f9; }
+    .grid { display:grid; grid-template-columns:1fr 2fr 1fr 1fr; align-items:center; gap:8px; }
+    .reg { color:#007bff; text-decoration:underline; cursor:pointer; }
   </style>
 </head>
 <body>
-  <div class="tracker-container">
-    <h1>RouteFlow Tracker</h1>
-    <div class="search-bar">
-      <input id="query" placeholder="Enter stop/station name">
-      <button onclick="searchStops()">Search</button>
+  <div class="tracker">
+    <div class="search">
+      <input id="query" placeholder="Search stop name">
+      <button id="btn">Search</button>
     </div>
     <div id="stopList" class="stop-list"></div>
     <div id="arrivals" class="arrivals"></div>
-    <div id="vehicleInfo" class="vehicle-info"></div>
+    <div id="vehicle" class="vehicle"></div>
   </div>
 
   <script>
-    const appKey = 'f17d0725d1654338ab02a361fe41abad';
+    const key = 'f17d0725d1654338ab02a361fe41abad';
+    let refreshId = null;
+
+    document.getElementById('btn').onclick = searchStops;
 
     async function searchStops() {
-      const query = document.getElementById('query').value.trim();
-      if (!query) return;
-      document.getElementById('stopList').innerHTML = '<p>Searching stops...</p>';
-      const res = await fetch(`https://api.tfl.gov.uk/StopPoint/Search/${query}?modes=bus,tube,overground,dlr&app_key=${appKey}`);
+      clear();
+      const q = document.getElementById('query').value.trim();
+      if (!q) return alert('Type a stop name');
+      const res = await fetch(`https://api.tfl.gov.uk/StopPoint/Search/${encodeURIComponent(q)}?modes=bus,tube,dlr,overground&app_key=${key}`);
       const data = await res.json();
-      const stops = data.matches || [];
-
-      if (!stops.length) {
-        document.getElementById('stopList').innerHTML = '<p>No matching stops found.</p>';
-        return;
-      }
-
-      document.getElementById('stopList').innerHTML = stops.map(stop =>
-        `<div class="stop-item" onclick="loadArrivals('${stop.id}', '${stop.name}')">${stop.name}</div>`
-      ).join('');
-      document.getElementById('arrivals').innerHTML = '';
-      document.getElementById('vehicleInfo').innerHTML = '';
+      const matches = data.matches || [];
+      if (!matches.length) return show('#stopList','No stops found');
+      show('#stopList', '');
+      matches.forEach(s => {
+        const title = `${s.name} (${s.stopPointIndicator||'–'})`;
+        const item = document.createElement('div');
+        item.className = 'stop-item';
+        item.textContent = title;
+        item.onclick = () => loadArrivals(s.id, s.name, s.stopPointIndicator);
+        document.querySelector('#stopList').appendChild(item);
+      });
     }
 
-    async function loadArrivals(stopId, stopName) {
-      document.getElementById('arrivals').innerHTML = `<p>Loading arrivals for <strong>${stopName}</strong>...</p>`;
-      const res = await fetch(`https://api.tfl.gov.uk/StopPoint/${stopId}/Arrivals?app_key=${appKey}`);
-      const data = await res.json();
-      if (!data.length) {
-        document.getElementById('arrivals').innerHTML = '<p>No upcoming arrivals.</p>';
-        return;
-      }
-
-      data.sort((a, b) => a.timeToStation - b.timeToStation);
-      document.getElementById('arrivals').innerHTML = `
-        <h2>Upcoming Arrivals at ${stopName}</h2>
-        ${data.map(arrival => `
-          <div class="arrival">
-            <div>${arrival.lineName}</div>
-            <div>${arrival.destinationName}</div>
-            <div>${Math.round(arrival.timeToStation / 60)} min</div>
-            <div><span class="reg" onclick="getVehicle('${arrival.vehicleId}')">${arrival.vehicleId || 'N/A'}</span></div>
-          </div>
-        `).join('')}
+    async function loadArrivals(id, name, plat) {
+      clear('stopList');
+      clear('vehicle');
+      show('#arrivals', `<p>Loading arrivals for ${name} ${plat?`[${plat}]`:''}…</p>`);
+      const res = await fetch(`https://api.tfl.gov.uk/StopPoint/${id}/Arrivals?app_key=${key}`);
+      const arr = await res.json();
+      if (!arr.length) return show('#arrivals','No scheduled arrivals.');
+      arr.sort((a,b)=>a.timeToStation-b.timeToStation);
+      document.querySelector('#arrivals').innerHTML = `
+        <h3>Arrivals at ${name} ${plat?`[${plat}]`:''}</h3>
       `;
-      document.getElementById('vehicleInfo').innerHTML = '';
+      arr.forEach(a => {
+        const div = document.createElement('div');
+        div.className = 'arrival grid';
+        div.innerHTML = `
+          <div>${a.lineName}</div>
+          <div>${a.destinationName||a.towards}</div>
+          <div>${Math.round(a.timeToStation/60)} min</div>
+          <div><span class="reg">${a.vehicleId||'—'}</span></div>
+        `;
+        div.querySelector('.reg').onclick = () => loadVehicle(a.vehicleId);
+        document.querySelector('#arrivals').appendChild(div);
+      });
     }
 
-    async function getVehicle(vehicleId) {
-      document.getElementById('vehicleInfo').innerHTML = `<p>Fetching location for vehicle <strong>${vehicleId}</strong>...</p>`;
-      const res = await fetch(`https://api.tfl.gov.uk/Vehicle/${vehicleId}/Arrivals?app_key=${appKey}`);
+    async function loadVehicle(reg) {
+      if (!reg) return;
+      clear('vehicle');
+      show('#vehicle', `<p>Loading vehicle ${reg}…</p>`);
+      const res = await fetch(`https://api.tfl.gov.uk/Vehicle/${reg}/Arrivals?app_key=${key}`);
       const data = await res.json();
-      if (!data.length) {
-        document.getElementById('vehicleInfo').innerHTML = '<p>No data for this vehicle.</p>';
-        return;
-      }
-      const latest = data[0];
-      document.getElementById('vehicleInfo').innerHTML = `
-        <h3>Vehicle ${vehicleId} Location</h3>
-        <p><strong>Route:</strong> ${latest.lineName}</p>
-        <p><strong>Current Stop:</strong> ${latest.stationName}</p>
-        <p><strong>Destination:</strong> ${latest.destinationName}</p>
+      if (!data.length) return show('#vehicle','No data for this vehicle.');
+      const v = data[0];
+      document.querySelector('#vehicle').innerHTML = `
+        <h4>Vehicle ${reg}</h4>
+        <p><strong>Line:</strong> ${v.lineName}</p>
+        <p><strong>At:</strong> ${v.stationName} ${v.platformName?'['+v.platformName+']':''}</p>
+        <p><strong>Towards:</strong> ${v.destinationName||v.towards}</p>
       `;
+    }
+
+    function show(sel, html) {
+      document.querySelector(sel).innerHTML = html;
+    }
+    function clear(sel) {
+      if (!sel) return;
+      document.querySelector('#'+sel)?.innerHTML = '';
     }
   </script>
+</body>
+
 </body>
 </html>
 
