@@ -1,0 +1,5 @@
+mkdir tfl-bus-stop-app
+cd tfl-bus-stop-app
+npx create-react-app client
+npm init -y
+npm install express mongoose axios cors
