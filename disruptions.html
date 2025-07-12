@@ -535,7 +535,7 @@ function signOut() {
   <!-- ... -->
   <main style="padding: 3rem 1rem; text-align: center;">
     <h1>Disruptions</h1>
-    <p>See live or planned route disruptions. Feature coming soon!</p>
+
   </main>
   <!-- Footer -->
   <!-- ... -->
@@ -566,31 +566,31 @@ function signOut() {
       gap: 1rem;
     }
 
-    .card {
-      background-color: #000000;
-      color: #ffffff;
-      padding: 1rem;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
+.card {
+  background-color: #f4f4f4; /* default grey background */
+  color: #222;
+  padding: 1rem;
+  border-radius: 10px;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 2px 10px #0001;
+  border-left: 7px solid #aaa; /* default grey border */
+  transition: background-color 0.3s, border-color 0.3s;
+}
 
-    .card:hover {
-      background-color: #222222;
-    }
+.card.good {
+  background-color: #e0e0e0; /* lighter grey for good service */
+  border-left: 7px solid #888; /* darker grey border */
+}
 
-    .card.good {
-      border-left: 5px solid #28a745;
-    }
+.card.bad {
+  background-color: #ffe5e8; /* pale red for disruption */
+  border-left: 7px solid #e50914; /* bright red border */
+}
 
-    .card.bad {
-      border-left: 5px solid #e50914;
-    }
-
-    .card p {
-      margin: 0.5rem 0 0;
-      font-size: 0.9rem;
-    }
+.card p {
+  margin: 0.5rem 0 0;
+  font-size: 0.95rem;
+}
 
     #bus-search {
       margin-bottom: 1rem;
