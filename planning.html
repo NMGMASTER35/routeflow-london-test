@@ -661,9 +661,9 @@ function signOut() {
   - Uses API_PROXY (recommended) to avoid exposing TfL keys client-side
 */
 
-const API_PROXY = '/api/tfl'; // Keep TfL keys server-side via proxy
-const CLIENT_APP_ID = '';
-const CLIENT_APP_KEY = ''; // only for local dev if API_PROXY is empty
+const CLIENT_APP_ID = '';  // TfL now only requires app_key, so this can stay empty
+const CLIENT_APP_KEY = 'f17d0725d1654338ab02a361fe41abad';  // Your TfL API key here
+const API_PROXY = '';  // Disable proxy for direct calls
 
 // Minimal mapping of TfL line ids to official colours (hex). Add more if needed.
 const LINE_COLOURS = {
