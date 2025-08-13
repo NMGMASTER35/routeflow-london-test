@@ -531,11 +531,6 @@ function signOut() {
   </div>
 </div>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>RouteFlow London — Journey Planner</title>
 <style>
   :root{
@@ -553,7 +548,7 @@ function signOut() {
   h1{margin:0 0 16px 0;font-size:22px;display:flex;align-items:center;gap:10px}
   .dot{width:10px;height:10px;border-radius:50%;background:var(--brand)}
   .grid{display:grid;grid-template-columns:360px 1fr;gap:18px}
-  @media (max-width:900px){.grid{grid-template-columns:1fr}}
+  @media (max-width:980px){.grid{grid-template-columns:1fr}}
   .panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px}
   label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
   input,select,button{font-size:14px}
@@ -561,35 +556,43 @@ function signOut() {
     width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;outline:none;background:#fff
   }
   input:focus, select:focus{border-color:var(--ring);box-shadow:0 0 0 3px rgba(59,130,246,.15)}
-  .row{display:flex;gap:10px}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
   .modes{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
   .chip{border:1px solid var(--border);background:#fff;border-radius:999px;padding:6px 10px;cursor:pointer}
   .chip.active{border-color:var(--brand);color:var(--brand)}
-  .btn{width:100%;margin-top:10px;border:0;border-radius:10px;padding:12px 14px;background:var(--brand);color:#fff;font-weight:600;cursor:pointer}
+  .btn{border:0;border-radius:10px;padding:12px 14px;background:var(--brand);color:#fff;font-weight:600;cursor:pointer}
+  .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--border)}
+  .btn.inline{padding:8px 10px;border-radius:8px}
+  .btn-row{display:flex;gap:8px;margin-top:10px}
   .results{margin-top:12px;display:flex;flex-direction:column;gap:12px;max-height:55vh;overflow:auto}
   .card{border:1px solid var(--border);background:#fff;border-radius:12px;padding:12px}
-  .summary{display:flex;align-items:center;justify-content:space-between;gap:10px}
-  .modes-inline{display:flex;gap:6px;flex-wrap:wrap}
-  .mode-icon{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:1px solid var(--border);font-size:12px}
-  .pill{font-size:12px;color:var(--muted)}
+  .summary{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+  .summary-main{display:flex;gap:10px;align-items:center}
+  .summary-text{display:flex;flex-direction:column;gap:2px}
+  .summary-title{font-weight:600}
+  .small{font-size:12px;color:var(--muted)}
+  .modes-inline{display:flex;gap:6px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
+  .mode-icon{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;border:1px solid var(--border);font-size:12px;line-height:1}
+  .spark{width:160px;height:60px;border:1px solid var(--border);border-radius:8px;background:#fff}
   .loading, .error{padding:10px;border-radius:10px;background:#fff;border:1px dashed var(--border);color:var(--muted);text-align:center}
   /* Autocomplete */
   .sugg{position:relative}
-  .dd{position:absolute;left:0;right:0;top:100%;z-index:50;background:#fff;border:1px solid var(--border);border-radius:10px;margin-top:6px;max-height:220px;overflow:auto}
+  .dd{position:absolute;left:0;right:0;top:100%;z-index:50;background:#fff;border:1px solid var(--border);border-radius:10px;margin-top:6px;max-height:240px;overflow:auto}
   .dd-item{padding:8px 10px;cursor:pointer}
   .dd-item:hover{background:#f3f4f6}
   /* Modal */
   .modal{position:fixed;inset:0;display:none;background:rgba(0,0,0,.35);align-items:center;justify-content:center;padding:16px}
   .modal.open{display:flex}
-  .modal > .sheet{background:#fff;border-radius:14px;max-width:840px;width:100%;max-height:85vh;overflow:auto;border:1px solid var(--border)}
-  .sheet header{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+  .modal > .sheet{background:#fff;border-radius:14px;max-width:900px;width:100%;max-height:88vh;overflow:auto;border:1px solid var(--border)}
+  .sheet header{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px}
   .sheet .content{padding:14px}
   .x{border:1px solid var(--border);background:#fff;border-radius:8px;padding:6px 10px;cursor:pointer}
   .leg{border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:10px}
-  .leg h4{margin:0 0 6px 0;font-size:14px}
+  .leg h4{margin:0 0 6px 0;font-size:14px;display:flex;gap:6px;align-items:center}
   .stops{margin:6px 0 0 0;padding-left:18px}
   .stops li{margin:2px 0}
-  .small{font-size:12px;color:var(--muted)}
+  .fare{margin-top:8px}
+  .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;background:#f3f4f6;border:1px solid var(--border);padding:1px 4px;border-radius:4px}
 </style>
 </head>
 <body>
@@ -610,7 +613,7 @@ function signOut() {
         </div>
 
         <div class="row" style="margin-top:10px">
-          <div style="flex:1">
+          <div style="flex:1;min-width:180px">
             <label for="date">Date</label>
             <input id="date" type="date">
           </div>
@@ -637,18 +640,24 @@ function signOut() {
             <button class="chip active" data-mode="tram">Tram</button>
             <button class="chip active" data-mode="river">River</button>
             <button class="chip active" data-mode="national-rail">Rail</button>
+            <button class="chip active" data-mode="walking">Walking</button>
           </div>
         </div>
 
-        <button id="go" class="btn">Search routes</button>
+        <div class="btn-row">
+          <button id="go" class="btn">Search routes</button>
+          <button id="share" class="btn secondary">Copy share link</button>
+        </div>
+
         <div id="list" class="results"></div>
       </aside>
 
       <section class="panel">
         <div class="card small">
-          This lightweight demo uses your TfL API key directly in the browser (ok for testing only).
+          This demo uses your TfL API key directly in the browser (<span class="kbd">temporary testing only</span>).
+          Type a place, pick a result, and search. Tip: try <span class="kbd">King's Cross</span> → <span class="kbd">Waterloo</span>.
         </div>
-        <div id="status" class="card small" style="margin-top:12px">Tip: try “King’s Cross” → “Waterloo”.</div>
+        <div id="status" class="card small" style="margin-top:12px"></div>
       </section>
     </div>
   </div>
@@ -665,49 +674,37 @@ function signOut() {
   </div>
 
 <script>
-/*** CONFIG ***/
-const TFL_APP_KEY = "f17d0725d1654338ab02a361fe41abad"; // TEMP USE ONLY
+/*** CONFIG (TEMP: browser key) ***/
+const TFL_APP_KEY = "f17d0725d1654338ab02a361fe41abad";
 
-/*** UTIL ***/
-const $ = sel => document.querySelector(sel);
-const modeColour = (id) => ({
-  tube:"#171717", bus:"#d50a0a", overground:"#ee7c0e", dlr:"#00a4a7",
-  tram:"#84b51a", river:"#00adef", "national-rail":"#1b365d", walk:"#6b7280"
-}[id] || "#6b7280");
+/*** LINE COLOURS (TfL) ***/
+const LINE_COLOURS = {
+  bakerloo:"#B36305", central:"#E32017", circle:"#FFD300", district:"#00782A",
+  northern:"#000000", piccadilly:"#0019A8", victoria:"#00A0E2", jubilee:"#6A7278",
+  metropolitan:"#9B0056", hammersmithcity:"#F3A9BB", waterlooandcity:"#76D0BD",
+  overground:"#EE7C0E", dlr:"#00A4A7", tram:"#84B51A", river:"#00ADEF",
+  bus:"#D50A0A", "national-rail":"#1B365D", walking:"#6b7280"
+};
 
-// Simple icons using text/SVG for compact list chips
-function iconForMode(id){
-  const c = modeColour(id);
-  const label = ({tube:"T",bus:"B",overground:"O",dlr:"D",tram:"Tr",river:"R",walk:"W","national-rail":"NR"}[id] || id[0]?.toUpperCase() || "?");
-  return `<span class="mode-icon" style="border-color:${c};color:${c}" title="${id}">${label}</span>`;
-}
-
-// Compact summary of modes in a journey
-function summarizeModes(journey){
-  const modes = [];
-  journey.legs.forEach(leg=>{
-    const id = (leg.mode && leg.mode.id) || (leg.modeName||"walk").toLowerCase();
-    if (!modes.includes(id)) modes.push(id);
-  });
-  return modes.map(iconForMode).join("");
-}
-
-// Debounce helper
-function debounce(fn, ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; }
-
-// Build URL
+/*** HELPERS ***/
+const $ = s => document.querySelector(s);
+const byId = id => document.getElementById(id);
 function tfl(path, params={}){
   const qs = new URLSearchParams(params);
   qs.set("app_key", TFL_APP_KEY);
   return `https://api.tfl.gov.uk${path}?${qs.toString()}`;
 }
+function debounce(fn, ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; }
+function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : ""; }
+function timeFmt(d){ return d.toTimeString().slice(0,5); }
 
-// Elements
-const fromEl = $("#from"), toEl = $("#to");
-const fromDD = $("#fromDD"), toDD = $("#toDD");
-const dateEl = $("#date"), timeEl = $("#time"), timeIsEl = $("#timeIs");
-const modesEl = $("#modes"), goBtn = $("#go"), listEl = $("#list");
-const statusEl = $("#status");
+/*** UI ELEMENTS ***/
+const fromEl = byId("from"), toEl = byId("to");
+const fromDD = byId("fromDD"), toDD = byId("toDD");
+const dateEl = byId("date"), timeEl = byId("time"), timeIsEl = byId("timeIs");
+const modesEl = byId("modes"), goBtn = byId("go"), listEl = byId("list");
+const statusEl = byId("status");
+const shareBtn = byId("share");
 
 (function initDateTime(){
   const now = new Date();
@@ -715,16 +712,16 @@ const statusEl = $("#status");
   timeEl.value = now.toTimeString().slice(0,5);
 })();
 
+/*** MODES ***/
 function selectedModes(){
   return [...modesEl.querySelectorAll(".chip.active")].map(b=>b.dataset.mode).join(",");
 }
-
 modesEl.addEventListener("click",(e)=>{
   const b = e.target.closest(".chip"); if(!b) return;
   b.classList.toggle("active");
 });
 
-// Autocomplete
+/*** AUTOCOMPLETE ***/
 async function queryStops(q){
   if (!q || q.length < 2) return [];
   try{
@@ -732,7 +729,7 @@ async function queryStops(q){
     if (!res.ok) return [];
     const data = await res.json();
     return (data.matches || []).slice(0,8);
-  }catch{return []}
+  }catch{ return []; }
 }
 function renderDD(box, items, input){
   box.innerHTML = "";
@@ -747,21 +744,53 @@ function renderDD(box, items, input){
   });
   box.hidden = false;
 }
-const debFrom = debounce(async ()=>{
-  const items = await queryStops(fromEl.value.trim());
-  renderDD(fromDD, items, fromEl);
-}, 250);
-const debTo = debounce(async ()=>{
-  const items = await queryStops(toEl.value.trim());
-  renderDD(toDD, items, toEl);
-}, 250);
+const debFrom = debounce(async ()=>{ renderDD(fromDD, await queryStops(fromEl.value.trim()), fromEl); }, 200);
+const debTo = debounce(async ()=>{ renderDD(toDD, await queryStops(toEl.value.trim()), toEl); }, 200);
 fromEl.addEventListener("input", debFrom);
 toEl.addEventListener("input", debTo);
-window.addEventListener("click",(e)=>{ if(!e.target.closest(".sugg")) { fromDD.hidden = true; toDD.hidden = true; }});
+window.addEventListener("click", (e)=>{ if(!e.target.closest(".sugg")){ fromDD.hidden = true; toDD.hidden = true; }});
 
-// Search
+/*** SHARE LINK ***/
+shareBtn.addEventListener("click", ()=>{
+  const params = new URLSearchParams({
+    from: fromEl.value.trim(),
+    fromId: fromEl.dataset.id || "",
+    to: toEl.value.trim(),
+    toId: toEl.dataset.id || "",
+    date: dateEl.value, time: timeEl.value, timeIs: timeIsEl.value,
+    modes: selectedModes()
+  });
+  const url = `${location.origin}${location.pathname}?${params.toString()}`;
+  navigator.clipboard.writeText(url).then(()=>{
+    statusEl.textContent = "Share link copied to clipboard.";
+  }, ()=>{
+    statusEl.textContent = "Unable to copy link.";
+  });
+});
+(function preloadFromURL(){
+  const qs = new URLSearchParams(location.search);
+  if (qs.get("from")) { fromEl.value = qs.get("from"); }
+  if (qs.get("fromId")) { fromEl.dataset.id = qs.get("fromId"); }
+  if (qs.get("to")) { toEl.value = qs.get("to"); }
+  if (qs.get("toId")) { toEl.dataset.id = qs.get("toId"); }
+  if (qs.get("date")) { dateEl.value = qs.get("date"); }
+  if (qs.get("time")) { timeEl.value = qs.get("time"); }
+  if (qs.get("timeIs")) { timeIsEl.value = qs.get("timeIs"); }
+  if (qs.get("modes")){
+    const want = new Set(qs.get("modes").split(",").map(s=>s.trim()));
+    modesEl.querySelectorAll(".chip").forEach(ch=>{
+      ch.classList.toggle("active", want.has(ch.dataset.mode));
+    });
+  }
+  // Auto-search if both are present
+  if ((fromEl.dataset.id || fromEl.value) && (toEl.dataset.id || toEl.value)) {
+    plan();
+  }
+})();
+
+/*** JOURNEY SEARCH ***/
 goBtn.addEventListener("click", plan);
-[fromEl, toEl].forEach(el=>el.addEventListener("keydown",(e)=>{ if(e.key==="Enter") plan(); }));
+[fromEl,toEl].forEach(el=>el.addEventListener("keydown",(e)=>{ if(e.key==="Enter") plan(); }));
 
 async function plan(){
   const from = fromEl.dataset.id || fromEl.value.trim();
@@ -783,74 +812,154 @@ async function plan(){
   }
 }
 
-// Render summary list
+/*** LINE ID / COLOURS / ICONS ***/
+function normalizeLineId(name){
+  if(!name) return "";
+  const s = name.toLowerCase().replace(/\s|-/g,"");
+  // common mappings
+  if (s.includes("hammersmith")) return "hammersmithcity";
+  if (s.includes("waterloo")) return "waterlooandcity";
+  return s;
+}
+function getLegLineId(leg){
+  // Try explicit identifiers first
+  const opt = leg.routeOptions?.[0];
+  return (opt?.id) ||
+         (opt?.lineIdentifier?.id) ||
+         normalizeLineId(opt?.lineIdentifier?.name || opt?.name || leg.routeId || leg.lineId || "");
+}
+function modeIdOf(leg){
+  return (leg.mode?.id) || (leg.modeName || "walking").toLowerCase();
+}
+function chip(label, colour){
+  const style = `border-color:${colour};color:${colour};background:#fff`;
+  return `<span class="mode-icon" style="${style}">${label}</span>`;
+}
+function iconForModeOrLine(leg){
+  const mode = modeIdOf(leg);
+  // Tube line? colour by line id if available
+  if (mode === "tube"){
+    const lineId = getLegLineId(leg);
+    const colour = LINE_COLOURS[lineId] || LINE_COLOURS.tube || "#111";
+    const short = (lineId && lineId.length>0) ? lineId[0].toUpperCase() : "T";
+    return chip(short, colour);
+  }
+  const colour = LINE_COLOURS[mode] || "#6b7280";
+  const labelMap = {bus:"B", overground:"O", dlr:"D", tram:"Tr", river:"R", walking:"W", "national-rail":"NR", tube:"T"};
+  const lbl = labelMap[mode] || (mode[0]||"?").toUpperCase();
+  return chip(lbl, colour);
+}
+function summarizeIconsOrdered(journey){
+  return journey.legs.map(iconForModeOrLine).join("");
+}
+
+/*** MINI MAP (SVG SPARKLINE) ***/
+function getJourneyPolylinePoints(journey, width=160, height=60, padding=6){
+  const pts = [];
+  journey.legs.forEach(leg=>{
+    const arr = leg.path?.lineString || [];
+    arr.forEach(p=>pts.push([p.lon, p.lat])); // [x=lon, y=lat]
+  });
+  if (pts.length < 2) return null;
+
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  pts.forEach(([x,y])=>{ if(x<minX)minX=x; if(x>maxX)maxX=x; if(y<minY)minY=y; if(y>maxY)maxY=y; });
+  const w = width - padding*2, h = height - padding*2;
+  const dx = maxX-minX || 1e-6, dy = maxY-minY || 1e-6;
+
+  // flip Y so north is up
+  const mapX = x => padding + ((x - minX) / dx) * w;
+  const mapY = y => padding + (1 - (y - minY) / dy) * h;
+
+  const path = pts.map(([x,y])=> `${mapX(x).toFixed(1)},${mapY(y).toFixed(1)}`).join(" ");
+  return { path, width, height };
+}
+function sparklineSVG(journey){
+  const geo = getJourneyPolylinePoints(journey);
+  if (!geo) return `<div class="spark small" style="display:flex;align-items:center;justify-content:center;color:#9ca3af">No map</div>`;
+  return `
+    <svg class="spark" viewBox="0 0 ${geo.width} ${geo.height}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <polyline points="${geo.path}" fill="none" stroke="#111827" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `;
+}
+
+/*** RENDER SUMMARIES ***/
 function renderJourneys(data){
   listEl.innerHTML = "";
   if (!data || !data.journeys || !data.journeys.length){
     listEl.innerHTML = `<div class="error">No journeys found.</div>`;
+    statusEl.textContent = "";
     return;
   }
+  statusEl.textContent = `Found ${data.journeys.length} route option${data.journeys.length>1?'s':''}. Click one for details.`;
+
   data.journeys.forEach((j, idx)=>{
     const card = document.createElement("div");
     card.className = "card";
     const depart = j.startDateTime ? new Date(j.startDateTime) : null;
     const arrive = j.arrivalDateTime ? new Date(j.arrivalDateTime) : null;
-    const times = (depart && arrive)
-      ? `${timeFmt(depart)} → ${timeFmt(arrive)}`
-      : `${j.duration} min`;
+    const times = (depart && arrive) ? `${timeFmt(depart)} → ${timeFmt(arrive)}` : `${j.duration} min`;
+
     card.innerHTML = `
       <div class="summary">
-        <div>
-          <div><strong>Journey ${idx+1}</strong> • ${j.duration} min</div>
-          <div class="small">${times} • ${j.legs.length} legs</div>
+        <div class="summary-main">
+          ${sparklineSVG(j)}
+          <div class="summary-text">
+            <div class="summary-title">Journey ${idx+1} • ${j.duration} min</div>
+            <div class="small">${times} • ${j.legs.length} legs</div>
+          </div>
         </div>
-        <div class="modes-inline">${summarizeModes(j)}</div>
+        <div class="modes-inline">${summarizeIconsOrdered(j)}</div>
       </div>
     `;
     card.style.cursor = "pointer";
     card.addEventListener("click", ()=> openModalForJourney(j, idx+1));
     listEl.appendChild(card);
   });
-  statusEl.textContent = `Found ${data.journeys.length} route option${data.journeys.length>1?'s':''}. Click one for details.`;
 }
 
-function timeFmt(d){ return d.toTimeString().slice(0,5); }
-
-// Modal with details
-const modal = $("#modal"), modalContent = $("#modalContent"), closeModalBtn = $("#closeModal");
+/*** MODAL DETAIL VIEW ***/
+const modal = byId("modal"), modalContent = byId("modalContent"), closeModalBtn = byId("closeModal");
 closeModalBtn.addEventListener("click", ()=> modal.classList.remove("open"));
 modal.addEventListener("click", (e)=>{ if(e.target===modal) modal.classList.remove("open"); });
 
+function labelForLeg(leg){
+  const mode = modeIdOf(leg);
+  const lineId = getLegLineId(leg);
+  const lineName = leg.routeOptions?.[0]?.lineIdentifier?.name || leg.routeOptions?.[0]?.name || leg.lineName || leg.routeId || "";
+  if (mode === "tube" && lineName) return `${cap(mode)} — ${lineName}`;
+  if ((mode === "bus" || mode === "overground" || mode === "dlr" || mode === "tram" || mode==="river" || mode==="national-rail") && lineName){
+    return `${cap(mode)} — ${lineName}`;
+  }
+  return cap(mode);
+}
+
 function openModalForJourney(journey, num){
-  $("#modalTitle").textContent = `Journey ${num} — ${journey.duration} min`;
+  byId("modalTitle").textContent = `Journey ${num} — ${journey.duration} min`;
   modalContent.innerHTML = "";
 
   journey.legs.forEach((leg, i)=>{
-    const modeId = (leg.mode && leg.mode.id) || (leg.modeName||"walk").toLowerCase();
-    const colour = modeColour(modeId);
+    const mode = modeIdOf(leg);
+    const colour = LINE_COLOURS[getLegLineId(leg)] || LINE_COLOURS[mode] || "#6b7280";
     const depTime = leg.departureTime ? timeFmt(new Date(leg.departureTime)) : "";
     const arrTime = leg.arrivalTime ? timeFmt(new Date(leg.arrivalTime)) : "";
     const dep = leg.departurePoint?.commonName || "";
     const arr = leg.arrivalPoint?.commonName || "";
-    const line = leg.routeOptions?.[0]?.name || leg.routeOptions?.[0]?.lineIdentifier?.name || leg.routeId || leg.lineName || "";
 
     const legBox = document.createElement("div");
     legBox.className = "leg";
     legBox.style.borderLeft = `6px solid ${colour}`;
 
-    // Title row
-    const title = document.createElement("h4");
-    const label = line ? `${cap(modeId)} — ${line}` : cap(modeId);
-    title.innerHTML = `${iconForMode(modeId)} <span style="margin-left:6px">${label}</span>`;
-    legBox.appendChild(title);
+    const h4 = document.createElement("h4");
+    h4.innerHTML = `${iconForModeOrLine(leg)} <span>${labelForLeg(leg)}</span>`;
+    legBox.appendChild(h4);
 
-    // Times + points
     const meta = document.createElement("div");
     meta.className = "small";
     meta.textContent = `${depTime} ${dep ? "• "+dep : ""}  →  ${arrTime} ${arr ? "• "+arr : ""}`;
     legBox.appendChild(meta);
 
-    // Instruction
     if (leg.instruction?.summary){
       const p = document.createElement("div");
       p.style.marginTop = "6px";
@@ -858,7 +967,7 @@ function openModalForJourney(journey, num){
       legBox.appendChild(p);
     }
 
-    // Stops list, if TfL provides them
+    // Stops or walking steps
     const stops = leg.path?.stopPoints || leg.stopPoints || [];
     if (stops.length){
       const h = document.createElement("div");
@@ -872,10 +981,8 @@ function openModalForJourney(journey, num){
         li.textContent = s.name || s.commonName;
         ul.appendChild(li);
       });
-      legBox.appendChild(h);
-      legBox.appendChild(ul);
-    } else if (modeId === "walk" && leg.instruction?.steps?.length){
-      // For walking, show step-by-step if available
+      legBox.appendChild(h); legBox.appendChild(ul);
+    } else if (mode === "walking" && leg.instruction?.steps?.length){
       const h = document.createElement("div");
       h.className = "small";
       h.style.marginTop = "8px";
@@ -887,31 +994,27 @@ function openModalForJourney(journey, num){
         li.textContent = step.description || step.summary || "";
         ul.appendChild(li);
       });
-      legBox.appendChild(h);
-      legBox.appendChild(ul);
+      legBox.appendChild(h); legBox.appendChild(ul);
     }
 
-    // Disruption info, if any
-    if (leg.disruption){
-      const d = Array.isArray(leg.disruption) ? leg.disruption : [leg.disruption];
-      d.filter(Boolean).forEach(di=>{
-        const alert = document.createElement("div");
-        alert.className = "small";
-        alert.style.marginTop = "6px";
-        alert.style.color = "#b45309";
-        alert.textContent = `⚠ ${di.description || di.category || "Disruption"}`;
-        legBox.appendChild(alert);
-      });
-    }
+    // Disruption
+    const disruptions = Array.isArray(leg.disruption) ? leg.disruption : (leg.disruption ? [leg.disruption] : []);
+    disruptions.forEach(d=>{
+      const alert = document.createElement("div");
+      alert.className = "small";
+      alert.style.marginTop = "6px";
+      alert.style.color = "#b45309";
+      alert.textContent = `⚠ ${d.description || d.category || "Disruption"}`;
+      legBox.appendChild(alert);
+    });
 
     modalContent.appendChild(legBox);
   });
 
-  // Fare (if present)
+  // Fare
   if (journey.fare?.displayCost || Number.isFinite(journey.fare?.totalCost)){
     const f = document.createElement("div");
-    f.className = "small";
-    f.style.marginTop = "6px";
+    f.className = "small fare";
     f.textContent = `Estimated fare: ${journey.fare.displayCost || (journey.fare.totalCost/100).toFixed(2) + " GBP"}`;
     modalContent.appendChild(f);
   }
@@ -919,7 +1022,21 @@ function openModalForJourney(journey, num){
   modal.classList.add("open");
 }
 
-function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : ""; }
+/*** ICON UTIL (uses above line colours) ***/
+function iconForModeOrLine(leg){
+  const mode = modeIdOf(leg);
+  if (mode === "tube"){
+    const lineId = getLegLineId(leg);
+    const colour = LINE_COLOURS[lineId] || "#111";
+    const label = (lineId && lineId.length>=2) ? lineId.slice(0,2).toUpperCase() : "T";
+    return `<span class="mode-icon" style="border-color:${colour};color:${colour}">${label}</span>`;
+  }
+  const colour = LINE_COLOURS[mode] || "#6b7280";
+  const lm = {bus:"B", overground:"O", dlr:"D", tram:"Tr", river:"R", walking:"W", "national-rail":"NR"};
+  const lbl = lm[mode] || (mode[0]||"?").toUpperCase();
+  return `<span class="mode-icon" style="border-color:${colour};color:${colour}">${lbl}</span>`;
+}
+
 </script>
 </body>
 </html>
