@@ -678,69 +678,32 @@ function signOut() {
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <title>RouteFlow London Live Arrivals</title>
 <style>
-    body {
-        font-family: Arial, sans-serif;
-        background: #f4f4f4;
-        padding: 20px;
-    }
-    h1 {
-        text-align: center;
-        color: #c8102e;
-    }
-    .search-container {
-        max-width: 600px;
-        margin: auto;
-        position: relative;
-    }
-    input {
-        width: 100%;
-        padding: 12px;
-        font-size: 16px;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-    }
-    .suggestions {
-        position: absolute;
-        width: 100%;
-        background: #fff;
-        border: 1px solid #ccc;
-        border-top: none;
-        max-height: 200px;
-        overflow-y: auto;
-        z-index: 10;
-    }
-    .suggestion {
-        padding: 10px;
-        cursor: pointer;
-    }
-    .suggestion:hover {
-        background: #eee;
-    }
-    .results {
-        margin-top: 20px;
-    }
-    .arrival {
-        background: #fff;
-        padding: 10px;
-        margin-bottom: 10px;
-        border-radius: 6px;
-        border: 1px solid #ccc;
-    }
-    .line-name {
-        font-weight: bold;
-        color: #c8102e;
-    }
+body { font-family: Arial, sans-serif; background:#f9f9f9; padding:20px; }
+h1 { text-align:center; color:#c8102e; margin-bottom:20px; }
+.search-container { max-width:700px; margin:auto; position:relative; }
+input { width:100%; padding:12px; font-size:16px; border:1px solid #ccc; border-radius:6px; }
+.suggestions { position:absolute; width:100%; background:#fff; border:1px solid #ccc; border-top:none; max-height:250px; overflow-y:auto; z-index:10; border-radius:0 0 6px 6px; }
+.suggestion { padding:10px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; }
+.suggestion:hover { background:#eee; }
+.results { margin-top:20px; max-width:700px; margin:auto; }
+.arrival { background:#fff; padding:12px; margin-bottom:12px; border-radius:8px; border:1px solid #ddd; box-shadow:0 2px 5px rgba(0,0,0,0.05); }
+.arrival-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+.line-name { font-weight:bold; color:#c8102e; font-size:16px; }
+.platform, .towards, .eta { font-size:14px; color:#333; margin-right:10px; }
+.badge { background:#eee; border-radius:4px; padding:2px 6px; font-size:12px; margin-left:6px; }
+.mode-icon { margin-right:6px; font-size:16px; }
 </style>
 </head>
 <body>
 
 <h1>RouteFlow London – Live Arrivals</h1>
 <div class="search-container">
-    <input type="text" id="searchBox" placeholder="Enter stop name or bus registration...">
-    <div class="suggestions" id="suggestions"></div>
+<input type="text" id="searchBox" placeholder="Enter stop name or bus registration...">
+<div class="suggestions" id="suggestions"></div>
 </div>
 
 <div class="results" id="results"></div>
+<div style="margin-top:20px; font-size:12px; color:#555;">Data provided by Transport for London.</div>
 
 <script>
 const apiKey = "f17d0725d1654338ab02a361fe41abad";
@@ -748,98 +711,104 @@ const searchBox = document.getElementById("searchBox");
 const suggestionsBox = document.getElementById("suggestions");
 const resultsBox = document.getElementById("results");
 
+const modeIcons = {bus:"🚍", tube:"🚇", tram:"🚋", dlr:"🚈", riverbus:"⛴️", overground:"🟠", elizabeth:"🟣", nationalrail:"🚆"};
+
 let debounceTimeout;
 
 searchBox.addEventListener("input", () => {
     const query = searchBox.value.trim();
     clearTimeout(debounceTimeout);
+    suggestionsBox.innerHTML = "";
 
-    if (query.length < 2) {
-        suggestionsBox.innerHTML = "";
-        return;
-    }
+    if (query.length < 2) return;
 
     debounceTimeout = setTimeout(() => {
-        if (/^[A-Za-z]{2}\d{2}\s?[A-Za-z]{3}$/.test(query)) {
-            // Looks like a bus reg - no suggestions needed
+        if (/^[A-Z]{2}\d{2}[A-Z]{3}$/i.test(query)) { return; }
+
+        fetch(`https://api.tfl.gov.uk/StopPoint/Search/${encodeURIComponent(query)}?modes=bus,tube,overground,dlr,tram,river-bus,national-rail,elizabeth-line&app_key=${apiKey}`)
+        .then(res=>res.json())
+        .then(data=>{
             suggestionsBox.innerHTML = "";
-        } else {
-            fetch(`https://api.tfl.gov.uk/StopPoint/Search/${encodeURIComponent(query)}?app_key=${apiKey}`)
-                .then(res => res.json())
-                .then(data => {
-                    suggestionsBox.innerHTML = "";
-                    if (data.matches) {
-                        data.matches.forEach(stop => {
-                            const div = document.createElement("div");
-                            div.classList.add("suggestion");
-                            div.textContent = stop.name;
-                            div.dataset.id = stop.id;
-                            div.addEventListener("click", () => {
-                                searchBox.value = stop.name;
-                                suggestionsBox.innerHTML = "";
-                                fetchStopArrivals(stop.id);
-                            });
-                            suggestionsBox.appendChild(div);
-                        });
-                    }
+            if(data.matches){
+                data.matches.slice(0,10).forEach(stop=>{
+                    const div = document.createElement("div");
+                    div.classList.add("suggestion");
+                    const icon = modeIcons[(stop.modes[0]||"").toLowerCase()]||"";
+                    div.innerHTML = `<span>${icon} ${stop.name}</span><span class="badge">${stop.modes.join("/")}</span>`;
+                    div.dataset.id = stop.id;
+                    div.addEventListener("click", ()=>{ searchBox.value=stop.name; suggestionsBox.innerHTML=""; fetchStopArrivals(stop.id); });
+                    suggestionsBox.appendChild(div);
                 });
-        }
+            }
+        });
     }, 300);
 });
 
-searchBox.addEventListener("keypress", e => {
-    if (e.key === "Enter") {
-        const query = searchBox.value.trim();
-        if (/^[A-Za-z]{2}\d{2}\s?[A-Za-z]{3}$/.test(query)) {
-            fetchBusByReg(query);
-        } else {
-            fetch(`https://api.tfl.gov.uk/StopPoint/Search/${encodeURIComponent(query)}?app_key=${apiKey}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.matches && data.matches.length > 0) {
-                        fetchStopArrivals(data.matches[0].id);
-                    } else {
-                        resultsBox.innerHTML = `<p>No stop found for "${query}"</p>`;
-                    }
-                });
-        }
+searchBox.addEventListener("keypress", e => { if(e.key==="Enter") handleSearch(); });
+
+function handleSearch(){
+    const query = searchBox.value.trim();
+    if(!query) return;
+    resultsBox.innerHTML = "Loading...";
+
+    if(/^[A-Z]{2}\d{2}[A-Z]{3}$/i.test(query)){
+        fetchBusByReg(query);
+    } else {
+        fetch(`https://api.tfl.gov.uk/StopPoint/Search/${encodeURIComponent(query)}?modes=bus,tube,overground,dlr,tram,river-bus,national-rail,elizabeth-line&app_key=${apiKey}`)
+        .then(res=>res.json())
+        .then(data=>{
+            if(data.matches && data.matches.length>0){ fetchStopArrivals(data.matches[0].id); }
+            else{ resultsBox.innerHTML=`No stop found for "${query}"`; }
+        }).catch(()=>{ resultsBox.innerHTML="Error fetching stop data"; });
     }
-});
-
-function fetchStopArrivals(stopId) {
-    fetch(`https://api.tfl.gov.uk/StopPoint/${stopId}/Arrivals?app_key=${apiKey}`)
-        .then(res => res.json())
-        .then(data => {
-            displayArrivals(data);
-        });
 }
 
-function fetchBusByReg(reg) {
-    fetch(`https://api.tfl.gov.uk/Vehicle/${encodeURIComponent(reg)}/Arrivals?app_key=${apiKey}`)
-        .then(res => res.json())
-        .then(data => {
-            if (data.length > 0) {
-                displayArrivals(data);
-            } else {
-                resultsBox.innerHTML = `<p>No live data found for bus ${reg}</p>`;
+async function fetchStopArrivals(stopId){
+    resultsBox.innerHTML="Loading arrivals...";
+    try {
+        let res = await fetch(`https://api.tfl.gov.uk/StopPoint/${stopId}/Arrivals?app_key=${apiKey}`);
+        let data = await res.json();
+        // Check for child stops
+        if(data.length===0){
+            let stopRes = await fetch(`https://api.tfl.gov.uk/StopPoint/${stopId}?app_key=${apiKey}`);
+            let info = await stopRes.json();
+            if(info.children && info.children.length>0){
+                const childFetches = info.children.map(c=>fetch(`https://api.tfl.gov.uk/StopPoint/${c.id}/Arrivals?app_key=${apiKey}`).then(r=>r.json()));
+                const childData = await Promise.all(childFetches);
+                data = childData.flat();
             }
-        });
+        }
+        if(data.length===0){ resultsBox.innerHTML="No live arrivals now."; return; }
+        displayArrivals(data);
+    } catch(e){ resultsBox.innerHTML="Error fetching arrivals"; }
 }
 
-function displayArrivals(data) {
-    resultsBox.innerHTML = "";
-    data.sort((a, b) => a.timeToStation - b.timeToStation);
-    data.forEach(arrival => {
-        const mins = Math.round(arrival.timeToStation / 60);
-        const dueText = mins <= 0 ? "due" : `${mins} min`;
+function fetchBusByReg(reg){
+    resultsBox.innerHTML="Loading bus data...";
+    fetch(`https://api.tfl.gov.uk/Vehicle/${encodeURIComponent(reg)}/Arrivals?app_key=${apiKey}`)
+    .then(res=>res.json())
+    .then(data=>{
+        if(data.length===0){ resultsBox.innerHTML=`No live data found for bus ${reg}`; return; }
+        displayArrivals(data);
+    }).catch(()=>{ resultsBox.innerHTML="Error fetching bus data"; });
+}
 
+function displayArrivals(data){
+    resultsBox.innerHTML="";
+    data.sort((a,b)=>a.timeToStation-b.timeToStation);
+    data.forEach(a=>{
+        const mins = Math.round(a.timeToStation/60);
+        const due = mins<=0?"Due":`${mins} min`;
+        const icon = modeIcons[a.modeName?.toLowerCase()]||"";
         const div = document.createElement("div");
         div.classList.add("arrival");
         div.innerHTML = `
-            <div class="line-name">${arrival.lineName} → ${arrival.destinationName}</div>
-            <div>${arrival.stationName}</div>
-            <div>Expected: ${dueText}</div>
-            <div>Mode: ${arrival.modeName}</div>
+            <div class="arrival-header">
+                <div class="line-name"><span class="mode-icon">${icon}</span>${a.lineName} → ${a.destinationName}</div>
+                <div class="eta">${due}</div>
+            </div>
+            <div><span class="platform">Platform: ${a.platformName||"-"}</span><span class="towards">Towards: ${a.towards||a.destinationName||"-"}</span></div>
+            <div class="badge">${a.modeName}</div>
         `;
         resultsBox.appendChild(div);
     });
