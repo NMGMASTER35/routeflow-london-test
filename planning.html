@@ -531,379 +531,395 @@ function signOut() {
   </div>
 </div>
 
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>RouteFlow London — Journey Planner (Autocomplete + Disruptions + Fares)</title>
-
-<!-- Leaflet CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
-
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RouteFlow London — Journey Planner</title>
 <style>
   :root{
-    --bg: #0f1720;
-    --card: #0b1220;
-    --accent: #e11d48;
-    --muted: #9aa4b2;
-    --glass: rgba(255,255,255,0.03);
-    --radius: 12px;
-    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-    color-scheme: dark;
+    --brand:#e11d48;
+    --ink:#111827;
+    --muted:#6b7280;
+    --card:#ffffff;
+    --bg:#fafafa;
+    --border:#e5e7eb;
+    --ring:#d1d5db;
   }
-  html,body { height:100%; margin:0; background:linear-gradient(180deg,#071015 0%, #0f1720 100%); color:#e6eef6; }
-  .app { display: grid; grid-template-columns: 400px 1fr; gap:18px; height:100vh; padding:18px; box-sizing:border-box; }
-  .panel { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius: var(--radius); padding:16px; box-shadow: 0 6px 20px rgba(0,0,0,0.6); overflow:auto; }
-  h1{ margin:0 0 8px 0; font-size:18px; display:flex; gap:8px; align-items:center;}
-  .brand-dot{ width:10px;height:10px;border-radius:50%;background:var(--accent); box-shadow:0 0 12px rgba(225,29,72,0.35);} 
-  label{ font-size:12px; color:var(--muted); margin-bottom:6px; display:block;}
-  input[type="text"], input[type="date"], input[type="time"], select { width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.04); background:var(--glass); color:inherit; font-size:14px; outline:none; }
-  .modes { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;}
-  .mode { padding:6px 8px; border-radius:8px; background:rgba(255,255,255,0.02); font-size:13px; cursor:pointer; border:1px solid rgba(255,255,255,0.02);} .mode.active{ background: linear-gradient(90deg, rgba(225,29,72,0.15), rgba(225,29,72,0.06)); border-color: rgba(225,29,72,0.25); box-shadow:0 4px 10px rgba(225,29,72,0.06); color:var(--accent);} 
-  button.primary { appearance:none; border:0; padding:10px 14px; border-radius:10px; cursor:pointer; background: linear-gradient(90deg,var(--accent),#ff6b8a); color:white; font-weight:600; font-size:15px; width:100%; margin-top:10px; box-shadow: 0 8px 25px rgba(225,29,72,0.18); }
-  .small { font-size:12px; color:var(--muted); margin-top:6px; }
-  .map-wrap{ position:relative; border-radius:var(--radius); overflow:hidden; }
-  #map { height:100%; min-height:280px; width:100%; display:block; }
-  .results { padding:12px; display:flex; flex-direction:column; gap:12px; max-height:45vh; overflow:auto; }
-  .journey-card { background:rgba(255,255,255,0.02); padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,0.02); }
-  .journey-meta{ display:flex; justify-content:space-between; align-items:center; gap:8px; }
-  .leg{ font-size:13px; color:var(--muted); margin-top:6px; padding-left:8px; }
-  .leg .title{ color:#e6eef6; font-weight:600; font-size:14px; }
-  .loading { padding:8px; border-radius:8px; background:rgba(255,255,255,0.015); color:var(--muted); text-align:center; }
-
-  /* autocomplete suggestions */
-  .suggestions { position:relative; }
-  .dropdown { position:absolute; left:0; right:0; top:100%; z-index:60; background:var(--card); border-radius:8px; margin-top:6px; max-height:240px; overflow:auto; border:1px solid rgba(255,255,255,0.04); }
-  .item { padding:8px 10px; cursor:pointer; font-size:14px; color:var(--muted); }
-  .item:hover { background:rgba(255,255,255,0.02); color:#e6eef6; }
-
-  .status { margin-top:10px; font-size:13px; color:var(--muted); }
-  .disruption { padding:8px; background:rgba(255,255,255,0.02); border-radius:8px; margin-top:6px; }
-
-  @media (max-width:900px){ .app{ grid-template-columns: 1fr; grid-auto-rows: auto 1fr; padding:12px; gap:12px; } .panel{ order:1; } .map-wrap{ order:2; min-height:50vh; } }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial;color:var(--ink);background:var(--bg);}
+  .wrap{max-width:1100px;margin:0 auto;padding:24px;}
+  h1{margin:0 0 16px 0;font-size:22px;display:flex;align-items:center;gap:10px}
+  .dot{width:10px;height:10px;border-radius:50%;background:var(--brand)}
+  .grid{display:grid;grid-template-columns:360px 1fr;gap:18px}
+  @media (max-width:900px){.grid{grid-template-columns:1fr}}
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px}
+  label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+  input,select,button{font-size:14px}
+  input[type="text"], input[type="date"], input[type="time"], select{
+    width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;outline:none;background:#fff
+  }
+  input:focus, select:focus{border-color:var(--ring);box-shadow:0 0 0 3px rgba(59,130,246,.15)}
+  .row{display:flex;gap:10px}
+  .modes{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .chip{border:1px solid var(--border);background:#fff;border-radius:999px;padding:6px 10px;cursor:pointer}
+  .chip.active{border-color:var(--brand);color:var(--brand)}
+  .btn{width:100%;margin-top:10px;border:0;border-radius:10px;padding:12px 14px;background:var(--brand);color:#fff;font-weight:600;cursor:pointer}
+  .results{margin-top:12px;display:flex;flex-direction:column;gap:12px;max-height:55vh;overflow:auto}
+  .card{border:1px solid var(--border);background:#fff;border-radius:12px;padding:12px}
+  .summary{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .modes-inline{display:flex;gap:6px;flex-wrap:wrap}
+  .mode-icon{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:1px solid var(--border);font-size:12px}
+  .pill{font-size:12px;color:var(--muted)}
+  .loading, .error{padding:10px;border-radius:10px;background:#fff;border:1px dashed var(--border);color:var(--muted);text-align:center}
+  /* Autocomplete */
+  .sugg{position:relative}
+  .dd{position:absolute;left:0;right:0;top:100%;z-index:50;background:#fff;border:1px solid var(--border);border-radius:10px;margin-top:6px;max-height:220px;overflow:auto}
+  .dd-item{padding:8px 10px;cursor:pointer}
+  .dd-item:hover{background:#f3f4f6}
+  /* Modal */
+  .modal{position:fixed;inset:0;display:none;background:rgba(0,0,0,.35);align-items:center;justify-content:center;padding:16px}
+  .modal.open{display:flex}
+  .modal > .sheet{background:#fff;border-radius:14px;max-width:840px;width:100%;max-height:85vh;overflow:auto;border:1px solid var(--border)}
+  .sheet header{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+  .sheet .content{padding:14px}
+  .x{border:1px solid var(--border);background:#fff;border-radius:8px;padding:6px 10px;cursor:pointer}
+  .leg{border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:10px}
+  .leg h4{margin:0 0 6px 0;font-size:14px}
+  .stops{margin:6px 0 0 0;padding-left:18px}
+  .stops li{margin:2px 0}
+  .small{font-size:12px;color:var(--muted)}
 </style>
 </head>
 <body>
-  <div class="app" role="application" aria-label="RouteFlow London Journey Planner">
-    <aside class="panel" aria-labelledby="planner-title">
-      <h1 id="planner-title"><span class="brand-dot" aria-hidden="true"></span> RouteFlow London — Planner</h1>
-
-      <div>
-        <label for="from">From</label>
-        <div class="suggestions">
-          <input id="from" type="text" placeholder="Start — station, postcode or place" aria-label="From" autocomplete="off" />
-          <div id="fromList" class="dropdown" hidden></div>
+  <div class="wrap">
+    <h1><span class="dot"></span> RouteFlow London — Journey Planner</h1>
+    <div class="grid">
+      <aside class="panel">
+        <div class="sugg">
+          <label for="from">From</label>
+          <input id="from" type="text" placeholder="Station, stop, postcode, place" autocomplete="off">
+          <div id="fromDD" class="dd" hidden></div>
         </div>
-      </div>
 
-      <div style="margin-top:8px;">
-        <label for="to">To</label>
-        <div class="suggestions">
-          <input id="to" type="text" placeholder="Destination — station, postcode or place" aria-label="To" autocomplete="off" />
-          <div id="toList" class="dropdown" hidden></div>
+        <div class="sugg" style="margin-top:10px">
+          <label for="to">To</label>
+          <input id="to" type="text" placeholder="Station, stop, postcode, place" autocomplete="off">
+          <div id="toDD" class="dd" hidden></div>
         </div>
-      </div>
 
-      <div class="form-row" style="margin-top:10px; display:flex; gap:10px;">
-        <div style="flex:1">
-          <label for="date">Date</label>
-          <input id="date" type="date" />
+        <div class="row" style="margin-top:10px">
+          <div style="flex:1">
+            <label for="date">Date</label>
+            <input id="date" type="date">
+          </div>
+          <div style="width:130px">
+            <label for="time">Time</label>
+            <input id="time" type="time">
+          </div>
+          <div style="width:150px">
+            <label for="timeIs">Time is</label>
+            <select id="timeIs">
+              <option value="Departing">Departing</option>
+              <option value="Arriving">Arriving</option>
+            </select>
+          </div>
         </div>
-        <div style="width:120px;">
-          <label for="time">Time</label>
-          <input id="time" type="time" />
+
+        <div style="margin-top:10px">
+          <label>Modes</label>
+          <div id="modes" class="modes">
+            <button class="chip active" data-mode="tube">Tube</button>
+            <button class="chip active" data-mode="bus">Bus</button>
+            <button class="chip active" data-mode="overground">Overground</button>
+            <button class="chip active" data-mode="dlr">DLR</button>
+            <button class="chip active" data-mode="tram">Tram</button>
+            <button class="chip active" data-mode="river">River</button>
+            <button class="chip active" data-mode="national-rail">Rail</button>
+          </div>
         </div>
-      </div>
 
-      <div class="form-row" style="align-items:center;margin-top:6px;">
-        <label style="margin:0 8px 0 0; font-size:13px; color:var(--muted);">Time is</label>
-        <select id="timeIs" title="Departing or Arriving">
-          <option value="Departing">Departing</option>
-          <option value="Arriving">Arriving</option>
-        </select>
-      </div>
+        <button id="go" class="btn">Search routes</button>
+        <div id="list" class="results"></div>
+      </aside>
 
-      <div style="margin-top:10px;">
-        <label>Modes</label>
-        <div class="modes" id="modes">
-          <button class="mode active" data-mode="tube">Tube</button>
-          <button class="mode active" data-mode="bus">Bus</button>
-          <button class="mode active" data-mode="overground">Overground</button>
-          <button class="mode active" data-mode="dlr">DLR</button>
-          <button class="mode active" data-mode="tram">Tram</button>
-          <button class="mode active" data-mode="river">River</button>
+      <section class="panel">
+        <div class="card small">
+          This lightweight demo uses your TfL API key directly in the browser (ok for testing only).
         </div>
-      </div>
-
-      <button class="primary" id="planBtn" aria-label="Plan journey">Plan Journey</button>
-      <div class="small">Tip: For production, configure an API proxy to keep TfL keys secure. This widget expects a proxy at <code>/api/tfl</code> that forwards to <code>https://api.tfl.gov.uk</code>.</div>
-
-      <div id="statusBox" class="status"></div>
-      <div id="resultsContainer" class="results" aria-live="polite" style="margin-top:12px;"></div>
-    </aside>
-
-    <main class="map-wrap" aria-hidden="false">
-      <div id="map"></div>
-    </main>
+        <div id="status" class="card small" style="margin-top:12px">Tip: try “King’s Cross” → “Waterloo”.</div>
+      </section>
+    </div>
   </div>
 
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <!-- Modal -->
+  <div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="sheet">
+      <header>
+        <strong id="modalTitle">Journey details</strong>
+        <button class="x" id="closeModal" aria-label="Close">Close</button>
+      </header>
+      <div class="content" id="modalContent"></div>
+    </div>
+  </div>
 
 <script>
-/*
-  Extended RouteFlow journey planner
-  - Autocomplete (StopPoint Search) with debounce
-  - Disruption/line status fetch
-  - Fares display (from journey response if present)
-  - Colour-coded legs using Tube/Line colours
-  - Uses API_PROXY (recommended) to avoid exposing TfL keys client-side
-*/
+/*** CONFIG ***/
+const TFL_APP_KEY = "f17d0725d1654338ab02a361fe41abad"; // TEMP USE ONLY
 
-const CLIENT_APP_ID = '';  // TfL now only requires app_key, so this can stay empty
-const CLIENT_APP_KEY = 'f17d0725d1654338ab02a361fe41abad';  // Your TfL API key here
-const API_PROXY = '';  // Disable proxy for direct calls
+/*** UTIL ***/
+const $ = sel => document.querySelector(sel);
+const modeColour = (id) => ({
+  tube:"#171717", bus:"#d50a0a", overground:"#ee7c0e", dlr:"#00a4a7",
+  tram:"#84b51a", river:"#00adef", "national-rail":"#1b365d", walk:"#6b7280"
+}[id] || "#6b7280");
 
-// Minimal mapping of TfL line ids to official colours (hex). Add more if needed.
-const LINE_COLOURS = {
-  bakerloo: '#B36305', bakerloo_text: '#fff',
-  central: '#E32017', central_text: '#fff',
-  circle: '#FFD300', circle_text: '#000',
-  district: '#00782A', district_text: '#fff',
-  northern: '#000000', northern_text: '#fff',
-  piccadilly: '#0019A8', piccadilly_text: '#fff',
-  victoria: '#00A0E2', victoria_text: '#fff',
-  jubilee: '#6A7278', jubilee_text: '#fff',
-  metropolitan: '#9B0056', metropolitan_text: '#fff',
-  hammersmithcity: '#F3A9BB', hammersmithcity_text: '#000',
-  overground: '#EE7C0E', overground_text: '#fff',
-  dlr: '#00A4A7', dlr_text: '#fff',
-  tram: '#84B51A', tram_text: '#000',
-  river: '#00ADEF', river_text: '#fff',
-  bus: '#D50A0A', bus_text: '#fff',
-  walk: '#9aa4b2'
-};
-
-// Map init
-const map = L.map('map', { zoomControl: true }).setView([51.5074, -0.1278], 12);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
-let routeLayer = L.layerGroup().addTo(map);
-let markersLayer = L.layerGroup().addTo(map);
-
-// UI elements
-const planBtn = document.getElementById('planBtn');
-const fromInput = document.getElementById('from');
-const toInput = document.getElementById('to');
-const dateInput = document.getElementById('date');
-const timeInput = document.getElementById('time');
-const timeIsEl = document.getElementById('timeIs');
-const resultsContainer = document.getElementById('resultsContainer');
-const modesEl = document.getElementById('modes');
-const fromList = document.getElementById('fromList');
-const toList = document.getElementById('toList');
-const statusBox = document.getElementById('statusBox');
-
-(function setDefaultDateTime(){ const now = new Date(); dateInput.value = now.toISOString().slice(0,10); timeInput.value = now.toTimeString().slice(0,5); })();
-
-function getSelectedModes(){ const active = Array.from(modesEl.querySelectorAll('.mode.active')); return active.map(btn => btn.dataset.mode).join(','); }
-modesEl.addEventListener('click', (e)=>{ const btn = e.target.closest('.mode'); if(!btn) return; btn.classList.toggle('active'); });
-
-// debounce helper for autocomplete
-function debounce(fn, wait){ let t; return function(...args){ clearTimeout(t); t = setTimeout(()=> fn.apply(this,args), wait); }; }
-
-// Build URL helper (similar to earlier)
-function buildUrl(path, params = {}){
-  const qs = new URLSearchParams(params);
-  if (!API_PROXY && CLIENT_APP_ID && CLIENT_APP_KEY) { qs.set('app_id', CLIENT_APP_ID); qs.set('app_key', CLIENT_APP_KEY); return `https://api.tfl.gov.uk${path}?${qs.toString()}`; }
-  return `${API_PROXY}${path}?${qs.toString()}`;
+// Simple icons using text/SVG for compact list chips
+function iconForMode(id){
+  const c = modeColour(id);
+  const label = ({tube:"T",bus:"B",overground:"O",dlr:"D",tram:"Tr",river:"R",walk:"W","national-rail":"NR"}[id] || id[0]?.toUpperCase() || "?");
+  return `<span class="mode-icon" style="border-color:${c};color:${c}" title="${id}">${label}</span>`;
 }
 
-// Autocomplete: call StopPoint/Search/{query}
-async function stopPointSearch(q){
+// Compact summary of modes in a journey
+function summarizeModes(journey){
+  const modes = [];
+  journey.legs.forEach(leg=>{
+    const id = (leg.mode && leg.mode.id) || (leg.modeName||"walk").toLowerCase();
+    if (!modes.includes(id)) modes.push(id);
+  });
+  return modes.map(iconForMode).join("");
+}
+
+// Debounce helper
+function debounce(fn, ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; }
+
+// Build URL
+function tfl(path, params={}){
+  const qs = new URLSearchParams(params);
+  qs.set("app_key", TFL_APP_KEY);
+  return `https://api.tfl.gov.uk${path}?${qs.toString()}`;
+}
+
+// Elements
+const fromEl = $("#from"), toEl = $("#to");
+const fromDD = $("#fromDD"), toDD = $("#toDD");
+const dateEl = $("#date"), timeEl = $("#time"), timeIsEl = $("#timeIs");
+const modesEl = $("#modes"), goBtn = $("#go"), listEl = $("#list");
+const statusEl = $("#status");
+
+(function initDateTime(){
+  const now = new Date();
+  dateEl.value = now.toISOString().slice(0,10);
+  timeEl.value = now.toTimeString().slice(0,5);
+})();
+
+function selectedModes(){
+  return [...modesEl.querySelectorAll(".chip.active")].map(b=>b.dataset.mode).join(",");
+}
+
+modesEl.addEventListener("click",(e)=>{
+  const b = e.target.closest(".chip"); if(!b) return;
+  b.classList.toggle("active");
+});
+
+// Autocomplete
+async function queryStops(q){
   if (!q || q.length < 2) return [];
   try{
-    const modes = getSelectedModes();
-    const url = buildUrl(`/StopPoint/Search/${encodeURIComponent(q)}`, { modes: modes || '' });
-    const res = await fetch(url);
+    const res = await fetch(tfl(`/StopPoint/Search/${encodeURIComponent(q)}`, { modes: selectedModes() }));
     if (!res.ok) return [];
     const data = await res.json();
-    // TfL StopPoint search returns matches in data.matches
-    return data && data.matches ? data.matches : [];
-  } catch(e){ console.error('stopPointSearch', e); return []; }
+    return (data.matches || []).slice(0,8);
+  }catch{return []}
 }
-
-function showDropdown(listEl, items, onSelect){
-  listEl.innerHTML = '';
-  if (!items || items.length === 0){ listEl.hidden = true; return; }
-  items.slice(0,8).forEach(it => {
-    const div = document.createElement('div');
-    div.className = 'item';
-    // show commonName with indicator (stop type)
-    div.innerHTML = `<strong style="color:var(--muted)">${it.name || it.commonName || it.icn || ''}</strong><div style="font-size:12px;color:var(--muted)">${it.placeType || it.modes ? (it.modes ? it.modes.join(', ') : '') : ''} ${it.id ? '' : ''}</div>`;
-    div.addEventListener('click', ()=>{
-      onSelect(it);
-      listEl.hidden = true;
-    });
-    listEl.appendChild(div);
+function renderDD(box, items, input){
+  box.innerHTML = "";
+  if (!items.length){ box.hidden = true; return; }
+  items.forEach(m=>{
+    const div = document.createElement("div");
+    div.className = "dd-item";
+    const subtitle = m.modes && m.modes.length ? `<div class="small">${m.modes.join(", ")}</div>` : "";
+    div.innerHTML = `<div><strong>${m.name || m.commonName}</strong>${subtitle}</div>`;
+    div.onclick = ()=>{ input.value = m.name || m.commonName; input.dataset.id = m.id || ""; box.hidden = true; };
+    box.appendChild(div);
   });
-  listEl.hidden = false;
+  box.hidden = false;
 }
+const debFrom = debounce(async ()=>{
+  const items = await queryStops(fromEl.value.trim());
+  renderDD(fromDD, items, fromEl);
+}, 250);
+const debTo = debounce(async ()=>{
+  const items = await queryStops(toEl.value.trim());
+  renderDD(toDD, items, toEl);
+}, 250);
+fromEl.addEventListener("input", debFrom);
+toEl.addEventListener("input", debTo);
+window.addEventListener("click",(e)=>{ if(!e.target.closest(".sugg")) { fromDD.hidden = true; toDD.hidden = true; }});
 
-const debouncedFrom = debounce(async ()=>{
-  const q = fromInput.value.trim();
-  if (!q) { fromList.hidden = true; return; }
-  const matches = await stopPointSearch(q);
-  showDropdown(fromList, matches, sel => {
-    fromInput.value = sel.name || sel.commonName || sel.matchedName || q;
-    fromInput.dataset.id = sel.id || '';
-  });
-}, 300);
+// Search
+goBtn.addEventListener("click", plan);
+[fromEl, toEl].forEach(el=>el.addEventListener("keydown",(e)=>{ if(e.key==="Enter") plan(); }));
 
-const debouncedTo = debounce(async ()=>{
-  const q = toInput.value.trim();
-  if (!q) { toList.hidden = true; return; }
-  const matches = await stopPointSearch(q);
-  showDropdown(toList, matches, sel => {
-    toInput.value = sel.name || sel.commonName || sel.matchedName || q;
-    toInput.dataset.id = sel.id || '';
-  });
-}, 300);
+async function plan(){
+  const from = fromEl.dataset.id || fromEl.value.trim();
+  const to = toEl.dataset.id || toEl.value.trim();
+  if(!from || !to){ listEl.innerHTML = `<div class="error">Enter both origin and destination.</div>`; return; }
 
-fromInput.addEventListener('input', debouncedFrom);
-toInput.addEventListener('input', debouncedTo);
-
-// hide dropdown if clicked outside
-window.addEventListener('click', (e)=>{ if (!e.target.closest('.suggestions')){ fromList.hidden = true; toList.hidden = true; } });
-
-// fetch line statuses for selected modes (to show disruptions)
-async function fetchLineStatus(modes){
+  listEl.innerHTML = `<div class="loading">Searching routes…</div>`;
   try{
-    // modes can be csv. We'll call /Line/Mode/{modes}/Status
-    const modePath = modes ? modes.split(',').map(m=>m.trim()).filter(Boolean).join(',') : 'tube,dlr,overground,tram';
-    const url = buildUrl(`/Line/Mode/${encodeURIComponent(modePath)}/Status`, {});
+    const url = tfl(`/Journey/JourneyResults/${encodeURIComponent(from)}/to/${encodeURIComponent(to)}`, {
+      date: dateEl.value, time: timeEl.value, timeIs: timeIsEl.value, mode: selectedModes(), nationalSearch: "false"
+    });
     const res = await fetch(url);
-    if (!res.ok) return null;
-    return await res.json();
-  } catch(e){ console.error('fetchLineStatus', e); return null; }
+    if (!res.ok){ listEl.innerHTML = `<div class="error">TfL error ${res.status}</div>`; return; }
+    const data = await res.json();
+    renderJourneys(data);
+  }catch(err){
+    console.error(err);
+    listEl.innerHTML = `<div class="error">Network error. Try again.</div>`;
+  }
 }
 
-function displayLineStatuses(statuses){
-  if (!statuses || statuses.length === 0){ statusBox.textContent = 'No current service disruptions detected.'; return; }
-  // show top-level disruptions for lines with issues
-  const issues = statuses.filter(l => l.lineStatuses && l.lineStatuses.some(s => s.statusSeverity !== 10));
-  if (issues.length === 0){ statusBox.textContent = 'No current service disruptions detected.'; return; }
-  statusBox.innerHTML = '';
-  issues.forEach(line => {
-    const d = document.createElement('div'); d.className = 'disruption';
-    const colour = LINE_COLOURS[line.id] || LINE_COLOURS['walk'];
-    d.innerHTML = `<strong style="color:${colour}">${line.name}</strong> — ${line.lineStatuses.map(s=>s.statusSeverityDescription).join(', ')}<div style="font-size:13px;color:var(--muted);margin-top:6px">${line.disruptions && line.disruptions.length ? line.disruptions.slice(0,2).map(dr=>dr.description).join(' — ') : ''}</div>`;
-    statusBox.appendChild(d);
-  });
-}
-
-function showLoading(){ resultsContainer.innerHTML = '<div class="loading">Planning journey…</div>'; routeLayer.clearLayers(); markersLayer.clearLayers(); }
-function showError(msg){ resultsContainer.innerHTML = `<div class="loading" role="alert">Error: ${msg}</div>`; }
-
-function getColourForLeg(leg){
-  // prefer lineId or routeId if present
-  const lineId = (leg.routeId || (leg.routeOptions && leg.routeOptions[0] && leg.routeOptions[0].id) || (leg.lineId || (leg.serviceId || ''))).toLowerCase();
-  if (lineId && LINE_COLOURS[lineId]) return LINE_COLOURS[lineId];
-  // else by mode
-  const mode = (leg.mode && leg.mode.id) || (leg.modeName || '').toLowerCase();
-  if (mode && LINE_COLOURS[mode]) return LINE_COLOURS[mode];
-  return LINE_COLOURS['walk'];
-}
-
+// Render summary list
 function renderJourneys(data){
-  routeLayer.clearLayers(); markersLayer.clearLayers(); resultsContainer.innerHTML = '';
-  if (!data || !data.journeys || data.journeys.length === 0) { showError('No journeys found.'); return; }
+  listEl.innerHTML = "";
+  if (!data || !data.journeys || !data.journeys.length){
+    listEl.innerHTML = `<div class="error">No journeys found.</div>`;
+    return;
+  }
+  data.journeys.forEach((j, idx)=>{
+    const card = document.createElement("div");
+    card.className = "card";
+    const depart = j.startDateTime ? new Date(j.startDateTime) : null;
+    const arrive = j.arrivalDateTime ? new Date(j.arrivalDateTime) : null;
+    const times = (depart && arrive)
+      ? `${timeFmt(depart)} → ${timeFmt(arrive)}`
+      : `${j.duration} min`;
+    card.innerHTML = `
+      <div class="summary">
+        <div>
+          <div><strong>Journey ${idx+1}</strong> • ${j.duration} min</div>
+          <div class="small">${times} • ${j.legs.length} legs</div>
+        </div>
+        <div class="modes-inline">${summarizeModes(j)}</div>
+      </div>
+    `;
+    card.style.cursor = "pointer";
+    card.addEventListener("click", ()=> openModalForJourney(j, idx+1));
+    listEl.appendChild(card);
+  });
+  statusEl.textContent = `Found ${data.journeys.length} route option${data.journeys.length>1?'s':''}. Click one for details.`;
+}
 
-  // show line statuses (get modes used)
-  const usedModes = Array.from(new Set(data.journeys.flatMap(j => j.legs.map(l => (l.mode && l.mode.id) || (l.modeName||'').toLowerCase())))).filter(Boolean).join(',');
-  fetchLineStatus(usedModes).then(displayLineStatuses).catch(()=>{});
+function timeFmt(d){ return d.toTimeString().slice(0,5); }
 
-  data.journeys.forEach((journey, jidx) => {
-    const card = document.createElement('div'); card.className = 'journey-card';
-    const header = document.createElement('div'); header.className = 'journey-meta';
-    header.innerHTML = `<div><strong>Journey ${jidx+1}</strong> — ${journey.duration} mins</div><div style="text-align:right;color:var(--muted);font-size:13px;">${journey.legs.length} legs</div>`;
-    card.appendChild(header);
+// Modal with details
+const modal = $("#modal"), modalContent = $("#modalContent"), closeModalBtn = $("#closeModal");
+closeModalBtn.addEventListener("click", ()=> modal.classList.remove("open"));
+modal.addEventListener("click", (e)=>{ if(e.target===modal) modal.classList.remove("open"); });
 
-    // fares (if present)
-    if (journey.fare && journey.fare.totalCost) {
-      const p = document.createElement('div'); p.style.marginTop='6px'; p.innerHTML = `<strong>Estimated fare:</strong> ${journey.fare.displayCost || (journey.fare.totalCost/100)+' GBP'}`; card.appendChild(p);
-    } else if (journey.fare && journey.fare.totalCost === undefined && journey.fare.displayCost){
-      const p = document.createElement('div'); p.style.marginTop='6px'; p.innerHTML = `<strong>Estimated fare:</strong> ${journey.fare.displayCost}`; card.appendChild(p);
+function openModalForJourney(journey, num){
+  $("#modalTitle").textContent = `Journey ${num} — ${journey.duration} min`;
+  modalContent.innerHTML = "";
+
+  journey.legs.forEach((leg, i)=>{
+    const modeId = (leg.mode && leg.mode.id) || (leg.modeName||"walk").toLowerCase();
+    const colour = modeColour(modeId);
+    const depTime = leg.departureTime ? timeFmt(new Date(leg.departureTime)) : "";
+    const arrTime = leg.arrivalTime ? timeFmt(new Date(leg.arrivalTime)) : "";
+    const dep = leg.departurePoint?.commonName || "";
+    const arr = leg.arrivalPoint?.commonName || "";
+    const line = leg.routeOptions?.[0]?.name || leg.routeOptions?.[0]?.lineIdentifier?.name || leg.routeId || leg.lineName || "";
+
+    const legBox = document.createElement("div");
+    legBox.className = "leg";
+    legBox.style.borderLeft = `6px solid ${colour}`;
+
+    // Title row
+    const title = document.createElement("h4");
+    const label = line ? `${cap(modeId)} — ${line}` : cap(modeId);
+    title.innerHTML = `${iconForMode(modeId)} <span style="margin-left:6px">${label}</span>`;
+    legBox.appendChild(title);
+
+    // Times + points
+    const meta = document.createElement("div");
+    meta.className = "small";
+    meta.textContent = `${depTime} ${dep ? "• "+dep : ""}  →  ${arrTime} ${arr ? "• "+arr : ""}`;
+    legBox.appendChild(meta);
+
+    // Instruction
+    if (leg.instruction?.summary){
+      const p = document.createElement("div");
+      p.style.marginTop = "6px";
+      p.textContent = leg.instruction.summary;
+      legBox.appendChild(p);
     }
 
-    // legs
-    const allCoords = [];
-    journey.legs.forEach((leg, lidx) => {
-      const legEl = document.createElement('div'); legEl.className = 'leg';
-      const modeName = (leg.mode && leg.mode.name) || (leg.modeName || 'Walk');
-      const dep = leg.departurePoint ? leg.departurePoint.commonName : '';
-      const arr = leg.arrivalPoint ? leg.arrivalPoint.commonName : '';
-      const colour = getColourForLeg(leg) || '#9aa4b2';
-      let title = `<div class="title">${modeName} — ${dep} → ${arr} (${leg.duration ? leg.duration+'m' : ''})</div>`;
-      let instr = '';
-      if (leg.instruction && leg.instruction.summary) instr = `<div>${leg.instruction.summary}</div>`;
-      // disruptions for leg
-      if (leg.disruption && leg.disruption.length){ instr += `<div style="color:#ffb4c4;font-size:12px">⚠ ${leg.disruption.map(d=>d.category).join(', ')}</div>`; }
-      legEl.innerHTML = title + instr;
-      card.appendChild(legEl);
+    // Stops list, if TfL provides them
+    const stops = leg.path?.stopPoints || leg.stopPoints || [];
+    if (stops.length){
+      const h = document.createElement("div");
+      h.className = "small";
+      h.style.marginTop = "8px";
+      h.textContent = `Stops (${stops.length}):`;
+      const ul = document.createElement("ul");
+      ul.className = "stops";
+      stops.forEach(s=>{
+        const li = document.createElement("li");
+        li.textContent = s.name || s.commonName;
+        ul.appendChild(li);
+      });
+      legBox.appendChild(h);
+      legBox.appendChild(ul);
+    } else if (modeId === "walk" && leg.instruction?.steps?.length){
+      // For walking, show step-by-step if available
+      const h = document.createElement("div");
+      h.className = "small";
+      h.style.marginTop = "8px";
+      h.textContent = `Directions:`;
+      const ul = document.createElement("ul");
+      ul.className = "stops";
+      leg.instruction.steps.forEach(step=>{
+        const li = document.createElement("li");
+        li.textContent = step.description || step.summary || "";
+        ul.appendChild(li);
+      });
+      legBox.appendChild(h);
+      legBox.appendChild(ul);
+    }
 
-      // map geometry
-      if (leg.path && leg.path.lineString && leg.path.lineString.length > 0) {
-        const coords = leg.path.lineString.map(p => [p.lat, p.lon]);
-        allCoords.push(...coords);
-        const poly = L.polyline(coords, { weight: 6, opacity: 0.95, color: colour }).addTo(routeLayer);
-        // add simple markers at start/end of leg
-        const start = coords[0]; const end = coords[coords.length-1];
-        L.circleMarker(start, { radius:5, color:colour, fillOpacity:1 }).addTo(markersLayer);
-        L.circleMarker(end, { radius:5, color:colour, fillOpacity:1 }).addTo(markersLayer);
-      } else {
-        // fallback: mark departure/arrival points if latlon provided
-        if (leg.departurePoint && leg.departurePoint.lat && leg.departurePoint.lon){ const s = [leg.departurePoint.lat, leg.departurePoint.lon]; L.circleMarker(s,{radius:5,color:colour}).addTo(markersLayer); allCoords.push(s); }
-        if (leg.arrivalPoint && leg.arrivalPoint.lat && leg.arrivalPoint.lon){ const e = [leg.arrivalPoint.lat, leg.arrivalPoint.lon]; L.circleMarker(e,{radius:5,color:colour}).addTo(markersLayer); allCoords.push(e); }
-      }
-    });
+    // Disruption info, if any
+    if (leg.disruption){
+      const d = Array.isArray(leg.disruption) ? leg.disruption : [leg.disruption];
+      d.filter(Boolean).forEach(di=>{
+        const alert = document.createElement("div");
+        alert.className = "small";
+        alert.style.marginTop = "6px";
+        alert.style.color = "#b45309";
+        alert.textContent = `⚠ ${di.description || di.category || "Disruption"}`;
+        legBox.appendChild(alert);
+      });
+    }
 
-    // focus button
-    const focusBtn = document.createElement('button'); focusBtn.textContent = 'Focus on map'; focusBtn.style.marginTop='8px'; focusBtn.className='primary'; focusBtn.style.width='auto';
-    focusBtn.addEventListener('click', ()=>{ if (allCoords.length){ const bounds = L.latLngBounds(allCoords); map.fitBounds(bounds.pad(0.6)); } });
-    card.appendChild(focusBtn);
-
-    resultsContainer.appendChild(card);
-
-    // auto-fit to first journey
-    if (jidx === 0 && allCoords.length){ const b = L.latLngBounds(allCoords); map.fitBounds(b.pad(0.6)); }
+    modalContent.appendChild(legBox);
   });
+
+  // Fare (if present)
+  if (journey.fare?.displayCost || Number.isFinite(journey.fare?.totalCost)){
+    const f = document.createElement("div");
+    f.className = "small";
+    f.style.marginTop = "6px";
+    f.textContent = `Estimated fare: ${journey.fare.displayCost || (journey.fare.totalCost/100).toFixed(2) + " GBP"}`;
+    modalContent.appendChild(f);
+  }
+
+  modal.classList.add("open");
 }
 
-// perform the fetch of journeys
-async function planJourney(){
-  const from = fromInput.value.trim(); const to = toInput.value.trim();
-  if (!from || !to) { showError('Please enter both origin and destination.'); return; }
-
-  // prefer stoppoint id if selected (but TfL Journey API accepts place names too)
-  const fromId = fromInput.dataset.id || '';
-  const toId = toInput.dataset.id || '';
-  const fromParam = fromId || from; const toParam = toId || to;
-
-  const urlPath = `/Journey/JourneyResults/${encodeURIComponent(fromParam)}/to/${encodeURIComponent(toParam)}`;
-  const url = buildUrl(urlPath, { timeIs: timeIsEl.value, date: dateInput.value, time: timeInput.value, mode: getSelectedModes() });
-
-  showLoading();
-  try{
-    const res = await fetch(url);
-    if (!res.ok){ const txt = await res.text(); showError(`TfL API returned ${res.status}: ${txt}`); return; }
-    const data = await res.json(); renderJourneys(data);
-  } catch(e){ console.error(e); showError('Network or CORS error. If running client-side, ensure TfL API allows your origin or use a server proxy.'); }
-}
-
-planBtn.addEventListener('click', planJourney);
-[fromInput, toInput].forEach(el => { el.addEventListener('keydown', (e)=> { if (e.key === 'Enter') planJourney(); }); });
-
+function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : ""; }
 </script>
 </body>
 </html>
