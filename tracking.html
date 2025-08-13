@@ -676,264 +676,175 @@ function signOut() {
 }
 </script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<title>RouteFlow London Live Arrivals</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f4f4f4;
+        padding: 20px;
+    }
+    h1 {
+        text-align: center;
+        color: #c8102e;
+    }
+    .search-container {
+        max-width: 600px;
+        margin: auto;
+        position: relative;
+    }
+    input {
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+    }
+    .suggestions {
+        position: absolute;
+        width: 100%;
+        background: #fff;
+        border: 1px solid #ccc;
+        border-top: none;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 10;
+    }
+    .suggestion {
+        padding: 10px;
+        cursor: pointer;
+    }
+    .suggestion:hover {
+        background: #eee;
+    }
+    .results {
+        margin-top: 20px;
+    }
+    .arrival {
+        background: #fff;
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+    }
+    .line-name {
+        font-weight: bold;
+        color: #c8102e;
+    }
+</style>
+</head>
 <body>
-  <div class="tracker-container">
-    <h1 class="tracker-title">Live Tracking</h1>
-    <div class="search-row">
-      <input id="searchInput" type="text" placeholder="Search stop name or vehicle reg (e.g. Waterloo, LTZ1234)" autocomplete="off"/>
-      <button id="searchBtn">Search</button>
-    </div>
-    <div id="results"></div>
-    <div id="details"></div>
-    <div id="vehicleInfo"></div>
-  </div>
-  <script>
-    const API_KEY = 'f17d0725d1654338ab02a361fe41abad';
-    const resultsDiv = document.getElementById('results');
-    const detailsDiv = document.getElementById('details');
-    const vehicleDiv = document.getElementById('vehicleInfo');
-    const searchInput = document.getElementById('searchInput');
-    let autoRefreshTimer = null;
-    let lastStopId = null;
-    let lastStopName = '';
-    let lastPlatform = '';
 
-    document.getElementById('searchBtn').onclick = doSearch;
-    searchInput.addEventListener('keydown', e => {
-      if (e.key === 'Enter') doSearch();
-    });
+<h1>RouteFlow London – Live Arrivals</h1>
+<div class="search-container">
+    <input type="text" id="searchBox" placeholder="Enter stop name or bus registration...">
+    <div class="suggestions" id="suggestions"></div>
+</div>
 
-    function showStatus(msg) {
-      resultsDiv.innerHTML = `<div class="status-message">${msg}</div>`;
-      detailsDiv.innerHTML = '';
-      vehicleDiv.innerHTML = '';
-    }
+<div class="results" id="results"></div>
 
-    function clearAll() {
-      resultsDiv.innerHTML = '';
-      detailsDiv.innerHTML = '';
-      vehicleDiv.innerHTML = '';
-      clearTimer();
-      lastStopId = null;
-    }
+<script>
+const apiKey = "f17d0725d1654338ab02a361fe41abad";
+const searchBox = document.getElementById("searchBox");
+const suggestionsBox = document.getElementById("suggestions");
+const resultsBox = document.getElementById("results");
 
-    function clearTimer() {
-      if (autoRefreshTimer) {
-        clearInterval(autoRefreshTimer);
-        autoRefreshTimer = null;
-      }
-    }
+let debounceTimeout;
 
-    function doSearch() {
-      clearAll();
-      const q = searchInput.value.trim();
-      if (!q) {
-        showStatus('Please type a bus/train stop name or vehicle registration.');
+searchBox.addEventListener("input", () => {
+    const query = searchBox.value.trim();
+    clearTimeout(debounceTimeout);
+
+    if (query.length < 2) {
+        suggestionsBox.innerHTML = "";
         return;
-      }
-      if (/^[A-Z]{2,3}\d{1,4}[A-Z]{0,3}$/i.test(q.replace(/[\s-]/g, ''))) {
-        // Looks like a vehicle reg
-        showVehicle(q.toUpperCase());
-      } else {
-        // Otherwise, treat as stop search
-        searchStops(q);
-      }
     }
 
-    sync function searchStops(query) {
-  showStatus('Searching for stops...');
-  try {
-    // Search for stops of all types (bus, tube, etc.)
-    const url = `https://api.tfl.gov.uk/StopPoint/Search/${encodeURIComponent(query)}?modes=bus,tube,overground,dlr,tram,elizabeth-line,rail,national-rail&app_key=${API_KEY}`;
-    const res = await fetch(url);
-    const data = await res.json();
-    let matches = (data.matches || []).filter(m => m.id && m.name);
+    debounceTimeout = setTimeout(() => {
+        if (/^[A-Za-z]{2}\d{2}\s?[A-Za-z]{3}$/.test(query)) {
+            // Looks like a bus reg - no suggestions needed
+            suggestionsBox.innerHTML = "";
+        } else {
+            fetch(`https://api.tfl.gov.uk/StopPoint/Search/${encodeURIComponent(query)}?app_key=${apiKey}`)
+                .then(res => res.json())
+                .then(data => {
+                    suggestionsBox.innerHTML = "";
+                    if (data.matches) {
+                        data.matches.forEach(stop => {
+                            const div = document.createElement("div");
+                            div.classList.add("suggestion");
+                            div.textContent = stop.name;
+                            div.dataset.id = stop.id;
+                            div.addEventListener("click", () => {
+                                searchBox.value = stop.name;
+                                suggestionsBox.innerHTML = "";
+                                fetchStopArrivals(stop.id);
+                            });
+                            suggestionsBox.appendChild(div);
+                        });
+                    }
+                });
+        }
+    }, 300);
+});
 
-    // Now, for each match, fetch the StopPoint details and extract actual child stops (for bus especially)
-    let allStops = [];
-    for (let match of matches) {
-      const stopRes = await fetch(`https://api.tfl.gov.uk/StopPoint/${match.id}?app_key=${API_KEY}`);
-      const stopData = await stopRes.json();
-      // If stopData has children, and any are bus stops, show those
-      if (stopData.children && stopData.children.length > 0) {
-        stopData.children
-          .filter(child => child.modes && child.modes.includes('bus'))
-          .forEach(child => {
-            allStops.push({
-              id: child.id,
-              name: child.commonName,
-              platform: child.stopLetter || child.platformName || '',
-              indicator: child.indicator || '',
-              modes: child.modes
-            });
-          });
-      } else if (stopData.modes && stopData.modes.includes('bus')) {
-        // If it's already a bus stop, add directly
-        allStops.push({
-          id: stopData.id,
-          name: stopData.commonName,
-          platform: stopData.stopLetter || stopData.platformName || '',
-          indicator: stopData.indicator || '',
-          modes: stopData.modes
+searchBox.addEventListener("keypress", e => {
+    if (e.key === "Enter") {
+        const query = searchBox.value.trim();
+        if (/^[A-Za-z]{2}\d{2}\s?[A-Za-z]{3}$/.test(query)) {
+            fetchBusByReg(query);
+        } else {
+            fetch(`https://api.tfl.gov.uk/StopPoint/Search/${encodeURIComponent(query)}?app_key=${apiKey}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.matches && data.matches.length > 0) {
+                        fetchStopArrivals(data.matches[0].id);
+                    } else {
+                        resultsBox.innerHTML = `<p>No stop found for "${query}"</p>`;
+                    }
+                });
+        }
+    }
+});
+
+function fetchStopArrivals(stopId) {
+    fetch(`https://api.tfl.gov.uk/StopPoint/${stopId}/Arrivals?app_key=${apiKey}`)
+        .then(res => res.json())
+        .then(data => {
+            displayArrivals(data);
         });
-      }
-    }
-
-    // Remove duplicates by stop id
-    allStops = allStops.filter((s, i, arr) => arr.findIndex(ss => ss.id === s.id) === i);
-
-    if (!allStops.length) {
-      showStatus('No bus stops found. Try a more specific name.');
-      return;
-    }
-
-    resultsDiv.innerHTML = `<div class="section-title">Stops matching "<span style="color:#2979ff">${query}</span>"</div>` +
-      `<div class="stop-list">${allStops.map(stop => `
-        <div class="stop-item" tabindex="0" role="button" aria-pressed="false" data-stopid="${stop.id}" data-name="${stop.name}" data-platform="${stop.platform||stop.indicator}">
-          <span class="station">${stop.name}</span>
-          <span class="platform">${stop.platform ? `[${stop.platform}]` : (stop.indicator ? `[${stop.indicator}]` : '')}</span>
-          <span style="color:#bbb;font-size:.95em;">(${stop.modes ? stop.modes.join(', ') : ''})</span>
-        </div>
-      `).join('')}</div>`;
-
-    // Add click handlers to all stop-items
-    document.querySelectorAll('.stop-item').forEach(item => {
-      item.onclick = () => {
-        const stopId = item.getAttribute('data-stopid');
-        const name = item.getAttribute('data-name');
-        const plat = item.getAttribute('data-platform');
-        showArrivals(stopId, name, plat);
-      };
-      item.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') item.onclick(); };
-    });
-    detailsDiv.innerHTML = '';
-    vehicleDiv.innerHTML = '';
-    clearTimer();
-  } catch (e) {
-    showStatus('Failed to search stops. Please try again.');
-  }
 }
-        resultsDiv.innerHTML = `<div class="section-title">Stops matching "<span style="color:#2979ff">${query}</span>"</div>` +
-          `<div class="stop-list">${matches.map(stop => `
-            <div class="stop-item" tabindex="0" role="button" aria-pressed="false" data-stopid="${stop.id}" data-name="${stop.name}" data-platform="${stop.stopPointIndicator||''}">
-              <span class="station">${stop.name}</span>
-              <span class="platform">${stop.stopPointIndicator ? `[${stop.stopPointIndicator}]` : ''}</span>
-              <span style="color:#bbb;font-size:.95em;">(${stop.modes ? stop.modes.join(', ') : ''})</span>
-            </div>
-          `).join('')}</div>`;
 
-        // Add click handlers to all stop-items
-        document.querySelectorAll('.stop-item').forEach(item => {
-          item.onclick = () => {
-            const stopId = item.getAttribute('data-stopid');
-            const name = item.getAttribute('data-name');
-            const plat = item.getAttribute('data-platform');
-            showArrivals(stopId, name, plat);
-          };
-          item.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') item.onclick(); };
+function fetchBusByReg(reg) {
+    fetch(`https://api.tfl.gov.uk/Vehicle/${encodeURIComponent(reg)}/Arrivals?app_key=${apiKey}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.length > 0) {
+                displayArrivals(data);
+            } else {
+                resultsBox.innerHTML = `<p>No live data found for bus ${reg}</p>`;
+            }
         });
-        detailsDiv.innerHTML = '';
-        vehicleDiv.innerHTML = '';
-        clearTimer();
-      } catch (e) {
-        showStatus('Failed to search stops. Please try again.');
-      }
-    }
+}
 
-    async function showArrivals(stopId, stopName, platform) {
-      lastStopId = stopId; lastStopName = stopName; lastPlatform = platform;
-      clearTimer();
-      detailsDiv.innerHTML = `<div class="status-message">Loading arrivals for <strong>${stopName}</strong> ${platform ? `[${platform}]` : ''}...</div>`;
-      vehicleDiv.innerHTML = '';
-      // Fetch and render immediately, then set interval for auto-refresh
-      await fetchAndRenderArrivals(stopId, stopName, platform);
-      autoRefreshTimer = setInterval(() => fetchAndRenderArrivals(stopId, stopName, platform), 20 * 1000);
-    }
+function displayArrivals(data) {
+    resultsBox.innerHTML = "";
+    data.sort((a, b) => a.timeToStation - b.timeToStation);
+    data.forEach(arrival => {
+        const mins = Math.round(arrival.timeToStation / 60);
+        const dueText = mins <= 0 ? "due" : `${mins} min`;
 
-    async function fetchAndRenderArrivals(stopId, stopName, platform) {
-      try {
-        const url = `https://api.tfl.gov.uk/StopPoint/${stopId}/Arrivals?app_key=${API_KEY}`;
-        const res = await fetch(url);
-        const arr = await res.json();
-        detailsDiv.innerHTML = ''; // Clear loading message
-
-        if (!Array.isArray(arr) || !arr.length) {
-          detailsDiv.innerHTML = `<div class="no-results">No scheduled arrivals at ${stopName}${platform ? ` [${platform}]` : ''}.</div>`;
-          return;
-        }
-        // Sort by soonest arrival
-        arr.sort((a, b) => a.timeToStation - b.timeToStation);
-
-        detailsDiv.innerHTML = `<div class="section-title">Live arrivals at <span style="color:#2979ff">${stopName}</span> ${platform ? `[${platform}]` : ''}</div>
-        <div class="arrivals-list">
-          <div class="arrival-row" style="font-weight:700;background:#e3f0ff;">
-            <div>Route</div><div>Destination</div><div>Due</div><div>Reg</div>
-          </div>
-          ${arr.map(a => `
-            <div class="arrival-row">
-              <div class="arrival-route">${a.lineName}</div>
-              <div class="arrival-destination">${a.destinationName || a.towards || ''}</div>
-              <div class="arrival-time">${a.timeToStation !== undefined ? Math.round(a.timeToStation / 60) + ' min' : '?'}</div>
-              <div>
-                <button class="arrival-reg" title="Track vehicle" data-reg="${a.vehicleId || ''}">${a.vehicleId || '—'}</button>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-        <div style="font-size:.97em;color:#bbb;text-align:right;">Auto-refreshes every 20s &bull; <a href="#" id="refreshNow" style="color:#2979ff;text-decoration:underline;">Refresh now</a></div>
+        const div = document.createElement("div");
+        div.classList.add("arrival");
+        div.innerHTML = `
+            <div class="line-name">${arrival.lineName} → ${arrival.destinationName}</div>
+            <div>${arrival.stationName}</div>
+            <div>Expected: ${dueText}</div>
+            <div>Mode: ${arrival.modeName}</div>
         `;
-        document.getElementById('refreshNow').onclick = e => { e.preventDefault(); fetchAndRenderArrivals(stopId, stopName, platform); };
+        resultsBox.appendChild(div);
+    });
+}
+</script>
 
-        // Add reg click handlers
-        document.querySelectorAll('.arrival-reg').forEach(btn => {
-          btn.onclick = e => {
-            const reg = btn.getAttribute('data-reg');
-            if (reg && reg !== '—') showVehicle(reg);
-          };
-        });
-
-        vehicleDiv.innerHTML = '';
-      } catch (e) {
-        detailsDiv.innerHTML = `<div class="no-results">Failed to load arrivals for this stop.</div>`;
-      }
-    }
-
-    async function showVehicle(reg) {
-      clearTimer();
-      detailsDiv.innerHTML = '';
-      vehicleDiv.innerHTML = `<div class="status-message">Loading vehicle <strong>${reg}</strong>...</div>`;
-      try {
-        const url = `https://api.tfl.gov.uk/Vehicle/${encodeURIComponent(reg)}/Arrivals?app_key=${API_KEY}`;
-        const res = await fetch(url);
-        const data = await res.json();
-        if (!Array.isArray(data) || !data.length) {
-          vehicleDiv.innerHTML = `<div class="no-results">No live data for this vehicle. It may be out of service.</div>`;
-          return;
-        }
-        // Usually only one, but if several, show the soonest
-        data.sort((a,b)=>a.timeToStation-b.timeToStation);
-        const v = data[0];
-        vehicleDiv.innerHTML = `
-          <div class="vehicle-info">
-            <div style="font-size:1.13em;margin-bottom:0.6em;"><strong>Vehicle ${reg}</strong></div>
-            <p><strong>Line:</strong> ${v.lineName}</p>
-            <p><strong>Current Stop:</strong> ${v.stationName || 'Unknown'} ${v.platformName ? `[${v.platformName}]` : ''}</p>
-            <p><strong>Destination:</strong> ${v.destinationName || v.towards || ''}</p>
-            <p><strong>Due in:</strong> ${v.timeToStation !== undefined ? Math.round(v.timeToStation / 60) + ' min' : '?'}</p>
-            <button id="backToArrivalsBtn" style="margin-top:1em;background:#2979ff;color:#fff;border:none;padding:0.55em 1.3em;border-radius:7px;cursor:pointer;font-weight:600;">Back to arrivals</button>
-          </div>
-        `;
-        document.getElementById('backToArrivalsBtn').onclick = function() {
-          if (lastStopId) showArrivals(lastStopId, lastStopName, lastPlatform);
-          else {
-            detailsDiv.innerHTML = '';
-            vehicleDiv.innerHTML = '';
-          }
-        };
-      } catch (e) {
-        vehicleDiv.innerHTML = `<div class="no-results">Failed to load vehicle info. Please try again.</div>`;
-      }
-    }
-  </script>
 </body>
 </html>
