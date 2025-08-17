@@ -754,7 +754,7 @@ async function searchStops(){
       let towards = stop.additionalProperties?.find(p=>p.key==="Towards")?.value || stop.towards || "-";
 
       card.innerHTML=`<div class="stop-name">${stop.name}</div>
-                      <div class="stop-sub">Platform: ${platform} | Towards: ${towards}</div>`;
+                      <div class="stop-sub">Platform: ${platformName} | Towards: ${towards}</div>`;
       card.onclick=()=>loadArrivals(stop.id, stop.name);
       stopsDiv.appendChild(card);
     });
