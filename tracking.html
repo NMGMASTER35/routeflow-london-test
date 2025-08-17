@@ -842,8 +842,8 @@ function signOut() {
         }
 
         card.innerHTML = `
-          <div class="stop-title">${icon} ${stop.name}</div>
-          <div class="stop-subtitle">${stop.id} – ${stop.modes.join(", ")}</div>
+          <div class="stop-title">${icon} ${stop.name} - ${arrival.platformName} </div>
+          <div class="stop-subtitle">Towards - ${towards}</div>
         `;
 
         card.onclick = () => loadArrivals(stop.id, stop.name);
