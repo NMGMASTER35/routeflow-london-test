@@ -678,214 +678,227 @@ function signOut() {
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <head>
   <meta charset="UTF-8">
-  <title>RouteFlow London - Live Arrivals</title>
+  <title>RouteFlow London – Live Arrivals</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f7f9fc;
+      background: #f8f9fa;
       margin: 0;
       padding: 0;
-      color: #222;
+      color: #333;
     }
+
     header {
-      background: #003688;
+      background: #0058a3;
       color: white;
       padding: 1rem;
       text-align: center;
     }
-    #search-box {
-      margin: 1rem auto;
-      display: flex;
-      justify-content: center;
-      gap: 10px;
+
+    header h1 {
+      margin: 0;
     }
-    #searchInput {
-      padding: 10px;
-      font-size: 16px;
-      width: 300px;
+
+    .search-container {
+      margin: 1.5rem auto;
+      text-align: center;
+    }
+
+    input[type="text"] {
+      width: 70%;
+      max-width: 500px;
+      padding: 0.7rem;
+      font-size: 1rem;
       border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-    button {
-      background: #d01c1f;
-      color: white;
-      padding: 10px 16px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #a31315;
-    }
-    #container {
-      display: grid;
-      grid-template-columns: 35% 65%;
-      height: calc(100vh - 150px);
-    }
-    #stopResults, #arrivals {
-      overflow-y: auto;
-      padding: 1rem;
-    }
-    #stopResults {
-      border-right: 2px solid #ddd;
-      background: #fff;
-    }
-    .stop-group {
-      margin-bottom: 1rem;
-    }
-    .stop-header {
-      font-weight: bold;
-      background: #eee;
-      padding: 6px;
-      border-radius: 4px;
-    }
-    .stop-item {
-      padding: 6px;
-      margin: 4px 0;
-      background: #f4f6fa;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .stop-item:hover {
-      background: #e6ebf5;
-    }
-    #arrivals h2 {
-      margin-top: 0;
-    }
-    .arrival-card {
-      background: white;
-      margin: 8px 0;
-      padding: 10px;
       border-radius: 8px;
+    }
+
+    button {
+      padding: 0.7rem 1rem;
+      margin-left: 0.5rem;
+      font-size: 1rem;
+      background: #0058a3;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #00467a;
+    }
+
+    .results, .arrivals {
+      max-width: 900px;
+      margin: 1rem auto;
+      padding: 0 1rem;
+    }
+
+    .stop-card {
+      background: white;
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 1rem;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: transform 0.1s ease-in-out;
+    }
+
+    .stop-card:hover {
+      transform: scale(1.02);
+    }
+
+    .stop-title {
+      font-weight: bold;
+      margin-bottom: 0.3rem;
+    }
+
+    .stop-subtitle {
+      font-size: 0.9rem;
+      color: #555;
+    }
+
+    .arrival-card {
+      background: #f1f3f5;
+      border-radius: 8px;
+      padding: 0.6rem;
+      margin: 0.4rem 0;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-    .arrival-info {
-      flex: 1;
-    }
-    .route-number {
-      font-size: 18px;
+
+    .line {
       font-weight: bold;
-      background: #003688;
-      color: white;
-      padding: 6px 10px;
+      font-size: 1rem;
+      padding: 0.2rem 0.6rem;
       border-radius: 6px;
-      margin-right: 10px;
+      color: white;
     }
-    .eta {
-      font-size: 16px;
+
+    .bus { background: #d9534f; }
+    .train { background: #0275d8; }
+    .tram { background: #5cb85c; }
+    .boat { background: #5bc0de; }
+
+    .destination {
+      flex: 1;
+      margin-left: 1rem;
+    }
+
+    .time {
       font-weight: bold;
-      color: #d01c1f;
+      color: #333;
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>RouteFlow London - Live Arrivals</h1>
+    <h1>🚍 RouteFlow London – Live Arrivals</h1>
   </header>
 
-  <div id="search-box">
-    <input type="text" id="searchInput" placeholder="Search stop name, station, postcode, or bus reg...">
+  <div class="search-container">
+    <input id="searchBox" type="text" placeholder="Enter stop name, station, or bus reg...">
     <button onclick="searchStops()">Search</button>
   </div>
 
-  <div id="container">
-    <div id="stopResults">
-      <p>Search for a stop to see results...</p>
-    </div>
-    <div id="arrivals">
-      <h2>Live Arrivals</h2>
-      <p>Select a stop to see arrivals.</p>
-    </div>
-  </div>
+  <div class="results" id="results"></div>
+  <div class="arrivals" id="arrivals"></div>
 
   <script>
-    const apiKey = "f17d0725d1654338ab02a361fe41abad";
+    const API_KEY = "f17d0725d1654338ab02a361fe41abad";
+    let refreshInterval;
 
     async function searchStops() {
-      const query = document.getElementById("searchInput").value.trim();
+      clearInterval(refreshInterval);
+      document.getElementById("arrivals").innerHTML = "";
+      const query = document.getElementById("searchBox").value.trim();
       if (!query) return;
 
-      document.getElementById("stopResults").innerHTML = "<p>Searching...</p>";
-      document.getElementById("arrivals").innerHTML = "<h2>Live Arrivals</h2><p>Select a stop to see arrivals.</p>";
+      const res = await fetch(`https://api.tfl.gov.uk/StopPoint/Search/${query}?app_key=${API_KEY}`);
+      const data = await res.json();
 
-      try {
-        // TfL StopPoint search
-        const stopResponse = await fetch(`https://api.tfl.gov.uk/StopPoint/Search/${query}?app_key=${apiKey}`);
-        const stopData = await stopResponse.json();
+      const resultsDiv = document.getElementById("results");
+      resultsDiv.innerHTML = "";
 
-        if (!stopData.matches || stopData.matches.length === 0) {
-          document.getElementById("stopResults").innerHTML = "<p>No stops found.</p>";
-          return;
-        }
-
-        // Group stops by stop letter (bus stop indicator)
-        let grouped = {};
-        stopData.matches.forEach(stop => {
-          const stopLetter = stop.additionalProperties?.find(p => p.key === "StopLetter")?.value || "General";
-          if (!grouped[stopLetter]) grouped[stopLetter] = [];
-          grouped[stopLetter].push(stop);
-        });
-
-        let html = "";
-        for (let letter in grouped) {
-          html += `<div class="stop-group"><div class="stop-header">Stop ${letter}</div>`;
-          grouped[letter].forEach(stop => {
-            html += `<div class="stop-item" onclick="getArrivals('${stop.id}','${stop.name}')">${stop.name}</div>`;
-          });
-          html += "</div>";
-        }
-
-        document.getElementById("stopResults").innerHTML = html;
-
-      } catch (e) {
-        document.getElementById("stopResults").innerHTML = "<p>Error fetching stop data.</p>";
-        console.error(e);
+      if (data.matches.length === 0) {
+        resultsDiv.innerHTML = "<p>No stops found.</p>";
+        return;
       }
+
+      data.matches.forEach(stop => {
+        const card = document.createElement("div");
+        card.className = "stop-card";
+
+        // Choose icon + class
+        let icon = "🚍";
+        let modeClass = "bus";
+        if (stop.modes.includes("national-rail") || stop.modes.includes("tube") || stop.modes.includes("overground")) {
+          icon = "🚆"; modeClass = "train";
+        } else if (stop.modes.includes("tram")) {
+          icon = "🚋"; modeClass = "tram";
+        } else if (stop.modes.includes("river-bus")) {
+          icon = "⛴️"; modeClass = "boat";
+        }
+
+        card.innerHTML = `
+          <div class="stop-title">${icon} ${stop.name}</div>
+          <div class="stop-subtitle">${stop.id} – ${stop.modes.join(", ")}</div>
+        `;
+
+        card.onclick = () => loadArrivals(stop.id, stop.name);
+        resultsDiv.appendChild(card);
+      });
     }
 
-    async function getArrivals(stopId, stopName) {
-      document.getElementById("arrivals").innerHTML = `<h2>${stopName}</h2><p>Loading arrivals...</p>`;
+    async function loadArrivals(stopId, stopName) {
+      clearInterval(refreshInterval);
+      const arrivalsDiv = document.getElementById("arrivals");
+      arrivalsDiv.innerHTML = `<h2>Live arrivals for ${stopName}</h2><p>Loading...</p>`;
 
-      try {
-        const res = await fetch(`https://api.tfl.gov.uk/StopPoint/${stopId}/Arrivals?app_key=${apiKey}`);
-        let arrivals = await res.json();
+      async function fetchArrivals() {
+        const res = await fetch(`https://api.tfl.gov.uk/StopPoint/${stopId}/Arrivals?app_key=${API_KEY}`);
+        const data = await res.json();
 
-        if (!arrivals || arrivals.length === 0) {
-          document.getElementById("arrivals").innerHTML = `<h2>${stopName}</h2><p>No live arrivals right now.</p>`;
+        arrivalsDiv.innerHTML = `<h2>Live arrivals for ${stopName}</h2>`;
+
+        if (data.length === 0) {
+          arrivalsDiv.innerHTML += "<p>No live arrivals right now.</p>";
           return;
         }
 
-        // Sort by timeToStation
-        arrivals.sort((a, b) => a.timeToStation - b.timeToStation);
+        // Sort by time
+        data.sort((a, b) => a.timeToStation - b.timeToStation);
 
-        let html = `<h2>${stopName}</h2>`;
-        arrivals.forEach(bus => {
-          let eta = Math.round(bus.timeToStation / 60);
-          if (eta === 0) eta = "Due";
-          else eta += " min";
+        data.forEach(arrival => {
+          let icon = "🚍";
+          let modeClass = "bus";
+          if (arrival.modeName === "tube" || arrival.modeName === "national-rail" || arrival.modeName === "overground") {
+            icon = "🚆"; modeClass = "train";
+          } else if (arrival.modeName === "tram") {
+            icon = "🚋"; modeClass = "tram";
+          } else if (arrival.modeName === "river-bus") {
+            icon = "⛴️"; modeClass = "boat";
+          }
 
-          html += `
-            <div class="arrival-card">
-              <div class="route-number">${bus.lineName}</div>
-              <div class="arrival-info">
-                <div><strong>${bus.destinationName}</strong></div>
-                <div>${bus.platformName || "Platform info not available"} - Towards ${bus.towards || "N/A"}</div>
-              </div>
-              <div class="eta">${eta}</div>
+          const mins = Math.round(arrival.timeToStation / 60);
+          const timeStr = mins <= 0 ? "Due" : `${mins} min`;
+
+          const card = document.createElement("div");
+          card.className = "arrival-card";
+          card.innerHTML = `
+            <div class="line ${modeClass}">${arrival.lineName}</div>
+            <div class="destination">${icon} ${arrival.destinationName} (Towards ${arrival.towards || "N/A"})<br>
+              <small>Stop ${arrival.platformName || arrival.stopLetter || "–"}</small>
             </div>
+            <div class="time">${timeStr}</div>
           `;
+          arrivalsDiv.appendChild(card);
         });
-
-        document.getElementById("arrivals").innerHTML = html;
-
-      } catch (e) {
-        document.getElementById("arrivals").innerHTML = `<h2>${stopName}</h2><p>Error loading arrivals.</p>`;
-        console.error(e);
       }
+
+      await fetchArrivals();
+      refreshInterval = setInterval(fetchArrivals, 30000);
     }
   </script>
 </body>
