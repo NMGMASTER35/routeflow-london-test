@@ -742,6 +742,7 @@ async function searchStops(){
   stopsDiv.innerHTML="<p>Loading stops...</p>";
 
   try{
+    // Search using stationName
     const res=await fetch(`https://api.tfl.gov.uk/StopPoint/Search?query=${encodeURIComponent(query)}&modes=bus,tube,overground,tram,river-bus,national-rail,elizabeth-line&app_key=${API_KEY}`);
     const data=await res.json();
 
@@ -750,11 +751,11 @@ async function searchStops(){
     data.matches.forEach(stop=>{
       const card=document.createElement("div");
       card.className="stop-card";
-      let platform = stop.additionalProperties?.find(p=>p.key==="PlatformName")?.value || stop.platformName || "-";
-      let towards = stop.additionalProperties?.find(p=>p.key==="Towards")?.value || stop.towards || "-";
+      let platform = stop.platformName || "-"; // Stop letter
+      let towards = stop.towards || "-";
 
       card.innerHTML=`<div class="stop-name">${stop.name}</div>
-                      <div class="stop-sub">Platform: ${platformName} | Towards: ${towards}</div>`;
+                      <div class="stop-sub">Platform: ${platform} | Towards: ${towards}</div>`;
       card.onclick=()=>loadArrivals(stop.id, stop.name);
       stopsDiv.appendChild(card);
     });
