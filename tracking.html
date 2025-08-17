@@ -682,86 +682,41 @@ function signOut() {
 <style>
 body {
   font-family: Arial, sans-serif;
-  background: #f8f9fa;
-  margin: 0;
-  padding: 0;
-  color: #333;
+  background:#f0f2f5;
+  margin:0; padding:0;
+  color:#333;
 }
 header {
-  background: #0058a3;
-  color: white;
-  padding: 1rem;
-  text-align: center;
+  background:#0058a3; color:white; padding:1rem; text-align:center;
 }
-header h1 { margin:0; }
-.search-container { margin: 1.5rem auto; text-align:center; }
-input[type="text"] {
-  width: 70%;
-  max-width: 500px;
-  padding: 0.7rem;
-  font-size: 1rem;
-  border:1px solid #ccc;
-  border-radius:8px;
-}
-button {
-  padding:0.7rem 1rem;
-  margin-left:0.5rem;
-  font-size:1rem;
-  background:#0058a3;
-  color:white;
-  border:none;
-  border-radius:8px;
-  cursor:pointer;
-}
+header h1 { margin:0; font-size:1.8rem; }
+.search-container { text-align:center; margin:1.5rem auto; }
+input[type="text"] { width:70%; max-width:500px; padding:0.7rem; font-size:1rem; border:1px solid #ccc; border-radius:8px; }
+button { padding:0.7rem 1rem; margin-left:0.5rem; font-size:1rem; background:#0058a3; color:white; border:none; border-radius:8px; cursor:pointer; }
 button:hover { background:#00467a; }
 
-.results, .arrivals {
-  max-width:900px;
-  margin:1rem auto;
-  padding:0 1rem;
-}
-
-.stop-card {
-  background:white;
-  border-radius:10px;
-  padding:1rem;
-  margin-bottom:1rem;
-  box-shadow:0 2px 5px rgba(0,0,0,0.1);
-  cursor:pointer;
-  transition: transform 0.1s ease-in-out;
-}
-.stop-card:hover { transform: scale(1.02); }
-.stop-title { font-weight:bold; margin-bottom:0.3rem; }
-.stop-subtitle { font-size:0.9rem; color:#555; }
-
-.arrival-card {
-  background:#f1f3f5;
-  border-radius:8px;
-  padding:0.6rem;
-  margin:0.4rem 0;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-.line {
-  font-weight:bold;
-  font-size:1rem;
-  padding:0.2rem 0.6rem;
-  border-radius:6px;
-  color:white;
-}
+#container { display:flex; flex-wrap:wrap; justify-content:center; max-width:1000px; margin:1rem auto; gap:1rem; }
+.stop-card, .arrival-card { border-radius:10px; padding:1rem; background:white; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
+.stop-card { flex:1 1 250px; cursor:pointer; transition: transform 0.1s ease-in-out; }
+.stop-card:hover { transform:scale(1.02); }
+.stop-name { font-weight:bold; font-size:1.1rem; margin-bottom:0.3rem; }
+.stop-sub { font-size:0.9rem; color:#555; }
+.arrivals-section { flex:2 1 500px; min-width:300px; }
+.arrival-card { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem; padding:0.6rem 0.8rem; }
+.line { font-weight:bold; padding:0.2rem 0.6rem; border-radius:6px; color:white; margin-right:0.5rem; min-width:50px; text-align:center; }
 .bus { background:#d9534f; }
 .train { background:#0275d8; }
 .tram { background:#5cb85c; }
 .boat { background:#5bc0de; }
-.destination { flex:1; margin-left:1rem; }
-.time { font-weight:bold; color:#333; }
-.stop-info { margin:0.5rem 0; font-size:0.95rem; font-weight:bold; }
+.destination { flex:1; margin-left:0.8rem; }
+.time { font-weight:bold; color:#333; min-width:50px; text-align:right; }
+.vehicle-id { font-size:0.85rem; color:#555; margin-top:0.2rem; }
+@media (max-width:768px){ #container{flex-direction:column; align-items:center;} .arrivals-section{width:90%;} }
 </style>
 </head>
 <body>
 <header>
-<h1>🚍 RouteFlow London – Live Arrivals</h1>
+<h1>RouteFlow London – Live Arrivals</h1>
 </header>
 
 <div class="search-container">
@@ -769,47 +724,42 @@ button:hover { background:#00467a; }
 <button onclick="searchStops()">Search</button>
 </div>
 
-<div class="results" id="results"></div>
-<div class="arrivals" id="arrivals"></div>
+<div id="container">
+  <div id="stops"></div>
+  <div class="arrivals-section" id="arrivals"><p>Select a stop to see arrivals.</p></div>
+</div>
 
 <script>
 const API_KEY = "f17d0725d1654338ab02a361fe41abad";
 let refreshInterval;
 
-async function searchStops() {
+async function searchStops(){
   clearInterval(refreshInterval);
-  document.getElementById("arrivals").innerHTML = "";
-  const query = document.getElementById("searchBox").value.trim();
+  document.getElementById("arrivals").innerHTML="<p>Select a stop to see arrivals.</p>";
+  const query=document.getElementById("searchBox").value.trim();
   if(!query) return;
+  const stopsDiv=document.getElementById("stops");
+  stopsDiv.innerHTML="<p>Loading stops...</p>";
 
-  const res = await fetch(`https://api.tfl.gov.uk/StopPoint/Search?query=${encodeURIComponent(query)}&modes=bus,tube,overground,tram,river-bus,national-rail,elizabeth-line&app_key=${API_KEY}`);
-  const data = await res.json();
+  try{
+    const res=await fetch(`https://api.tfl.gov.uk/StopPoint/Search?query=${encodeURIComponent(query)}&modes=bus,tube,overground,tram,river-bus,national-rail,elizabeth-line&app_key=${API_KEY}`);
+    const data=await res.json();
 
-  const resultsDiv = document.getElementById("results");
-  resultsDiv.innerHTML = "";
+    if(!data.matches || data.matches.length===0){ stopsDiv.innerHTML="<p>No stops found.</p>"; return; }
+    stopsDiv.innerHTML="";
+    data.matches.forEach(stop=>{
+      const card=document.createElement("div");
+      card.className="stop-card";
+      let platform = stop.additionalProperties?.find(p=>p.key==="PlatformName")?.value || stop.platformName || "-";
+      let towards = stop.additionalProperties?.find(p=>p.key==="Towards")?.value || stop.towards || "-";
 
-  if(!data.matches || data.matches.length===0){
-    resultsDiv.innerHTML="<p>No stops found.</p>";
-    return;
-  }
+      card.innerHTML=`<div class="stop-name">${stop.name}</div>
+                      <div class="stop-sub">Platform: ${platform} | Towards: ${towards}</div>`;
+      card.onclick=()=>loadArrivals(stop.id, stop.name);
+      stopsDiv.appendChild(card);
+    });
 
-  data.matches.forEach(stop => {
-    const card = document.createElement("div");
-    card.className="stop-card";
-
-    let icon="🚍", modeClass="bus";
-    if(stop.modes.includes("national-rail") || stop.modes.includes("tube") || stop.modes.includes("overground")) { icon="🚆"; modeClass="train"; }
-    else if(stop.modes.includes("tram")) { icon="🚋"; modeClass="tram"; }
-    else if(stop.modes.includes("river-bus")) { icon="⛴️"; modeClass="boat"; }
-
-    card.innerHTML = `
-      <div class="stop-title">${icon} ${stop.name}</div>
-      <div class="stop-subtitle">${stop.modes.join(", ")} – ID: ${stop.id}</div>
-    `;
-
-    card.onclick = () => loadArrivals(stop.id, stop.name);
-    resultsDiv.appendChild(card);
-  });
+  }catch(e){ stopsDiv.innerHTML="<p>Error fetching stops.</p>"; console.error(e); }
 }
 
 async function loadArrivals(stopId, stopName){
@@ -818,20 +768,13 @@ async function loadArrivals(stopId, stopName){
   arrivalsDiv.innerHTML=`<h2>Live arrivals for ${stopName}</h2><p>Loading...</p>`;
 
   async function fetchArrivals(){
-    try {
+    try{
       const res=await fetch(`https://api.tfl.gov.uk/StopPoint/${stopId}/Arrivals?app_key=${API_KEY}`);
-      let data=await res.json();
-
+      const data=await res.json();
       arrivalsDiv.innerHTML=`<h2>Live arrivals for ${stopName}</h2>`;
+      if(data.length===0){ arrivalsDiv.innerHTML+="<p>No live arrivals right now.</p>"; return; }
 
-      if(data.length===0){
-        arrivalsDiv.innerHTML+="<p>No live arrivals right now.</p>";
-        return;
-      }
-
-      // Sort by time
       data.sort((a,b)=>a.timeToStation-b.timeToStation);
-
       data.forEach(arrival=>{
         let icon="🚍", modeClass="bus";
         if(arrival.modeName==="tube" || arrival.modeName==="national-rail" || arrival.modeName==="overground"){ icon="🚆"; modeClass="train"; }
@@ -843,19 +786,14 @@ async function loadArrivals(stopId, stopName){
 
         const card=document.createElement("div");
         card.className="arrival-card";
-        card.innerHTML=`
-          <div class="line ${modeClass}">${arrival.lineName}</div>
-          <div class="destination">${icon} ${arrival.destinationName} (Towards ${arrival.towards || "N/A"})<br>
-          <small class="stop-info">Stop Letter: ${arrival.stopLetter || arrival.platformName || "–"} | Vehicle ID: ${arrival.vehicleId || "N/A"}</small></div>
-          <div class="time">${timeStr}</div>
-        `;
+        card.innerHTML=`<div class="line ${modeClass}">${arrival.lineName}</div>
+                        <div class="destination">${icon} ${arrival.destinationName}
+                        <div class="vehicle-id">Vehicle ID: ${arrival.vehicleId || "N/A"}</div></div>
+                        <div class="time">${timeStr}</div>`;
         arrivalsDiv.appendChild(card);
       });
 
-    } catch(e){
-      arrivalsDiv.innerHTML=`<h2>Live arrivals for ${stopName}</h2><p>Error loading arrivals.</p>`;
-      console.error(e);
-    }
+    }catch(e){ arrivalsDiv.innerHTML=`<h2>Live arrivals for ${stopName}</h2><p>Error loading arrivals.</p>`; console.error(e); }
   }
 
   await fetchArrivals();
