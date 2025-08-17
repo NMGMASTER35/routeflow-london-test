@@ -530,522 +530,145 @@ function signOut() {
     </div>
   </div>
 </div>
-
-<title>RouteFlow London — Upgraded Journey Planner</title>
-<style>
-:root{
-  --brand:#e11d48; --bg:#ffffff; --card:#fff; --muted:#6b7280; --ink:#111827;
-  --border:#e6e8eb; --radius:12px;
-}
-*{box-sizing:border-box}
-body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial;background:var(--bg);color:var(--ink)}
-.container{max-width:1200px;margin:18px auto;padding:18px}
-.header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
-.logo-dot{width:12px;height:12px;border-radius:50%;background:var(--brand)}
-.grid{display:grid;grid-template-columns:380px 1fr;gap:18px}
-@media (max-width:980px){.grid{grid-template-columns:1fr}}
-.panel{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px}
-label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
-.input, select{width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:#fff;font-size:14px}
-.row{display:flex;gap:8px;align-items:center}
-.modes{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
-.chip{padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:#fff;cursor:pointer;font-size:13px}
-.chip.active{border-color:var(--brand);color:var(--brand)}
-.btn{padding:10px 12px;border-radius:10px;border:0;background:var(--brand);color:#fff;font-weight:600;cursor:pointer}
-.small{font-size:12px;color:var(--muted)}
-.results{margin-top:12px;display:flex;flex-direction:column;gap:12px;max-height:65vh;overflow:auto;padding-right:6px}
-.card{border:1px solid var(--border);border-radius:10px;padding:10px;background:#fff}
-.summary{display:flex;justify-content:space-between;align-items:center;gap:12px}
-.summary-left{display:flex;gap:10px;align-items:center}
-.summary-text{display:flex;flex-direction:column}
-.summary-title{font-weight:700}
-.mode-icons{display:flex;gap:6px;flex-wrap:wrap}
-.mode-icon{display:inline-flex;align-items:center;justify-content:center;border-radius:8px;padding:4px 6px;font-size:12px;border:1px solid var(--border)}
-.spark{width:160px;height:48px;border-radius:8px;border:1px solid var(--border);display:block}
-.loading{padding:10px;border-radius:8px;background:#fff;border:1px dashed var(--border);text-align:center;color:var(--muted)}
-.error{padding:10px;border-radius:8px;background:#fff;border:1px dashed #f8d7da;color:#842029}
-.sugg{position:relative}
-.dd{position:absolute;left:0;right:0;top:100%;z-index:90;background:#fff;border:1px solid var(--border);border-radius:10px;margin-top:6px;max-height:230px;overflow:auto}
-.dd-item{padding:8px 10px;cursor:pointer}
-.dd-item:hover{background:#f8f9fb}
-.kbd{font-family:ui-monospace,monospace;background:#f3f4f6;padding:2px 6px;border-radius:6px;border:1px solid var(--border);font-size:12px}
-
-/* modal */
-.modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.35);z-index:120}
-.modal.open{display:flex}
-.sheet{width:min(920px,98%);max-height:88vh;background:#fff;border-radius:12px;overflow:auto;border:1px solid var(--border)}
-.sheet header{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--border);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px}
-.sheet .content{padding:14px}
-.leg{border-radius:8px;padding:10px;border:1px solid var(--border);margin-bottom:10px}
-.leg h4{margin:0 0 6px 0;display:flex;gap:8px;align-items:center}
-.stops{padding-left:18px;margin:6px 0 0 0}
-.stops li{margin:2px 0}
-.footer-note{font-size:12px;color:var(--muted);margin-top:8px}
-.share-row{display:flex;gap:8px}
-</style>
+<head>
+  <meta charset="UTF-8">
+  <title>RouteFlow London</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #fff; color: #000; }
+    h1 { text-align: center; }
+    .search-container { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; }
+    input, button { padding: 10px; font-size: 16px; }
+    #results { display: grid; gap: 15px; max-width: 800px; margin: auto; }
+    .route-card { padding: 15px; border: 1px solid #ccc; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; }
+    .route-summary { display: flex; justify-content: space-between; align-items: center; }
+    .icons { display: flex; gap: 8px; }
+    .popup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; }
+    .popup-content { background: #fff; padding: 20px; border-radius: 10px; max-width: 600px; width: 100%; max-height: 80%; overflow-y: auto; }
+    .close-btn { float: right; cursor: pointer; font-size: 20px; }
+    .copy-link { margin-top: 10px; display: block; text-align: center; background: #eee; padding: 5px; border-radius: 5px; cursor: pointer; }
+    .error { color: red; text-align: center; }
+  </style>
 </head>
 <body>
+  <h1>RouteFlow London</h1>
+  <div class="search-container">
+    <input type="text" id="from" placeholder="From (stop, postcode, place)">
+    <input type="text" id="to" placeholder="To (stop, postcode, place)">
+    <button onclick="searchRoute()">Search Route</button>
+  </div>
+  <div id="results"></div>
+  <div id="error" class="error"></div>
 
-<div class="container">
-  <div class="header">
-    <div class="logo-dot" aria-hidden="true"></div>
-    <h2 style="margin:0">RouteFlow London — Journey Planner</h2>
+  <!-- Popup -->
+  <div id="popup" class="popup">
+    <div class="popup-content">
+      <span class="close-btn" onclick="closePopup()">&times;</span>
+      <h2>Journey Details</h2>
+      <div id="popup-details"></div>
+      <span class="copy-link" onclick="copyLink()">📋 Copy Link</span>
+    </div>
   </div>
 
-  <div class="grid">
-    <aside class="panel" aria-labelledby="planner-title">
-      <div id="planner-title" style="font-weight:700;margin-bottom:8px">Plan a journey</div>
+  <script>
+    const appKey = "YOUR_TFL_APP_KEY"; // Replace with your TfL API key
+    let currentJourney = null;
 
-      <div class="sugg" style="margin-bottom:10px">
-        <label for="from">From</label>
-        <input id="from" class="input" type="text" placeholder="Type origin (e.g. King's Cross)" aria-label="From">
-        <div id="fromDD" class="dd" hidden></div>
-      </div>
+    async function searchRoute() {
+      const from = document.getElementById("from").value.trim();
+      const to = document.getElementById("to").value.trim();
+      const resultsDiv = document.getElementById("results");
+      const errorDiv = document.getElementById("error");
 
-      <div class="sugg" style="margin-bottom:10px">
-        <label for="to">To</label>
-        <input id="to" class="input" type="text" placeholder="Type destination (e.g. Waterloo)" aria-label="To">
-        <div id="toDD" class="dd" hidden></div>
-      </div>
+      resultsDiv.innerHTML = "";
+      errorDiv.innerHTML = "";
 
-      <div style="display:flex;gap:8px;margin-bottom:10px">
-        <div style="flex:1">
-          <label for="date">Date</label>
-          <input id="date" class="input" type="date">
-        </div>
-        <div style="width:120px">
-          <label for="time">Time</label>
-          <input id="time" class="input" type="time">
-        </div>
-      </div>
+      if (!from || !to) {
+        errorDiv.innerHTML = "Please enter both origin and destination.";
+        return;
+      }
 
-      <div style="margin-bottom:10px">
-        <label for="timeIs">Time is</label>
-        <select id="timeIs" class="input">
-          <option value="Departing">Departing</option>
-          <option value="Arriving">Arriving</option>
-        </select>
-      </div>
+      try {
+        const url = `https://api.tfl.gov.uk/Journey/JourneyResults/${encodeURIComponent(from)}/to/${encodeURIComponent(to)}?app_key=${appKey}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("TfL API error: " + res.status);
+        const data = await res.json();
 
-      <div style="margin-bottom:12px">
-        <label>Modes</label>
-        <div id="modes" class="modes">
-          <button class="chip active" data-mode="tube">Tube</button>
-          <button class="chip active" data-mode="bus">Bus</button>
-          <button class="chip active" data-mode="overground">Overground</button>
-          <button class="chip active" data-mode="dlr">DLR</button>
-          <button class="chip active" data-mode="tram">Tram</button>
-          <button class="chip active" data-mode="river">River</button>
-          <button class="chip active" data-mode="national-rail">Rail</button>
-          <button class="chip active" data-mode="walking">Walking</button>
-        </div>
-      </div>
+        if (!data.journeys || data.journeys.length === 0) {
+          errorDiv.innerHTML = "No journeys found. Try different locations.";
+          return;
+        }
 
-      <div style="display:flex;gap:8px">
-        <button id="searchBtn" class="btn">Search routes</button>
-        <button id="shareBtn" class="chip" title="Copy share link">Copy link</button>
-      </div>
+        data.journeys.forEach((journey, i) => {
+          const card = document.createElement("div");
+          card.className = "route-card";
+          card.onclick = () => showDetails(journey);
 
-      <div id="status" class="small" style="margin-top:10px">Tip: use Place suggestions for best results.</div>
+          const duration = journey.duration + " mins";
+          const icons = journey.legs.map(l => getIcon(l.mode.id));
 
-      <div id="results" class="results" aria-live="polite" style="margin-top:12px"></div>
+          card.innerHTML = `
+            <div class="route-summary">
+              <span><b>Option ${i + 1}</b> - ${duration}</span>
+              <div class="icons">${icons.join(" ")}</div>
+            </div>
+          `;
 
-      <div class="footer-note">⚠️ Key is in client-side JS for testing only — move to a server proxy for production.</div>
-    </aside>
+          resultsDiv.appendChild(card);
+        });
 
-    <main class="panel">
-      <div style="font-weight:700">Route summaries & preview</div>
-      <div id="mainInfo" style="margin-top:10px" class="small">Search for journeys — results appear here.</div>
-      <div style="height:10px"></div>
-      <div id="spare" aria-hidden="true"></div>
-    </main>
-  </div>
-</div>
-
-<!-- modal -->
-<div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-  <div class="sheet" role="document">
-    <header>
-      <div id="modalTitle" style="font-weight:700">Journey details</div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <div id="fareText" class="small"></div>
-        <button id="closeModal" class="chip" aria-label="Close">Close</button>
-      </div>
-    </header>
-    <div class="content" id="modalContent"></div>
-  </div>
-</div>
-
-<script>
-/* ===== CONFIG (temporary testing key) ===== */
-const TFL_APP_KEY = "f17d0725d1654338ab02a361fe41abad";
-
-/* ===== LINE/ MODE COLOURS (subset) ===== */
-const LINE_COLOURS = {
-  central:"#E32017", piccadilly:"#0019A8", victoria:"#00A0E2", jubilee:"#6A7278", northern:"#000000",
-  circle:"#FFD300", district:"#00782A", bakerloo:"#B36305", metropolitan:"#9B0056", hammersmithcity:"#F3A9BB",
-  waterlooandcity:"#76D0BD", overground:"#EE7C0E", dlr:"#00A4A7", tram:"#84B51A", river:"#00ADEF",
-  "national-rail":"#1B365D", bus:"#D50A0A", walking:"#6b7280", tube:"#111827"
-};
-
-/* ===== Helpers ===== */
-const $ = s => document.querySelector(s);
-const byId = id => document.getElementById(id);
-const encode = v => encodeURIComponent(v);
-function tfl(path, params = {}) {
-  const qs = new URLSearchParams(params);
-  qs.set("app_key", TFL_APP_KEY);
-  return `https://api.tfl.gov.uk${path}?${qs.toString()}`;
-}
-function debounce(fn, ms=220){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; }
-function nowDateISO(){ return new Date().toISOString().slice(0,10); }
-function nowTimeHM(){ return new Date().toTimeString().slice(0,5); }
-function cap(s){ return s ? s.charAt(0).toUpperCase() + s.slice(1) : ""; }
-function safeJSON(obj){ try{ return JSON.parse(JSON.stringify(obj)); }catch{return obj;} }
-
-/* ===== UI Elements ===== */
-const fromEl = byId("from"), toEl = byId("to");
-const fromDD = byId("fromDD"), toDD = byId("toDD");
-const dateEl = byId("date"), timeEl = byId("time"), timeIsEl = byId("timeIs");
-const modesEl = byId("modes"), resultsEl = byId("results"), statusEl = byId("status");
-const searchBtn = byId("searchBtn"), shareBtn = byId("shareBtn");
-const modal = byId("modal"), modalContent = byId("modalContent"), modalTitle = byId("modalTitle"), closeModal = byId("closeModal"), fareText = byId("fareText");
-const mainInfo = byId("mainInfo");
-
-/* set defaults */
-dateEl.value = nowDateISO();
-timeEl.value = nowTimeHM();
-
-/* modes toggling */
-modesEl.addEventListener("click", e => {
-  const b = e.target.closest(".chip");
-  if (!b) return;
-  b.classList.toggle("active");
-});
-
-/* get selected modes as CSV for TfL query */
-function selectedModesCSV(){
-  return Array.from(modesEl.querySelectorAll(".chip.active")).map(x=>x.dataset.mode).join(",");
-}
-
-/* ===== Autocomplete using Place Search (returns Place IDs) =====
-   Using /Place/Search?input=... for flexible matching */
-async function placeSearch(q){
-  if (!q || q.length < 2) return [];
-  try{
-    const url = tfl("/Place/Search", { input: q, maxResults: 8, modes: selectedModesCSV() });
-    const res = await fetch(url);
-    if (!res.ok) return [];
-    const json = await res.json();
-    return json.matches || [];
-  }catch(err){
-    console.warn("Place search failed", err);
-    return [];
-  }
-}
-
-/* render dropdown */
-function renderDD(box, items, inputEl){
-  box.innerHTML = "";
-  if (!items || items.length === 0){ box.hidden = true; return; }
-  items.forEach(it => {
-    const div = document.createElement("div");
-    div.className = "dd-item";
-    const placeType = it.placeType ? ` • ${it.placeType}` : "";
-    div.innerHTML = `<strong>${it.name}</strong><div class="small">${it.id || ""}${placeType}</div>`;
-    div.addEventListener("click", ()=> {
-      inputEl.value = it.name;
-      inputEl.dataset.id = it.id || "";
-      box.hidden = true;
-    });
-    box.appendChild(div);
-  });
-  box.hidden = false;
-}
-
-/* keyboard support for dropdown (up/down/enter) */
-function wireDropdown(inputEl, boxEl, fetcher){
-  let idx = -1;
-  inputEl.addEventListener("keydown", (e) => {
-    if (boxEl.hidden) return;
-    const items = boxEl.querySelectorAll(".dd-item");
-    if (e.key === "ArrowDown"){ idx = Math.min(idx+1, items.length-1); items.forEach((it,i)=>it.style.background = i===idx?"#f0f0f0": ""); e.preventDefault(); }
-    if (e.key === "ArrowUp"){ idx = Math.max(idx-1, 0); items.forEach((it,i)=>it.style.background = i===idx?"#f0f0f0": ""); e.preventDefault(); }
-    if (e.key === "Enter"){ if (items[idx]) items[idx].click(); e.preventDefault(); }
-  });
-  inputEl.addEventListener("input", debounce(async () => {
-    idx = -1;
-    const list = await fetcher(inputEl.value.trim());
-    renderDD(boxEl, list, inputEl);
-  }, 180));
-}
-
-/* attach autocompletes */
-wireDropdown(fromEl, fromDD, placeSearch);
-wireDropdown(toEl, toDD, placeSearch);
-
-/* hide dropdowns when clicking away */
-window.addEventListener("click", e => {
-  if (!e.target.closest(".sugg")) { fromDD.hidden = true; toDD.hidden = true; }
-});
-
-/* ===== Build and run Journey query =====
-   Use Place IDs when available to avoid ambiguous text and 400s. */
-searchBtn.addEventListener("click", planJourney);
-[fromEl, toEl].forEach(el => el.addEventListener("keydown", e => { if (e.key === "Enter") planJourney(); }));
-
-async function planJourney(){
-  resultsEl.innerHTML = `<div class="loading">Planning journey…</div>`;
-  mainInfo.textContent = "";
-  const fromVal = fromEl.dataset.id || fromEl.value.trim();
-  const toVal = toEl.dataset.id || toEl.value.trim();
-  if (!fromVal || !toVal){ resultsEl.innerHTML = `<div class="error">Please enter both origin and destination (use suggestions where possible).</div>`; return; }
-
-  const url = tfl(`/Journey/JourneyResults/${encodeURIComponent(fromVal)}/to/${encodeURIComponent(toVal)}`, {
-    date: dateEl.value, time: timeEl.value, timeIs: timeIsEl.value, mode: selectedModesCSV(), nationalSearch: "false"
-  });
-
-  try{
-    const res = await fetch(url);
-    if (!res.ok){
-      const text = await res.text().catch(()=>"");
-      resultsEl.innerHTML = `<div class="error">TfL API returned ${res.status}${text?": "+text:""}</div>`;
-      return;
-    }
-    const data = await res.json();
-    if (!data || !data.journeys || data.journeys.length === 0){
-      resultsEl.innerHTML = `<div class="error">No journeys found for that query.</div>`;
-      return;
-    }
-    renderJourneySummaries(data.journeys);
-    mainInfo.textContent = `Found ${data.journeys.length} route option${data.journeys.length>1?"s":""}. Click one for full details.`;
-  }catch(err){
-    console.error("planJourney", err);
-    resultsEl.innerHTML = `<div class="error">Network error or TfL unreachable. See console for details.</div>`;
-  }
-}
-
-/* ===== Summaries: mini-map + icons + meta ===== */
-function renderJourneySummaries(journeys){
-  resultsEl.innerHTML = "";
-  journeys.forEach((j, idx) => {
-    const card = document.createElement("div"); card.className = "card";
-    const left = document.createElement("div"); left.className = "summary-left";
-    const sparkHTML = makeSparkSVG(j);
-    const sparkWrap = document.createElement("div"); sparkWrap.innerHTML = sparkHTML;
-    const text = document.createElement("div"); text.className = "summary-text";
-    const title = document.createElement("div"); title.className = "summary-title"; title.textContent = `Journey ${idx+1} • ${j.duration} min`;
-    const startTime = j.startDateTime ? new Date(j.startDateTime).toTimeString().slice(0,5) : "";
-    const endTime = j.arrivalDateTime ? new Date(j.arrivalDateTime).toTimeString().slice(0,5) : "";
-    const sub = document.createElement("div"); sub.className = "small"; sub.textContent = (startTime && endTime) ? `${startTime} → ${endTime} • ${j.legs.length} legs` : `${j.legs.length} legs`;
-    text.appendChild(title); text.appendChild(sub);
-    left.appendChild(sparkWrap); left.appendChild(text);
-
-    const right = document.createElement("div"); right.className = "mode-icons";
-    right.innerHTML = summarizeIconsOrdered(j);
-
-    const summary = document.createElement("div"); summary.className = "summary";
-    summary.appendChild(left); summary.appendChild(right);
-    card.appendChild(summary);
-    card.style.cursor = "pointer";
-    card.addEventListener("click", ()=> openJourneyModal(j, idx+1));
-    resultsEl.appendChild(card);
-  });
-}
-
-/* ===== Helpers to create mini map sparkline ===== */
-function gatherCoordsFromJourney(journey){
-  const pts = [];
-  journey.legs.forEach(leg => {
-    (leg.path?.lineString || []).forEach(p => pts.push([p.lon, p.lat]));
-  });
-  return pts;
-}
-function makeSparkSVG(journey, w=160, h=48, pad=6){
-  const pts = gatherCoordsFromJourney(journey);
-  if (pts.length < 2) return `<div class="spark small" style="display:flex;align-items:center;justify-content:center;color:${LINE_COLOURS.walking}">No map</div>`;
-  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
-  pts.forEach(([x,y])=>{ minX=Math.min(minX,x); maxX=Math.max(maxX,x); minY=Math.min(minY,y); maxY=Math.max(maxY,y); });
-  const dx = (maxX - minX) || 1, dy = (maxY - minY) || 1;
-  const mapX = x => pad + ((x - minX) / dx) * (w - pad*2);
-  const mapY = y => pad + (1 - (y - minY) / dy) * (h - pad*2);
-  const path = pts.map(([x,y]) => `${mapX(x).toFixed(1)},${mapY(y).toFixed(1)}`).join(" ");
-  // single polyline; could colour segments later
-  return `<svg class="spark" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg"><polyline points="${path}" fill="none" stroke="#111827" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-}
-
-/* ===== Icons & colours for legs ===== */
-function modeIdOfLeg(leg){
-  return (leg.mode?.id || leg.modeName || "walking").toString().toLowerCase();
-}
-function getLineId(leg){
-  const opt = leg.routeOptions?.[0];
-  const candidate = opt?.lineIdentifier?.id || opt?.id || opt?.name || leg.lineId || leg.routeId;
-  return candidate ? candidate.toString().toLowerCase().replace(/\s+/g,"").replace(/-/g,"") : "";
-}
-function iconForLegShort(leg){
-  const mode = modeIdOfLeg(leg);
-  const lineId = getLineId(leg);
-  let label = (mode[0] || "?").toUpperCase();
-  let color = LINE_COLOURS[mode] || LINE_COLOURS.tube || "#111";
-  if (mode === "tube" && lineId && LINE_COLOURS[lineId]){ color = LINE_COLOURS[lineId]; label = lineId.slice(0,2).toUpperCase(); }
-  if (mode === "bus" && leg.routeOptions?.[0]?.name){ label = (leg.routeOptions[0].name || "").replace(/Bus\s*/i, ""); }
-  return `<span class="mode-icon" style="border-color:${color};color:${color}">${label}</span>`;
-}
-function summarizeIconsOrdered(journey){
-  const seen = [];
-  journey.legs.forEach(leg => {
-    const mode = modeIdOfLeg(leg);
-    const line = getLineId(leg) || mode;
-    if (!seen.includes(line)) seen.push(line);
-  });
-  return seen.map(l => {
-    const col = LINE_COLOURS[l] || LINE_COLOURS[l.split(" ")[0]] || "#6b7280";
-    const label = l.length>2 ? l.slice(0,2).toUpperCase() : l.toUpperCase();
-    return `<span class="mode-icon" style="border-color:${col};color:${col}">${label}</span>`;
-  }).join("");
-}
-
-/* ===== Modal with detailed legs/stops/directions ===== */
-closeModal.addEventListener("click", ()=> modal.classList.remove("open"));
-modal.addEventListener("click", e => { if (e.target === modal) modal.classList.remove("open"); });
-
-function openJourneyModal(journey, num){
-  modalTitle.textContent = `Journey ${num} • ${journey.duration} min`;
-  fareText.textContent = journey.fare?.displayCost ? `Fare: ${journey.fare.displayCost}` : "";
-  modalContent.innerHTML = "";
-
-  // overall summary
-  const overview = document.createElement("div");
-  overview.className = "small";
-  const start = journey.startDateTime ? new Date(journey.startDateTime).toTimeString().slice(0,5) : "";
-  const end = journey.arrivalDateTime ? new Date(journey.arrivalDateTime).toTimeString().slice(0,5) : "";
-  overview.textContent = (start && end) ? `${start} → ${end} • ${journey.legs.length} legs` : `${journey.legs.length} legs`;
-  modalContent.appendChild(overview);
-
-  // each leg
-  journey.legs.forEach((leg, idx) => {
-    const legDiv = document.createElement("div"); legDiv.className = "leg";
-    const mode = modeIdOfLeg(leg);
-    const lineId = getLineId(leg);
-    const colour = LINE_COLOURS[lineId] || LINE_COLOURS[mode] || LINE_COLOURS.tube;
-    const lineName = leg.routeOptions?.[0]?.lineIdentifier?.name || leg.routeOptions?.[0]?.name || leg.lineName || "";
-
-    // title (icon + label)
-    const h4 = document.createElement("h4");
-    h4.innerHTML = `${iconForLegShort(leg)} <span style="font-weight:700">${cap(mode)}${lineName ? ' — '+lineName : ''}</span>`;
-    legDiv.appendChild(h4);
-
-    // times & points
-    const depTime = leg.departureTime ? new Date(leg.departureTime).toTimeString().slice(0,5) : "";
-    const arrTime = leg.arrivalTime ? new Date(leg.arrivalTime).toTimeString().slice(0,5) : "";
-    const depName = leg.departurePoint?.commonName || leg.departurePoint?.name || "";
-    const arrName = leg.arrivalPoint?.commonName || leg.arrivalPoint?.name || "";
-    const meta = document.createElement("div");
-    meta.className = "small";
-    meta.textContent = `${depTime}${depName ? ' • '+depName : ''} → ${arrTime}${arrName ? ' • '+arrName : ''}`;
-    legDiv.appendChild(meta);
-
-    // instruction
-    if (leg.instruction?.summary){
-      const p = document.createElement("div");
-      p.style.marginTop = "6px";
-      p.textContent = leg.instruction.summary;
-      legDiv.appendChild(p);
+      } catch (err) {
+        errorDiv.innerHTML = "Error: " + err.message;
+      }
     }
 
-    // stops list (leg.path.stopPoints or leg.stopPoints)
-    const stops = (leg.path?.stopPoints || leg.stopPoints || []);
-    if (stops && stops.length){
-      const sHead = document.createElement("div"); sHead.className = "small"; sHead.style.marginTop = "8px";
-      sHead.textContent = `Stops (${stops.length}):`;
-      legDiv.appendChild(sHead);
-      const ul = document.createElement("ul"); ul.className = "stops";
-      stops.forEach(sp => {
-        const li = document.createElement("li");
-        li.textContent = sp.name || sp.commonName || sp.id || "";
-        ul.appendChild(li);
+    function getIcon(mode) {
+      const icons = {
+        bus: "🚌",
+        tube: "🚇",
+        dlr: "🚊",
+        overground: "🚆",
+        tflrail: "🚆",
+        walking: "🚶",
+        coach: "🚌",
+        nationalrail: "🚆",
+        riverbus: "⛴️",
+        tram: "🚋"
+      };
+      return icons[mode] || "➡️";
+    }
+
+    function showDetails(journey) {
+      currentJourney = journey;
+      const detailsDiv = document.getElementById("popup-details");
+      detailsDiv.innerHTML = "";
+
+      journey.legs.forEach((leg, i) => {
+        const step = document.createElement("div");
+        step.style.marginBottom = "10px";
+        step.innerHTML = `
+          <b>Step ${i + 1}:</b> ${getIcon(leg.mode.id)} ${leg.instruction.summary}<br>
+          From: ${leg.departurePoint.commonName} <br>
+          To: ${leg.arrivalPoint.commonName} <br>
+          Duration: ${leg.duration} mins
+        `;
+        detailsDiv.appendChild(step);
       });
-      legDiv.appendChild(ul);
-    } else if (mode === "walking" && leg.instruction?.steps?.length){
-      const sHead = document.createElement("div"); sHead.className = "small"; sHead.style.marginTop = "8px";
-      sHead.textContent = "Walking directions:";
-      legDiv.appendChild(sHead);
-      const ul = document.createElement("ul"); ul.className = "stops";
-      (leg.instruction.steps || []).forEach(st => {
-        const li = document.createElement("li");
-        li.textContent = st.description || st.summary || "";
-        ul.appendChild(li);
-      });
-      legDiv.appendChild(ul);
+
+      document.getElementById("popup").style.display = "flex";
     }
 
-    // disruptions
-    const disruptions = Array.isArray(leg.disruption) ? leg.disruption : (leg.disruption ? [leg.disruption] : []);
-    disruptions.forEach(d => {
-      const alert = document.createElement("div");
-      alert.className = "small";
-      alert.style.marginTop = "6px";
-      alert.style.color = "#b45309";
-      alert.textContent = `⚠ ${d.description || d.category || 'Disruption'}`;
-      legDiv.appendChild(alert);
-    });
-
-    // show vehicle/line details (bus number if present)
-    if (leg.routeOptions && leg.routeOptions.length){
-      const r = leg.routeOptions[0];
-      const details = document.createElement("div");
-      details.className = "small";
-      details.style.marginTop = "6px";
-      const routeName = r.name || r.lineIdentifier?.name || r.id || "";
-      const direction = r.direction || "";
-      details.textContent = `Service: ${routeName}${direction ? ' • ' + direction : ''}`;
-      legDiv.appendChild(details);
+    function closePopup() {
+      document.getElementById("popup").style.display = "none";
     }
 
-    modalContent.appendChild(legDiv);
-  });
-
-  // overall fare if any
-  if (journey.fare?.displayCost || Number.isFinite(journey.fare?.totalCost)){
-    const f = document.createElement("div"); f.className = "small"; f.style.marginTop = "8px";
-    f.textContent = "Estimated fare: " + (journey.fare.displayCost || (journey.fare.totalCost/100).toFixed(2) + " GBP");
-    modalContent.appendChild(f);
-  }
-
-  modal.classList.add("open");
-}
-
-/* ===== Share link (capture current query) ===== */
-shareBtn.addEventListener("click", ()=>{
-  const params = new URLSearchParams({
-    from: fromEl.value || "", fromId: fromEl.dataset.id || "",
-    to: toEl.value || "", toId: toEl.dataset.id || "",
-    date: dateEl.value, time: timeEl.value, timeIs: timeIsEl.value, modes: selectedModesCSV()
-  });
-  const url = `${location.origin}${location.pathname}?${params.toString()}`;
-  navigator.clipboard?.writeText(url).then(()=> statusEl.textContent = "Share link copied to clipboard.", ()=> statusEl.textContent = "Unable to copy link.");
-});
-
-/* ===== Auto-load from URL if present ===== */
-(function preloadFromURL(){
-  const qs = new URLSearchParams(location.search);
-  if (qs.get("from")) { fromEl.value = qs.get("from"); }
-  if (qs.get("fromId")) { fromEl.dataset.id = qs.get("fromId"); }
-  if (qs.get("to")) { toEl.value = qs.get("to"); }
-  if (qs.get("toId")) { toEl.dataset.id = qs.get("toId"); }
-  if (qs.get("date")) dateEl.value = qs.get("date");
-  if (qs.get("time")) timeEl.value = qs.get("time");
-  if (qs.get("timeIs")) timeIsEl.value = qs.get("timeIs");
-  if (qs.get("modes")){
-    const want = new Set(qs.get("modes").split(",").map(s=>s.trim()));
-    modesEl.querySelectorAll(".chip").forEach(ch => ch.classList.toggle("active", want.has(ch.dataset.mode)));
-  }
-  if ((fromEl.dataset.id || fromEl.value) && (toEl.dataset.id || toEl.value)){
-    planJourney();
-  }
-})();
-
-</script>
+    function copyLink() {
+      if (!currentJourney) return;
+      const from = document.getElementById("from").value.trim();
+      const to = document.getElementById("to").value.trim();
+      const link = `https://tfl.gov.uk/plan-a-journey/results?InputFrom=${encodeURIComponent(from)}&InputTo=${encodeURIComponent(to)}`;
+      navigator.clipboard.writeText(link);
+      alert("Journey link copied!");
+    }
+  </script>
 </body>
 </html>
