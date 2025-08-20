@@ -1,13 +1,11 @@
-<body>
 <header class="navbar">
   <div class="navbar__container">
-    <a href="index.html" class="navbar__logo" aria-label="RouteFlow London Home">
-      <img src="images/Routeflow London permanent logo.png" alt="RouteFlow London Logo" />
+    <a href="index.html" class="navbar__logo">
+      <img src="images/Routeflow London permanent logo.png" alt="RouteFlow London Logo">
       <strong>RouteFlow London</strong>
     </a>
 
-    <!-- Desktop Nav Links -->
-    <nav class="navbar__links" id="navbarLinks">
+    <nav class="navbar__links">
       <a href="index.html">Home</a>
       <a href="dashboard.html">Dashboard</a>
       <a href="tracking.html">Arrival Times</a>
@@ -20,30 +18,25 @@
     </nav>
 
     <div class="navbar__controls">
-      <button class="hamburger" id="hamburgerBtn" aria-label="Open mobile menu" aria-expanded="false">
+      <button class="hamburger" id="hamburgerBtn">
         <i class="fa-solid fa-bars"></i>
       </button>
 
       <div class="account-menu" id="accountMenu">
-        <button aria-label="Account" id="profileIcon" type="button" aria-expanded="false">
-          <i class="fa-regular fa-user"></i>
-        </button>
-        <div class="account-dropdown" id="dropdownContent">
+        <button id="profileIcon"><i class="fa-regular fa-user"></i></button>
+        <div class="account-dropdown">
           <a href="profile.html">Profile</a>
           <a href="settings.html">Settings</a>
-          <button type="button" id="loginBtn">Login</button>
-          <button type="button" id="signupBtn">Sign Up</button>
-          <button type="button" id="signOutBtn" style="display:none;">Sign Out</button>
+          <button id="loginBtn">Login</button>
+          <button id="signupBtn">Sign Up</button>
+          <button id="signOutBtn" style="display:none;">Sign Out</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Mobile Drawer -->
-  <nav class="mobile-drawer" id="mobileDrawer" aria-label="Mobile Navigation">
-    <button class="close-drawer" id="closeDrawerBtn" aria-label="Close menu">
-      <i class="fa-solid fa-times"></i>
-    </button>
+  <nav class="mobile-drawer" id="mobileDrawer">
+    <button class="close-drawer" id="closeDrawerBtn"><i class="fa-solid fa-times"></i></button>
     <a href="index.html">Home</a>
     <a href="dashboard.html">Dashboard</a>
     <a href="tracking.html">Arrival Times</a>
@@ -56,173 +49,10 @@
     <hr>
     <a href="profile.html">Profile</a>
     <a href="settings.html">Settings</a>
-    <button type="button" id="mobileLoginBtn">Login</button>
-    <button type="button" id="mobileSignupBtn">Sign Up</button>
-    <button type="button" id="mobileSignOutBtn" style="display:none;">Sign Out</button>
+    <button id="mobileLoginBtn">Login</button>
+    <button id="mobileSignupBtn">Sign Up</button>
+    <button id="mobileSignOutBtn" style="display:none;">Sign Out</button>
   </nav>
+
   <div class="drawer-backdrop" id="drawerBackdrop"></div>
-
-  <!-- Auth Modal -->
-  <div id="authModal" class="modal" aria-modal="true" role="dialog">
-    <div class="modal-content">
-      <span class="close" id="closeModal" title="Close">&times;</span>
-
-      <!-- Login Form -->
-      <div id="loginFormContainer">
-        <h2>Login</h2>
-        <form id="loginForm" autocomplete="off">
-          <input type="email" id="loginEmail" placeholder="Email" required autocomplete="username">
-          <input type="password" id="loginPassword" placeholder="Password" required autocomplete="current-password">
-          <button type="submit">Login</button>
-          <button type="button" id="loginGoogleBtn" class="google-btn">Sign in with Google</button>
-          <p><a href="#" class="reset-password" id="showReset">Forgot Password?</a></p>
-          <div class="error-message" id="loginError"></div>
-        </form>
-        <p>Don't have an account? <a href="#" id="showSignup">Sign up</a></p>
-      </div>
-
-      <!-- Signup Form -->
-      <div id="signupFormContainer" style="display:none;">
-        <h2>Sign Up</h2>
-        <form id="signupForm" autocomplete="off">
-          <input type="email" id="signupEmail" placeholder="Email" required autocomplete="username">
-          <input type="password" id="signupPassword" placeholder="Password" required autocomplete="new-password">
-          <button type="submit">Sign Up</button>
-          <button type="button" id="signupGoogleBtn" class="google-btn">Sign Up with Google</button>
-          <div class="error-message" id="signupError"></div>
-        </form>
-        <p>Already have an account? <a href="#" id="showLogin">Login</a></p>
-      </div>
-
-      <!-- Reset Password Form -->
-      <div id="resetFormContainer" style="display:none;">
-        <h2>Reset Password</h2>
-        <form id="resetForm" autocomplete="off">
-          <input type="email" id="resetEmail" placeholder="Enter your email" required autocomplete="username">
-          <button type="submit">Send Reset Link</button>
-          <div class="error-message" id="resetError"></div>
-        </form>
-        <p>Remembered? <a href="#" id="showLoginFromReset">Back to Login</a></p>
-      </div>
-    </div>
-  </div>
 </header>
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-<!-- Include Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-
-<script>
-// ================== FIREBASE CONFIG ==================
-const firebaseConfig = {
-  apiKey: "AIzaSyDuedLuagA4IXc9ZMG9wvoak-sRrhtFZfo",
-  authDomain: "routeflow-london.firebaseapp.com",
-  projectId: "routeflow-london",
-  storageBucket: "routeflow-london.firebasestorage.app",
-  messagingSenderId: "368346241440",
-  appId: "1:368346241440:web:7cc87d551420459251ecc5"
-};
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-
-// ================== NAV + MODAL LOGIC ==================
-const hamburger = document.getElementById('hamburgerBtn');
-const drawer = document.getElementById('mobileDrawer');
-const backdrop = document.getElementById('drawerBackdrop');
-const closeBtn = document.getElementById('closeDrawerBtn');
-
-hamburger.addEventListener('click', e => { e.stopPropagation(); drawer.classList.add('open'); backdrop.classList.add('open'); });
-closeBtn.addEventListener('click', () => { drawer.classList.remove('open'); backdrop.classList.remove('open'); });
-backdrop.addEventListener('click', () => { drawer.classList.remove('open'); backdrop.classList.remove('open'); });
-
-const accountMenu = document.getElementById('accountMenu');
-document.getElementById('profileIcon').addEventListener('click', e => { e.stopPropagation(); accountMenu.classList.toggle('open'); });
-document.addEventListener('click', e => { if(!accountMenu.contains(e.target)) accountMenu.classList.remove('open'); });
-
-// ================== MODAL ==================
-const authModal = document.getElementById('authModal');
-function openModal(mode){
-  authModal.style.display = 'block';
-  document.getElementById('loginFormContainer').style.display = mode==='login'? '':'none';
-  document.getElementById('signupFormContainer').style.display = mode==='signup'? '':'none';
-  document.getElementById('resetFormContainer').style.display = 'none';
-}
-function closeModal(){ authModal.style.display = 'none'; }
-document.getElementById('closeModal').onclick = closeModal;
-window.onclick = e => { if(e.target===authModal) closeModal(); };
-
-// Form switches
-document.getElementById('showSignup').onclick = e => { e.preventDefault(); openModal('signup'); };
-document.getElementById('showLogin').onclick = e => { e.preventDefault(); openModal('login'); };
-document.getElementById('showLoginFromReset').onclick = e => { e.preventDefault(); openModal('login'); };
-document.getElementById('showReset').onclick = e => { e.preventDefault(); document.getElementById('loginFormContainer').style.display='none'; document.getElementById('signupFormContainer').style.display='none'; document.getElementById('resetFormContainer').style.display=''; };
-
-// ================== AUTH LOGIC ==================
-// Update UI on auth state
-function updateUI(user){
-  const loginBtns = [document.getElementById('loginBtn'), document.getElementById('mobileLoginBtn')];
-  const signupBtns = [document.getElementById('signupBtn'), document.getElementById('mobileSignupBtn')];
-  const signOutBtns = [document.getElementById('signOutBtn'), document.getElementById('mobileSignOutBtn')];
-
-  if(user){
-    loginBtns.concat(signupBtns).forEach(b=>b.style.display='none');
-    signOutBtns.forEach(b=>b.style.display='block');
-  } else {
-    loginBtns.concat(signupBtns).forEach(b=>b.style.display='block');
-    signOutBtns.forEach(b=>b.style.display='none');
-  }
-}
-
-// Login with email
-document.getElementById('loginForm').onsubmit = e => {
-  e.preventDefault();
-  const email = document.getElementById('loginEmail').value;
-  const pass = document.getElementById('loginPassword').value;
-  auth.signInWithEmailAndPassword(email, pass)
-    .then(()=>{ closeModal(); })
-    .catch(err=>{ document.getElementById('loginError').textContent = err.message; });
-};
-
-// Signup with email
-document.getElementById('signupForm').onsubmit = e => {
-  e.preventDefault();
-  const email = document.getElementById('signupEmail').value;
-  const pass = document.getElementById('signupPassword').value;
-  auth.createUserWithEmailAndPassword(email, pass)
-    .then(()=>{ closeModal(); })
-    .catch(err=>{ document.getElementById('signupError').textContent = err.message; });
-};
-
-// Password reset
-document.getElementById('resetForm').onsubmit = e => {
-  e.preventDefault();
-  const email = document.getElementById('resetEmail').value;
-  auth.sendPasswordResetEmail(email)
-    .then(()=>{ closeModal(); alert('Password reset email sent!'); })
-    .catch(err=>{ document.getElementById('resetError').textContent = err.message; });
-};
-
-// Google login
-document.getElementById('loginGoogleBtn').onclick = document.getElementById('signupGoogleBtn').onclick = e => {
-  e.preventDefault();
-  const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider).then(()=>{ closeModal(); }).catch(err=>alert(err.message));
-};
-
-// Sign out
-document.querySelectorAll('#signOutBtn, #mobileSignOutBtn').forEach(btn=>{
-  btn.onclick = ()=> auth.signOut();
-});
-
-// Monitor auth state
-auth.onAuthStateChanged(user => { updateUI(user); });
-
-// Highlight active links
-const path = window.location.pathname.split('/').pop();
-document.querySelectorAll('.navbar__links a, .mobile-drawer a').forEach(link=>{
-  if(link.getAttribute('href')===path) link.classList.add('active');
-});
-</script>
-</body>

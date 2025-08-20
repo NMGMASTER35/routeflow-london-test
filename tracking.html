@@ -7,12 +7,9 @@
   <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
- <div id="navbar-container"></div>
-<script>
-  fetch('components/navbar.html')
-    .then(res => res.text())
-    .then(html => { document.getElementById('navbar-container').innerHTML = html; });
-</script>
+<body>
+  <div id="navbar-container"></div>
+  <main>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <head>
 <meta charset="utf-8" />
@@ -379,5 +376,8 @@ q.addEventListener('keydown', (e)=>{
 goBtn.addEventListener('click', ()=> runSearch());
 
 </script>
+</body>
+ </main>
+  <script src="navbar-loader.js"></script> <!-- see next -->
 </body>
 </html>
