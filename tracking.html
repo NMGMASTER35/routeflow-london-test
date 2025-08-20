@@ -794,7 +794,7 @@ function signOut() {
     </div>
     <div class="search-wrap">
       <div class="search" id="searchBox">
-        <input id="q" type="text" placeholder="Search a station name (e.g. Rye Hill Park) or paste a Stop ID…" autocomplete="off" />
+        <input id="q" type="text" placeholder="Search a station name (e.g. Liverpool Street Station) or paste a Stop ID…" autocomplete="off" />
         <button id="goBtn" disabled>Search</button>
         <div class="results" id="results"></div>
       </div>
@@ -1013,7 +1013,7 @@ function selectStop(id, name){
   if(refreshTimer) clearInterval(refreshTimer);
   refreshTimer = setInterval(()=> {
     if(currentStop) loadArrivals(currentStop.id, currentStop.name);
-  }, 5000);
+  }, 25000);
 }
 
 /* ---------- wire up ---------- */
@@ -1039,10 +1039,6 @@ q.addEventListener('keydown', (e)=>{
   }
 });
 goBtn.addEventListener('click', ()=> runSearch());
-
-/* ---------- quick demo: prefill rye hill park to prove coverage ---------- */
-// Uncomment to auto-search Rye Hill Park on load
-// window.addEventListener('load', () => { q.value="Rye Hill Park"; goBtn.disabled=false; runSearch(); });
 
 </script>
 </body>
