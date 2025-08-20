@@ -1,24 +1,155 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Journey Planning | Routeflow London</title>
   <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
-</head>
-  <body>
 
-  <header class="navbar">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+/* ====== MODERN NAVBAR ====== */
+body { margin:0; font-family:'Segoe UI', Arial, sans-serif; background:#f7f7f7; }
+
+/* Navbar */
+.navbar {
+  position: sticky;
+  top:0; z-index:1000;
+  backdrop-filter: blur(10px);
+  background: rgba(255,255,255,0.92);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  transition: all 0.3s ease;
+}
+
+.navbar__container {
+  max-width:1200px; margin:0 auto;
+  padding:0.8rem 2vw;
+  display:flex; align-items:center; justify-content:space-between; gap:1rem;
+}
+
+/* Logo */
+.navbar__logo {
+  display:flex; align-items:center; gap:0.6rem;
+  text-decoration:none; color:#c62828; font-weight:bold;
+}
+.navbar__logo img { height:38px; }
+.navbar__logo strong { font-size:1.3rem; letter-spacing:1px; }
+
+/* Desktop links */
+.navbar__links { display:flex; gap:1rem; }
+.navbar__links a {
+  position:relative;
+  padding:0.5rem 1rem;
+  border-radius:8px;
+  text-decoration:none; font-weight:500; font-size:1.05rem; color:#333;
+  transition: all 0.25s ease;
+}
+.navbar__links a::after {
+  content:''; position:absolute; width:0%; height:2px; bottom:0; left:0;
+  background: #2979ff; transition:width 0.3s;
+}
+.navbar__links a:hover::after,
+.navbar__links a.active::after { width:100%; }
+
+/* Controls */
+.navbar__controls { display:flex; align-items:center; gap:0.4rem; }
+
+/* Hamburger */
+.hamburger {
+  display:none; font-size:1.55rem; border:none; background:none; color:#c62828; cursor:pointer;
+  transition: transform 0.3s;
+}
+.hamburger.open { transform: rotate(90deg); }
+
+/* Account menu */
+.account-menu { position:relative; }
+.account-menu button {
+  border:none; background:none; font-size:1.5rem; cursor:pointer; padding:0.2rem 0.5rem; border-radius:50%;
+  transition: background 0.2s;
+}
+.account-menu button:hover { background:#f0f0f0; }
+
+.account-dropdown {
+  position:absolute; right:0; top:125%; background:#fff; border-radius:12px;
+  box-shadow:0 6px 20px rgba(0,0,0,0.1); padding:0.5rem 0; min-width:160px;
+  display:flex; flex-direction:column; opacity:0; transform:scale(0.95); pointer-events:none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.account-menu.open .account-dropdown {
+  opacity:1; transform:scale(1); pointer-events:auto;
+}
+.account-dropdown a, .account-dropdown button {
+  padding:0.75rem 1rem; border:none; background:none; text-align:left; font-size:1rem;
+  color:#333; transition: background 0.2s, color 0.2s; cursor:pointer;
+}
+.account-dropdown a:hover, .account-dropdown button:hover {
+  background:#2979ff; color:#fff;
+}
+
+/* Mobile Drawer */
+.mobile-drawer {
+  position:fixed; top:0; left:0; width:80vw; max-width:340px; height:100vh;
+  background:#fff; box-shadow:2px 0 32px rgba(0,0,0,0.35);
+  transform:translateX(-100%);
+  transition: transform 0.3s cubic-bezier(.7,.3,.3,1);
+  display:flex; flex-direction:column; padding:2rem 1.2rem; gap:1rem; z-index:1200;
+  overflow-y:auto; -webkit-overflow-scrolling: touch;
+}
+.mobile-drawer.open { transform:translateX(0); }
+.mobile-drawer a, .mobile-drawer button {
+  padding:1rem; font-size:1.1rem; text-align:left; border-radius:8px; background:none; border:none; color:#333;
+  transition: background 0.25s, color 0.25s; cursor:pointer;
+}
+.mobile-drawer a:hover, .mobile-drawer button:hover { background:#2979ff; color:#fff; }
+.close-drawer { align-self:flex-end; font-size:1.3rem; border:none; background:none; color:#c62828; cursor:pointer; }
+
+/* Drawer backdrop */
+.drawer-backdrop {
+  display:none; position:fixed; top:0; left:0; width:100vw; height:100vh;
+  background: rgba(30,30,30,0.3); z-index:1100; opacity:0; transition: opacity 0.25s;
+}
+.drawer-backdrop.open { display:block; opacity:1; }
+
+/* Responsive */
+@media(max-width:950px){ .navbar__links { display:none; } .hamburger { display:block; } }
+@media(min-width:951px){ .mobile-drawer, .drawer-backdrop { display:none !important; } }
+
+/* ====== AUTH MODAL ====== */
+.modal { display:none; position:fixed; z-index:1500; left:0; top:0; width:100%; height:100%;
+  overflow:auto; background:rgba(0,0,0,0.5); transition:opacity 0.3s ease; }
+.modal-content {
+  background:#fff; margin:5% auto; border-radius:12px; padding:2rem;
+  max-width:420px; box-shadow:0 12px 28px rgba(0,0,0,0.25);
+  animation:fadeInScale 0.3s ease forwards;
+}
+@keyframes fadeInScale { 0%{opacity:0; transform:scale(0.9);} 100%{opacity:1; transform:scale(1);} }
+.modal h2 { margin-bottom:1rem; color:#c62828; text-align:center; }
+.modal input { width:100%; padding:0.65rem 1rem; margin:0.5rem 0; border-radius:8px; border:1px solid #ccc; }
+.modal button { width:100%; padding:0.75rem; margin-top:0.75rem; border:none; border-radius:8px;
+  background: linear-gradient(90deg,#2979ff,#00c6ff); color:#fff; font-weight:600; cursor:pointer;
+  transition: all 0.25s ease;
+}
+.modal button:hover { filter:brightness(1.1); }
+.google-btn { background:#fff; border:1px solid #ccc; color:#333; display:flex; align-items:center; justify-content:center; gap:0.5rem; }
+.google-btn:hover { background:#f0f0f0; }
+
+/* Error message */
+.error-message { color:red; font-size:0.85rem; margin-top:0.5rem; text-align:center; }
+</style>
+</head>
+<body>
+
+<header class="navbar">
   <div class="navbar__container">
     <a href="index.html" class="navbar__logo" aria-label="RouteFlow London Home">
-      <img src="images/Routeflow London permanent logo.png" alt="RouteFlow London Logo" />
+      <img src="images/Routeflow London permanent logo.png" alt="RouteFlow London Logo">
       <strong>RouteFlow London</strong>
     </a>
 
-    <!-- Desktop Nav Links -->
     <nav class="navbar__links" id="navbarLinks">
       <a href="index.html">Home</a>
       <a href="dashboard.html">Dashboard</a>
@@ -32,20 +163,17 @@
     </nav>
 
     <div class="navbar__controls">
-      <button class="hamburger" id="hamburgerBtn" aria-label="Open mobile menu" aria-expanded="false">
+      <button class="hamburger" id="hamburgerBtn" aria-label="Open mobile menu">
         <i class="fa-solid fa-bars"></i>
       </button>
-
       <div class="account-menu" id="accountMenu">
-        <button aria-label="Account" id="profileIcon" type="button" aria-expanded="false">
-          <i class="fa-regular fa-user"></i>
-        </button>
+        <button aria-label="Account" id="profileIcon"><i class="fa-regular fa-user"></i></button>
         <div class="account-dropdown" id="dropdownContent">
           <a href="profile.html">Profile</a>
           <a href="settings.html">Settings</a>
-          <button type="button" id="loginBtn">Login</button>
-          <button type="button" id="signupBtn">Sign Up</button>
-          <button type="button" id="signOutBtn" style="display:none;">Sign Out</button>
+          <button id="loginBtn">Login</button>
+          <button id="signupBtn">Sign Up</button>
+          <button id="signOutBtn" style="display:none;">Sign Out</button>
         </div>
       </div>
     </div>
@@ -53,9 +181,7 @@
 
   <!-- Mobile Drawer -->
   <nav class="mobile-drawer" id="mobileDrawer" aria-label="Mobile Navigation">
-    <button class="close-drawer" id="closeDrawerBtn" aria-label="Close menu">
-      <i class="fa-solid fa-times"></i>
-    </button>
+    <button class="close-drawer" id="closeDrawerBtn"><i class="fa-solid fa-times"></i></button>
     <a href="index.html">Home</a>
     <a href="dashboard.html">Dashboard</a>
     <a href="tracking.html">Arrival Times</a>
@@ -68,9 +194,9 @@
     <hr>
     <a href="profile.html">Profile</a>
     <a href="settings.html">Settings</a>
-    <button type="button" id="mobileLoginBtn">Login</button>
-    <button type="button" id="mobileSignupBtn">Sign Up</button>
-    <button type="button" id="mobileSignOutBtn" style="display:none;">Sign Out</button>
+    <button id="mobileLoginBtn">Login</button>
+    <button id="mobileSignupBtn">Sign Up</button>
+    <button id="mobileSignOutBtn" style="display:none;">Sign Out</button>
   </nav>
   <div class="drawer-backdrop" id="drawerBackdrop"></div>
 
@@ -78,35 +204,31 @@
   <div id="authModal" class="modal" aria-modal="true" role="dialog">
     <div class="modal-content">
       <span class="close" id="closeModal" title="Close">&times;</span>
-
-      <!-- Login Form -->
       <div id="loginFormContainer">
         <h2>Login</h2>
         <form id="loginForm" autocomplete="off">
           <input type="email" id="loginEmail" placeholder="Email" required autocomplete="username">
           <input type="password" id="loginPassword" placeholder="Password" required autocomplete="current-password">
           <button type="submit">Login</button>
-          <button type="button" id="loginGoogleBtn" class="google-btn">Sign in with Google</button>
+          <button type="button" id="loginGoogleBtn" class="google-btn"><i class="fa-brands fa-google"></i> Sign in with Google</button>
           <p><a href="#" class="reset-password" id="showReset">Forgot Password?</a></p>
           <div class="error-message" id="loginError"></div>
         </form>
         <p>Don't have an account? <a href="#" id="showSignup">Sign up</a></p>
       </div>
 
-      <!-- Signup Form -->
       <div id="signupFormContainer" style="display:none;">
         <h2>Sign Up</h2>
         <form id="signupForm" autocomplete="off">
           <input type="email" id="signupEmail" placeholder="Email" required autocomplete="username">
           <input type="password" id="signupPassword" placeholder="Password" required autocomplete="new-password">
           <button type="submit">Sign Up</button>
-          <button type="button" id="signupGoogleBtn" class="google-btn">Sign Up with Google</button>
+          <button type="button" id="signupGoogleBtn" class="google-btn"><i class="fa-brands fa-google"></i> Sign Up with Google</button>
           <div class="error-message" id="signupError"></div>
         </form>
         <p>Already have an account? <a href="#" id="showLogin">Login</a></p>
       </div>
 
-      <!-- Reset Password Form -->
       <div id="resetFormContainer" style="display:none;">
         <h2>Reset Password</h2>
         <form id="resetForm" autocomplete="off">
@@ -118,16 +240,15 @@
       </div>
     </div>
   </div>
+
 </header>
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-<!-- Include Firebase SDK -->
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
 <script>
-// ================== FIREBASE CONFIG ==================
+// ================= FIREBASE CONFIG =================
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY",
   authDomain: "YOUR_AUTH_DOMAIN",
@@ -139,104 +260,88 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 
-// ================== NAV + MODAL LOGIC ==================
+// ===== NAVBAR MOBILE =====
 const hamburger = document.getElementById('hamburgerBtn');
 const drawer = document.getElementById('mobileDrawer');
 const backdrop = document.getElementById('drawerBackdrop');
 const closeBtn = document.getElementById('closeDrawerBtn');
+hamburger.addEventListener('click', e => { e.stopPropagation(); drawer.classList.toggle('open'); backdrop.classList.toggle('open'); hamburger.classList.toggle('open'); });
+closeBtn.addEventListener('click', () => { drawer.classList.remove('open'); backdrop.classList.remove('open'); hamburger.classList.remove('open'); });
+backdrop.addEventListener('click', () => { drawer.classList.remove('open'); backdrop.classList.remove('open'); hamburger.classList.remove('open'); });
+document.querySelectorAll('.mobile-drawer a').forEach(link => { link.addEventListener('click', () => { drawer.classList.remove('open'); backdrop.classList.remove('open'); hamburger.classList.remove('open'); }); });
 
-hamburger.addEventListener('click', e => { e.stopPropagation(); drawer.classList.add('open'); backdrop.classList.add('open'); });
-closeBtn.addEventListener('click', () => { drawer.classList.remove('open'); backdrop.classList.remove('open'); });
-backdrop.addEventListener('click', () => { drawer.classList.remove('open'); backdrop.classList.remove('open'); });
-
+// ===== ACCOUNT DROPDOWN =====
 const accountMenu = document.getElementById('accountMenu');
 document.getElementById('profileIcon').addEventListener('click', e => { e.stopPropagation(); accountMenu.classList.toggle('open'); });
 document.addEventListener('click', e => { if(!accountMenu.contains(e.target)) accountMenu.classList.remove('open'); });
 
-// ================== MODAL ==================
+// ===== ACTIVE LINKS =====
+const path = window.location.pathname.split('/').pop();
+document.querySelectorAll('.navbar__links a, .mobile-drawer a').forEach(link=>{ if(link.getAttribute('href')===path) link.classList.add('active'); });
+
+// ===== MODAL =====
 const authModal = document.getElementById('authModal');
-function openModal(mode){
-  authModal.style.display = 'block';
+function openModal(mode){ authModal.style.display='block';
   document.getElementById('loginFormContainer').style.display = mode==='login'? '':'none';
   document.getElementById('signupFormContainer').style.display = mode==='signup'? '':'none';
-  document.getElementById('resetFormContainer').style.display = 'none';
+  document.getElementById('resetFormContainer').style.display='none';
 }
-function closeModal(){ authModal.style.display = 'none'; }
+function closeModal(){ authModal.style.display='none'; }
 document.getElementById('closeModal').onclick = closeModal;
 window.onclick = e => { if(e.target===authModal) closeModal(); };
+document.getElementById('showSignup').onclick = e=>{ e.preventDefault(); openModal('signup'); };
+document.getElementById('showLogin').onclick = e=>{ e.preventDefault(); openModal('login'); };
+document.getElementById('showLoginFromReset').onclick = e=>{ e.preventDefault(); openModal('login'); };
+document.getElementById('showReset').onclick = e=>{ e.preventDefault(); document.getElementById('loginFormContainer').style.display='none'; document.getElementById('signupFormContainer').style.display='none'; document.getElementById('resetFormContainer').style.display=''; };
 
-// Form switches
-document.getElementById('showSignup').onclick = e => { e.preventDefault(); openModal('signup'); };
-document.getElementById('showLogin').onclick = e => { e.preventDefault(); openModal('login'); };
-document.getElementById('showLoginFromReset').onclick = e => { e.preventDefault(); openModal('login'); };
-document.getElementById('showReset').onclick = e => { e.preventDefault(); document.getElementById('loginFormContainer').style.display='none'; document.getElementById('signupFormContainer').style.display='none'; document.getElementById('resetFormContainer').style.display=''; };
-
-// ================== AUTH LOGIC ==================
-// Update UI on auth state
+// ===== FIREBASE AUTH =====
 function updateUI(user){
   const loginBtns = [document.getElementById('loginBtn'), document.getElementById('mobileLoginBtn')];
   const signupBtns = [document.getElementById('signupBtn'), document.getElementById('mobileSignupBtn')];
   const signOutBtns = [document.getElementById('signOutBtn'), document.getElementById('mobileSignOutBtn')];
-
-  if(user){
-    loginBtns.concat(signupBtns).forEach(b=>b.style.display='none');
-    signOutBtns.forEach(b=>b.style.display='block');
-  } else {
-    loginBtns.concat(signupBtns).forEach(b=>b.style.display='block');
-    signOutBtns.forEach(b=>b.style.display='none');
-  }
+  if(user){ loginBtns.concat(signupBtns).forEach(b=>b.style.display='none'); signOutBtns.forEach(b=>b.style.display='block'); }
+  else { loginBtns.concat(signupBtns).forEach(b=>b.style.display='block'); signOutBtns.forEach(b=>b.style.display='none'); }
 }
 
-// Login with email
-document.getElementById('loginForm').onsubmit = e => {
+// Email login
+document.getElementById('loginForm').onsubmit = e=>{
   e.preventDefault();
-  const email = document.getElementById('loginEmail').value;
-  const pass = document.getElementById('loginPassword').value;
-  auth.signInWithEmailAndPassword(email, pass)
+  auth.signInWithEmailAndPassword(document.getElementById('loginEmail').value, document.getElementById('loginPassword').value)
     .then(()=>{ closeModal(); })
-    .catch(err=>{ document.getElementById('loginError').textContent = err.message; });
+    .catch(err=>{ document.getElementById('loginError').textContent=err.message; });
 };
 
-// Signup with email
-document.getElementById('signupForm').onsubmit = e => {
+// Email signup
+document.getElementById('signupForm').onsubmit = e=>{
   e.preventDefault();
-  const email = document.getElementById('signupEmail').value;
-  const pass = document.getElementById('signupPassword').value;
-  auth.createUserWithEmailAndPassword(email, pass)
+  auth.createUserWithEmailAndPassword(document.getElementById('signupEmail').value, document.getElementById('signupPassword').value)
     .then(()=>{ closeModal(); })
-    .catch(err=>{ document.getElementById('signupError').textContent = err.message; });
+    .catch(err=>{ document.getElementById('signupError').textContent=err.message; });
 };
 
 // Password reset
-document.getElementById('resetForm').onsubmit = e => {
+document.getElementById('resetForm').onsubmit = e=>{
   e.preventDefault();
-  const email = document.getElementById('resetEmail').value;
-  auth.sendPasswordResetEmail(email)
+  auth.sendPasswordResetEmail(document.getElementById('resetEmail').value)
     .then(()=>{ closeModal(); alert('Password reset email sent!'); })
-    .catch(err=>{ document.getElementById('resetError').textContent = err.message; });
+    .catch(err=>{ document.getElementById('resetError').textContent=err.message; });
 };
 
 // Google login
-document.getElementById('loginGoogleBtn').onclick = document.getElementById('signupGoogleBtn').onclick = e => {
+document.getElementById('loginGoogleBtn').onclick = document.getElementById('signupGoogleBtn').onclick = e=>{
   e.preventDefault();
   const provider = new firebase.auth.GoogleAuthProvider();
   auth.signInWithPopup(provider).then(()=>{ closeModal(); }).catch(err=>alert(err.message));
 };
 
 // Sign out
-document.querySelectorAll('#signOutBtn, #mobileSignOutBtn').forEach(btn=>{
-  btn.onclick = ()=> auth.signOut();
-});
+document.querySelectorAll('#signOutBtn,#mobileSignOutBtn').forEach(btn=>{ btn.onclick=()=>auth.signOut(); });
 
 // Monitor auth state
-auth.onAuthStateChanged(user => { updateUI(user); });
-
-// Highlight active links
-const path = window.location.pathname.split('/').pop();
-document.querySelectorAll('.navbar__links a, .mobile-drawer a').forEach(link=>{
-  if(link.getAttribute('href')===path) link.classList.add('active');
-});
+auth.onAuthStateChanged(user=>{ updateUI(user); });
 </script>
+
+</body>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     </div>
   </div>
