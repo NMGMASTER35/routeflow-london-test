@@ -677,129 +677,182 @@ function signOut() {
 </script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <head>
-<meta charset="UTF-8">
-<title>RouteFlow London – Live Arrivals</title>
-<style>
-body {
-  font-family: Arial, sans-serif;
-  background:#f0f2f5;
-  margin:0; padding:0;
-  color:#333;
-}
-header {
-  background:#0058a3; color:white; padding:1rem; text-align:center;
-}
-header h1 { margin:0; font-size:1.8rem; }
-.search-container { text-align:center; margin:1.5rem auto; }
-input[type="text"] { width:70%; max-width:500px; padding:0.7rem; font-size:1rem; border:1px solid #ccc; border-radius:8px; }
-button { padding:0.7rem 1rem; margin-left:0.5rem; font-size:1rem; background:#0058a3; color:white; border:none; border-radius:8px; cursor:pointer; }
-button:hover { background:#00467a; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>London Bus Arrivals</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      background: #f9f9fb;
+      color: #222;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1rem;
+    }
 
-#container { display:flex; flex-wrap:wrap; justify-content:center; max-width:1000px; margin:1rem auto; gap:1rem; }
-.stop-card, .arrival-card { border-radius:10px; padding:1rem; background:white; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
-.stop-card { flex:1 1 250px; cursor:pointer; transition: transform 0.1s ease-in-out; }
-.stop-card:hover { transform:scale(1.02); }
-.stop-name { font-weight:bold; font-size:1.1rem; margin-bottom:0.3rem; }
-.stop-sub { font-size:0.9rem; color:#555; }
-.arrivals-section { flex:2 1 500px; min-width:300px; }
-.arrival-card { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem; padding:0.6rem 0.8rem; }
-.line { font-weight:bold; padding:0.2rem 0.6rem; border-radius:6px; color:white; margin-right:0.5rem; min-width:50px; text-align:center; }
-.bus { background:#d9534f; }
-.train { background:#0275d8; }
-.tram { background:#5cb85c; }
-.boat { background:#5bc0de; }
-.destination { flex:1; margin-left:0.8rem; }
-.time { font-weight:bold; color:#333; min-width:50px; text-align:right; }
-.vehicle-id { font-size:0.85rem; color:#555; margin-top:0.2rem; }
-@media (max-width:768px){ #container{flex-direction:column; align-items:center;} .arrivals-section{width:90%;} }
-</style>
+    h1 {
+      margin-bottom: 1rem;
+      font-weight: 600;
+      color: #c8102e;
+    }
+
+    /* Search box */
+    .search-box {
+      position: relative;
+      width: 100%;
+      max-width: 500px;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 30px;
+      border: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      font-size: 16px;
+    }
+
+    .search-results {
+      position: absolute;
+      top: 105%;
+      width: 100%;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      overflow: hidden;
+      z-index: 10;
+    }
+
+    .search-results div {
+      padding: 10px 14px;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+    }
+    .search-results div:hover {
+      background: #f2f2f2;
+    }
+
+    /* Arrivals board */
+    .arrivals-board {
+      margin-top: 2rem;
+      width: 100%;
+      max-width: 600px;
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      overflow: hidden;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .arrivals-header {
+      background: #c8102e;
+      color: #fff;
+      padding: 12px 16px;
+      font-weight: 600;
+    }
+
+    .arrival {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid #eee;
+      transition: background 0.2s;
+    }
+
+    .arrival:hover {
+      background: #f8f8f8;
+    }
+
+    .route {
+      font-weight: bold;
+      font-size: 18px;
+      color: #c8102e;
+      margin-right: 10px;
+    }
+
+    .destination {
+      flex-grow: 1;
+    }
+
+    .time {
+      font-weight: bold;
+    }
+
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(10px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+  </style>
 </head>
 <body>
-<header>
-<h1>RouteFlow London – Live Arrivals</h1>
-</header>
+  <h1>London Bus Arrivals</h1>
 
-<div class="search-container">
-<input id="searchBox" type="text" placeholder="Enter station name or bus reg...">
-<button onclick="searchStops()">Search</button>
-</div>
+  <div class="search-box">
+    <input id="searchInput" type="text" placeholder="Search for a stop...">
+    <div class="search-results" id="results"></div>
+  </div>
 
-<div id="container">
-  <div id="stops"></div>
-  <div class="arrivals-section" id="arrivals"><p>Select a stop to see arrivals.</p></div>
-</div>
+  <div id="arrivalsContainer"></div>
 
-<script>
-const API_KEY = "f17d0725d1654338ab02a361fe41abad";
-let refreshInterval;
+  <script>
+    const searchInput = document.getElementById('searchInput');
+    const resultsBox = document.getElementById('results');
+    const arrivalsContainer = document.getElementById('arrivalsContainer');
+    let refreshInterval;
 
-async function searchStops(){
-  clearInterval(refreshInterval);
-  document.getElementById("arrivals").innerHTML="<p>Select a stop to see arrivals.</p>";
-  const query=document.getElementById("searchBox").value.trim();
-  if(!query) return;
-  const stopsDiv=document.getElementById("stops");
-  stopsDiv.innerHTML="<p>Loading stops...</p>";
+    // Search stop points
+    searchInput.addEventListener('keyup', async (e) => {
+      const query = e.target.value;
+      if (query.length < 3) {
+        resultsBox.innerHTML = "";
+        return;
+      }
 
-  try{
-    // Search using stationName
-    const res=await fetch(`https://api.tfl.gov.uk/StopPoint/Search?query=${encodeURIComponent(query)}&modes=bus,tube,overground,tram,river-bus,national-rail,elizabeth-line&app_key=${API_KEY}`);
-    const data=await res.json();
+      const res = await fetch(`https://api.tfl.gov.uk/StopPoint/Search/${query}`);
+      const data = await res.json();
+      resultsBox.innerHTML = "";
 
-    if(!data.matches || data.matches.length===0){ stopsDiv.innerHTML="<p>No stops found.</p>"; return; }
-    stopsDiv.innerHTML="";
-    data.matches.forEach(stop=>{
-      const card=document.createElement("div");
-      card.className="stop-card";
-      let platform = stop.platformName || "-"; // Stop letter
-      let towards = stop.towards || "-";
-
-      card.innerHTML=`<div class="stop-name">${stop.name}</div>
-                      <div class="stop-sub">Platform: ${platform} | Towards: ${towards}</div>`;
-      card.onclick=()=>loadArrivals(stop.id, stop.name);
-      stopsDiv.appendChild(card);
+      data.matches.forEach(stop => {
+        const div = document.createElement('div');
+        div.innerHTML = `
+          <strong>${stop.name}</strong> 
+          ${stop.additionalProperties.find(p => p.key === "Towards")?.value || ""}
+          (${stop.additionalProperties.find(p => p.key === "StopLetter")?.value || ""})
+        `;
+        div.onclick = () => selectStop(stop.id, stop.name);
+        resultsBox.appendChild(div);
+      });
     });
 
-  }catch(e){ stopsDiv.innerHTML="<p>Error fetching stops.</p>"; console.error(e); }
-}
+    async function selectStop(id, name) {
+      resultsBox.innerHTML = "";
+      searchInput.value = name;
+      loadArrivals(id);
+      clearInterval(refreshInterval);
+      refreshInterval = setInterval(() => loadArrivals(id), 5000);
+    }
 
-async function loadArrivals(stopId, stopName){
-  clearInterval(refreshInterval);
-  const arrivalsDiv=document.getElementById("arrivals");
-  arrivalsDiv.innerHTML=`<h2>Live arrivals for ${stopName}</h2><p>Loading...</p>`;
+    async function loadArrivals(stopId) {
+      const res = await fetch(`https://api.tfl.gov.uk/StopPoint/${stopId}/Arrivals`);
+      const data = await res.json();
+      data.sort((a, b) => a.timeToStation - b.timeToStation);
 
-  async function fetchArrivals(){
-    try{
-      const res=await fetch(`https://api.tfl.gov.uk/StopPoint/${stopId}/Arrivals?app_key=${API_KEY}`);
-      const data=await res.json();
-      arrivalsDiv.innerHTML=`<h2>Live arrivals for ${stopName}</h2>`;
-      if(data.length===0){ arrivalsDiv.innerHTML+="<p>No live arrivals right now.</p>"; return; }
-
-      data.sort((a,b)=>a.timeToStation-b.timeToStation);
-      data.forEach(arrival=>{
-        let icon="🚍", modeClass="bus";
-        if(arrival.modeName==="tube" || arrival.modeName==="national-rail" || arrival.modeName==="overground"){ icon="🚆"; modeClass="train"; }
-        else if(arrival.modeName==="tram"){ icon="🚋"; modeClass="tram"; }
-        else if(arrival.modeName==="river-bus"){ icon="⛴️"; modeClass="boat"; }
-
-        const mins=Math.round(arrival.timeToStation/60);
-        const timeStr = mins<=0?"Due":`${mins} min`;
-
-        const card=document.createElement("div");
-        card.className="arrival-card";
-        card.innerHTML=`<div class="line ${modeClass}">${arrival.lineName}</div>
-                        <div class="destination">${icon} ${arrival.destinationName}
-                        <div class="vehicle-id">Vehicle ID: ${arrival.vehicleId || "N/A"}</div></div>
-                        <div class="time">${timeStr}</div>`;
-        arrivalsDiv.appendChild(card);
-      });
-
-    }catch(e){ arrivalsDiv.innerHTML=`<h2>Live arrivals for ${stopName}</h2><p>Error loading arrivals.</p>`; console.error(e); }
-  }
-
-  await fetchArrivals();
-  refreshInterval=setInterval(fetchArrivals,5000);
-}
-</script>
+      arrivalsContainer.innerHTML = `
+        <div class="arrivals-board">
+          <div class="arrivals-header">Live Arrivals</div>
+          ${data.map(bus => `
+            <div class="arrival">
+              <div class="route">${bus.lineName}</div>
+              <div class="destination">${bus.destinationName}</div>
+              <div class="time">${Math.round(bus.timeToStation/60)} min</div>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+  </script>
 </body>
 </html>
