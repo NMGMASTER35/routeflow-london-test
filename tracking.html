@@ -677,182 +677,373 @@ function signOut() {
 </script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>London Bus Arrivals</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      background: #f9f9fb;
-      color: #222;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 1rem;
-    }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RouteFlow London – Live Arrivals</title>
+<style>
+  :root{
+    --bg:#f7f8fb;
+    --card:#ffffff;
+    --ink:#1a1d21;
+    --muted:#6b7280;
+    --ring:#e5e7eb;
+    --accent:#c8102e;
+    --shadow:0 8px 24px rgba(16,24,40,.06);
 
-    h1 {
-      margin-bottom: 1rem;
-      font-weight: 600;
-      color: #c8102e;
-    }
+    /* Mode colours */
+    --bus:#d01c1f;
+    --tube:#003688;
+    --dlr:#00afad;
+    --overground:#ff6d00;
+    --elizabeth:#6633cc;
+    --tram:#00a650;
+    --river:#0aa7b8;
+    --national:#0b3b8c;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    display:flex; flex-direction:column; align-items:center;
+  }
+  header{
+    width:100%;
+    padding:24px 16px;
+    background:#fff;
+    border-bottom:1px solid var(--ring);
+    position:sticky; top:0; z-index:10;
+  }
+  .brand{max-width:1100px; margin:0 auto; display:flex; align-items:center; gap:12px;}
+  .brand h1{font-size:20px; font-weight:700; letter-spacing:.2px; margin:0; color:var(--accent)}
+  .brand small{color:var(--muted)}
+  /* Search */
+  .search-wrap{width:100%; max-width:900px; margin:18px auto 8px; padding:0 16px;}
+  .search{
+    position:relative; margin:auto; width:100%;
+    background:var(--card); border:1px solid var(--ring); border-radius:14px; box-shadow:var(--shadow);
+    display:flex; align-items:center; gap:10px; padding:10px 12px;
+  }
+  .search input{
+    flex:1; border:0; outline:0; font-size:16px; padding:10px 12px; background:transparent;
+  }
+  .search button{
+    border:0; background:var(--accent); color:#fff; font-weight:600; padding:10px 14px;
+    border-radius:10px; cursor:pointer;
+  }
+  .search button:disabled{opacity:.5; cursor:not-allowed}
 
-    /* Search box */
-    .search-box {
-      position: relative;
-      width: 100%;
-      max-width: 500px;
-    }
+  /* Results dropdown */
+  .results{
+    position:absolute; left:0; right:0; top:calc(100% + 8px);
+    background:var(--card); border:1px solid var(--ring); border-radius:12px; box-shadow:var(--shadow);
+    overflow:auto; max-height:420px; display:none;
+  }
+  .result{
+    padding:12px 14px; border-bottom:1px solid var(--ring); cursor:pointer; display:flex; gap:10px; align-items:center;
+  }
+  .result:last-child{border-bottom:0}
+  .result:hover{background:#f3f4f6}
+  .r-main{flex:1}
+  .r-title{font-weight:700}
+  .r-sub{font-size:12px; color:var(--muted); margin-top:2px}
+  .chip{font-size:12px; background:#eef2f7; border:1px solid var(--ring); padding:2px 6px; border-radius:999px}
 
-    .search-box input {
-      width: 100%;
-      padding: 12px 16px;
-      border-radius: 30px;
-      border: none;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      font-size: 16px;
-    }
+  /* Layout */
+  .container{width:100%; max-width:1100px; padding:12px 16px; margin-top:8px; display:grid; grid-template-columns:1fr; gap:16px;}
+  @media (min-width:900px){ .container{grid-template-columns: 1fr;} }
 
-    .search-results {
-      position: absolute;
-      top: 105%;
-      width: 100%;
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      overflow: hidden;
-      z-index: 10;
-    }
-
-    .search-results div {
-      padding: 10px 14px;
-      cursor: pointer;
-      border-bottom: 1px solid #eee;
-    }
-    .search-results div:hover {
-      background: #f2f2f2;
-    }
-
-    /* Arrivals board */
-    .arrivals-board {
-      margin-top: 2rem;
-      width: 100%;
-      max-width: 600px;
-      border-radius: 12px;
-      background: #fff;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-      overflow: hidden;
-      animation: fadeIn 0.5s ease;
-    }
-
-    .arrivals-header {
-      background: #c8102e;
-      color: #fff;
-      padding: 12px 16px;
-      font-weight: 600;
-    }
-
-    .arrival {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 14px 16px;
-      border-bottom: 1px solid #eee;
-      transition: background 0.2s;
-    }
-
-    .arrival:hover {
-      background: #f8f8f8;
-    }
-
-    .route {
-      font-weight: bold;
-      font-size: 18px;
-      color: #c8102e;
-      margin-right: 10px;
-    }
-
-    .destination {
-      flex-grow: 1;
-    }
-
-    .time {
-      font-weight: bold;
-    }
-
-    @keyframes fadeIn {
-      from {opacity: 0; transform: translateY(10px);}
-      to {opacity: 1; transform: translateY(0);}
-    }
-  </style>
+  /* Arrivals board */
+  .board{background:var(--card); border:1px solid var(--ring); border-radius:14px; box-shadow:var(--shadow); overflow:hidden;}
+  .board-head{display:flex; justify-content:space-between; align-items:center; padding:14px 16px; background:#fbfbfc; border-bottom:1px solid var(--ring);}
+  .board-title{font-weight:800}
+  .meta{font-size:12px; color:var(--muted)}
+  .rows{display:flex; flex-direction:column}
+  .row{
+    display:grid; grid-template-columns: 110px 1fr 110px; gap:12px;
+    padding:12px 16px; border-bottom:1px solid var(--ring); align-items:center;
+  }
+  .row:last-child{border-bottom:0}
+  .badge{
+    justify-self:start; color:#fff; font-weight:800; letter-spacing:.2px;
+    padding:8px 10px; border-radius:10px; display:inline-flex; align-items:center; gap:8px; min-width:90px; justify-content:center;
+    text-transform:uppercase;
+  }
+  .mode-bus{background:var(--bus)}
+  .mode-tube{background:var(--tube)}
+  .mode-dlr{background:var(--dlr)}
+  .mode-overground{background:var(--overground)}
+  .mode-elizabeth-line{background:var(--elizabeth)}
+  .mode-tram{background:var(--tram)}
+  .mode-river-bus{background:var(--river)}
+  .mode-national-rail{background:var(--national)}
+  .dest{display:flex; flex-direction:column}
+  .dest b{font-weight:700}
+  .dest small{color:var(--muted)}
+  .eta{justify-self:end; font-weight:800}
+  .empty{padding:18px; color:var(--muted)}
+</style>
 </head>
 <body>
-  <h1>London Bus Arrivals</h1>
+  <header>
+    <div class="brand">
+      <h1>RouteFlow London</h1>
+      <small>Live arrivals for buses, tubes, trams & boats</small>
+    </div>
+    <div class="search-wrap">
+      <div class="search" id="searchBox">
+        <input id="q" type="text" placeholder="Search a station name (e.g. Rye Hill Park) or paste a Stop ID…" autocomplete="off" />
+        <button id="goBtn" disabled>Search</button>
+        <div class="results" id="results"></div>
+      </div>
+    </div>
+  </header>
 
-  <div class="search-box">
-    <input id="searchInput" type="text" placeholder="Search for a stop...">
-    <div class="search-results" id="results"></div>
-  </div>
+  <main class="container">
+    <section class="board" id="board" aria-live="polite">
+      <div class="board-head">
+        <div>
+          <div class="board-title" id="boardTitle">No stop selected</div>
+          <div class="meta" id="boardMeta">Type a station name and choose a stop from the list.</div>
+        </div>
+        <div class="meta" id="updated"></div>
+      </div>
+      <div class="rows" id="rows">
+        <div class="empty">Nothing to show yet.</div>
+      </div>
+    </section>
+  </main>
 
-  <div id="arrivalsContainer"></div>
+<script>
+const APP_KEY = "f17d0725d1654338ab02a361fe41abad";
+const MODES = "bus,tube,overground,dlr,tram,river-bus,national-rail,elizabeth-line";
+const q = document.getElementById('q');
+const goBtn = document.getElementById('goBtn');
+const results = document.getElementById('results');
+const rows = document.getElementById('rows');
+const boardTitle = document.getElementById('boardTitle');
+const boardMeta = document.getElementById('boardMeta');
+const updated = document.getElementById('updated');
 
-  <script>
-    const searchInput = document.getElementById('searchInput');
-    const resultsBox = document.getElementById('results');
-    const arrivalsContainer = document.getElementById('arrivalsContainer');
-    let refreshInterval;
+let refreshTimer = null;
+let currentStop = null;
 
-    // Search stop points
-    searchInput.addEventListener('keyup', async (e) => {
-      const query = e.target.value;
-      if (query.length < 3) {
-        resultsBox.innerHTML = "";
-        return;
-      }
+/* ---------- helpers ---------- */
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+function debounce(fn, ms=300){
+  let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args),ms); };
+}
+function minsOrDue(seconds){
+  const m = Math.round(seconds/60);
+  return m <= 0 ? "Due" : `${m} min`;
+}
+function modeClass(mode){
+  // Map TfL mode to CSS class
+  return `mode-${mode}`;
+}
+function modeIcon(mode){
+  switch(mode){
+    case "bus": return "🚍";
+    case "tube": return "🚇";
+    case "dlr": return "🚈";
+    case "overground": return "🟠";
+    case "elizabeth-line": return "🟣";
+    case "tram": return "🚊";
+    case "river-bus": return "⛴️";
+    case "national-rail": return "🚆";
+    default: return "🚌";
+  }
+}
+async function fetchJSON(url){
+  const res = await fetch(url);
+  if(!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
 
-      const res = await fetch(`https://api.tfl.gov.uk/StopPoint/Search/${query}`);
-      const data = await res.json();
-      resultsBox.innerHTML = "";
+/* ---------- search ---------- */
+async function search(query){
+  if(!query) { results.style.display="none"; return; }
 
-      data.matches.forEach(stop => {
-        const div = document.createElement('div');
-        div.innerHTML = `
-          <strong>${stop.name}</strong> 
-          ${stop.additionalProperties.find(p => p.key === "Towards")?.value || ""}
-          (${stop.additionalProperties.find(p => p.key === "StopLetter")?.value || ""})
-        `;
-        div.onclick = () => selectStop(stop.id, stop.name);
-        resultsBox.appendChild(div);
+  // If user pasted a StopPoint ID, bypass search
+  if(/^\d{8,}[A-Z]?$/i.test(query.trim())){
+    results.style.display="none";
+    selectStop(query.trim(), "Selected stop");
+    return;
+  }
+
+  // Use TfL StopPoint Search (path param gives better coverage)
+  const searchUrl = `https://api.tfl.gov.uk/StopPoint/Search/${encodeURIComponent(query)}?modes=${encodeURIComponent(MODES)}&maxResults=20&app_key=${APP_KEY}`;
+
+  let searchData;
+  try{
+    searchData = await fetchJSON(searchUrl);
+  }catch(e){
+    console.error(e);
+    results.innerHTML = `<div class="result"><div class="r-main"><div class="r-title">Search failed</div><div class="r-sub">Check network/API key</div></div></div>`;
+    results.style.display="block";
+    return;
+  }
+
+  const matches = (searchData && searchData.matches) ? searchData.matches.slice(0,20) : [];
+  if(matches.length === 0){
+    results.innerHTML = `<div class="result"><div class="r-main"><div class="r-title">No results</div><div class="r-sub">Try another station name</div></div></div>`;
+    results.style.display="block";
+    return;
+  }
+
+  // For each match, fetch StopPoint details to get stopLetter (platform) and towards and children
+  const detailPromises = matches.map(m => fetchJSON(`https://api.tfl.gov.uk/StopPoint/${m.id}?app_key=${APP_KEY}`).catch(()=>null));
+  const details = await Promise.all(detailPromises);
+
+  // Expand children so bus stop variants (letters) show individually
+  const entries = [];
+  details.forEach(sp => {
+    if(!sp) return;
+    if(Array.isArray(sp.children) && sp.children.length){
+      sp.children.forEach(child=>{
+        entries.push(child);
       });
-    });
+    }else{
+      entries.push(sp);
+    }
+  });
 
-    async function selectStop(id, name) {
-      resultsBox.innerHTML = "";
-      searchInput.value = name;
-      loadArrivals(id);
-      clearInterval(refreshInterval);
-      refreshInterval = setInterval(() => loadArrivals(id), 5000);
+  // Build results list
+  results.innerHTML = entries.map(sp=>{
+    const stopName = sp.commonName || sp.name || "";
+    const stopLetter = sp.stopLetter || (sp.additionalProperties||[]).find(p=>p.key==="StopLetter")?.value || "";
+    const towards = (sp.additionalProperties||[]).find(p=>p.key==="Towards")?.value || "";
+    const mode = (sp.modes && sp.modes[0]) ? sp.modes[0] : "bus";
+    const icon = modeIcon(mode);
+    const platformText = stopLetter ? `Platform: ${stopLetter}` : `Platform: –`;
+    const towardsText = towards ? `Towards: ${towards}` : `Towards: –`;
+
+    return `
+      <div class="result" data-id="${sp.id}" data-name="${stopName}">
+        <div class="chip ${modeClass(mode)}" style="color:#fff;border-color:transparent;background:inherit;display:none"></div>
+        <div class="r-main">
+          <div class="r-title">${icon} ${stopName}</div>
+          <div class="r-sub">${platformText} &nbsp;•&nbsp; ${towardsText}</div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  Array.from(results.querySelectorAll('.result')).forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const id = el.getAttribute('data-id');
+      const name = el.getAttribute('data-name');
+      results.style.display="none";
+      selectStop(id, name);
+    });
+  });
+
+  results.style.display="block";
+}
+
+/* ---------- arrivals ---------- */
+async function loadArrivals(stopId, stopName){
+  boardTitle.textContent = stopName || "Live Arrivals";
+  boardMeta.textContent = "Fetching live data…";
+  rows.innerHTML = `<div class="empty">Loading…</div>`;
+
+  try{
+    let data = await fetchJSON(`https://api.tfl.gov.uk/StopPoint/${stopId}/Arrivals?app_key=${APP_KEY}`);
+
+    // If nothing came back, try fetching children and aggregate
+    if(!Array.isArray(data) || data.length===0){
+      const info = await fetchJSON(`https://api.tfl.gov.uk/StopPoint/${stopId}?app_key=${APP_KEY}`).catch(()=>null);
+      if(info && Array.isArray(info.children) && info.children.length){
+        const childReqs = info.children.map(c => fetchJSON(`https://api.tfl.gov.uk/StopPoint/${c.id}/Arrivals?app_key=${APP_KEY}`).catch(()=>[]));
+        const childData = (await Promise.all(childReqs)).flat();
+        data = childData;
+      }
     }
 
-    async function loadArrivals(stopId) {
-      const res = await fetch(`https://api.tfl.gov.uk/StopPoint/${stopId}/Arrivals`);
-      const data = await res.json();
-      data.sort((a, b) => a.timeToStation - b.timeToStation);
+    if(!Array.isArray(data) || data.length===0){
+      rows.innerHTML = `<div class="empty">No live arrivals right now.</div>`;
+      updated.textContent = new Date().toLocaleTimeString();
+      boardMeta.textContent = "";
+      return;
+    }
 
-      arrivalsContainer.innerHTML = `
-        <div class="arrivals-board">
-          <div class="arrivals-header">Live Arrivals</div>
-          ${data.map(bus => `
-            <div class="arrival">
-              <div class="route">${bus.lineName}</div>
-              <div class="destination">${bus.destinationName}</div>
-              <div class="time">${Math.round(bus.timeToStation/60)} min</div>
-            </div>
-          `).join("")}
+    // Sort by soonest
+    data.sort((a,b)=> a.timeToStation - b.timeToStation);
+
+    rows.innerHTML = data.map(a=>{
+      const mode = (a.modeName || "bus");
+      const badgeClass = modeClass(mode);
+      const icon = modeIcon(mode);
+      const eta = minsOrDue(a.timeToStation);
+      const vehicle = a.vehicleId ? `Vehicle ID: ${a.vehicleId}` : "";
+      const line = a.lineName || a.lineId || "";
+
+      return `
+        <div class="row">
+          <div class="badge ${badgeClass}" style="background:var(--${mode.replace(/ /g,'') || 'bus'})">
+            ${icon} ${line}
+          </div>
+          <div class="dest">
+            <b>${a.destinationName || a.towards || "—"}</b>
+            <small>${vehicle}</small>
+          </div>
+          <div class="eta">${eta}</div>
         </div>
       `;
-    }
-  </script>
+    }).join("");
+
+    updated.textContent = `Updated ${new Date().toLocaleTimeString()}`;
+    boardMeta.textContent = "";
+  }catch(e){
+    console.error(e);
+    rows.innerHTML = `<div class="empty">Error loading arrivals.</div>`;
+    boardMeta.textContent = "Please try again.";
+  }
+}
+
+function selectStop(id, name){
+  currentStop = { id, name };
+  q.value = name;
+  results.style.display = "none";
+  loadArrivals(id, name);
+
+  // Auto-refresh every 5s
+  if(refreshTimer) clearInterval(refreshTimer);
+  refreshTimer = setInterval(()=> {
+    if(currentStop) loadArrivals(currentStop.id, currentStop.name);
+  }, 5000);
+}
+
+/* ---------- wire up ---------- */
+const runSearch = debounce(()=> search(q.value.trim()), 250);
+
+q.addEventListener('input', ()=>{
+  goBtn.disabled = q.value.trim().length < 2;
+  runSearch();
+});
+q.addEventListener('focus', ()=>{
+  if(results.innerHTML.trim()) results.style.display="block";
+});
+document.addEventListener('click', (e)=>{
+  if(!document.getElementById('searchBox').contains(e.target)){
+    results.style.display="none";
+  }
+});
+q.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter'){
+    e.preventDefault();
+    // If results are visible, do nothing (user can click). If not, force a search.
+    if(results.style.display!=="block") runSearch();
+  }
+});
+goBtn.addEventListener('click', ()=> runSearch());
+
+/* ---------- quick demo: prefill rye hill park to prove coverage ---------- */
+// Uncomment to auto-search Rye Hill Park on load
+// window.addEventListener('load', () => { q.value="Rye Hill Park"; goBtn.disabled=false; runSearch(); });
+
+</script>
 </body>
 </html>
