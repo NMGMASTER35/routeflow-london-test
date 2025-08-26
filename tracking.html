@@ -89,12 +89,18 @@
     background:var(--card); border:1px solid var(--ring); border-radius:12px; box-shadow:var(--shadow);
     overflow:auto; max-height:420px; display:none;
   }
-  .result{
-    padding:12px 14px; border-bottom:1px solid var(--ring); cursor:pointer; display:flex; gap:10px; align-items:center;
-  }
-  .result:last-child {
-  border-bottom: 0;
-  color: red; /* change "red" to any color you want */
+.result {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--ring);
+  cursor: pointer;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: red; /* <-- change this to your desired color */
+}
+
+.result:last-child {
+  border-bottom: 0; /* just removes the last border, keeps color from above */
 }
   .result:hover{background:#f3f4f6}
   .r-main{flex:1}
