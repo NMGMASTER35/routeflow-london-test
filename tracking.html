@@ -53,7 +53,7 @@
   body{
     margin:0;
     background:var(--bg);
-    color:var(--ink);
+    color:black(--ink);
     font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     display:flex; flex-direction:column; align-items:center;
   }
@@ -92,7 +92,10 @@
   .result{
     padding:12px 14px; border-bottom:1px solid var(--ring); cursor:pointer; display:flex; gap:10px; align-items:center;
   }
-  .result:last-child{border-bottom:0}
+  .result:last-child {
+  border-bottom: 0;
+  color: red; /* change "red" to any color you want */
+}
   .result:hover{background:#f3f4f6}
   .r-main{flex:1}
   .r-title{font-weight:700}
