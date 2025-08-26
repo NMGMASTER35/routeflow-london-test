@@ -334,7 +334,7 @@ async function loadArrivals(stopId, stopName){
       const badgeClass = modeClass(mode);
       const icon = modeIcon(mode);
       const eta = minsOrDue(a.timeToStation);
-      const vehicle = a.vehicleId ? `Vehicle Registration: ${a.vehicleId}` : "";
+      const vehicle = a.vehicleId ? `Reg: ${a.vehicleId}` : "";
       const line = a.lineName || a.lineId || "";
 
       return `
