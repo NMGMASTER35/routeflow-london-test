@@ -119,14 +119,14 @@
     padding:8px 10px; border-radius:10px; display:inline-flex; align-items:center; gap:8px; min-width:90px; justify-content:center;
     text-transform:uppercase;
   }
-  .mode-bus{background:var(--bus)}
-  .mode-tube{background:var(--tube)}
-  .mode-dlr{background:var(--dlr)}
-  .mode-overground{background:var(--overground)}
-  .mode-elizabeth-line{background:var(--elizabeth)}
-  .mode-tram{background:var(--tram)}
-  .mode-river-bus{background:var(--river)}
-  .mode-national-rail{background:var(--national)}
+  .mode-bus{background:Red(--bus)}
+  .mode-tube{background:Blue(--tube)}
+  .mode-dlr{background:lightblue(--dlr)}
+  .mode-overground{background:orange(--overground)}
+  .mode-elizabeth-line{background:purple(--elizabeth)}
+  .mode-tram{background:green(--tram)}
+  .mode-river-bus{background:darkgreen(--river)}
+  .mode-national-rail{background:black(--national)}
   .dest{display:flex; flex-direction:column}
   .dest b{font-weight:700}
   .dest small{color:var(--muted)}
@@ -325,7 +325,7 @@ async function loadArrivals(stopId, stopName){
       const badgeClass = modeClass(mode);
       const icon = modeIcon(mode);
       const eta = minsOrDue(a.timeToStation);
-      const vehicle = a.vehicleId ? `Vehicle ID: ${a.vehicleId}` : "";
+      const vehicle = a.vehicleId ? `Vehicle Registration: ${a.vehicleId}` : "";
       const line = a.lineName || a.lineId || "";
 
       return `
