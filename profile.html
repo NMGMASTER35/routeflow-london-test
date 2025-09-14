@@ -36,28 +36,64 @@ function signOut() {
 
     <!-- Profile Info -->
     <section class="profile-info">
-      <h2>Profile Summary</h2>
-      <div class="info-grid">
-        <div class="info-card">
-          <h3>Favorite Route</h3>
-          <p>Route 25</p>
-        </div>
-        <div class="info-card">
-          <h3>Saved Stops</h3>
-          <p>Oxford Circus, Aldgate</p>
-        </div>
-        <div class="info-card">
-          <h3>Followers</h3>
-          <p>54</p>
-        </div>
-        <div class="info-card">
-          <h3>Following</h3>
-          <p>22</p>
-        </div>
-      </div>
+      <h2>Your Favourites</h2>
+      <ul id="favList"></ul>
+      <h2>Your Notes</h2>
+      <ul id="noteList"></ul>
     </section>
   </main>
-
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script src="main.js"></script>
+  <script type="module">
+  import { getFavourites, removeFavourite } from './favourites.js';
+  import { getNotes, updateNote, removeNote } from './notes.js';
+
+  const favList = document.getElementById('favList');
+  const noteList = document.getElementById('noteList');
+
+  firebase.auth().onAuthStateChanged(user => {
+    if (!user) return;
+
+    function renderFavs() {
+      const favs = getFavourites(user.uid);
+      favList.innerHTML = favs.map(f => `<li data-id="${f.id}">${f.name} <button class="delete-fav">Delete</button></li>`).join('');
+    }
+
+    function renderNotes() {
+      const notes = getNotes(user.uid);
+      noteList.innerHTML = notes.map((n,i)=>`<li data-index="${i}"><strong>${n.name}</strong>: ${n.text} <button class="edit-note">Edit</button> <button class="delete-note">Delete</button></li>`).join('');
+    }
+
+    favList.addEventListener('click', e => {
+      if (e.target.classList.contains('delete-fav')) {
+        const id = e.target.parentElement.getAttribute('data-id');
+        removeFavourite(user.uid, id);
+        renderFavs();
+      }
+    });
+
+    noteList.addEventListener('click', e => {
+      if (e.target.classList.contains('delete-note')) {
+        const idx = Number(e.target.parentElement.getAttribute('data-index'));
+        removeNote(user.uid, idx);
+        renderNotes();
+      }
+      if (e.target.classList.contains('edit-note')) {
+        const idx = Number(e.target.parentElement.getAttribute('data-index'));
+        const notes = getNotes(user.uid);
+        const current = notes[idx].text;
+        const updatedText = prompt('Edit note:', current);
+        if (updatedText !== null) {
+          updateNote(user.uid, idx, updatedText);
+          renderNotes();
+        }
+      }
+    });
+
+    renderFavs();
+    renderNotes();
+  });
+  </script>
 </body>
 </html>
