@@ -1,13 +1,19 @@
-// Load navbar component
-fetch('components/navbar.html')
-  .then(res => res.text())
-  .then(html => {
-    const container = document.getElementById('navbar-container');
-    container.innerHTML = html;
+// Load navbar component when the DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  const container = document.getElementById('navbar-container');
 
-    // Re-run JS after loading navbar
+  if (container) {
+    fetch('components/navbar.html')
+      .then(res => res.text())
+      .then(html => {
+        container.innerHTML = html;
+        initNavbar();
+      });
+  } else {
+    // If there's no container, assume the navbar markup is already present
     initNavbar();
-  });
+  }
+});
 
 // Function to initialize navbar behaviors
 function initNavbar() {
@@ -38,4 +44,9 @@ function initNavbar() {
   document.querySelectorAll('.navbar__links a, .mobile-drawer a').forEach(link => {
     if(link.getAttribute('href')===path) link.classList.add('active');
   });
+}
+
+// Placeholder sign-out handler
+function signOut() {
+  alert('Signed out (demo)');
 }
