@@ -186,6 +186,20 @@ const updated = document.getElementById('updated');
 
 let refreshTimer = null;
 let currentStop = null;
+let refreshSeconds = 25;
+let distanceUnit = "metric";
+
+function loadSettings(){
+  try{
+    const s = JSON.parse(localStorage.getItem('rfSettings')) || {};
+    refreshSeconds = Number(s.refreshSeconds) || 25;
+    distanceUnit = s.distanceUnit || "metric";
+  }catch(e){
+    refreshSeconds = 25;
+    distanceUnit = "metric";
+  }
+}
+loadSettings();
 
 /* ---------- helpers ---------- */
 const sleep = ms => new Promise(r=>setTimeout(r,ms));
@@ -195,6 +209,9 @@ function debounce(fn, ms=300){
 function minsOrDue(seconds){
   const m = Math.round(seconds/60);
   return m <= 0 ? "Due" : `${m} min`;
+}
+function formatDistance(m){
+  return distanceUnit === "imperial" ? `${(m/1609.344).toFixed(2)} mi` : `${Math.round(m)} m`;
 }
 function modeClass(mode){
   // Map TfL mode to CSS class
@@ -334,8 +351,12 @@ async function loadArrivals(stopId, stopName){
       const badgeClass = modeClass(mode);
       const icon = modeIcon(mode);
       const eta = minsOrDue(a.timeToStation);
-      const vehicle = a.vehicleId ? `Reg: ${a.vehicleId}` : "";
       const line = a.lineName || a.lineId || "";
+
+      const details = [];
+      if(a.vehicleId) details.push(`Reg: ${a.vehicleId}`);
+      if(typeof a.distance === 'number') details.push(formatDistance(a.distance));
+      const detailStr = details.join(' • ');
 
       return `
         <div class="row">
@@ -344,7 +365,7 @@ async function loadArrivals(stopId, stopName){
           </div>
           <div class="dest">
             <b>${a.destinationName || a.towards || "—"}</b>
-            <small>${vehicle}</small>
+            <small>${detailStr}</small>
           </div>
           <div class="eta">${eta}</div>
         </div>
@@ -360,17 +381,20 @@ async function loadArrivals(stopId, stopName){
   }
 }
 
+function startRefreshTimer(){
+  if(refreshTimer) clearInterval(refreshTimer);
+  refreshTimer = setInterval(()=> {
+    if(currentStop) loadArrivals(currentStop.id, currentStop.name);
+  }, refreshSeconds * 1000);
+}
+
 function selectStop(id, name){
+  loadSettings();
   currentStop = { id, name };
   q.value = name;
   results.style.display = "none";
   loadArrivals(id, name);
-
-  // Auto-refresh every 5s
-  if(refreshTimer) clearInterval(refreshTimer);
-  refreshTimer = setInterval(()=> {
-    if(currentStop) loadArrivals(currentStop.id, currentStop.name);
-  }, 25000);
+  startRefreshTimer();
 }
 
 /* ---------- wire up ---------- */
