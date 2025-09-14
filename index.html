@@ -4,82 +4,115 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png">
-  <title>Routeflow London</title>
+  <title>RouteFlow London</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div id="navbar-container"></div>
-<script>
-  fetch('components/navbar.html')
-    .then(res => res.text())
-    .then(html => { document.getElementById('navbar-container').innerHTML = html; });
-</script>
+  <div id="navbar-container"></div>
+  <script>
+    fetch('components/navbar.html')
+      .then(res => res.text())
+      .then(html => { document.getElementById('navbar-container').innerHTML = html; });
+  </script>
 
-  <!-- Main Content -->
-  <section class="landing-hero">
-    <div class="hero-card">
-      <img src="images/New_Routflow_London_Logo.png" alt="RouteFlow London Logo" class="hero-logo" />
-      <h1>Welcome to RouteFlow London!</h1>
-      <p class="hero-subtitle">London Travel. Reimagined.</p>
-      <div class="hero-buttons">
-        <a class="explore" href="planner.html">Journey Planner</a>
-        <a class="learn" href="tracking.html">Arrival Times</a>
+  <main>
+    <!-- Hero Section -->
+    <section class="landing-hero">
+      <div class="hero-card">
+        <img src="images/New_Routflow_London_Logo.png" alt="RouteFlow London logo" class="hero-logo" />
+        <h1>Welcome to RouteFlow London</h1>
+        <p class="hero-subtitle">London Travel. Reimagined.</p>
+        <div class="hero-buttons">
+          <a class="explore" href="planning.html">Journey Planner</a>
+          <a class="learn" href="tracking.html">Arrival Times</a>
+        </div>
       </div>
-    </div>
-  </section>
-  <section class="newsletter">
-    <div class="newsletter-box">
-      <h2>Get updates on new features and sightings</h2>
-      <p>Sign up for our newsletter to get the latest on live tracking, rare sightings, and London bus news.</p>
-      <form id="newsletter-form">
-        <input type="email" id="email" placeholder="Enter your email" required />
-        <button type="submit">Subscribe</button>
-      </form>
-      <div class="response" id="response-message"></div>
-    </div>
-  </section>
-  <section class="imagescara">
-    <div class="carousel-container">
-      <div class="carousel-title">New London Buses</div>
-  <div class="carousel-slide">
-   <img src="https://static.wikia.nocookie.net/bus-routes-in-london/images/2/25/80403_on_SL3.webp" alt="Bus 1" data-caption="Enviro 400ev | Route SL3">
-   <img src="https://southwarknews.co.uk/wp-content/uploads/2024/07/An-image-of-the-new-ie-Tram-bus-which-will-soon-operate-on-Route-358.-Photo-from-Go-Ahead-Mark-Lyons-scaled.jpg" alt="Bus 2" data-caption="Irizar ie Tram Bus">
-    <img src="https://static.wikia.nocookie.net/bus-routes-in-london/images/4/4d/1716-LV24EXC.jpg/revision/latest?cb=20250201152244" alt="Bus 3" data-caption="Electroliner Kite">
-    <img src="https://live.staticflickr.com/65535/53653477828_b2582c362c_h.jpg" alt="Bus 4" data-caption="Volvo BZL">
-    <img src="https://live.staticflickr.com/65535/53811039010_f2d6378c2d_b.jpg" alt="Bus 5" data-caption="Volvo BZL DD">
-     <img src="https://static.wikia.nocookie.net/bus-routes-in-london/images/f/ff/321_EBD.png/revision/latest?cb=20250202221630" alt="Bus 6" data-caption="BYD BD11">
-</div>
-  </section>
-  <section class="about">
-    <h2>About RouteFlow London</h2>
-    <p>
-      RouteFlow London is a next-generation platform for exploring London's iconic bus network.
-      Track vehicles live, explore rare workings, dive into historical data, and connect with the enthusiast community.
-      Built from scratch for London's unique transit scene.
-    </p>
-  </section>
-  <section id="blog">
-    <h2>Latest Blog Posts</h2>
-    <div class="blog-preview">
-      <article class="blog-card">
-        <span class="blog-date">May 2025</span>
-        <h3>Hidden Buses of Zone 6</h3>
-        <p>A journey to London's farthest reaches, hunting for rare bus gems and snap-worthy moments.</p>
-      </article>
-      <article class="blog-card">
-        <span class="blog-date">April 2025</span>
-        <h3>Fleet Tech Upgrades</h3>
-        <p>How TfL's newest buses are greener, smarter, and more connected than ever.</p>
-      </article>
-      <article class="blog-card">
-        <span class="blog-date">March 2025</span>
-        <h3>Meet the Enthusiasts</h3>
-        <p>Spotlight on the passionate community tracking London's bus history in real time.</p>
-      </article>
-    </div>
-  </section>
+    </section>
+
+    <!-- Newsletter Section -->
+    <section class="newsletter">
+      <div class="newsletter-box">
+        <h2>Get updates on new features and sightings</h2>
+        <p>Sign up for our newsletter to get the latest on live tracking, rare sightings, and London bus news.</p>
+        <form id="newsletter-form">
+          <input type="email" id="email" placeholder="Enter your email" required />
+          <button type="submit">Subscribe</button>
+        </form>
+        <div class="response" id="response-message"></div>
+      </div>
+    </section>
+
+    <!-- Carousel Section -->
+    <section class="imagescara">
+      <div class="carousel-container">
+        <div class="carousel-title">New London Buses</div>
+        <button class="carousel-btn prev" aria-label="Previous slide">&lsaquo;</button>
+        <div class="carousel-slide">
+          <figure>
+            <img src="https://static.wikia.nocookie.net/bus-routes-in-london/images/2/25/80403_on_SL3.webp" alt="Enviro 400EV on Route SL3">
+            <figcaption>Enviro 400EV | Route SL3</figcaption>
+          </figure>
+          <figure>
+            <img src="https://southwarknews.co.uk/wp-content/uploads/2024/07/An-image-of-the-new-ie-Tram-bus-which-will-soon-operate-on-Route-358.-Photo-from-Go-Ahead-Mark-Lyons-scaled.jpg" alt="Irizar ie Tram Bus">
+            <figcaption>Irizar ie Tram Bus</figcaption>
+          </figure>
+          <figure>
+            <img src="https://static.wikia.nocookie.net/bus-routes-in-london/images/4/4d/1716-LV24EXC.jpg/revision/latest?cb=20250201152244" alt="Electroliner Kite">
+            <figcaption>Electroliner Kite</figcaption>
+          </figure>
+          <figure>
+            <img src="https://live.staticflickr.com/65535/53653477828_b2582c362c_h.jpg" alt="Volvo BZL">
+            <figcaption>Volvo BZL</figcaption>
+          </figure>
+          <figure>
+            <img src="https://live.staticflickr.com/65535/53811039010_f2d6378c2d_b.jpg" alt="Volvo BZL DD">
+            <figcaption>Volvo BZL DD</figcaption>
+          </figure>
+          <figure>
+            <img src="https://static.wikia.nocookie.net/bus-routes-in-london/images/f/ff/321_EBD.png/revision/latest?cb=20250202221630" alt="BYD BD11">
+            <figcaption>BYD BD11</figcaption>
+          </figure>
+        </div>
+        <button class="carousel-btn next" aria-label="Next slide">&rsaquo;</button>
+        <div class="carousel-dots"></div>
+      </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="about">
+      <h2>About RouteFlow London</h2>
+      <p>
+        RouteFlow London is a next-generation platform for exploring London's iconic bus network.
+        Track vehicles live, explore rare workings, dive into historical data, and connect with the enthusiast community.
+        Built from scratch for London's unique transit scene.
+      </p>
+    </section>
+
+    <!-- Blog Section -->
+    <section id="blog">
+      <h2>Latest Blog Posts</h2>
+      <div class="blog-preview">
+        <article class="blog-card">
+          <span class="blog-date">May 2025</span>
+          <h3>Hidden Buses of Zone 6</h3>
+          <p>A journey to London's farthest reaches, hunting for rare bus gems and snap-worthy moments.</p>
+        </article>
+        <article class="blog-card">
+          <span class="blog-date">April 2025</span>
+          <h3>Fleet Tech Upgrades</h3>
+          <p>How TfL's newest buses are greener, smarter, and more connected than ever.</p>
+        </article>
+        <article class="blog-card">
+          <span class="blog-date">March 2025</span>
+          <h3>Meet the Enthusiasts</h3>
+          <p>Spotlight on the passionate community tracking London's bus history in real time.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
   <footer>
     <div class="footer-links">
       <a href="about.html">About</a> |
@@ -94,8 +127,42 @@
     </div>
     <small>Made for London. Built from scratch.</small>
   </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const slide = document.querySelector('.carousel-slide');
+      const figures = slide.querySelectorAll('figure');
+      const prev = document.querySelector('.carousel-btn.prev');
+      const next = document.querySelector('.carousel-btn.next');
+      const dots = document.querySelector('.carousel-dots');
+      let index = 0;
+
+      figures.forEach((_, i) => {
+        const dot = document.createElement('span');
+        dot.className = 'dot' + (i === 0 ? ' active' : '');
+        dot.addEventListener('click', () => moveTo(i));
+        dots.appendChild(dot);
+      });
+
+      function moveTo(i) {
+        index = (i + figures.length) % figures.length;
+        slide.scrollTo({ left: figures[index].offsetLeft, behavior: 'smooth' });
+        updateDots();
+      }
+
+      function updateDots() {
+        dots.querySelectorAll('.dot').forEach((dot, i) => {
+          dot.classList.toggle('active', i === index);
+        });
+      }
+
+      prev.addEventListener('click', () => moveTo(index - 1));
+      next.addEventListener('click', () => moveTo(index + 1));
+    });
+  </script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script src="main.js"></script>
 </body>
 </html>
+
