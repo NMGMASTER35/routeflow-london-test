@@ -1,0 +1,59 @@
+<link rel="stylesheet" href="navbar.css">
+<header class="navbar">
+  <div class="navbar__container">
+    <a href="index.html" class="navbar__logo" aria-label="RouteFlow London Home">
+      <img src="images/Routeflow London permanent logo.png" alt="RouteFlow London Logo" />
+      <strong>RouteFlow London</strong>
+    </a>
+    <nav class="navbar__links" id="navbarLinks">
+      <a href="index.html">Home</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="tracking.html">Tracking</a>
+      <a href="planning.html">Planning</a>
+      <a href="routes.html">Routes</a>
+      <a href="withdrawn.html">Withdrawn</a>
+      <a href="disruptions.html">Disruptions</a>
+      <a href="fleet.html">Fleet</a>
+    </nav>
+    <div class="navbar__controls">
+      <button class="hamburger" id="hamburgerBtn" aria-label="Open mobile menu">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <div class="account-menu" id="accountMenu">
+        <button aria-label="Account" id="profileIcon" type="button">
+          <i class="fa-regular fa-user"></i>
+        </button>
+        <div class="account-dropdown" id="dropdownContent">
+          <a href="profile.html">Profile</a>
+          <a href="settings.html">Settings</a>
+          <button class="theme-toggle" onclick="toggleTheme()" type="button">Toggle Theme</button>
+          <button onclick="openModal('login')" type="button">Login</button>
+          <button onclick="openModal('signup')" type="button">Sign Up</button>
+          <button onclick="signOut()" type="button">Sign out</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Mobile nav drawer -->
+  <nav class="mobile-drawer" id="mobileDrawer" aria-label="Mobile Navigation">
+    <button class="close-drawer" id="closeDrawerBtn" aria-label="Close menu">
+      <i class="fa-solid fa-times"></i>
+    </button>
+    <a href="index.html">Home</a>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="tracking.html">Tracking</a>
+    <a href="planning.html">Planning</a>
+    <a href="routes.html">Routes</a>
+    <a href="withdrawn.html">Withdrawn</a>
+    <a href="disruptions.html">Disruptions</a>
+    <a href="fleet.html">Fleet</a>
+    <hr>
+    <a href="profile.html">Profile</a>
+    <a href="settings.html">Settings</a>
+    <button class="theme-toggle" onclick="toggleTheme()" type="button">Toggle Theme</button>
+    <button onclick="openModal('login')" type="button">Login</button>
+    <button onclick="openModal('signup')" type="button">Sign Up</button>
+    <button onclick="signOut()" type="button">Sign out</button>
+  </nav>
+  <div class="drawer-backdrop" id="drawerBackdrop"></div>
+</header>
