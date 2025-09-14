@@ -31,6 +31,19 @@
 .account-dropdown a:hover,.account-dropdown button:hover { background:#2979ff;color:#fff; }
 .account-menu.open .account-dropdown { display:flex; }
 
+.theme-toggle {
+  background:none;
+  border:none;
+  cursor:pointer;
+  padding:0.45rem 0.9rem;
+  border-radius:6px;
+}
+
+.theme-toggle:hover {
+  background:#2979ff;
+  color:#fff;
+}
+
 /* Mobile drawer */
 .mobile-drawer { display:flex; flex-direction:column; position:fixed; top:0; left:0; width:80vw; max-width:340px; height:100vh; background:#fff; padding:2rem 1rem; gap:0.5rem; transform:translateX(-100%); transition:0.3s; z-index:1200; }
 .mobile-drawer.open { transform:translateX(0); }
