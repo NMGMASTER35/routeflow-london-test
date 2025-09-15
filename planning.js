@@ -7,6 +7,8 @@ document.getElementById('journey-form').addEventListener('submit', async (e) => 
   const to = document.getElementById('to').value.trim();
   const resultsDiv = document.getElementById('results');
   const errorDiv = document.getElementById('error');
+  const mode = Array.from(document.querySelectorAll('input[name="mode"]:checked')).map(cb => cb.value);
+  const accessibility = Array.from(document.querySelectorAll('input[name="accessibility"]:checked')).map(cb => cb.value);
 
   resultsDiv.innerHTML = '';
   errorDiv.textContent = '';
@@ -17,7 +19,13 @@ document.getElementById('journey-form').addEventListener('submit', async (e) => 
   }
 
   try {
-    const url = `https://api.tfl.gov.uk/Journey/JourneyResults/${encodeURIComponent(from)}/to/${encodeURIComponent(to)}`;
+    const params = new URLSearchParams();
+    if (mode.length) params.append('mode', mode.join(','));
+    if (accessibility.length) params.append('accessibilityPreference', accessibility.join(','));
+
+    let url = `https://api.tfl.gov.uk/Journey/JourneyResults/${encodeURIComponent(from)}/to/${encodeURIComponent(to)}`;
+    if (params.toString()) url += `?${params.toString()}`;
+
     const res = await fetch(url);
     if (!res.ok) {
       if (res.status === 404) {
@@ -41,17 +49,19 @@ document.getElementById('journey-form').addEventListener('submit', async (e) => 
       header.textContent = `Option ${index + 1} – ${journey.duration} mins (${interchanges} interchange${interchanges === 1 ? '' : 's'})`;
       option.appendChild(header);
 
-      const legsList = document.createElement('ol');
-      journey.legs.forEach(leg => {
-        const li = document.createElement('li');
-        const mode = leg.mode?.name || leg.modeName;
-        const departure = leg.departurePoint?.commonName || '';
-        const arrival = leg.arrivalPoint?.commonName || '';
-        const line = leg.routeOptions && leg.routeOptions[0] ? ` (${leg.routeOptions[0].name})` : '';
-        li.textContent = `${mode}${line}: ${departure} → ${arrival}`;
-        legsList.appendChild(li);
-      });
-      option.appendChild(legsList);
+      if (Array.isArray(journey.legs)) {
+        const legsList = document.createElement('ol');
+        journey.legs.forEach(leg => {
+          const li = document.createElement('li');
+          const modeName = leg.mode?.name || leg.modeName;
+          const departure = leg.departurePoint?.commonName || '';
+          const arrival = leg.arrivalPoint?.commonName || '';
+          const line = leg.routeOptions && leg.routeOptions[0] ? ` (${leg.routeOptions[0].name})` : '';
+          li.textContent = `${modeName}${line}: ${departure} → ${arrival}`;
+          legsList.appendChild(li);
+        });
+        option.appendChild(legsList);
+      }
       resultsDiv.appendChild(option);
     });
   } catch (err) {
