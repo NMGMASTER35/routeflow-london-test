@@ -3,97 +3,24 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png">
+  <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png" />
   <title>Withdrawn Routes | Routeflow London</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="style.css">
-<head>
-<body>
-  <div id="navbar-container"></div>
-
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="style.css" />
   <style>
-    /* Enhanced search and filter styling */
-    .filters-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin: 20px auto;
-      justify-content: center;
-    }
-    .filters-container input, .filters-container select {
-      padding: 8px;
-      border-radius: 12px;
-      border: 1px solid #ccc;
-      font-size: 1rem;
-    }
-    table.bubble-table-lined {
-      border-collapse: collapse;
-      width: 100%;
-      border-radius: 15px;
-      overflow: hidden;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
-    }
-    table.bubble-table-lined th, table.bubble-table-lined td {
-      padding: 10px;
-      border: 1px solid #e0e0e0;
-      text-align: left;
-    }
-    table.bubble-table-lined thead {
-      background-color: #f5f5f5;
-    }
-    #searchInput {
-      width: 50%;
-      padding: 10px;
-      font-size: 1rem;
-      border-radius: 20px;
-      border: 1px solid #ccc;
-      margin-bottom: 20px;
-    }
-  </style>
-  <main style="padding: 3rem 1rem; text-align: center;">
-    <h1>Withdrawn Routes</h1>
-    <p>Explore London's discontinued bus routes using advanced filters below.</p>
-    
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      background-color: #f7f8fa;
-      padding: 2vw;
-      color: #2d3a4a;
-    }
-
-    h1 {
-      text-align: center;
-      margin-bottom: 24px;
-      font-size: 2em;
-    }
-
     .controls {
       max-width: 95vw;
-      margin: 0 auto 20px auto;
+      margin: 0 auto 20px;
       text-align: center;
     }
-
-    input[type="text"] {
+    .controls input {
       padding: 10px;
       width: 250px;
       border-radius: 6px;
       border: 1px solid #ccc;
       margin-bottom: 10px;
     }
-
     .table-container {
       max-width: 95vw;
       margin: auto;
@@ -103,69 +30,35 @@
       box-shadow: 0 2px 12px rgba(0,0,0,0.1);
       padding: 16px;
     }
-
     table {
       width: 100%;
       border-collapse: collapse;
       min-width: 700px;
     }
-
     th, td {
       padding: 12px;
       text-align: center;
       border-bottom: 1px solid #e0e0e0;
     }
-
     th {
       background: linear-gradient(90deg, #2d3a4a 80%, #3f4e62 100%);
       color: white;
       font-weight: bold;
     }
-
-    tr:hover td {
-      background-color: #f1f6fb;
-    }
-
+    tr:hover td { background-color: #f1f6fb; }
     @media (max-width: 768px) {
-      body {
-        padding: 8px;
-      }
-
-      th, td {
-        padding: 8px;
-        font-size: 0.9em;
-      }
-
-      h1 {
-        font-size: 1.5em;
-      }
+      th, td { padding: 8px; font-size: 0.9em; }
     }
   </style>
-  <script>
-    function filterTable() {
-      const input = document.getElementById("searchInput");
-      const filter = input.value.toLowerCase();
-      const table = document.getElementById("routeTable");
-      const tr = table.getElementsByTagName("tr");
-
-      for (let i = 1; i < tr.length; i++) {
-        let tdMatch = false;
-        const tds = tr[i].getElementsByTagName("td");
-        for (let j = 0; j < tds.length; j++) {
-          if (tds[j] && tds[j].textContent.toLowerCase().includes(filter)) {
-            tdMatch = true;
-            break;
-          }
-        }
-        tr[i].style.display = tdMatch ? "" : "none";
-      }
-    }
-  </script>
 </head>
 <body>
-  <h1>Withdrawn London Bus Routes</h1>
+  <div id="navbar-container"></div>
+  <section class="page-banner">
+    <h1>Withdrawn Routes</h1>
+    <p>Explore London's discontinued bus routes.</p>
+  </section>
   <div class="controls">
-    <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search routes, locations, operators...">
+    <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search routes, locations, operators..." />
   </div>
   <div class="table-container">
     <table id="routeTable">
@@ -3784,6 +3677,25 @@
 </tbody>
 </table>
   </div>
+  <script>
+    function filterTable() {
+      const input = document.getElementById('searchInput');
+      const filter = input.value.toLowerCase();
+      const table = document.getElementById('routeTable');
+      const tr = table.getElementsByTagName('tr');
+      for (let i = 1; i < tr.length; i++) {
+        let tdMatch = false;
+        const tds = tr[i].getElementsByTagName('td');
+        for (let j = 0; j < tds.length; j++) {
+          if (tds[j] && tds[j].textContent.toLowerCase().includes(filter)) {
+            tdMatch = true;
+            break;
+          }
+        }
+        tr[i].style.display = tdMatch ? '' : 'none';
+      }
+    }
+  </script>
   <script src="navbar-loader.js"></script>
 </body>
 </html>

@@ -10,14 +10,21 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Journey Planner</h1>
-  <form id="journey-form">
-    <input type="text" id="from" placeholder="From" required>
-    <input type="text" id="to" placeholder="To" required>
-    <button type="submit">Search</button>
-  </form>
-  <div id="error" class="error"></div>
-  <div id="results"></div>
+  <div id="navbar-container"></div>
+  <section class="page-banner">
+    <h1>Journey Planner</h1>
+    <p>Plan your trip across London using TfL data.</p>
+  </section>
+  <main class="planner">
+    <form id="journey-form" class="planner-form">
+      <input type="text" id="from" placeholder="From" required>
+      <input type="text" id="to" placeholder="To" required>
+      <button type="submit">Search</button>
+    </form>
+    <div id="error" class="error"></div>
+    <div id="results"></div>
+  </main>
   <script src="planning.js"></script>
+  <script src="navbar-loader.js"></script>
 </body>
 </html>

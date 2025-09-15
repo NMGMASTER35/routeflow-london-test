@@ -297,8 +297,22 @@ body.dark-mode .modal-content input {
   align-items: center;
   justify-content: center;
   min-height: 57vh;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--accent-blue) 100%);
+  background: linear-gradient(135deg, var(--accent-blue) 0%, var(--primary) 100%);
   padding: 5vw 0;
+}
+.page-banner {
+  background: linear-gradient(135deg, var(--accent-blue), var(--primary));
+  color: #fff;
+  text-align: center;
+  padding: 3rem 1rem;
+}
+.page-banner h1 {
+  margin: 0;
+  font-size: 2.5rem;
+}
+.page-banner p {
+  margin-top: 0.5rem;
+  font-size: 1.2rem;
 }
 .hero-card {
   background: var(--card-bg-light);
@@ -717,6 +731,44 @@ body.dark-mode button:hover,
 body.dark-mode .btn:hover {
   background: var(--primary-dark);
 }
+
+/* Journey planner layout */
+.planner {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+.planner-form {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+.planner-form input {
+  flex: 1;
+}
+.planner-form button {
+  background: var(--accent-blue);
+  color: #fff;
+  border: none;
+  padding: 0.8rem 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.planner .error {
+  color: var(--primary);
+  margin-top: 1rem;
+}
+.journey-option {
+  background: var(--card-bg-light);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: var(--border-radius);
+}
+body.dark-mode .journey-option {
+  background: var(--card-bg-dark);
+}
+.journey-option h3 { margin-top: 0; }
+.journey-option ol { padding-left: 1.2rem; }
 
 /*-------------------------------
   Responsive Design
