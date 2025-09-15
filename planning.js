@@ -34,8 +34,24 @@ document.getElementById('journey-form').addEventListener('submit', async (e) => 
 
     data.journeys.forEach((journey, index) => {
       const option = document.createElement('div');
+      option.className = 'journey-option';
+
       const interchanges = journey.legs ? journey.legs.length - 1 : 0;
-      option.textContent = `Option ${index + 1}: ${journey.duration} mins, ${interchanges} interchange${interchanges === 1 ? '' : 's'}`;
+      const header = document.createElement('h3');
+      header.textContent = `Option ${index + 1} – ${journey.duration} mins (${interchanges} interchange${interchanges === 1 ? '' : 's'})`;
+      option.appendChild(header);
+
+      const legsList = document.createElement('ol');
+      journey.legs.forEach(leg => {
+        const li = document.createElement('li');
+        const mode = leg.mode?.name || leg.modeName;
+        const departure = leg.departurePoint?.commonName || '';
+        const arrival = leg.arrivalPoint?.commonName || '';
+        const line = leg.routeOptions && leg.routeOptions[0] ? ` (${leg.routeOptions[0].name})` : '';
+        li.textContent = `${mode}${line}: ${departure} → ${arrival}`;
+        legsList.appendChild(li);
+      });
+      option.appendChild(legsList);
       resultsDiv.appendChild(option);
     });
   } catch (err) {
