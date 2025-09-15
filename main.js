@@ -10,7 +10,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 
 // Newsletter form
-document.getElementById('newsletter-form').addEventListener('submit', function (e) {
+document.getElementById('newsletter-form')?.addEventListener('submit', function (e) {
   e.preventDefault();
   const email = document.getElementById('email').value;
   const message = document.getElementById('response-message');
@@ -23,6 +23,7 @@ document.getElementById('newsletter-form').addEventListener('submit', function (
 // --- Auth Dropdown ---
 function renderDropdown(user) {
   const dropdown = document.getElementById('dropdownContent');
+  if (!dropdown) return;
   dropdown.innerHTML = '';
   if (!user) {
     dropdown.innerHTML = `
@@ -32,27 +33,30 @@ function renderDropdown(user) {
   } else {
     dropdown.innerHTML = `
       <a href="profile.html" id="profileBtn">Profile</a>
-      <a href="setting.html" id="settingsBtn">Settings</a>
+      <a href="settings.html" id="settingsBtn">Settings</a>
       <button id="logoutBtn" style="color:#f03e3e;">Logout</button>
     `;
   }
 }
 
 // Dropdown toggle for mobile (click)
-const profileMenu = document.getElementById('profileMenu');
-const dropdownContent = document.getElementById('dropdownContent');
-const profileIcon = document.getElementById('profileIcon');
-let dropdownOpen = false;
-profileIcon.addEventListener('click', function(e) {
-  e.stopPropagation();
-  dropdownContent.style.display = (dropdownContent.style.display === 'flex' ? 'none' : 'flex');
-  dropdownOpen = !dropdownOpen;
-});
-document.addEventListener('click', function(e) {
-  if (dropdownOpen && !profileMenu.contains(e.target)) {
-    dropdownContent.style.display = 'none';
-    dropdownOpen = false;
-  }
+document.addEventListener('DOMContentLoaded', () => {
+  const profileMenu = document.getElementById('profileMenu');
+  const dropdownContent = document.getElementById('dropdownContent');
+  const profileIcon = document.getElementById('profileIcon');
+  let dropdownOpen = false;
+  profileIcon?.addEventListener('click', function(e) {
+    e.stopPropagation();
+    if(!dropdownContent) return;
+    dropdownContent.style.display = (dropdownContent.style.display === 'flex' ? 'none' : 'flex');
+    dropdownOpen = !dropdownOpen;
+  });
+  document.addEventListener('click', function(e) {
+    if (dropdownOpen && !profileMenu?.contains(e.target)) {
+      dropdownContent.style.display = 'none';
+      dropdownOpen = false;
+    }
+  });
 });
 
 // Modal logic
@@ -109,15 +113,15 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 }
     // Settings
- if (e.target.id === 'settingBtn') {
-  e.preventDefault();
-  const user = firebase.auth().currentUser;
-  if (user) {
-    window.location.href = 'setting.html';
-  } else {
-    alert("Not signed in");
-  }
-}
+    if (e.target.id === 'settingsBtn') {
+      e.preventDefault();
+      const user = firebase.auth().currentUser;
+      if (user) {
+        window.location.href = 'settings.html';
+      } else {
+        alert("Not signed in");
+      }
+    }
     // Switch to Signup
     if (e.target.id === 'showSignup') {
       e.preventDefault();

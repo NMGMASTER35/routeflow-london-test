@@ -23,6 +23,13 @@ function initNavbar() {
   });
   closeBtn?.addEventListener('click', () => { drawer.classList.remove('open'); backdrop.classList.remove('open'); });
   backdrop?.addEventListener('click', () => { drawer.classList.remove('open'); backdrop.classList.remove('open'); });
+  // Close drawer when any link is clicked
+  drawer?.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      drawer.classList.remove('open');
+      backdrop.classList.remove('open');
+    });
+  });
 
   const accountMenu = document.getElementById('accountMenu');
   document.getElementById('profileIcon')?.addEventListener('click', e => {
@@ -32,10 +39,23 @@ function initNavbar() {
   document.addEventListener('click', e => {
     if(!accountMenu?.contains(e.target)) accountMenu?.classList.remove('open');
   });
+  document.addEventListener('keydown', e => {
+    if(e.key === 'Escape') {
+      drawer?.classList.remove('open');
+      backdrop?.classList.remove('open');
+      accountMenu?.classList.remove('open');
+    }
+  });
 
   // Highlight active links
   const path = window.location.pathname.split('/').pop();
   document.querySelectorAll('.navbar__links a, .mobile-drawer a').forEach(link => {
     if(link.getAttribute('href')===path) link.classList.add('active');
   });
+
+  // Provide fallback auth helpers
+  window.signOut = window.signOut || function(){
+    if(window.firebase?.auth) { window.firebase.auth().signOut(); }
+  };
+  window.openModal = window.openModal || function(){};
 }
