@@ -11,11 +11,6 @@
 <head>
 <body>
   <div id="navbar-container"></div>
-  <script>
-    fetch('components/navbar.html')
-      .then(res => res.text())
-      .then(html => { document.getElementById('navbar-container').innerHTML = html; });
-  </script>
 
   <style>
     /* Enhanced search and filter styling */
@@ -3789,5 +3784,6 @@
 </tbody>
 </table>
   </div>
+  <script src="navbar-loader.js"></script>
 </body>
 </html>

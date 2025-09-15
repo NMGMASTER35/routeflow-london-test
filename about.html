@@ -7,11 +7,6 @@
 </head>
 <body>
 <div id="navbar-container"></div>
-<script>
-  fetch('components/navbar.html')
-    .then(res => res.text())
-    .then(html => { document.getElementById('navbar-container').innerHTML = html; });
-</script>
 
   <section class="card about">
     <h2>About RouteFlow London</h2>
@@ -32,5 +27,6 @@
     <small>© 2025 RouteFlow London</small>
   </footer>
   <script src="theme.js"></script>
+  <script src="navbar-loader.js"></script>
 </body>
 </html>
