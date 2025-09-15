@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings | RouteFlow London</title>
+  <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+  <div id="navbar-container"></div>
+  <main class="settings-page">
+    <h1>Settings</h1>
+    <section class="card">
+      <label class="setting-item" for="darkModeToggle">
+        <span>Dark Mode</span>
+        <input type="checkbox" id="darkModeToggle" />
+      </label>
+    </section>
+  </main>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDuedLuagA4IXc9ZMG9wvoak-sRrhtFZfo",
+      authDomain: "routeflow-london.firebaseapp.com",
+      projectId: "routeflow-london",
+      storageBucket: "routeflow-london.firebasestorage.app",
+      messagingSenderId: "368346241440",
+      appId: "1:368346241440:web:7cc87d551420459251ecc5"
+    };
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+  </script>
+  <script src="theme.js"></script>
+  <script src="navbar-loader.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggle = document.getElementById('darkModeToggle');
+      toggle.checked = document.body.classList.contains('dark-mode');
+      toggle.addEventListener('change', () => toggleTheme());
+    });
+  </script>
+</body>
+</html>

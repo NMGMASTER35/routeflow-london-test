@@ -69,3 +69,8 @@
 
 /* Responsive */
 @media(max-width:950px){ .navbar__links{display:none;} .hamburger{display:block;} }
+
+@media(max-width:500px){
+  .navbar__container{padding:0.7rem 4vw;}
+  .mobile-drawer{width:100vw; max-width:none;}
+}

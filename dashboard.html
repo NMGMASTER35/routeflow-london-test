@@ -3,217 +3,107 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard | Routeflow London</title>
-  <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="style.css">
+  <title>Dashboard | RouteFlow London</title>
+  <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="dashboard.css" />
 </head>
 <body>
-<div id="navbar-container"></div>
-<script>
-  fetch('components/navbar.html')
-    .then(res => res.text())
-    .then(html => { document.getElementById('navbar-container').innerHTML = html; });
-</script>
-
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dashboard Demo</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f7f9fc;
-      margin: 0;
-      padding: 0;
-      color: #333;
-    }
-    header {
-      background: #1a73e8;
-      color: #fff;
-      padding: 1rem 2rem;
-      text-align: center;
-    }
-    .dashboard {
-      display: grid;
-      grid-template-columns: 1fr 2fr;
-      gap: 20px;
-      padding: 20px;
-      max-width: 1200px;
-      margin: auto;
-    }
-    .card {
-      background: #fff;
-      border-radius: 12px;
-      padding: 16px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    h2 {
-      margin-top: 0;
-      font-size: 1.2rem;
-      margin-bottom: 12px;
-    }
-    ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-    li {
-      padding: 8px 0;
-      border-bottom: 1px solid #eee;
-    }
-    li:last-child {
-      border-bottom: none;
-    }
-    .badge {
-      padding: 2px 8px;
-      border-radius: 6px;
-      font-size: 0.8rem;
-      color: #fff;
-    }
-    .badge.green { background: #4caf50; }
-    .badge.gray { background: #9e9e9e; }
-
-    .favourites-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
-    }
-    .favourite-item {
-      background: #fafafa;
-      padding: 12px;
-      border-radius: 10px;
-      text-align: center;
-      border: 1px solid #eee;
-    }
-
-    .progress-bar {
-      background: #eee;
-      border-radius: 6px;
-      overflow: hidden;
-      height: 10px;
-      margin-top: 8px;
-    }
-    .progress {
-      background: #1a73e8;
-      height: 100%;
-      transition: width 0.3s ease;
-    }
-
-    .profile-card {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-    .profile-card img {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-    .activity-list {
-      max-height: 180px;
-      overflow-y: auto;
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <h1>User Dashboard (Demo)</h1>
-  </header>
-
-  <div class="dashboard">
-    <!-- Left Column -->
-    <div>
-      <div class="card profile-card">
-        <img src="https://via.placeholder.com/60" alt="User Avatar">
+  <div id="navbar-container"></div>
+  <main class="dashboard">
+    <div class="dashboard-column">
+      <section class="card profile-card">
+        <img src="user-icon.png" alt="User Avatar" id="profileAvatar" />
         <div>
-          <h2>Welcome, Demo User</h2>
-          <p>Level 5 | 1200 XP</p>
+          <h2 id="welcomeTitle">Welcome</h2>
+          <p id="profileInfo"></p>
         </div>
-      </div>
-
-      <div class="card" id="achievementsCard">
-        <h2>Achievements</h2>
-        <ul id="achievementsList"></ul>
-      </div>
-    </div>
-
-    <!-- Right Column -->
-    <div>
-      <div class="card">
+      </section>
+      <section class="card" id="activityCard">
         <h2>Recent Activity</h2>
         <ul id="activityList" class="activity-list"></ul>
-      </div>
-
-      <div class="card">
-        <h2>Your Favourites</h2>
-        <div class="favourites-grid" id="favouritesGrid"></div>
-      </div>
+      </section>
     </div>
-  </div>
-
-  <script>
-    // Demo Data (replace with DB later)
-    const achievements = [
-      { name: "First Bus Stop Saved", unlocked: true, progress: 100 },
-      { name: "Viewed 10 Routes", unlocked: false, progress: 60 },
-      { name: "Joined Discord", unlocked: true, progress: 100 }
-    ];
-
-    const activities = [
-      "You searched for bus stop: Oxford Circus",
-      "Added bus registration YX19 ABC to favourites",
-      "Viewed disruptions for route 25",
-      "Logged in 2 hours ago"
-    ];
-
-    const favourites = [
-      { type: "Bus Stop", value: "Waterloo Station / York Rd" },
-      { type: "Bus Reg", value: "YX19 ABC" },
-      { type: "Route", value: "Route 25" }
-    ];
-
-    // Render Achievements
-    const achievementsList = document.getElementById("achievementsList");
-    achievements.forEach(a => {
-      const li = document.createElement("li");
-      li.innerHTML = `
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span>${a.name}</span>
-          <span class="badge ${a.unlocked ? "green" : "gray"}">
-            ${a.unlocked ? "Unlocked" : "Locked"}
-          </span>
-        </div>
-        <div class="progress-bar">
-          <div class="progress" style="width:${a.progress}%;"></div>
-        </div>
-      `;
-      achievementsList.appendChild(li);
-    });
-
-    // Render Activity
-    const activityList = document.getElementById("activityList");
-    activities.forEach(act => {
-      const li = document.createElement("li");
-      li.textContent = act;
-      activityList.appendChild(li);
-    });
-
-    // Render Favourites
-    const favouritesGrid = document.getElementById("favouritesGrid");
-    favourites.forEach(f => {
-      const div = document.createElement("div");
-      div.className = "favourite-item";
-      div.innerHTML = `<h3>${f.type}</h3><p>${f.value}</p>`;
-      favouritesGrid.appendChild(div);
-    });
-  </script>
-</body>
-</html>
+    <div class="dashboard-column">
+      <section class="card">
+        <h2>Your Favourites</h2>
+        <div id="favouritesGrid" class="favourites-grid"></div>
+      </section>
+    </div>
+  </main>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-  <script src="main.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDuedLuagA4IXc9ZMG9wvoak-sRrhtFZfo",
+      authDomain: "routeflow-london.firebaseapp.com",
+      projectId: "routeflow-london",
+      storageBucket: "routeflow-london.firebasestorage.app",
+      messagingSenderId: "368346241440",
+      appId: "1:368346241440:web:7cc87d551420459251ecc5"
+    };
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+  </script>
+  <script src="theme.js"></script>
+  <script src="navbar-loader.js"></script>
+  <script type="module">
+    import {getFavourites} from './favourites.js';
+
+    window.signOut = () => { firebase.auth().signOut(); };
+    window.openModal = () => {};
+
+    function loadFavourites(uid) {
+      const grid = document.getElementById('favouritesGrid');
+      grid.innerHTML = '';
+      const favs = getFavourites(uid);
+      if (favs.length === 0) {
+        grid.innerHTML = '<p>No favourites yet.</p>';
+        return;
+      }
+      favs.forEach(f => {
+        const div = document.createElement('div');
+        div.className = 'favourite-item';
+        div.innerHTML = `<h3>${f.type}</h3><p>${f.value}</p>`;
+        grid.appendChild(div);
+      });
+    }
+
+    function loadActivity(uid) {
+      const list = document.getElementById('activityList');
+      list.innerHTML = '';
+      const acts = JSON.parse(localStorage.getItem(`activity_${uid}`) || '[]');
+      if (acts.length === 0) {
+        list.innerHTML = '<li>No recent activity.</li>';
+        return;
+      }
+      acts.forEach(a => {
+        const li = document.createElement('li');
+        li.textContent = a;
+        list.appendChild(li);
+      });
+    }
+
+    firebase.auth().onAuthStateChanged(user => {
+      const title = document.getElementById('welcomeTitle');
+      const info = document.getElementById('profileInfo');
+      const avatar = document.getElementById('profileAvatar');
+      if (user) {
+        title.textContent = `Welcome, ${user.email}`;
+        avatar.src = user.photoURL || 'user-icon.png';
+        info.textContent = '';
+        loadFavourites(user.uid);
+        loadActivity(user.uid);
+      } else {
+        title.textContent = 'Welcome';
+        avatar.src = 'user-icon.png';
+        info.textContent = 'Please sign in to see your data.';
+        document.getElementById('favouritesGrid').innerHTML = '<p>Sign in to manage favourites.</p>';
+        document.getElementById('activityList').innerHTML = '<li>Sign in to see activity.</li>';
+      }
+    });
+  </script>
 </body>
 </html>
