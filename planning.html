@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>
 <body>
   <div id="navbar-container"></div>
@@ -19,11 +20,47 @@
     <form id="journey-form" class="planner-form">
       <input type="text" id="from" placeholder="From" required>
       <input type="text" id="to" placeholder="To" required>
+      <fieldset class="filters">
+        <legend>Modes</legend>
+        <label><input type="checkbox" name="mode" value="bus" checked> Bus</label>
+        <label><input type="checkbox" name="mode" value="tube" checked> Tube</label>
+        <label><input type="checkbox" name="mode" value="dlr" checked> DLR</label>
+        <label><input type="checkbox" name="mode" value="overground" checked> Overground</label>
+        <label><input type="checkbox" name="mode" value="tram" checked> Tram</label>
+        <label><input type="checkbox" name="mode" value="river-bus" checked> River Bus</label>
+        <label><input type="checkbox" name="mode" value="national-rail" checked> National Rail</label>
+        <label><input type="checkbox" name="mode" value="coach" checked> Coach</label>
+        <label><input type="checkbox" name="mode" value="cable-car" checked> Cable Car</label>
+        <label><input type="checkbox" name="mode" value="cycle" checked> Cycle</label>
+      </fieldset>
+      <fieldset class="filters">
+        <legend>Accessibility</legend>
+        <label><input type="checkbox" name="accessibility" value="NoSolidStairs"> No solid stairs</label>
+        <label><input type="checkbox" name="accessibility" value="NoEscalators"> No escalators</label>
+        <label><input type="checkbox" name="accessibility" value="NoElevators"> No elevators</label>
+        <label><input type="checkbox" name="accessibility" value="StepFreeToVehicle"> Step-free to vehicle</label>
+        <label><input type="checkbox" name="accessibility" value="StepFreeToPlatform"> Step-free to platform</label>
+        <label><input type="checkbox" name="accessibility" value="NoNarrowGates"> No narrow gates</label>
+        <label><input type="checkbox" name="accessibility" value="TurnUpAndGo"> Turn up and go</label>
+      </fieldset>
+      <div class="walking-options">
+        <label for="walking-speed">Walking speed:</label>
+        <select id="walking-speed">
+          <option value="">Default</option>
+          <option value="slow">Slow</option>
+          <option value="average">Average</option>
+          <option value="fast">Fast</option>
+        </select>
+        <label for="max-walking">Max walking (mins):</label>
+        <input type="number" id="max-walking" min="1" max="60">
+      </div>
       <button type="submit">Search</button>
     </form>
     <div id="error" class="error"></div>
     <div id="results"></div>
+    <div id="map" class="planner-map"></div>
   </main>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="planning.js"></script>
   <script src="navbar-loader.js"></script>
 </body>
