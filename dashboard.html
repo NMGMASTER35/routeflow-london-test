@@ -30,6 +30,10 @@
         <h2>Your Favourites</h2>
         <div id="favouritesGrid" class="favourites-grid"></div>
       </section>
+      <section class="card">
+        <h2>Recents</h2>
+        <ul id="recentsList" class="recents-list"></ul>
+      </section>
     </div>
   </main>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -50,7 +54,8 @@
   <script src="theme.js"></script>
   <script src="navbar-loader.js"></script>
   <script type="module">
-    import {getFavourites} from './favourites.js';
+    import {getFavourites, removeFavourite} from './favourites.js';
+    import {getRecents} from './recents.js';
 
     window.signOut = () => { firebase.auth().signOut(); };
     window.openModal = () => {};
@@ -67,7 +72,32 @@
         const div = document.createElement('div');
         div.className = 'favourite-item';
         div.innerHTML = `<h3>${f.type}</h3><p>${f.value}</p>`;
+        const btn = document.createElement('button');
+        btn.textContent = 'Remove';
+        btn.addEventListener('click', () => {
+          removeFavourite(uid, f.id);
+          loadFavourites(uid);
+        });
+        div.appendChild(btn);
         grid.appendChild(div);
+      });
+    }
+
+    function loadRecents(uid) {
+      const list = document.getElementById('recentsList');
+      list.innerHTML = '';
+      const recents = getRecents(uid);
+      if (recents.length === 0) {
+        list.innerHTML = '<li>No recent items.</li>';
+        return;
+      }
+      recents.forEach(r => {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = r.url;
+        a.textContent = r.title || r.url;
+        li.appendChild(a);
+        list.appendChild(li);
       });
     }
 
@@ -96,12 +126,14 @@
         info.textContent = '';
         loadFavourites(user.uid);
         loadActivity(user.uid);
+        loadRecents(user.uid);
       } else {
         title.textContent = 'Welcome';
         avatar.src = 'user-icon.png';
         info.textContent = 'Please sign in to see your data.';
         document.getElementById('favouritesGrid').innerHTML = '<p>Sign in to manage favourites.</p>';
         document.getElementById('activityList').innerHTML = '<li>Sign in to see activity.</li>';
+        loadRecents('guest');
       }
     });
   </script>

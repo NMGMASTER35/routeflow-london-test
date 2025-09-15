@@ -56,6 +56,31 @@ body.dark-mode .activity-list li { border-color: #444; }
   text-align: center;
 }
 body.dark-mode .favourite-item { background: var(--card-bg-dark); }
+.favourite-item button {
+  margin-top: 0.5rem;
+  background: var(--accent-blue);
+  color: #fff;
+  border: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.favourite-item button:hover {
+  background: var(--accent-blue-dark);
+}
+
+.recents-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.recents-list li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #ddd;
+}
+body.dark-mode .recents-list li { border-color: #444; }
 .setting-item {
   display: flex;
   align-items: center;
