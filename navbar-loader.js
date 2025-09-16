@@ -1,15 +1,107 @@
-fetch('components/navbar.html')
-  .then(res => res.text())
-  .then(html => {
-    const container = document.getElementById('navbar-container');
-    if (!container) return;
+const NAVBAR_SOURCE = 'components/navbar.html';
+const AUTH_MODAL_SOURCE = 'components/auth-modal.html';
+const AUTH_SCRIPTS = [
+  'https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js',
+  'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js',
+  'main.js'
+];
 
-    container.innerHTML = html;
-    initNavbar(container);
-  })
-  .catch(err => console.error('Failed to load navbar:', err));
+const scriptPromises = new Map();
+let authModalLoaded = false;
+let authModalPromise = null;
 
-function initNavbar(container) {
+const toAbsoluteUrl = (src) => new URL(src, document.baseURI).href;
+
+function ensureScript(src) {
+  const absolute = toAbsoluteUrl(src);
+  if (Array.from(document.scripts).some(script => script.src === absolute)) {
+    return Promise.resolve();
+  }
+  if (scriptPromises.has(absolute)) {
+    return scriptPromises.get(absolute);
+  }
+  const promise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+    document.head.appendChild(script);
+  });
+  scriptPromises.set(absolute, promise);
+  return promise;
+}
+
+function ensureDependencies() {
+  return AUTH_SCRIPTS.reduce(
+    (chain, src) => chain.then(() => ensureScript(src)),
+    Promise.resolve()
+  );
+}
+
+function ensureAuthModal() {
+  if (authModalLoaded || document.getElementById('authModal')) {
+    authModalLoaded = true;
+    return Promise.resolve();
+  }
+  if (authModalPromise) {
+    return authModalPromise;
+  }
+  authModalPromise = fetch(AUTH_MODAL_SOURCE)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Failed to load authentication modal (${response.status})`);
+      }
+      return response.text();
+    })
+    .then(html => {
+      const template = document.createElement('template');
+      template.innerHTML = html.trim();
+      document.body.appendChild(template.content);
+      authModalLoaded = true;
+    })
+    .finally(() => {
+      authModalPromise = null;
+    });
+  return authModalPromise;
+}
+
+function bootstrapNavbar() {
+  const dependenciesReady = ensureDependencies().catch(error => {
+    console.error('Failed to load authentication scripts:', error);
+  });
+
+  ensureAuthModal().catch(error => {
+    console.error('Failed to load authentication modal:', error);
+  });
+
+  const container = document.getElementById('navbar-container');
+  if (!container) {
+    return;
+  }
+
+  fetch(NAVBAR_SOURCE)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Failed to load navbar (${response.status})`);
+      }
+      return response.text();
+    })
+    .then(html => {
+      container.innerHTML = html;
+      initNavbar(container, dependenciesReady);
+    })
+    .catch(error => {
+      console.error('Failed to load navbar:', error);
+    });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootstrapNavbar);
+} else {
+  bootstrapNavbar();
+}
+
+function initNavbar(container, dependenciesReadyPromise = Promise.resolve()) {
   const navRoot = container.querySelector('.navbar');
   if (!navRoot) return;
 
@@ -138,10 +230,20 @@ function initNavbar(container) {
     closeDrawer();
   });
 
-  if (typeof window.renderDropdown === 'function') {
-    const user = window.__lastAuthUser ?? window.firebase?.auth?.currentUser ?? null;
-    window.renderDropdown(user);
+  const refreshAuthState = () => {
+    if (typeof window.renderDropdown === 'function') {
+      const user = window.__lastAuthUser ?? window.firebase?.auth?.currentUser ?? null;
+      window.renderDropdown(user);
+    }
+  };
+
+  if (dependenciesReadyPromise && typeof dependenciesReadyPromise.then === 'function') {
+    dependenciesReadyPromise.then(refreshAuthState);
+  } else {
+    refreshAuthState();
   }
+
+  ensureAuthModal().catch(() => {});
 
   window.signOut = window.signOut || function () {
     if (window.firebase?.auth) {
