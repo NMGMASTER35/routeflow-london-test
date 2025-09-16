@@ -1,59 +1,91 @@
 <link rel="stylesheet" href="navbar.css">
-<header class="navbar">
-  <div class="navbar__container">
-    <a href="index.html" class="navbar__logo" aria-label="RouteFlow London Home">
-      <img src="images/Routeflow London permanent logo.png" alt="RouteFlow London Logo" />
-      <strong>RouteFlow London</strong>
+<nav class="navbar" aria-label="Primary navigation">
+  <div class="navbar__inner">
+    <a href="index.html" class="navbar__brand" aria-label="RouteFlow London home">
+      <img src="images/Routeflow London permanent logo.png" alt="RouteFlow London logo">
+      <span class="navbar__brand-text">
+        <span class="navbar__brand-name">RouteFlow London</span>
+        <span class="navbar__brand-tagline">Live transport insights</span>
+      </span>
     </a>
-    <nav class="navbar__links" id="navbarLinks">
-      <a href="index.html">Home</a>
-      <a href="dashboard.html">Dashboard</a>
-      <a href="tracking.html">Tracking</a>
-      <a href="planning.html">Planning</a>
-      <a href="routes.html">Routes</a>
-      <a href="withdrawn.html">Withdrawn</a>
-      <a href="disruptions.html">Disruptions</a>
-      <a href="fleet.html">Fleet</a>
-    </nav>
-    <div class="navbar__controls">
-      <button class="hamburger" id="hamburgerBtn" aria-label="Open mobile menu">
-        <i class="fa-solid fa-bars"></i>
-      </button>
-      <div class="account-menu" id="accountMenu">
-        <button aria-label="Account" id="profileIcon" type="button">
-          <i class="fa-regular fa-user"></i>
-        </button>
-        <div class="account-dropdown" id="dropdownContent">
-          <a href="profile.html">Profile</a>
-          <a href="settings.html">Settings</a>
-          <button class="theme-toggle" onclick="toggleTheme()" type="button">Toggle Theme</button>
-          <button onclick="openModal('login')" type="button">Login</button>
-          <button onclick="openModal('signup')" type="button">Sign Up</button>
-          <button onclick="signOut()" type="button">Sign out</button>
+
+    <div class="navbar__desktop" data-navbar-desktop>
+      <ul class="navbar__list" role="list">
+        <li><a class="navbar__link" data-nav-link href="index.html">Home</a></li>
+        <li><a class="navbar__link" data-nav-link href="dashboard.html">Dashboard</a></li>
+        <li><a class="navbar__link" data-nav-link href="tracking.html">Tracking</a></li>
+        <li><a class="navbar__link" data-nav-link href="planning.html">Planning</a></li>
+        <li><a class="navbar__link" data-nav-link href="routes.html">Routes</a></li>
+        <li><a class="navbar__link" data-nav-link href="withdrawn.html">Withdrawn</a></li>
+        <li><a class="navbar__link" data-nav-link href="disruptions.html">Disruptions</a></li>
+        <li><a class="navbar__link" data-nav-link href="fleet.html">Fleet</a></li>
+      </ul>
+    </div>
+
+    <div class="navbar__actions">
+      <div class="navbar__auth" data-auth-container>
+        <div class="navbar__auth-guest" data-auth-state="signed-out">
+          <button type="button" class="navbar__btn navbar__btn--ghost" data-auth-action="login">Login</button>
+          <button type="button" class="navbar__btn navbar__btn--primary" data-auth-action="signup">Sign Up</button>
+        </div>
+        <div class="navbar__profile" data-auth-state="signed-in" hidden>
+          <button type="button" class="navbar__profile-toggle" data-profile-toggle aria-haspopup="true" aria-expanded="false">
+            <span class="navbar__profile-avatar" aria-hidden="true">
+              <i class="fa-regular fa-circle-user"></i>
+            </span>
+            <span class="navbar__profile-label" data-profile-label>Account</span>
+            <span class="navbar__profile-chevron" aria-hidden="true">
+              <i class="fa-solid fa-chevron-down"></i>
+            </span>
+          </button>
+          <div class="navbar__profile-menu" data-profile-menu aria-hidden="true" data-open="false">
+            <a href="profile.html" class="navbar__profile-link" data-auth-action="profile">Profile</a>
+            <a href="settings.html" class="navbar__profile-link" data-auth-action="settings">Settings</a>
+            <button type="button" class="navbar__profile-link navbar__profile-link--destructive" data-auth-action="logout">Logout</button>
+          </div>
         </div>
       </div>
+
+      <button type="button" class="navbar__toggle" id="navbarToggle" aria-expanded="false" aria-controls="navbarDrawer">
+        <span class="sr-only">Toggle navigation menu</span>
+        <span class="navbar__toggle-bar" aria-hidden="true"></span>
+        <span class="navbar__toggle-bar" aria-hidden="true"></span>
+        <span class="navbar__toggle-bar" aria-hidden="true"></span>
+      </button>
     </div>
   </div>
-  <!-- Mobile nav drawer -->
-  <nav class="mobile-drawer" id="mobileDrawer" aria-label="Mobile Navigation">
-    <button class="close-drawer" id="closeDrawerBtn" aria-label="Close menu">
-      <i class="fa-solid fa-times"></i>
-    </button>
-    <a href="index.html">Home</a>
-    <a href="dashboard.html">Dashboard</a>
-    <a href="tracking.html">Tracking</a>
-    <a href="planning.html">Planning</a>
-    <a href="routes.html">Routes</a>
-    <a href="withdrawn.html">Withdrawn</a>
-    <a href="disruptions.html">Disruptions</a>
-    <a href="fleet.html">Fleet</a>
-    <hr>
-    <a href="profile.html">Profile</a>
-    <a href="settings.html">Settings</a>
-    <button class="theme-toggle" onclick="toggleTheme()" type="button">Toggle Theme</button>
-    <button onclick="openModal('login')" type="button">Login</button>
-    <button onclick="openModal('signup')" type="button">Sign Up</button>
-    <button onclick="signOut()" type="button">Sign out</button>
-  </nav>
-  <div class="drawer-backdrop" id="drawerBackdrop"></div>
-</header>
+
+  <aside class="navbar__drawer" id="navbarDrawer" aria-hidden="true" tabindex="-1" data-open="false">
+    <div class="navbar__drawer-header">
+      <span class="navbar__drawer-title">Menu</span>
+      <button type="button" class="navbar__drawer-close" id="navbarDrawerClose" aria-label="Close menu">
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+      </button>
+    </div>
+    <nav class="navbar__drawer-nav" aria-label="Mobile navigation">
+      <ul class="navbar__drawer-list" role="list">
+        <li><a class="navbar__drawer-link" data-nav-link href="index.html">Home</a></li>
+        <li><a class="navbar__drawer-link" data-nav-link href="dashboard.html">Dashboard</a></li>
+        <li><a class="navbar__drawer-link" data-nav-link href="tracking.html">Tracking</a></li>
+        <li><a class="navbar__drawer-link" data-nav-link href="planning.html">Planning</a></li>
+        <li><a class="navbar__drawer-link" data-nav-link href="routes.html">Routes</a></li>
+        <li><a class="navbar__drawer-link" data-nav-link href="withdrawn.html">Withdrawn</a></li>
+        <li><a class="navbar__drawer-link" data-nav-link href="disruptions.html">Disruptions</a></li>
+        <li><a class="navbar__drawer-link" data-nav-link href="fleet.html">Fleet</a></li>
+      </ul>
+      <div class="navbar__drawer-divider" role="separator"></div>
+      <div class="navbar__drawer-auth" data-auth-container>
+        <div class="navbar__drawer-section" data-auth-state="signed-out">
+          <button type="button" class="navbar__drawer-action" data-auth-action="login">Login</button>
+          <button type="button" class="navbar__drawer-action navbar__drawer-action--primary" data-auth-action="signup">Sign Up</button>
+        </div>
+        <div class="navbar__drawer-section" data-auth-state="signed-in" hidden>
+          <a href="profile.html" class="navbar__drawer-action" data-auth-action="profile">Profile</a>
+          <a href="settings.html" class="navbar__drawer-action" data-auth-action="settings">Settings</a>
+          <button type="button" class="navbar__drawer-action navbar__drawer-action--destructive" data-auth-action="logout">Logout</button>
+        </div>
+      </div>
+    </nav>
+  </aside>
+  <div class="navbar__backdrop" id="navbarBackdrop" data-visible="false" aria-hidden="true"></div>
+</nav>
