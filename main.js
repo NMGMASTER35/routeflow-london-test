@@ -174,6 +174,15 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         break;
       }
+      case 'admin': {
+        const user = auth?.currentUser;
+        if (user) {
+          window.location.href = 'admin.html';
+        } else {
+          alert('Not signed in');
+        }
+        break;
+      }
       default:
         break;
     }
