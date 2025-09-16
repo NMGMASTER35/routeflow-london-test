@@ -8,6 +8,54 @@ const firebaseConfig = {
   appId: "1:368346241440:web:7cc87d551420459251ecc5"
 };
 
+const ADMIN_OVERRIDES = new Map([
+  [
+    'emKTnjbKIKfBjQzQEvpUOWOpFKc2',
+    {
+      email: 'nmorris210509@gmail.com'
+    }
+  ]
+]);
+
+const normaliseEmail = (value) => (typeof value === 'string' ? value.trim().toLowerCase() : '');
+
+function hasAdminOverride(userOrUid) {
+  if (!userOrUid) {
+    return false;
+  }
+
+  const uid = typeof userOrUid === 'string' ? userOrUid : userOrUid?.uid;
+  if (!uid || !ADMIN_OVERRIDES.has(uid)) {
+    return false;
+  }
+
+  const override = ADMIN_OVERRIDES.get(uid);
+  if (override?.email) {
+    const currentEmail = normaliseEmail(typeof userOrUid === 'string' ? undefined : userOrUid?.email);
+    const expectedEmail = normaliseEmail(override.email);
+    if (currentEmail && expectedEmail && currentEmail !== expectedEmail) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function isAdminUser(user, tokenResult) {
+  if (tokenResult?.claims?.admin) {
+    return true;
+  }
+  return hasAdminOverride(user);
+}
+
+window.RouteflowAdmin = Object.freeze({
+  ...(window.RouteflowAdmin || {}),
+  overrides: ADMIN_OVERRIDES,
+  hasOverride: hasAdminOverride,
+  isAdminUser,
+  listOverrides: () => Array.from(ADMIN_OVERRIDES.entries()).map(([uid, meta]) => ({ uid, ...meta }))
+});
+
 let auth = null;
 if (typeof firebase !== 'undefined') {
   if (!firebase.apps.length) {
@@ -140,7 +188,7 @@ async function updateAdminVisibility(user) {
 
   try {
     const tokenResult = await user.getIdTokenResult();
-    const isAdmin = Boolean(tokenResult?.claims?.admin);
+    const isAdmin = isAdminUser(user, tokenResult);
     window.__lastAuthIsAdmin = isAdmin;
     adminTargets.forEach(target => setElementHidden(target, !isAdmin));
     document.dispatchEvent(new CustomEvent('auth:admin-state', {
@@ -243,7 +291,7 @@ function handleAuthAction(action) {
       } else {
         user.getIdTokenResult()
           .then(result => {
-            const isAdmin = Boolean(result?.claims?.admin);
+            const isAdmin = isAdminUser(user, result);
             window.__lastAuthIsAdmin = isAdmin;
             updateAdminVisibility(user);
             if (isAdmin) {
@@ -431,7 +479,7 @@ function handleAdminLoginSubmit(form) {
         throw new Error('Administrator sign-in failed. Please try again.');
       }
       const tokenResult = await user.getIdTokenResult();
-      const isAdmin = Boolean(tokenResult?.claims?.admin);
+      const isAdmin = isAdminUser(user, tokenResult);
       window.__lastAuthIsAdmin = isAdmin;
       if (!isAdmin) {
         await auth.signOut();

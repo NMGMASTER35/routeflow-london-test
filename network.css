@@ -1,0 +1,317 @@
+.network-shell {
+  max-width: 1200px;
+  margin: 2.5rem auto 4rem auto;
+  padding: 0 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.25rem;
+}
+
+.network-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  background: var(--card-bg-light);
+  border-radius: 20px;
+  padding: 2.2rem;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.14);
+}
+
+body.dark-mode .network-hero {
+  background: var(--card-bg-dark);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+}
+
+.network-hero h1 {
+  margin: 0;
+  font-size: clamp(2rem, 3vw, 2.6rem);
+}
+
+.network-hero p {
+  margin: 0;
+  opacity: 0.82;
+  max-width: 70ch;
+}
+
+.network-hero__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+}
+
+.network-stat {
+  background: rgba(41, 121, 255, 0.12);
+  border-radius: 14px;
+  padding: 1rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+body.dark-mode .network-stat {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.network-stat span {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.7;
+}
+
+.network-stat strong {
+  font-size: 1.8rem;
+}
+
+.network-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
+  align-items: flex-end;
+  background: var(--card-bg-light);
+  padding: 1.5rem;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.1);
+}
+
+body.dark-mode .network-toolbar {
+  background: var(--card-bg-dark);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.4);
+}
+
+.network-search {
+  flex: 1 1 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.network-search label {
+  font-weight: 600;
+}
+
+.network-search input {
+  border-radius: 999px;
+  border: 1px solid rgba(23, 23, 23, 0.12);
+  padding: 0.7rem 1.1rem;
+  font-size: 1rem;
+  background: #fff;
+}
+
+body.dark-mode .network-search input {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: var(--foreground-dark);
+}
+
+.network-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.network-chip {
+  border-radius: 999px;
+  border: 1px solid rgba(41, 121, 255, 0.35);
+  background: transparent;
+  color: var(--accent-blue);
+  padding: 0.4rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition), border-color var(--transition), transform var(--transition);
+}
+
+.network-chip:hover,
+.network-chip:focus-visible {
+  background: var(--accent-blue);
+  color: #fff;
+  border-color: var(--accent-blue);
+  transform: translateY(-1px);
+}
+
+.network-chip[data-active="true"] {
+  background: var(--accent-blue);
+  color: #fff;
+  border-color: var(--accent-blue);
+}
+
+.network-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.network-section__title {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.network-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.4rem;
+}
+
+.network-card {
+  background: var(--card-bg-light);
+  border-radius: 16px;
+  padding: 1.4rem;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  border-left: 4px solid transparent;
+}
+
+body.dark-mode .network-card {
+  background: var(--card-bg-dark);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+}
+
+.network-card[data-state="issue"] {
+  border-left-color: #d32f2f;
+}
+
+.network-card[data-state="good"] {
+  border-left-color: #2e7d32;
+}
+
+.network-card__status {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.network-card__title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.network-card__meta {
+  margin: 0;
+  font-size: 0.95rem;
+  opacity: 0.8;
+}
+
+.network-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.4rem;
+}
+
+.network-tag {
+  border-radius: 999px;
+  padding: 0.2rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  background: rgba(41, 121, 255, 0.15);
+  color: var(--accent-blue);
+}
+
+body.dark-mode .network-tag {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--foreground-dark);
+}
+
+.network-card__footer {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.network-card__list {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.network-card__link {
+  color: var(--accent-blue);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.network-card__link:hover,
+.network-card__link:focus-visible {
+  text-decoration: underline;
+}
+
+.network-empty {
+  margin: 0;
+  padding: 1rem;
+  border-radius: 14px;
+  border: 1px dashed rgba(23, 23, 23, 0.2);
+  text-align: center;
+  font-size: 0.98rem;
+  opacity: 0.8;
+  grid-column: 1 / -1;
+}
+
+body.dark-mode .network-empty {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.network-table-wrapper {
+  overflow-x: auto;
+  background: var(--card-bg-light);
+  border-radius: 18px;
+  box-shadow: 0 12px 36px rgba(15, 23, 42, 0.12);
+}
+
+body.dark-mode .network-table-wrapper {
+  background: var(--card-bg-dark);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+.network-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+}
+
+.network-table thead {
+  background: rgba(41, 121, 255, 0.15);
+}
+
+.network-table th,
+.network-table td {
+  text-align: left;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid rgba(23, 23, 23, 0.08);
+}
+
+body.dark-mode .network-table th,
+body.dark-mode .network-table td {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.network-table th {
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.network-table tbody tr:hover {
+  background: rgba(41, 121, 255, 0.1);
+}
+
+body.dark-mode .network-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+@media (max-width: 760px) {
+  .network-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

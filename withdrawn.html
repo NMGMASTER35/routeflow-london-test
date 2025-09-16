@@ -4,77 +4,59 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png" />
-  <title>Withdrawn Routes | Routeflow London</title>
+  <title>Withdrawn Routes | RouteFlow London</title>
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="network.css" />
   <script src="theme.js" defer></script>
-  <style>
-    .controls {
-      max-width: 95vw;
-      margin: 0 auto 20px;
-      text-align: center;
-    }
-    .controls input {
-      padding: 10px;
-      width: 250px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      margin-bottom: 10px;
-    }
-    .table-container {
-      max-width: 95vw;
-      margin: auto;
-      background: white;
-      border-radius: 12px;
-      overflow-x: auto;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
-      padding: 16px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 700px;
-    }
-    th, td {
-      padding: 12px;
-      text-align: center;
-      border-bottom: 1px solid #e0e0e0;
-    }
-    th {
-      background: linear-gradient(90deg, #2d3a4a 80%, #3f4e62 100%);
-      color: white;
-      font-weight: bold;
-    }
-    tr:hover td { background-color: #f1f6fb; }
-    @media (max-width: 768px) {
-      th, td { padding: 8px; font-size: 0.9em; }
-    }
-  </style>
 </head>
 <body>
   <div id="navbar-container"></div>
-  <section class="page-banner">
-    <h1>Withdrawn Routes</h1>
-    <p>Explore London's discontinued bus routes.</p>
-  </section>
-  <div class="controls">
-    <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search routes, locations, operators..." />
-  </div>
-  <div class="table-container">
-    <table id="routeTable">
-<thead>
-<tr>
-  <th>Route</th>
-  <th>Start</th>
-  <th>End</th>
-  <th>Date of Launch</th>
-  <th>Date of Withdrawal</th>
-  <th>Last Operator</th>
-  <th>Replaced By</th>
-</tr>
-</thead>
-<tbody>
+  <main class="network-shell">
+    <section class="network-hero">
+      <div>
+        <h1>Withdrawn bus routes</h1>
+        <p>Browse the archive of London bus services that have been retired or renumbered. Search instantly to surface decades of network history.</p>
+      </div>
+      <div class="network-hero__stats">
+        <div class="network-stat">
+          <span>Routes recorded</span>
+          <strong id="withdrawnTotal">0</strong>
+        </div>
+        <div class="network-stat">
+          <span>Operators listed</span>
+          <strong id="withdrawnOperators">0</strong>
+        </div>
+        <div class="network-stat">
+          <span>Earliest withdrawal</span>
+          <strong id="withdrawnEarliest">—</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="network-toolbar" aria-label="Withdrawn route filters">
+      <div class="network-search">
+        <label for="withdrawnSearch">Search archive</label>
+        <input type="search" id="withdrawnSearch" placeholder="Search by route, location, or operator" autocomplete="off" />
+      </div>
+    </section>
+
+    <section class="network-section">
+      <h2 class="network-section__title">Archive table</h2>
+      <div class="network-table-wrapper">
+        <table class="network-table" id="withdrawnTable">
+          <thead>
+            <tr>
+              <th>Route</th>
+              <th>Start</th>
+              <th>End</th>
+              <th>Launched</th>
+              <th>Withdrawn</th>
+              <th>Last operator</th>
+              <th>Replaced by</th>
+            </tr>
+          </thead>
+          <tbody>
   <tr>
     <td>2 (1908)</td>
     <td>West Norwood Rosendale</td>
@@ -3676,27 +3658,28 @@
     <td>Renumbered to SL9 .</td>
   </tr>
 </tbody>
-</table>
-  </div>
+        </table>
+      </div>
+      <p class="network-empty" id="withdrawnEmpty" hidden>No routes match your search right now.</p>
+    </section>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script>
-    function filterTable() {
-      const input = document.getElementById('searchInput');
-      const filter = input.value.toLowerCase();
-      const table = document.getElementById('routeTable');
-      const tr = table.getElementsByTagName('tr');
-      for (let i = 1; i < tr.length; i++) {
-        let tdMatch = false;
-        const tds = tr[i].getElementsByTagName('td');
-        for (let j = 0; j < tds.length; j++) {
-          if (tds[j] && tds[j].textContent.toLowerCase().includes(filter)) {
-            tdMatch = true;
-            break;
-          }
-        }
-        tr[i].style.display = tdMatch ? '' : 'none';
-      }
+    const firebaseConfig = {
+      apiKey: "AIzaSyDuedLuagA4IXc9ZMG9wvoak-sRrhtFZfo",
+      authDomain: "routeflow-london.firebaseapp.com",
+      projectId: "routeflow-london",
+      storageBucket: "routeflow-london.firebasestorage.app",
+      messagingSenderId: "368346241440",
+      appId: "1:368346241440:web:7cc87d551420459251ecc5"
+    };
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
     }
   </script>
-  <script src="navbar-loader.js"></script>
+  <script src="navbar-loader.js" defer></script>
+  <script type="module" src="withdrawn.js"></script>
 </body>
 </html>

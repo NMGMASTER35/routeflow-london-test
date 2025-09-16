@@ -49,24 +49,86 @@ body.dark-mode .activity-list li { border-color: #444; }
   grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
   gap: 1rem;
 }
-.favourite-item {
-  background: var(--card-bg-light);
-  padding: 0.8rem;
-  border-radius: 8px;
+.dashboard-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 0.75rem;
   text-align: center;
+  font-size: 0.95rem;
+  opacity: 0.7;
 }
-body.dark-mode .favourite-item { background: var(--card-bg-dark); }
-.favourite-item button {
-  margin-top: 0.5rem;
+.favourite-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  background: var(--card-bg-light);
+  border-radius: 12px;
+  padding: 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+body.dark-mode .favourite-item {
+  background: var(--card-bg-dark);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+}
+.favourite-item__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.favourite-item__eyebrow {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent-blue);
+  font-weight: 700;
+}
+body.dark-mode .favourite-item__eyebrow {
+  color: var(--accent-blue);
+}
+.favourite-item__title {
+  margin: 0;
+  font-size: 1.1rem;
+  line-height: 1.3;
+}
+.favourite-item__meta {
+  margin: 0;
+  font-size: 0.92rem;
+  opacity: 0.78;
+}
+.favourite-item__meta span {
+  display: inline-block;
+  margin-right: 0.35rem;
+}
+.favourite-item__remove {
+  margin-left: auto;
+  border-radius: 999px;
+  border: 1px solid var(--accent-blue);
+  background: transparent;
+  color: var(--accent-blue);
+  padding: 0.35rem 0.9rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+.favourite-item__remove:hover,
+.favourite-item__remove:focus-visible {
   background: var(--accent-blue);
   color: #fff;
-  border: none;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  cursor: pointer;
+  border-color: var(--accent-blue);
 }
-.favourite-item button:hover {
-  background: var(--accent-blue-dark);
+body.dark-mode .favourite-item__remove {
+  border-color: rgba(255, 255, 255, 0.35);
+  color: var(--foreground-dark);
+}
+body.dark-mode .favourite-item__remove:hover,
+body.dark-mode .favourite-item__remove:focus-visible {
+  color: #000;
+  background: var(--foreground-dark);
+  border-color: var(--foreground-dark);
 }
 
 .recents-list {
