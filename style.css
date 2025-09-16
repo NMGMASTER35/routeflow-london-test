@@ -31,6 +31,54 @@ body.dark-mode {
   color: var(--foreground-dark);
 }
 
+body.high-contrast {
+  --background-light: #ffffff;
+  --foreground-light: #000000;
+  --card-bg-light: #ffffff;
+}
+
+body.dark-mode.high-contrast {
+  --background-dark: #000000;
+  --foreground-dark: #ffffff;
+  --card-bg-dark: #040404;
+}
+
+body.high-contrast a {
+  text-decoration: underline;
+}
+
+body.high-contrast .card {
+  box-shadow: none;
+  border: 2px solid currentColor;
+}
+
+body.dark-mode.high-contrast .card {
+  border-color: var(--foreground-dark);
+}
+
+body.high-contrast header {
+  box-shadow: none;
+  border-bottom: 3px solid currentColor;
+}
+
+body.high-contrast *:focus-visible {
+  outline: 3px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+body.readable-font {
+  font-family: 'Atkinson Hyperlegible', 'Inter', 'Segoe UI', Arial, sans-serif;
+}
+
+body.reduced-motion *,
+body.reduced-motion *::before,
+body.reduced-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
 /*-------------------------------
   Header & Navigation
 -------------------------------*/

@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard | RouteFlow London</title>
   <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="dashboard.css" />
+  <script src="theme.js" defer></script>
 </head>
 <body>
   <div id="navbar-container"></div>
@@ -51,7 +52,6 @@
       firebase.initializeApp(firebaseConfig);
     }
   </script>
-  <script src="theme.js"></script>
   <script src="navbar-loader.js"></script>
   <script type="module">
     import {getFavourites, removeFavourite} from './favourites.js';

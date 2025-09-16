@@ -93,3 +93,251 @@ body.dark-mode .recents-list li { border-color: #444; }
   margin: 2rem auto;
   padding: 0 1rem;
 }
+
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.settings-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.settings-card h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.settings-description {
+  margin: 0;
+  font-size: 0.95rem;
+  color: rgba(23, 23, 23, 0.72);
+}
+
+body.dark-mode .settings-description {
+  color: rgba(250, 250, 250, 0.72);
+}
+
+.settings-lead {
+  margin-top: 0.5rem;
+  margin-bottom: 2rem;
+  max-width: 60ch;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+body.dark-mode .setting-row {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.setting-row:last-child {
+  border-bottom: none;
+}
+
+.setting-row--stacked {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.setting-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+.setting-hint {
+  font-weight: 400;
+  font-size: 0.9rem;
+  opacity: 0.7;
+}
+
+.setting-control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 52px;
+  height: 28px;
+  cursor: pointer;
+}
+
+.switch input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.switch-slider {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 999px;
+  transition: background var(--transition), box-shadow var(--transition);
+}
+
+body.dark-mode .switch-slider {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.switch-slider::before {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+  transition: transform var(--transition);
+}
+
+.switch input:checked + .switch-slider {
+  background: var(--accent-blue);
+}
+
+.switch input:checked + .switch-slider::before {
+  transform: translateX(24px);
+}
+
+.switch input:focus-visible + .switch-slider {
+  box-shadow: 0 0 0 3px rgba(41, 121, 255, 0.35);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-blue) 35%, transparent);
+}
+
+body.high-contrast .switch input:focus-visible + .switch-slider {
+  box-shadow: 0 0 0 3px var(--accent-blue);
+}
+
+.accent-palette {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+
+.accent-choice {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.9rem;
+  background: var(--card-bg-light);
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: border var(--transition), box-shadow var(--transition), transform var(--transition);
+}
+
+body.dark-mode .accent-choice {
+  background: var(--card-bg-dark);
+}
+
+.accent-choice input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.accent-choice .accent-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-swatch), var(--accent-swatch-contrast));
+  border: 2px solid rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .accent-choice .accent-swatch {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.accent-choice .accent-name {
+  font-weight: 600;
+}
+
+.accent-choice[data-selected="true"],
+.accent-choice:focus-within {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(41, 121, 255, 0.2);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-blue) 25%, transparent);
+}
+
+.accent-choice[data-selected="true"] {
+  transform: translateY(-1px);
+}
+
+.text-size-control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.text-size-control input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent-blue);
+}
+
+.text-scale-preview {
+  font-size: 0.9rem;
+  opacity: 0.75;
+}
+
+.settings-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.settings-actions button {
+  border-radius: 999px;
+  border: 1.5px solid var(--accent-blue);
+  background: transparent;
+  color: var(--accent-blue);
+  font-weight: 600;
+  padding: 0.65rem 1.2rem;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition), transform var(--transition);
+}
+
+.settings-actions button:hover {
+  background: var(--accent-blue);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+body.dark-mode .settings-actions button {
+  color: var(--accent-blue);
+}
+
+@media (max-width: 640px) {
+  .setting-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .switch {
+    align-self: flex-start;
+  }
+}

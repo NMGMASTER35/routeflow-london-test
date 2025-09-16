@@ -5,21 +5,102 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Settings | RouteFlow London</title>
   <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="dashboard.css" />
+  <script src="theme.js" defer></script>
+  <script src="settings.js" defer></script>
 </head>
 <body>
   <div id="navbar-container"></div>
-  <main class="settings-page">
-    <h1>Settings</h1>
-    <section class="card">
-      <label class="setting-item" for="darkModeToggle">
-        <span>Dark Mode</span>
-        <input type="checkbox" id="darkModeToggle" />
-      </label>
-    </section>
+  <main class="settings-page" aria-labelledby="settingsTitle">
+    <h1 id="settingsTitle">Settings</h1>
+    <p class="settings-description settings-lead">
+      Personalise RouteFlow London with appearance and accessibility preferences that follow you across every page.
+    </p>
+
+    <form id="preferencesForm" class="settings-form">
+      <section class="card settings-card" aria-labelledby="appearanceHeading">
+        <h2 id="appearanceHeading">Appearance</h2>
+        <p class="settings-description">Fine-tune the interface to match your environment.</p>
+
+        <div class="setting-row">
+          <div class="setting-label">
+            <span id="prefDarkModeLabel">Dark mode</span>
+            <span class="setting-hint" id="prefDarkModeHint">Use a darker palette to reduce glare.</span>
+          </div>
+          <label class="switch" aria-labelledby="prefDarkModeLabel prefDarkModeHint">
+            <input type="checkbox" id="prefDarkMode" aria-labelledby="prefDarkModeLabel" aria-describedby="prefDarkModeHint" />
+            <span class="switch-slider" aria-hidden="true"></span>
+          </label>
+        </div>
+
+        <div class="setting-row setting-row--stacked">
+          <div class="setting-label">
+            <span id="prefAccentLabel">Accent colour</span>
+            <span class="setting-hint" id="prefAccentHint">Choose the hue used for buttons and highlights.</span>
+          </div>
+          <div class="setting-control">
+            <div class="accent-palette" id="accentPalette" role="radiogroup" aria-labelledby="prefAccentLabel" aria-describedby="prefAccentHint"></div>
+          </div>
+        </div>
+
+        <div class="setting-row setting-row--stacked">
+          <div class="setting-label">
+            <label id="prefTextScaleLabel" for="prefTextScale">Text size</label>
+            <span class="setting-hint" id="prefTextScaleHint">Increase text across the site for easier reading.</span>
+          </div>
+          <div class="setting-control text-size-control">
+            <input type="range" id="prefTextScale" min="90" max="130" step="5" aria-labelledby="prefTextScaleLabel" aria-describedby="prefTextScaleHint textScaleValue" />
+            <div class="text-scale-preview">Current size: <span id="textScaleValue"></span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card settings-card" aria-labelledby="accessibilityHeading">
+        <h2 id="accessibilityHeading">Accessibility</h2>
+        <p class="settings-description">Enhance clarity and reduce eye strain with additional options.</p>
+
+        <div class="setting-row">
+          <div class="setting-label">
+            <span id="prefHighContrastLabel">High contrast</span>
+            <span class="setting-hint" id="prefHighContrastHint">Boost contrast and emphasise focus states.</span>
+          </div>
+          <label class="switch" aria-labelledby="prefHighContrastLabel prefHighContrastHint">
+            <input type="checkbox" id="prefHighContrast" aria-labelledby="prefHighContrastLabel" aria-describedby="prefHighContrastHint" />
+            <span class="switch-slider" aria-hidden="true"></span>
+          </label>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-label">
+            <span id="prefReadableFontLabel">Readable font</span>
+            <span class="setting-hint" id="prefReadableFontHint">Swap to Atkinson Hyperlegible for improved character clarity.</span>
+          </div>
+          <label class="switch" aria-labelledby="prefReadableFontLabel prefReadableFontHint">
+            <input type="checkbox" id="prefReadableFont" aria-labelledby="prefReadableFontLabel" aria-describedby="prefReadableFontHint" />
+            <span class="switch-slider" aria-hidden="true"></span>
+          </label>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-label">
+            <span id="prefReduceMotionLabel">Reduce motion</span>
+            <span class="setting-hint" id="prefReduceMotionHint">Minimise animations and transitions for sensitive users.</span>
+          </div>
+          <label class="switch" aria-labelledby="prefReduceMotionLabel prefReduceMotionHint">
+            <input type="checkbox" id="prefReduceMotion" aria-labelledby="prefReduceMotionLabel" aria-describedby="prefReduceMotionHint" />
+            <span class="switch-slider" aria-hidden="true"></span>
+          </label>
+        </div>
+      </section>
+
+      <div class="settings-actions">
+        <button type="button" id="resetPreferences">Reset to defaults</button>
+      </div>
+    </form>
   </main>
+
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script>
@@ -35,14 +116,6 @@
       firebase.initializeApp(firebaseConfig);
     }
   </script>
-  <script src="theme.js"></script>
-  <script src="navbar-loader.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const toggle = document.getElementById('darkModeToggle');
-      toggle.checked = document.body.classList.contains('dark-mode');
-      toggle.addEventListener('change', () => toggleTheme());
-    });
-  </script>
+  <script src="navbar-loader.js" defer></script>
 </body>
 </html>
