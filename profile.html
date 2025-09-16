@@ -1,103 +1,123 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Profile | RouteFlow London</title>
-  <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png">
-  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png" />
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="profile.css" />
   <script src="theme.js" defer></script>
 </head>
 <body>
- 
-
-/* Dummy sign out */
-function signOut() {
-  closeModal();
-  alert('Signed out (demo)');
-}
-</script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  </header>
-
-  <!-- Profile Content -->
-  <main class="profile-container">
-    <section class="profile-header">
-      <div class="profile-avatar">
-        <img src="images/default-avatar.png" alt="Profile Avatar">
-        <button class="edit-avatar-btn">Change Avatar</button>
+  <div id="navbar-container"></div>
+  <main class="profile-shell" aria-live="polite">
+    <section class="profile-hero card" id="profileHero">
+      <div class="profile-hero__avatar">
+        <img src="user-icon.png" alt="Profile avatar" id="profileAvatar" />
+        <button type="button" class="profile-hero__chip" id="refreshProfile" title="Refresh profile data">Refresh</button>
       </div>
-      <div class="profile-details">
-        <h1>Alex Busfan</h1>
-        <p class="username">@busfan123</p>
-        <p class="bio">Avid bus enthusiast exploring London's iconic routes.</p>
-        <button class="edit-profile-btn">Edit Profile</button>
+      <div class="profile-hero__content">
+        <p class="profile-hero__eyebrow" id="profileRole">Guest</p>
+        <h1 class="profile-hero__title" id="profileName">Your profile</h1>
+        <p class="profile-hero__subtitle" id="profileEmail">Sign in to personalise your RouteFlow London experience.</p>
+        <dl class="profile-hero__meta">
+          <div>
+            <dt>Member since</dt>
+            <dd id="profileMemberSince">—</dd>
+          </div>
+          <div>
+            <dt>Last active</dt>
+            <dd id="profileLastActive">—</dd>
+          </div>
+          <div>
+            <dt>User ID</dt>
+            <dd id="profileUid">—</dd>
+          </div>
+        </dl>
+        <div class="profile-hero__actions">
+          <a href="settings.html" class="profile-hero__button" id="openSettings" data-disabled>Open settings</a>
+          <button type="button" class="profile-hero__button profile-hero__button--ghost" id="signOutBtn" data-disabled>Sign out</button>
+        </div>
       </div>
     </section>
 
-    <!-- Profile Info -->
-    <section class="profile-info">
-      <h2>Your Favourites</h2>
-      <ul id="favList"></ul>
-      <h2>Your Notes</h2>
-      <ul id="noteList"></ul>
+    <section class="profile-grid">
+      <article class="profile-card profile-card--stats" id="profileStatsCard">
+        <header class="profile-card__header">
+          <h2>Account snapshot</h2>
+          <p class="profile-card__subtitle" id="profileStatusMessage">Keep an eye on your saved stops and personalised notes.</p>
+        </header>
+        <ul class="profile-stats" id="profileStats">
+          <li>
+            <span>Favourites</span>
+            <strong id="statFavourites">0</strong>
+          </li>
+          <li>
+            <span>Saved notes</span>
+            <strong id="statNotes">0</strong>
+          </li>
+          <li>
+            <span>Recent lookups</span>
+            <strong id="statRecents">0</strong>
+          </li>
+        </ul>
+      </article>
+
+      <article class="profile-card" id="profileFavouritesCard">
+        <header class="profile-card__header">
+          <h2>Saved favourites</h2>
+          <p class="profile-card__subtitle">Quick access to the stops and routes you rely on the most.</p>
+        </header>
+        <ul class="profile-list" id="profileFavouritesList" aria-live="polite"></ul>
+      </article>
+
+      <article class="profile-card" id="profileRecentsCard">
+        <header class="profile-card__header">
+          <h2>Recent lookups</h2>
+          <p class="profile-card__subtitle">Jump back to journeys and stops you've viewed recently.</p>
+        </header>
+        <ul class="profile-list" id="profileRecentsList" aria-live="polite"></ul>
+      </article>
+
+      <article class="profile-card" id="profileNotesCard">
+        <header class="profile-card__header">
+          <h2>Personal notes</h2>
+          <div class="profile-card__actions">
+            <button type="button" class="profile-chip" id="addNoteBtn">Add note</button>
+          </div>
+          <p class="profile-card__subtitle">Keep track of service changes, planned trips, or anything else you need to remember.</p>
+        </header>
+        <ul class="profile-list profile-list--notes" id="profileNotesList" aria-live="polite"></ul>
+      </article>
+
+      <article class="profile-card" id="profilePreferencesCard">
+        <header class="profile-card__header">
+          <h2>Accessibility &amp; theme</h2>
+          <p class="profile-card__subtitle">Your current appearance and accessibility preferences.</p>
+        </header>
+        <dl class="profile-preferences" id="profilePreferences"></dl>
+      </article>
     </section>
   </main>
+
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-  <script src="main.js"></script>
-  <script type="module">
-  import { getFavourites, removeFavourite } from './favourites.js';
-  import { getNotes, updateNote, removeNote } from './notes.js';
-
-  const favList = document.getElementById('favList');
-  const noteList = document.getElementById('noteList');
-
-  firebase.auth().onAuthStateChanged(user => {
-    if (!user) return;
-
-    function renderFavs() {
-      const favs = getFavourites(user.uid);
-      favList.innerHTML = favs.map(f => `<li data-id="${f.id}">${f.name} <button class="delete-fav">Delete</button></li>`).join('');
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDuedLuagA4IXc9ZMG9wvoak-sRrhtFZfo",
+      authDomain: "routeflow-london.firebaseapp.com",
+      projectId: "routeflow-london",
+      storageBucket: "routeflow-london.firebasestorage.app",
+      messagingSenderId: "368346241440",
+      appId: "1:368346241440:web:7cc87d551420459251ecc5"
+    };
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
     }
-
-    function renderNotes() {
-      const notes = getNotes(user.uid);
-      noteList.innerHTML = notes.map((n,i)=>`<li data-index="${i}"><strong>${n.name}</strong>: ${n.text} <button class="edit-note">Edit</button> <button class="delete-note">Delete</button></li>`).join('');
-    }
-
-    favList.addEventListener('click', e => {
-      if (e.target.classList.contains('delete-fav')) {
-        const id = e.target.parentElement.getAttribute('data-id');
-        removeFavourite(user.uid, id);
-        renderFavs();
-      }
-    });
-
-    noteList.addEventListener('click', e => {
-      if (e.target.classList.contains('delete-note')) {
-        const idx = Number(e.target.parentElement.getAttribute('data-index'));
-        removeNote(user.uid, idx);
-        renderNotes();
-      }
-      if (e.target.classList.contains('edit-note')) {
-        const idx = Number(e.target.parentElement.getAttribute('data-index'));
-        const notes = getNotes(user.uid);
-        const current = notes[idx].text;
-        const updatedText = prompt('Edit note:', current);
-        if (updatedText !== null) {
-          updateNote(user.uid, idx, updatedText);
-          renderNotes();
-        }
-      }
-    });
-
-    renderFavs();
-    renderNotes();
-  });
   </script>
-  <script src="navbar-loader.js"></script>
+  <script src="navbar-loader.js" defer></script>
+  <script type="module" src="profile.js"></script>
 </body>
 </html>
