@@ -22,131 +22,191 @@ document.getElementById('newsletter-form')?.addEventListener('submit', function 
 
 // --- Auth Dropdown ---
 function renderDropdown(user) {
-  const dropdown = document.getElementById('dropdownContent');
-  if (!dropdown) return;
-  dropdown.innerHTML = '';
-  if (!user) {
-    dropdown.innerHTML = `
-      <a href="#" id="loginBtn">Login</a>
-      <a href="#" id="signupBtn">Sign Up</a>
-    `;
-  } else {
-    dropdown.innerHTML = `
-      <a href="profile.html" id="profileBtn">Profile</a>
-      <a href="settings.html" id="settingsBtn">Settings</a>
-      <button id="logoutBtn" style="color:#f03e3e;">Logout</button>
-    `;
-  }
-}
+  window.__lastAuthUser = user ?? null;
 
-// Dropdown toggle for mobile (click)
-document.addEventListener('DOMContentLoaded', () => {
-  const profileMenu = document.getElementById('profileMenu');
-  const dropdownContent = document.getElementById('dropdownContent');
-  const profileIcon = document.getElementById('profileIcon');
-  let dropdownOpen = false;
-  profileIcon?.addEventListener('click', function(e) {
-    e.stopPropagation();
-    if(!dropdownContent) return;
-    dropdownContent.style.display = (dropdownContent.style.display === 'flex' ? 'none' : 'flex');
-    dropdownOpen = !dropdownOpen;
-  });
-  document.addEventListener('click', function(e) {
-    if (dropdownOpen && !profileMenu?.contains(e.target)) {
-      dropdownContent.style.display = 'none';
-      dropdownOpen = false;
+  const signedOutSections = document.querySelectorAll('[data-auth-state="signed-out"]');
+  const signedInSections = document.querySelectorAll('[data-auth-state="signed-in"]');
+
+  if (!signedOutSections.length && !signedInSections.length) {
+    return;
+  }
+
+  signedOutSections.forEach(section => {
+    if (user) {
+      section.setAttribute('hidden', '');
+    } else {
+      section.removeAttribute('hidden');
     }
   });
-});
+
+  signedInSections.forEach(section => {
+    if (user) {
+      section.removeAttribute('hidden');
+    } else {
+      section.setAttribute('hidden', '');
+    }
+  });
+
+  document.querySelectorAll('[data-profile-toggle]').forEach(toggle => {
+    toggle.setAttribute('aria-expanded', 'false');
+  });
+  document.querySelectorAll('[data-profile-menu]').forEach(menu => {
+    menu.setAttribute('data-open', 'false');
+    menu.setAttribute('aria-hidden', 'true');
+    menu.setAttribute('hidden', '');
+  });
+
+  const displayName = user?.displayName || user?.email || 'Account';
+  document.querySelectorAll('[data-profile-label]').forEach(label => {
+    label.textContent = user ? displayName : 'Account';
+  });
+}
 
 // Modal logic
 function closeModal() {
-  document.getElementById('authModal').style.display = 'none';
+  const modal = document.getElementById('authModal');
+  if (!modal) return;
+  modal.style.display = 'none';
   clearFormMessages();
-  document.getElementById('loginForm').reset();
-  document.getElementById('signupForm').reset();
+  document.getElementById('loginForm')?.reset();
+  document.getElementById('signupForm')?.reset();
 }
 function clearFormMessages() {
-  document.getElementById('loginError').style.display = 'none';
-  document.getElementById('signupError').style.display = 'none';
+  const loginError = document.getElementById('loginError');
+  if (loginError) loginError.style.display = 'none';
+  const signupError = document.getElementById('signupError');
+  if (signupError) signupError.style.display = 'none';
+  const resetError = document.getElementById('resetError');
+  if (resetError) resetError.style.display = 'none';
 }
 // Initial auth state
 firebase.auth().onAuthStateChanged(function(user) {
   renderDropdown(user);
 });
 document.addEventListener('DOMContentLoaded', function () {
-  // Dropdown menu
   renderDropdown(firebase.auth().currentUser);
+
   const modal = document.getElementById('authModal');
   const closeModalEl = document.getElementById('closeModal');
-  document.body.addEventListener('click', function (e) {
-    // Login
-    if (e.target.id === 'loginBtn') {
-      e.preventDefault();
-      document.getElementById('loginFormContainer').style.display = '';
-      document.getElementById('signupFormContainer').style.display = 'none';
-      modal.style.display = 'block';
-      clearFormMessages();
+  const loginContainer = document.getElementById('loginFormContainer');
+  const signupContainer = document.getElementById('signupFormContainer');
+
+  const showAuthModal = (mode) => {
+    if (!modal) return;
+    if (loginContainer) {
+      loginContainer.style.display = mode === 'login' ? '' : 'none';
     }
-    // Signup
-    if (e.target.id === 'signupBtn') {
-      e.preventDefault();
-      document.getElementById('loginFormContainer').style.display = 'none';
-      document.getElementById('signupFormContainer').style.display = '';
-      modal.style.display = 'block';
-      clearFormMessages();
+    if (signupContainer) {
+      signupContainer.style.display = mode === 'signup' ? '' : 'none';
     }
-    // Logout
-    if (e.target.id === 'logoutBtn') {
-      e.preventDefault();
-      firebase.auth().signOut().then(() => {
-        renderDropdown(null);
-      });
+    const resetContainer = document.getElementById('resetFormContainer');
+    if (resetContainer && mode !== 'reset') {
+      resetContainer.style.display = 'none';
     }
-   if (e.target.id === 'profileBtn') {
-  e.preventDefault();
-  const user = firebase.auth().currentUser;
-  if (user) {
-    window.location.href = 'profile.html';
-  } else {
-    alert("Not signed in");
-  }
-}
-    // Settings
-    if (e.target.id === 'settingsBtn') {
-      e.preventDefault();
-      const user = firebase.auth().currentUser;
-      if (user) {
-        window.location.href = 'settings.html';
-      } else {
-        alert("Not signed in");
+    modal.style.display = 'block';
+    clearFormMessages();
+  };
+
+  const handleAuthAction = (action) => {
+    switch (action) {
+      case 'login':
+        window.dispatchEvent(new Event('navbar:close-overlays'));
+        showAuthModal('login');
+        break;
+      case 'signup':
+        window.dispatchEvent(new Event('navbar:close-overlays'));
+        showAuthModal('signup');
+        break;
+      case 'logout':
+        firebase.auth().signOut().then(() => {
+          renderDropdown(null);
+        });
+        break;
+      case 'profile': {
+        const user = firebase.auth().currentUser;
+        if (user) {
+          window.location.href = 'profile.html';
+        } else {
+          alert('Not signed in');
+        }
+        break;
       }
+      case 'settings': {
+        const user = firebase.auth().currentUser;
+        if (user) {
+          window.location.href = 'settings.html';
+        } else {
+          alert('Not signed in');
+        }
+        break;
+      }
+      default:
+        break;
     }
-    // Switch to Signup
-    if (e.target.id === 'showSignup') {
-      e.preventDefault();
-      document.getElementById('loginFormContainer').style.display = 'none';
-      document.getElementById('signupFormContainer').style.display = '';
-      clearFormMessages();
-    }
-    // Switch to Login
-    if (e.target.id === 'showLogin') {
-      e.preventDefault();
-      document.getElementById('loginFormContainer').style.display = '';
-      document.getElementById('signupFormContainer').style.display = 'none';
-      clearFormMessages();
-    }
-    // Close Modal
-    if (e.target === closeModalEl) {
-      closeModal();
-    }
+  };
+
+  document.addEventListener('navbar:auth-action', (event) => {
+    const action = event.detail?.action;
+    if (!action) return;
+    handleAuthAction(action);
   });
 
-  // Login Form Submission
-  document.getElementById('loginForm').addEventListener('submit', function (e) {
+  document.body.addEventListener('click', (event) => {
+    if (event.defaultPrevented) return;
+    const trigger = event.target.closest('[data-auth-action]');
+    if (!trigger) return;
+    const action = trigger.dataset.authAction;
+    if (!action) return;
+    event.preventDefault();
+    handleAuthAction(action);
+  });
+
+  if (modal) {
+    closeModalEl?.addEventListener('click', closeModal);
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) {
+        closeModal();
+      }
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && modal.style.display === 'block') {
+        closeModal();
+      }
+    });
+  }
+
+  document.getElementById('showSignup')?.addEventListener('click', (event) => {
+    event.preventDefault();
+    showAuthModal('signup');
+  });
+
+  document.getElementById('showLogin')?.addEventListener('click', (event) => {
+    event.preventDefault();
+    showAuthModal('login');
+  });
+
+  document.getElementById('showLoginFromReset')?.addEventListener('click', (event) => {
+    event.preventDefault();
+    showAuthModal('login');
+  });
+
+  document.getElementById('showReset')?.addEventListener('click', (event) => {
+    event.preventDefault();
+    if (!modal) return;
+    if (loginContainer) loginContainer.style.display = 'none';
+    if (signupContainer) signupContainer.style.display = 'none';
+    const resetContainer = document.getElementById('resetFormContainer');
+    if (resetContainer) {
+      resetContainer.style.display = '';
+    }
+    clearFormMessages();
+  });
+
+  document.getElementById('loginForm')?.addEventListener('submit', function (e) {
     e.preventDefault();
-    const email = document.getElementById('loginEmail').value.trim();
-    const password = document.getElementById('loginPassword').value;
+    const email = document.getElementById('loginEmail')?.value.trim();
+    const password = document.getElementById('loginPassword')?.value;
+    if (!email || !password) return;
     clearFormMessages();
     firebase.auth().signInWithEmailAndPassword(email, password)
       .then(() => {
@@ -155,16 +215,18 @@ document.addEventListener('DOMContentLoaded', function () {
       })
       .catch((error) => {
         const loginError = document.getElementById('loginError');
-        loginError.textContent = error.message;
-        loginError.style.display = 'block';
+        if (loginError) {
+          loginError.textContent = error.message;
+          loginError.style.display = 'block';
+        }
       });
   });
 
-  // Signup Form Submission
-  document.getElementById('signupForm').addEventListener('submit', function (e) {
+  document.getElementById('signupForm')?.addEventListener('submit', function (e) {
     e.preventDefault();
-    const email = document.getElementById('signupEmail').value.trim();
-    const password = document.getElementById('signupPassword').value;
+    const email = document.getElementById('signupEmail')?.value.trim();
+    const password = document.getElementById('signupPassword')?.value;
+    if (!email || !password) return;
     clearFormMessages();
     firebase.auth().createUserWithEmailAndPassword(email, password)
       .then(() => {
@@ -173,39 +235,45 @@ document.addEventListener('DOMContentLoaded', function () {
       })
       .catch((error) => {
         const signupError = document.getElementById('signupError');
-        signupError.textContent = error.message;
-        signupError.style.display = 'block';
+        if (signupError) {
+          signupError.textContent = error.message;
+          signupError.style.display = 'block';
+        }
       });
   });
 
-  // Close modal on outside click
-  window.onclick = function(event) {
-    if (event.target === modal) {
-      closeModal();
-    }
-  }
-  // ESC closes modal
-  document.addEventListener('keydown', function(event) {
-    if (event.key === "Escape") {
-      closeModal();
-    }
-  });
-
-  // Assign Google Sign-In and Reset handlers to all relevant buttons/links
   document.querySelectorAll('.google-login').forEach(btn => {
     btn.addEventListener('click', function(e) {
       e.preventDefault();
       const provider = new firebase.auth.GoogleAuthProvider();
       firebase.auth().signInWithPopup(provider)
-        .then((result) => {
-          alert("Google sign-in successful!");
-          window.location.href = "dashboard.html"; // redirect after login
+        .then(() => {
+          alert('Google sign-in successful!');
+          window.location.href = 'dashboard.html';
         })
         .catch((error) => {
-          alert("Google sign-in error: " + error.message);
+          alert('Google sign-in error: ' + error.message);
         });
     });
   });
+
+  document.querySelectorAll('.reset-password').forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      const email = prompt('Enter your email to reset your password:');
+      if (email) {
+        firebase.auth().sendPasswordResetEmail(email)
+          .then(() => {
+            alert('Password reset email sent!');
+          })
+          .catch((error) => {
+            alert('Reset error: ' + error.message);
+          });
+      }
+    });
+  });
+});
+
 const slideContainer = document.querySelector('.carousel-slide');
 const images = document.querySelectorAll('.carousel-slide img');
 const prevBtn = document.querySelector('.carousel-btn.prev');
@@ -215,56 +283,6 @@ const dotsContainer = document.querySelector('.carousel-dots');
 let currentIndex = 0;
   const captions = Array.from(images).map(img => img.dataset.caption);
 const captionEl = document.getElementById('carousel-caption'); // Make sure this exists in HTML
-
-
-// Create dots
-images.forEach((_, index) => {
-  const dot = document.createElement('span');
-  dot.addEventListener('click', () => goToSlide(index));
-  dotsContainer.appendChild(dot);
-});
-
-function updateCarousel() {
-  slideContainer.style.transform = `translateX(-${currentIndex * 100}%)`;
-  Array.from(dotsContainer.children).forEach(dot => dot.classList.remove('active'));
-  dotsContainer.children[currentIndex].classList.add('active');
-}
-
-function goToSlide(index) {
-  currentIndex = index;
-  updateCarousel();
-}
-
-function nextSlide() {
-  currentIndex = (currentIndex + 1) % images.length;
-  updateCarousel();
-}
-
-function prevSlide() {
-  currentIndex = (currentIndex - 1 + images.length) % images.length;
-  updateCarousel();
-}
-
-
-
-// Init
-updateCarousel();
-  document.querySelectorAll('.reset-password').forEach(link => {
-    link.addEventListener('click', function(e) {
-      e.preventDefault();
-      const email = prompt("Enter your email to reset your password:");
-      if (email) {
-        firebase.auth().sendPasswordResetEmail(email)
-          .then(() => {
-            alert("Password reset email sent!");
-          })
-          .catch((error) => {
-            alert("Reset error: " + error.message);
-          });
-      }
-    });
-  });
-});
 document.addEventListener("DOMContentLoaded", () => {
   const themeToggle = document.getElementById("themeToggle");
   const themeLabel = document.getElementById("themeLabel");
