@@ -18,24 +18,36 @@
   </section>
   <main class="planner">
     <form id="journey-form" class="planner-form">
-      <input type="text" id="from" placeholder="From" required>
-      <input type="text" id="to" placeholder="To" required>
+      <div class="form-row">
+        <div class="input-group">
+          <label for="from">From</label>
+          <input type="text" id="from" placeholder="Start location" required>
+        </div>
+        <div class="input-group">
+          <label for="to">To</label>
+          <input type="text" id="to" placeholder="Destination" required>
+        </div>
+      </div>
       <fieldset class="filters">
         <legend>Modes</legend>
-        <label><input type="checkbox" name="mode" value="bus" checked> Bus</label>
-        <label><input type="checkbox" name="mode" value="tube" checked> Tube</label>
-        <label><input type="checkbox" name="mode" value="dlr" checked> DLR</label>
-        <label><input type="checkbox" name="mode" value="overground" checked> Overground</label>
-        <label><input type="checkbox" name="mode" value="tram" checked> Tram</label>
-        <label><input type="checkbox" name="mode" value="river-bus" checked> River Bus</label>
+        <div class="checkbox-group">
+          <label><input type="checkbox" name="mode" value="bus" checked> Bus</label>
+          <label><input type="checkbox" name="mode" value="tube" checked> Tube</label>
+          <label><input type="checkbox" name="mode" value="dlr" checked> DLR</label>
+          <label><input type="checkbox" name="mode" value="overground" checked> Overground</label>
+          <label><input type="checkbox" name="mode" value="tram" checked> Tram</label>
+          <label><input type="checkbox" name="mode" value="river-bus" checked> River Bus</label>
+        </div>
       </fieldset>
       <fieldset class="filters">
         <legend>Accessibility</legend>
-        <label><input type="checkbox" name="accessibility" value="NoSolidStairs"> No solid stairs</label>
-        <label><input type="checkbox" name="accessibility" value="NoEscalators"> No escalators</label>
-        <label><input type="checkbox" name="accessibility" value="NoElevators"> No elevators</label>
-        <label><input type="checkbox" name="accessibility" value="StepFreeToVehicle"> Step-free to vehicle</label>
-        <label><input type="checkbox" name="accessibility" value="StepFreeToPlatform"> Step-free to platform</label>
+        <div class="checkbox-group">
+          <label><input type="checkbox" name="accessibility" value="NoSolidStairs"> No solid stairs</label>
+          <label><input type="checkbox" name="accessibility" value="NoEscalators"> No escalators</label>
+          <label><input type="checkbox" name="accessibility" value="NoElevators"> No elevators</label>
+          <label><input type="checkbox" name="accessibility" value="StepFreeToVehicle"> Step-free to vehicle</label>
+          <label><input type="checkbox" name="accessibility" value="StepFreeToPlatform"> Step-free to platform</label>
+        </div>
       </fieldset>
       <button type="submit">Search</button>
     </form>

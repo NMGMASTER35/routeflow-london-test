@@ -74,10 +74,17 @@ function bootstrapNavbar() {
     console.error('Failed to load authentication modal:', error);
   });
 
-  const container = document.getElementById('navbar-container');
+  let container = document.getElementById('navbar-container');
   if (!container) {
-    return;
+    container = document.createElement('div');
+    container.id = 'navbar-container';
+    document.body.insertBefore(container, document.body.firstChild);
   }
+
+  document.querySelectorAll('header.navbar, nav.navbar').forEach(el => el.remove());
+  document.getElementById('authModal')?.remove();
+  document.querySelector('.mobile-drawer')?.remove();
+  document.querySelector('.drawer-backdrop')?.remove();
 
   fetch(NAVBAR_SOURCE)
     .then(response => {
