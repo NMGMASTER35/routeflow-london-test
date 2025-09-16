@@ -7,7 +7,16 @@ const firebaseConfig = {
   messagingSenderId: "368346241440",
   appId: "1:368346241440:web:7cc87d551420459251ecc5"
 };
-firebase.initializeApp(firebaseConfig);
+
+let auth = null;
+if (typeof firebase !== 'undefined') {
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+  auth = firebase.auth();
+} else {
+  console.error('Firebase SDK not loaded; authentication is unavailable.');
+}
 
 // Newsletter form
 document.getElementById('newsletter-form')?.addEventListener('submit', function (e) {
@@ -62,49 +71,68 @@ function renderDropdown(user) {
   });
 }
 
+window.renderDropdown = renderDropdown;
+
 // Modal logic
 function closeModal() {
   const modal = document.getElementById('authModal');
   if (!modal) return;
-  modal.style.display = 'none';
+  modal.removeAttribute('data-open');
+  modal.setAttribute('aria-hidden', 'true');
+  document.body.removeAttribute('data-auth-modal-open');
   clearFormMessages();
   document.getElementById('loginForm')?.reset();
   document.getElementById('signupForm')?.reset();
+  document.getElementById('resetForm')?.reset();
 }
 function clearFormMessages() {
-  const loginError = document.getElementById('loginError');
-  if (loginError) loginError.style.display = 'none';
-  const signupError = document.getElementById('signupError');
-  if (signupError) signupError.style.display = 'none';
-  const resetError = document.getElementById('resetError');
-  if (resetError) resetError.style.display = 'none';
+  const clear = (id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = '';
+    el.setAttribute('hidden', '');
+  };
+  clear('loginError');
+  clear('signupError');
+  clear('resetError');
+  clear('resetSuccess');
 }
 // Initial auth state
-firebase.auth().onAuthStateChanged(function(user) {
+auth?.onAuthStateChanged(function(user) {
   renderDropdown(user);
 });
 document.addEventListener('DOMContentLoaded', function () {
-  renderDropdown(firebase.auth().currentUser);
+  renderDropdown(auth?.currentUser ?? null);
 
   const modal = document.getElementById('authModal');
   const closeModalEl = document.getElementById('closeModal');
   const loginContainer = document.getElementById('loginFormContainer');
   const signupContainer = document.getElementById('signupFormContainer');
+  const resetContainer = document.getElementById('resetFormContainer');
+
+  const toggleHidden = (element, hidden) => {
+    element?.toggleAttribute('hidden', hidden);
+  };
+
+  const focusFirstField = (container) => {
+    if (!container) return;
+    const focusTarget = container.querySelector('input, button, [tabindex]');
+    if (focusTarget) {
+      requestAnimationFrame(() => focusTarget.focus());
+    }
+  };
 
   const showAuthModal = (mode) => {
     if (!modal) return;
-    if (loginContainer) {
-      loginContainer.style.display = mode === 'login' ? '' : 'none';
-    }
-    if (signupContainer) {
-      signupContainer.style.display = mode === 'signup' ? '' : 'none';
-    }
-    const resetContainer = document.getElementById('resetFormContainer');
-    if (resetContainer && mode !== 'reset') {
-      resetContainer.style.display = 'none';
-    }
-    modal.style.display = 'block';
+    toggleHidden(loginContainer, mode !== 'login');
+    toggleHidden(signupContainer, mode !== 'signup');
+    toggleHidden(resetContainer, mode !== 'reset');
+    modal.setAttribute('data-open', 'true');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.dataset.authModalOpen = 'true';
     clearFormMessages();
+    const activeContainer = mode === 'signup' ? signupContainer : mode === 'reset' ? resetContainer : loginContainer;
+    focusFirstField(activeContainer);
   };
 
   const handleAuthAction = (action) => {
@@ -118,12 +146,18 @@ document.addEventListener('DOMContentLoaded', function () {
         showAuthModal('signup');
         break;
       case 'logout':
-        firebase.auth().signOut().then(() => {
+        if (!auth) {
+          console.error('Sign-out requested but Firebase auth is unavailable.');
+          return;
+        }
+        auth.signOut().then(() => {
           renderDropdown(null);
+        }).catch(error => {
+          console.error('Failed to sign out:', error);
         });
         break;
       case 'profile': {
-        const user = firebase.auth().currentUser;
+        const user = auth?.currentUser;
         if (user) {
           window.location.href = 'profile.html';
         } else {
@@ -132,7 +166,7 @@ document.addEventListener('DOMContentLoaded', function () {
         break;
       }
       case 'settings': {
-        const user = firebase.auth().currentUser;
+        const user = auth?.currentUser;
         if (user) {
           window.location.href = 'settings.html';
         } else {
@@ -169,7 +203,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
     document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && modal.style.display === 'block') {
+      if (event.key === 'Escape' && modal.getAttribute('data-open') === 'true') {
         closeModal();
       }
     });
@@ -192,14 +226,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   document.getElementById('showReset')?.addEventListener('click', (event) => {
     event.preventDefault();
-    if (!modal) return;
-    if (loginContainer) loginContainer.style.display = 'none';
-    if (signupContainer) signupContainer.style.display = 'none';
-    const resetContainer = document.getElementById('resetFormContainer');
-    if (resetContainer) {
-      resetContainer.style.display = '';
-    }
-    clearFormMessages();
+    showAuthModal('reset');
   });
 
   document.getElementById('loginForm')?.addEventListener('submit', function (e) {
@@ -208,16 +235,24 @@ document.addEventListener('DOMContentLoaded', function () {
     const password = document.getElementById('loginPassword')?.value;
     if (!email || !password) return;
     clearFormMessages();
-    firebase.auth().signInWithEmailAndPassword(email, password)
+    if (!auth) {
+      const loginError = document.getElementById('loginError');
+      if (loginError) {
+        loginError.textContent = 'Authentication is temporarily unavailable. Please try again shortly.';
+        loginError.removeAttribute('hidden');
+      }
+      return;
+    }
+    auth.signInWithEmailAndPassword(email, password)
       .then(() => {
-        renderDropdown(firebase.auth().currentUser);
+        renderDropdown(auth.currentUser);
         closeModal();
       })
       .catch((error) => {
         const loginError = document.getElementById('loginError');
         if (loginError) {
           loginError.textContent = error.message;
-          loginError.style.display = 'block';
+          loginError.removeAttribute('hidden');
         }
       });
   });
@@ -228,49 +263,84 @@ document.addEventListener('DOMContentLoaded', function () {
     const password = document.getElementById('signupPassword')?.value;
     if (!email || !password) return;
     clearFormMessages();
-    firebase.auth().createUserWithEmailAndPassword(email, password)
+    if (!auth) {
+      const signupError = document.getElementById('signupError');
+      if (signupError) {
+        signupError.textContent = 'Authentication is temporarily unavailable. Please try again shortly.';
+        signupError.removeAttribute('hidden');
+      }
+      return;
+    }
+    auth.createUserWithEmailAndPassword(email, password)
       .then(() => {
-        renderDropdown(firebase.auth().currentUser);
+        renderDropdown(auth.currentUser);
         closeModal();
       })
       .catch((error) => {
         const signupError = document.getElementById('signupError');
         if (signupError) {
           signupError.textContent = error.message;
-          signupError.style.display = 'block';
+          signupError.removeAttribute('hidden');
         }
       });
   });
 
-  document.querySelectorAll('.google-login').forEach(btn => {
+  document.querySelectorAll('.google-login, .google-btn').forEach(btn => {
     btn.addEventListener('click', function(e) {
       e.preventDefault();
+      if (!auth) {
+        alert('Authentication is temporarily unavailable. Please try again shortly.');
+        return;
+      }
       const provider = new firebase.auth.GoogleAuthProvider();
-      firebase.auth().signInWithPopup(provider)
+      auth.signInWithPopup(provider)
         .then(() => {
-          alert('Google sign-in successful!');
+          renderDropdown(auth.currentUser);
+          closeModal();
           window.location.href = 'dashboard.html';
         })
         .catch((error) => {
-          alert('Google sign-in error: ' + error.message);
+          const targetError = !loginContainer?.hasAttribute('hidden')
+            ? document.getElementById('loginError')
+            : document.getElementById('signupError');
+          if (targetError) {
+            targetError.textContent = error.message;
+            targetError.removeAttribute('hidden');
+          } else {
+            alert('Google sign-in error: ' + error.message);
+          }
         });
     });
   });
 
-  document.querySelectorAll('.reset-password').forEach(link => {
-    link.addEventListener('click', function(e) {
-      e.preventDefault();
-      const email = prompt('Enter your email to reset your password:');
-      if (email) {
-        firebase.auth().sendPasswordResetEmail(email)
-          .then(() => {
-            alert('Password reset email sent!');
-          })
-          .catch((error) => {
-            alert('Reset error: ' + error.message);
-          });
+  document.getElementById('resetForm')?.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const email = document.getElementById('resetEmail')?.value.trim();
+    if (!email) return;
+    clearFormMessages();
+    if (!auth) {
+      const resetError = document.getElementById('resetError');
+      if (resetError) {
+        resetError.textContent = 'Authentication is temporarily unavailable. Please try again shortly.';
+        resetError.removeAttribute('hidden');
       }
-    });
+      return;
+    }
+    auth.sendPasswordResetEmail(email)
+      .then(() => {
+        const resetSuccess = document.getElementById('resetSuccess');
+        if (resetSuccess) {
+          resetSuccess.textContent = 'Check your inbox for the reset link.';
+          resetSuccess.removeAttribute('hidden');
+        }
+      })
+      .catch((error) => {
+        const resetError = document.getElementById('resetError');
+        if (resetError) {
+          resetError.textContent = error.message;
+          resetError.removeAttribute('hidden');
+        }
+      });
   });
 });
 

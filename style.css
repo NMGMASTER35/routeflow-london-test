@@ -819,6 +819,218 @@ body.dark-mode .journey-option {
 .journey-option ol { padding-left: 1.2rem; }
 
 /*-------------------------------
+  Authentication Modal
+-------------------------------*/
+body[data-auth-modal-open="true"] {
+  overflow: hidden;
+}
+
+#authModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  padding: 1.5rem;
+  background: rgba(17, 24, 39, 0.55);
+  backdrop-filter: blur(2px);
+  align-items: center;
+  justify-content: center;
+}
+
+#authModal[data-open="true"] {
+  display: flex;
+}
+
+.auth-modal__dialog {
+  position: relative;
+  width: min(420px, 100%);
+  background: var(--background-light);
+  color: var(--foreground-light);
+  border-radius: 16px;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.22);
+  padding: 2rem 2rem 1.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+body.dark-mode #authModal .auth-modal__dialog {
+  background: #1f2937;
+  color: var(--foreground-dark);
+}
+
+.auth-modal__close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 1.75rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.auth-modal__close:hover {
+  transform: scale(1.05);
+  color: var(--accent-blue);
+}
+
+.auth-modal__panel[hidden] {
+  display: none;
+}
+
+.auth-modal__title {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.auth-modal__subtitle {
+  margin: 0;
+  font-size: 0.98rem;
+  color: rgba(15, 23, 42, 0.72);
+}
+
+body.dark-mode #authModal .auth-modal__subtitle {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.auth-modal__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-top: 0.75rem;
+}
+
+.auth-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.95rem;
+  color: inherit;
+}
+
+.auth-modal__field input {
+  border-radius: 10px;
+  border: 1.5px solid rgba(15, 23, 42, 0.15);
+  padding: 0.75rem 0.9rem;
+  font-size: 1rem;
+  background: var(--background-light);
+  color: inherit;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+body.dark-mode #authModal .auth-modal__field input {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.auth-modal__field input:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(41, 121, 255, 0.25);
+}
+
+.auth-modal__primary,
+.auth-modal__provider {
+  border-radius: 10px;
+  padding: 0.85rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.auth-modal__primary {
+  background: var(--accent-blue);
+  color: #fff;
+  border: none;
+}
+
+.auth-modal__primary:hover {
+  background: var(--accent-blue-dark);
+  transform: translateY(-1px);
+}
+
+.auth-modal__provider {
+  background: #fff;
+  color: #1f2933;
+  border: 1.5px solid rgba(15, 23, 42, 0.12);
+}
+
+.auth-modal__provider:hover {
+  background: rgba(15, 23, 42, 0.04);
+  color: #0f172a;
+  transform: translateY(-1px);
+}
+
+body.dark-mode #authModal .auth-modal__provider {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.auth-modal__error,
+.auth-modal__message {
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.95rem;
+}
+
+.auth-modal__error {
+  background: rgba(211, 47, 47, 0.1);
+  color: #b71c1c;
+  border-left: 4px solid #d32f2f;
+}
+
+body.dark-mode #authModal .auth-modal__error {
+  background: rgba(239, 83, 80, 0.18);
+  color: #ffb3b8;
+  border-color: rgba(239, 83, 80, 0.6);
+}
+
+.auth-modal__message {
+  background: rgba(46, 125, 50, 0.12);
+  color: #1b5e20;
+  border-left: 4px solid #2e7d32;
+}
+
+body.dark-mode #authModal .auth-modal__message {
+  background: rgba(129, 199, 132, 0.18);
+  color: #c8facc;
+  border-color: rgba(129, 199, 132, 0.6);
+}
+
+.auth-modal__links,
+.auth-modal__switch {
+  font-size: 0.95rem;
+  margin: 0;
+  text-align: center;
+}
+
+.auth-modal__link {
+  color: var(--accent-blue);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-modal__link:hover {
+  text-decoration: underline;
+}
+
+body.dark-mode #authModal .auth-modal__link {
+  color: #90c2ff;
+}
+
+@media (max-width: 520px) {
+  .auth-modal__dialog {
+    padding: 1.6rem 1.4rem 1.4rem;
+  }
+}
+
+/*-------------------------------
   Responsive Design
 -------------------------------*/
 @media (max-width: 700px) {
