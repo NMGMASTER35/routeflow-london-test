@@ -97,6 +97,32 @@ function clearFormMessages() {
   clear('resetError');
   clear('resetSuccess');
 }
+
+function waitForElement(selector, timeout = 10000) {
+  const existing = document.querySelector(selector);
+  if (existing) {
+    return Promise.resolve(existing);
+  }
+
+  return new Promise((resolve, reject) => {
+    const root = document.body || document.documentElement;
+    const observer = new MutationObserver(() => {
+      const element = document.querySelector(selector);
+      if (element) {
+        observer.disconnect();
+        window.clearTimeout(timer);
+        resolve(element);
+      }
+    });
+
+    observer.observe(root, { childList: true, subtree: true });
+
+    const timer = window.setTimeout(() => {
+      observer.disconnect();
+      reject(new Error(`Timed out waiting for element: ${selector}`));
+    }, timeout);
+  });
+}
 // Initial auth state
 auth?.onAuthStateChanged(function(user) {
   renderDropdown(user);
@@ -104,14 +130,9 @@ auth?.onAuthStateChanged(function(user) {
 document.addEventListener('DOMContentLoaded', function () {
   renderDropdown(auth?.currentUser ?? null);
 
-  const modal = document.getElementById('authModal');
-  const closeModalEl = document.getElementById('closeModal');
-  const loginContainer = document.getElementById('loginFormContainer');
-  const signupContainer = document.getElementById('signupFormContainer');
-  const resetContainer = document.getElementById('resetFormContainer');
-
   const toggleHidden = (element, hidden) => {
-    element?.toggleAttribute('hidden', hidden);
+    if (!element) return;
+    element.toggleAttribute('hidden', hidden);
   };
 
   const focusFirstField = (container) => {
@@ -122,17 +143,51 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   };
 
+  const waitForAuthModal = (() => {
+    let pending = null;
+    return () => {
+      const existing = document.getElementById('authModal');
+      if (existing) {
+        return Promise.resolve(existing);
+      }
+      if (pending) {
+        return pending;
+      }
+      pending = waitForElement('#authModal').finally(() => {
+        pending = null;
+      });
+      return pending;
+    };
+  })();
+
   const showAuthModal = (mode) => {
-    if (!modal) return;
-    toggleHidden(loginContainer, mode !== 'login');
-    toggleHidden(signupContainer, mode !== 'signup');
-    toggleHidden(resetContainer, mode !== 'reset');
-    modal.setAttribute('data-open', 'true');
-    modal.setAttribute('aria-hidden', 'false');
-    document.body.dataset.authModalOpen = 'true';
-    clearFormMessages();
-    const activeContainer = mode === 'signup' ? signupContainer : mode === 'reset' ? resetContainer : loginContainer;
-    focusFirstField(activeContainer);
+    return waitForAuthModal()
+      .then((modal) => {
+        const loginContainer = modal.querySelector('#loginFormContainer');
+        const signupContainer = modal.querySelector('#signupFormContainer');
+        const resetContainer = modal.querySelector('#resetFormContainer');
+
+        toggleHidden(loginContainer, mode !== 'login');
+        toggleHidden(signupContainer, mode !== 'signup');
+        toggleHidden(resetContainer, mode !== 'reset');
+
+        modal.setAttribute('data-open', 'true');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.dataset.authModalOpen = 'true';
+        clearFormMessages();
+
+        const activeContainer =
+          mode === 'signup' ? signupContainer :
+          mode === 'reset' ? resetContainer :
+          loginContainer;
+
+        focusFirstField(activeContainer);
+        return modal;
+      })
+      .catch((error) => {
+        console.error('Failed to open authentication modal:', error);
+        alert('Authentication is temporarily unavailable. Please try again later.');
+      });
   };
 
   const handleAuthAction = (action) => {
@@ -174,6 +229,16 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         break;
       }
+      case 'admin': {
+        const user = auth?.currentUser;
+        if (user) {
+          window.location.href = 'admin.html';
+        } else {
+          window.dispatchEvent(new Event('navbar:close-overlays'));
+          showAuthModal('login');
+        }
+        break;
+      }
       default:
         break;
     }
@@ -195,99 +260,53 @@ document.addEventListener('DOMContentLoaded', function () {
     handleAuthAction(action);
   });
 
-  if (modal) {
-    closeModalEl?.addEventListener('click', closeModal);
-    modal.addEventListener('click', (event) => {
-      if (event.target === modal) {
-        closeModal();
-      }
-    });
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && modal.getAttribute('data-open') === 'true') {
-        closeModal();
-      }
-    });
-  }
+  document.addEventListener('click', (event) => {
+    if (event.defaultPrevented) return;
 
-  document.getElementById('showSignup')?.addEventListener('click', (event) => {
-    event.preventDefault();
-    showAuthModal('signup');
-  });
-
-  document.getElementById('showLogin')?.addEventListener('click', (event) => {
-    event.preventDefault();
-    showAuthModal('login');
-  });
-
-  document.getElementById('showLoginFromReset')?.addEventListener('click', (event) => {
-    event.preventDefault();
-    showAuthModal('login');
-  });
-
-  document.getElementById('showReset')?.addEventListener('click', (event) => {
-    event.preventDefault();
-    showAuthModal('reset');
-  });
-
-  document.getElementById('loginForm')?.addEventListener('submit', function (e) {
-    e.preventDefault();
-    const email = document.getElementById('loginEmail')?.value.trim();
-    const password = document.getElementById('loginPassword')?.value;
-    if (!email || !password) return;
-    clearFormMessages();
-    if (!auth) {
-      const loginError = document.getElementById('loginError');
-      if (loginError) {
-        loginError.textContent = 'Authentication is temporarily unavailable. Please try again shortly.';
-        loginError.removeAttribute('hidden');
-      }
+    const closeButton = event.target.closest('#closeModal');
+    if (closeButton) {
+      event.preventDefault();
+      closeModal();
       return;
     }
-    auth.signInWithEmailAndPassword(email, password)
-      .then(() => {
-        renderDropdown(auth.currentUser);
-        closeModal();
-      })
-      .catch((error) => {
-        const loginError = document.getElementById('loginError');
-        if (loginError) {
-          loginError.textContent = error.message;
-          loginError.removeAttribute('hidden');
-        }
-      });
-  });
 
-  document.getElementById('signupForm')?.addEventListener('submit', function (e) {
-    e.preventDefault();
-    const email = document.getElementById('signupEmail')?.value.trim();
-    const password = document.getElementById('signupPassword')?.value;
-    if (!email || !password) return;
-    clearFormMessages();
-    if (!auth) {
-      const signupError = document.getElementById('signupError');
-      if (signupError) {
-        signupError.textContent = 'Authentication is temporarily unavailable. Please try again shortly.';
-        signupError.removeAttribute('hidden');
-      }
+    const modal = document.getElementById('authModal');
+    if (modal && event.target === modal) {
+      closeModal();
       return;
     }
-    auth.createUserWithEmailAndPassword(email, password)
-      .then(() => {
-        renderDropdown(auth.currentUser);
-        closeModal();
-      })
-      .catch((error) => {
-        const signupError = document.getElementById('signupError');
-        if (signupError) {
-          signupError.textContent = error.message;
-          signupError.removeAttribute('hidden');
-        }
-      });
-  });
 
-  document.querySelectorAll('.google-login, .google-btn').forEach(btn => {
-    btn.addEventListener('click', function(e) {
-      e.preventDefault();
+    const showSignup = event.target.closest('#showSignup');
+    if (showSignup) {
+      event.preventDefault();
+      showAuthModal('signup');
+      return;
+    }
+
+    const showLogin = event.target.closest('#showLogin');
+    if (showLogin) {
+      event.preventDefault();
+      showAuthModal('login');
+      return;
+    }
+
+    const showLoginFromReset = event.target.closest('#showLoginFromReset');
+    if (showLoginFromReset) {
+      event.preventDefault();
+      showAuthModal('login');
+      return;
+    }
+
+    const showReset = event.target.closest('#showReset');
+    if (showReset) {
+      event.preventDefault();
+      showAuthModal('reset');
+      return;
+    }
+
+    const googleTrigger = event.target.closest('.google-login, .google-btn');
+    if (googleTrigger) {
+      event.preventDefault();
       if (!auth) {
         alert('Authentication is temporarily unavailable. Please try again shortly.');
         return;
@@ -300,6 +319,7 @@ document.addEventListener('DOMContentLoaded', function () {
           window.location.href = 'dashboard.html';
         })
         .catch((error) => {
+          const loginContainer = document.getElementById('loginFormContainer');
           const targetError = !loginContainer?.hasAttribute('hidden')
             ? document.getElementById('loginError')
             : document.getElementById('signupError');
@@ -310,37 +330,108 @@ document.addEventListener('DOMContentLoaded', function () {
             alert('Google sign-in error: ' + error.message);
           }
         });
-    });
+    }
   });
 
-  document.getElementById('resetForm')?.addEventListener('submit', function (e) {
-    e.preventDefault();
-    const email = document.getElementById('resetEmail')?.value.trim();
-    if (!email) return;
-    clearFormMessages();
-    if (!auth) {
-      const resetError = document.getElementById('resetError');
-      if (resetError) {
-        resetError.textContent = 'Authentication is temporarily unavailable. Please try again shortly.';
-        resetError.removeAttribute('hidden');
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    const modal = document.getElementById('authModal');
+    if (modal?.getAttribute('data-open') === 'true') {
+      closeModal();
+    }
+  });
+
+  document.addEventListener('submit', (event) => {
+    const form = event.target;
+    if (!(form instanceof HTMLFormElement)) return;
+
+    if (form.id === 'loginForm') {
+      event.preventDefault();
+      const email = document.getElementById('loginEmail')?.value.trim();
+      const password = document.getElementById('loginPassword')?.value;
+      if (!email || !password) return;
+      clearFormMessages();
+      if (!auth) {
+        const loginError = document.getElementById('loginError');
+        if (loginError) {
+          loginError.textContent = 'Authentication is temporarily unavailable. Please try again shortly.';
+          loginError.removeAttribute('hidden');
+        }
+        return;
       }
+      auth.signInWithEmailAndPassword(email, password)
+        .then(() => {
+          renderDropdown(auth.currentUser);
+          closeModal();
+        })
+        .catch((error) => {
+          const loginError = document.getElementById('loginError');
+          if (loginError) {
+            loginError.textContent = error.message;
+            loginError.removeAttribute('hidden');
+          }
+        });
       return;
     }
-    auth.sendPasswordResetEmail(email)
-      .then(() => {
-        const resetSuccess = document.getElementById('resetSuccess');
-        if (resetSuccess) {
-          resetSuccess.textContent = 'Check your inbox for the reset link.';
-          resetSuccess.removeAttribute('hidden');
+
+    if (form.id === 'signupForm') {
+      event.preventDefault();
+      const email = document.getElementById('signupEmail')?.value.trim();
+      const password = document.getElementById('signupPassword')?.value;
+      if (!email || !password) return;
+      clearFormMessages();
+      if (!auth) {
+        const signupError = document.getElementById('signupError');
+        if (signupError) {
+          signupError.textContent = 'Authentication is temporarily unavailable. Please try again shortly.';
+          signupError.removeAttribute('hidden');
         }
-      })
-      .catch((error) => {
+        return;
+      }
+      auth.createUserWithEmailAndPassword(email, password)
+        .then(() => {
+          renderDropdown(auth.currentUser);
+          closeModal();
+        })
+        .catch((error) => {
+          const signupError = document.getElementById('signupError');
+          if (signupError) {
+            signupError.textContent = error.message;
+            signupError.removeAttribute('hidden');
+          }
+        });
+      return;
+    }
+
+    if (form.id === 'resetForm') {
+      event.preventDefault();
+      const email = document.getElementById('resetEmail')?.value.trim();
+      if (!email) return;
+      clearFormMessages();
+      if (!auth) {
         const resetError = document.getElementById('resetError');
         if (resetError) {
-          resetError.textContent = error.message;
+          resetError.textContent = 'Authentication is temporarily unavailable. Please try again shortly.';
           resetError.removeAttribute('hidden');
         }
-      });
+        return;
+      }
+      auth.sendPasswordResetEmail(email)
+        .then(() => {
+          const resetSuccess = document.getElementById('resetSuccess');
+          if (resetSuccess) {
+            resetSuccess.textContent = 'Check your inbox for the reset link.';
+            resetSuccess.removeAttribute('hidden');
+          }
+        })
+        .catch((error) => {
+          const resetError = document.getElementById('resetError');
+          if (resetError) {
+            resetError.textContent = error.message;
+            resetError.removeAttribute('hidden');
+          }
+        });
+    }
   });
 });
 
