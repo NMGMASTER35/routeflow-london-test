@@ -30,35 +30,142 @@ document.getElementById('newsletter-form')?.addEventListener('submit', function 
 });
 
 // --- Auth Dropdown ---
+const AUTH_VIEW_IDS = {
+  login: 'loginFormContainer',
+  signup: 'signupFormContainer',
+  reset: 'resetFormContainer',
+  admin: 'adminFormContainer'
+};
+
+function setElementHidden(element, hidden) {
+  if (!element) return;
+  if (hidden) {
+    element.setAttribute('hidden', '');
+    element.setAttribute('aria-hidden', 'true');
+  } else {
+    element.removeAttribute('hidden');
+    element.removeAttribute('aria-hidden');
+  }
+}
+
+function showMessage(id, message) {
+  const element = document.getElementById(id);
+  if (!element) return;
+  element.textContent = message ?? '';
+  if (message) {
+    element.removeAttribute('hidden');
+  } else {
+    element.setAttribute('hidden', '');
+  }
+}
+
+function clearFormMessages() {
+  ['loginError', 'signupError', 'resetError', 'resetSuccess', 'adminLoginError'].forEach(id => {
+    showMessage(id, '');
+  });
+}
+
+function resetAuthForms() {
+  ['loginForm', 'signupForm', 'resetForm', 'adminLoginForm'].forEach(id => {
+    const form = document.getElementById(id);
+    form?.reset();
+  });
+}
+
+function closeModal() {
+  const modal = document.getElementById('authModal');
+  if (!modal) return;
+  modal.removeAttribute('data-open');
+  modal.setAttribute('aria-hidden', 'true');
+  delete document.body.dataset.authModalOpen;
+  clearFormMessages();
+  resetAuthForms();
+}
+
+function focusFirstField(container) {
+  if (!container) return;
+  const focusTarget = container.querySelector('input, button, [tabindex]');
+  if (focusTarget) {
+    requestAnimationFrame(() => focusTarget.focus());
+  }
+}
+
+function setActiveAuthView(mode) {
+  let activeContainer = null;
+  Object.entries(AUTH_VIEW_IDS).forEach(([key, id]) => {
+    const container = document.getElementById(id);
+    const shouldHide = key !== mode;
+    if (container) {
+      container.toggleAttribute('hidden', shouldHide);
+      if (!shouldHide) {
+        activeContainer = container;
+      }
+    }
+  });
+  return activeContainer;
+}
+
+function showAuthModal(mode = 'login') {
+  const modal = document.getElementById('authModal');
+  if (!modal) {
+    const handleReady = () => {
+      document.removeEventListener('auth-modal:ready', handleReady);
+      showAuthModal(mode);
+    };
+    document.addEventListener('auth-modal:ready', handleReady, { once: true });
+    return;
+  }
+
+  clearFormMessages();
+  const activeContainer = setActiveAuthView(mode);
+  modal.setAttribute('data-open', 'true');
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.dataset.authModalOpen = 'true';
+  focusFirstField(activeContainer);
+}
+
+window.openModal = showAuthModal;
+
+async function updateAdminVisibility(user) {
+  const adminTargets = document.querySelectorAll('[data-requires-admin]');
+  if (!adminTargets.length) {
+    return;
+  }
+
+  if (!user) {
+    window.__lastAuthIsAdmin = false;
+    adminTargets.forEach(target => setElementHidden(target, true));
+    return;
+  }
+
+  try {
+    const tokenResult = await user.getIdTokenResult();
+    const isAdmin = Boolean(tokenResult?.claims?.admin);
+    window.__lastAuthIsAdmin = isAdmin;
+    adminTargets.forEach(target => setElementHidden(target, !isAdmin));
+    document.dispatchEvent(new CustomEvent('auth:admin-state', {
+      detail: { isAdmin }
+    }));
+  } catch (error) {
+    console.error('Failed to determine administrator privileges:', error);
+    window.__lastAuthIsAdmin = undefined;
+    adminTargets.forEach(target => setElementHidden(target, true));
+  }
+}
+
 function renderDropdown(user) {
   window.__lastAuthUser = user ?? null;
 
   const signedOutSections = document.querySelectorAll('[data-auth-state="signed-out"]');
   const signedInSections = document.querySelectorAll('[data-auth-state="signed-in"]');
 
-  if (!signedOutSections.length && !signedInSections.length) {
-    return;
-  }
-
-  signedOutSections.forEach(section => {
-    if (user) {
-      section.setAttribute('hidden', '');
-    } else {
-      section.removeAttribute('hidden');
-    }
-  });
-
-  signedInSections.forEach(section => {
-    if (user) {
-      section.removeAttribute('hidden');
-    } else {
-      section.setAttribute('hidden', '');
-    }
-  });
+  signedOutSections.forEach(section => setElementHidden(section, !!user));
+  signedInSections.forEach(section => setElementHidden(section, !user));
 
   document.querySelectorAll('[data-profile-toggle]').forEach(toggle => {
     toggle.setAttribute('aria-expanded', 'false');
   });
+
   document.querySelectorAll('[data-profile-menu]').forEach(menu => {
     menu.setAttribute('data-open', 'false');
     menu.setAttribute('aria-hidden', 'true');
@@ -69,288 +176,312 @@ function renderDropdown(user) {
   document.querySelectorAll('[data-profile-label]').forEach(label => {
     label.textContent = user ? displayName : 'Account';
   });
+
+  updateAdminVisibility(user);
 }
 
 window.renderDropdown = renderDropdown;
 
-// Modal logic
-function closeModal() {
-  const modal = document.getElementById('authModal');
-  if (!modal) return;
-  modal.removeAttribute('data-open');
-  modal.setAttribute('aria-hidden', 'true');
-  document.body.removeAttribute('data-auth-modal-open');
-  clearFormMessages();
-  document.getElementById('loginForm')?.reset();
-  document.getElementById('signupForm')?.reset();
-  document.getElementById('resetForm')?.reset();
-}
-function clearFormMessages() {
-  const clear = (id) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.textContent = '';
-    el.setAttribute('hidden', '');
-  };
-  clear('loginError');
-  clear('signupError');
-  clear('resetError');
-  clear('resetSuccess');
-}
-// Initial auth state
-auth?.onAuthStateChanged(function(user) {
-  renderDropdown(user);
-});
-document.addEventListener('DOMContentLoaded', function () {
-  renderDropdown(auth?.currentUser ?? null);
-
-  const modal = document.getElementById('authModal');
-  const closeModalEl = document.getElementById('closeModal');
-  const loginContainer = document.getElementById('loginFormContainer');
-  const signupContainer = document.getElementById('signupFormContainer');
-  const resetContainer = document.getElementById('resetFormContainer');
-
-  const toggleHidden = (element, hidden) => {
-    element?.toggleAttribute('hidden', hidden);
-  };
-
-  const focusFirstField = (container) => {
-    if (!container) return;
-    const focusTarget = container.querySelector('input, button, [tabindex]');
-    if (focusTarget) {
-      requestAnimationFrame(() => focusTarget.focus());
-    }
-  };
-
-  const showAuthModal = (mode) => {
-    if (!modal) return;
-    toggleHidden(loginContainer, mode !== 'login');
-    toggleHidden(signupContainer, mode !== 'signup');
-    toggleHidden(resetContainer, mode !== 'reset');
-    modal.setAttribute('data-open', 'true');
-    modal.setAttribute('aria-hidden', 'false');
-    document.body.dataset.authModalOpen = 'true';
-    clearFormMessages();
-    const activeContainer = mode === 'signup' ? signupContainer : mode === 'reset' ? resetContainer : loginContainer;
-    focusFirstField(activeContainer);
-  };
-
-  const handleAuthAction = (action) => {
-    switch (action) {
-      case 'login':
-        window.dispatchEvent(new Event('navbar:close-overlays'));
-        showAuthModal('login');
-        break;
-      case 'signup':
-        window.dispatchEvent(new Event('navbar:close-overlays'));
-        showAuthModal('signup');
-        break;
-      case 'logout':
-        if (!auth) {
-          console.error('Sign-out requested but Firebase auth is unavailable.');
-          return;
-        }
-        auth.signOut().then(() => {
-          renderDropdown(null);
-        }).catch(error => {
-          console.error('Failed to sign out:', error);
-        });
-        break;
-      case 'profile': {
-        const user = auth?.currentUser;
-        if (user) {
-          window.location.href = 'profile.html';
-        } else {
-          alert('Not signed in');
-        }
-        break;
-      }
-      case 'settings': {
-        const user = auth?.currentUser;
-        if (user) {
-          window.location.href = 'settings.html';
-        } else {
-          alert('Not signed in');
-        }
-        break;
-      }
-      case 'admin': {
-        const user = auth?.currentUser;
-        if (user) {
-          window.location.href = 'admin.html';
-        } else {
-          alert('Not signed in');
-        }
-        break;
-      }
-      default:
-        break;
-    }
-  };
-
-  document.addEventListener('navbar:auth-action', (event) => {
-    const action = event.detail?.action;
-    if (!action) return;
-    handleAuthAction(action);
-  });
-
-  document.body.addEventListener('click', (event) => {
-    if (event.defaultPrevented) return;
-    const trigger = event.target.closest('[data-auth-action]');
-    if (!trigger) return;
-    const action = trigger.dataset.authAction;
-    if (!action) return;
-    event.preventDefault();
-    handleAuthAction(action);
-  });
-
-  if (modal) {
-    closeModalEl?.addEventListener('click', closeModal);
-    modal.addEventListener('click', (event) => {
-      if (event.target === modal) {
-        closeModal();
-      }
-    });
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && modal.getAttribute('data-open') === 'true') {
-        closeModal();
-      }
-    });
-  }
-
-  document.getElementById('showSignup')?.addEventListener('click', (event) => {
-    event.preventDefault();
-    showAuthModal('signup');
-  });
-
-  document.getElementById('showLogin')?.addEventListener('click', (event) => {
-    event.preventDefault();
-    showAuthModal('login');
-  });
-
-  document.getElementById('showLoginFromReset')?.addEventListener('click', (event) => {
-    event.preventDefault();
-    showAuthModal('login');
-  });
-
-  document.getElementById('showReset')?.addEventListener('click', (event) => {
-    event.preventDefault();
-    showAuthModal('reset');
-  });
-
-  document.getElementById('loginForm')?.addEventListener('submit', function (e) {
-    e.preventDefault();
-    const email = document.getElementById('loginEmail')?.value.trim();
-    const password = document.getElementById('loginPassword')?.value;
-    if (!email || !password) return;
-    clearFormMessages();
-    if (!auth) {
-      const loginError = document.getElementById('loginError');
-      if (loginError) {
-        loginError.textContent = 'Authentication is temporarily unavailable. Please try again shortly.';
-        loginError.removeAttribute('hidden');
-      }
-      return;
-    }
-    auth.signInWithEmailAndPassword(email, password)
-      .then(() => {
-        renderDropdown(auth.currentUser);
-        closeModal();
-      })
-      .catch((error) => {
-        const loginError = document.getElementById('loginError');
-        if (loginError) {
-          loginError.textContent = error.message;
-          loginError.removeAttribute('hidden');
-        }
-      });
-  });
-
-  document.getElementById('signupForm')?.addEventListener('submit', function (e) {
-    e.preventDefault();
-    const email = document.getElementById('signupEmail')?.value.trim();
-    const password = document.getElementById('signupPassword')?.value;
-    if (!email || !password) return;
-    clearFormMessages();
-    if (!auth) {
-      const signupError = document.getElementById('signupError');
-      if (signupError) {
-        signupError.textContent = 'Authentication is temporarily unavailable. Please try again shortly.';
-        signupError.removeAttribute('hidden');
-      }
-      return;
-    }
-    auth.createUserWithEmailAndPassword(email, password)
-      .then(() => {
-        renderDropdown(auth.currentUser);
-        closeModal();
-      })
-      .catch((error) => {
-        const signupError = document.getElementById('signupError');
-        if (signupError) {
-          signupError.textContent = error.message;
-          signupError.removeAttribute('hidden');
-        }
-      });
-  });
-
-  document.querySelectorAll('.google-login, .google-btn').forEach(btn => {
-    btn.addEventListener('click', function(e) {
-      e.preventDefault();
+function handleAuthAction(action) {
+  switch (action) {
+    case 'login':
+      window.dispatchEvent(new Event('navbar:close-overlays'));
+      showAuthModal('login');
+      break;
+    case 'signup':
+      window.dispatchEvent(new Event('navbar:close-overlays'));
+      showAuthModal('signup');
+      break;
+    case 'admin-login':
+      window.dispatchEvent(new Event('navbar:close-overlays'));
+      showAuthModal('admin');
+      break;
+    case 'logout':
       if (!auth) {
-        alert('Authentication is temporarily unavailable. Please try again shortly.');
+        console.error('Sign-out requested but Firebase auth is unavailable.');
         return;
       }
-      const provider = new firebase.auth.GoogleAuthProvider();
-      auth.signInWithPopup(provider)
+      auth.signOut()
         .then(() => {
-          renderDropdown(auth.currentUser);
-          closeModal();
-          window.location.href = 'dashboard.html';
+          window.__lastAuthIsAdmin = false;
+          renderDropdown(null);
         })
-        .catch((error) => {
-          const targetError = !loginContainer?.hasAttribute('hidden')
-            ? document.getElementById('loginError')
-            : document.getElementById('signupError');
-          if (targetError) {
-            targetError.textContent = error.message;
-            targetError.removeAttribute('hidden');
-          } else {
-            alert('Google sign-in error: ' + error.message);
-          }
+        .catch(error => {
+          console.error('Failed to sign out:', error);
         });
-    });
-  });
-
-  document.getElementById('resetForm')?.addEventListener('submit', function (e) {
-    e.preventDefault();
-    const email = document.getElementById('resetEmail')?.value.trim();
-    if (!email) return;
-    clearFormMessages();
-    if (!auth) {
-      const resetError = document.getElementById('resetError');
-      if (resetError) {
-        resetError.textContent = 'Authentication is temporarily unavailable. Please try again shortly.';
-        resetError.removeAttribute('hidden');
+      break;
+    case 'profile': {
+      const user = auth?.currentUser;
+      if (user) {
+        window.location.href = 'profile.html';
+      } else {
+        alert('Not signed in');
       }
-      return;
+      break;
     }
-    auth.sendPasswordResetEmail(email)
-      .then(() => {
-        const resetSuccess = document.getElementById('resetSuccess');
-        if (resetSuccess) {
-          resetSuccess.textContent = 'Check your inbox for the reset link.';
-          resetSuccess.removeAttribute('hidden');
+    case 'settings': {
+      const user = auth?.currentUser;
+      if (user) {
+        window.location.href = 'settings.html';
+      } else {
+        alert('Not signed in');
+      }
+      break;
+    }
+    case 'admin': {
+      const user = auth?.currentUser;
+      if (!user) {
+        showAuthModal('admin');
+        break;
+      }
+      const proceed = () => { window.location.href = 'admin.html'; };
+      const knownState = window.__lastAuthIsAdmin;
+      if (knownState === true) {
+        proceed();
+      } else if (knownState === false) {
+        alert('This account does not have administrator access.');
+      } else {
+        user.getIdTokenResult()
+          .then(result => {
+            const isAdmin = Boolean(result?.claims?.admin);
+            window.__lastAuthIsAdmin = isAdmin;
+            updateAdminVisibility(user);
+            if (isAdmin) {
+              proceed();
+            } else {
+              alert('This account does not have administrator access.');
+            }
+          })
+          .catch(error => {
+            console.error('Failed to verify administrator permissions:', error);
+            alert('Unable to verify administrator access right now. Please try again later.');
+          });
+      }
+      break;
+    }
+    default:
+      break;
+  }
+}
+
+auth?.onAuthStateChanged(user => {
+  renderDropdown(user);
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderDropdown(auth?.currentUser ?? null);
+});
+
+document.addEventListener('navbar:auth-action', (event) => {
+  const action = event.detail?.action;
+  if (!action) return;
+  handleAuthAction(action);
+});
+
+document.body.addEventListener('click', (event) => {
+  if (event.defaultPrevented) return;
+  const trigger = event.target.closest('[data-auth-action]');
+  if (!trigger) return;
+  const action = trigger.dataset.authAction;
+  if (!action) return;
+  event.preventDefault();
+  handleAuthAction(action);
+});
+
+document.addEventListener('click', (event) => {
+  const closeButton = event.target.closest('#closeModal');
+  if (closeButton) {
+    event.preventDefault();
+    closeModal();
+    return;
+  }
+
+  const showSignup = event.target.closest('#showSignup');
+  if (showSignup) {
+    event.preventDefault();
+    showAuthModal('signup');
+    return;
+  }
+
+  const showLogin = event.target.closest('#showLogin, #showLoginFromReset, #showLoginFromAdmin');
+  if (showLogin) {
+    event.preventDefault();
+    showAuthModal('login');
+    return;
+  }
+
+  const showReset = event.target.closest('#showReset');
+  if (showReset) {
+    event.preventDefault();
+    showAuthModal('reset');
+    return;
+  }
+
+  const showAdmin = event.target.closest('#showAdminLogin, #showAdminFromSignup');
+  if (showAdmin) {
+    event.preventDefault();
+    showAuthModal('admin');
+    return;
+  }
+
+  const modal = document.getElementById('authModal');
+  if (modal && event.target === modal) {
+    closeModal();
+  }
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') {
+    const modal = document.getElementById('authModal');
+    if (modal?.getAttribute('data-open') === 'true') {
+      closeModal();
+    }
+  }
+});
+
+document.addEventListener('submit', (event) => {
+  const form = event.target;
+  if (!(form instanceof HTMLFormElement)) {
+    return;
+  }
+
+  if (form.id === 'loginForm') {
+    event.preventDefault();
+    handleLoginSubmit(form);
+  } else if (form.id === 'signupForm') {
+    event.preventDefault();
+    handleSignupSubmit(form);
+  } else if (form.id === 'resetForm') {
+    event.preventDefault();
+    handleResetSubmit(form);
+  } else if (form.id === 'adminLoginForm') {
+    event.preventDefault();
+    handleAdminLoginSubmit(form);
+  }
+});
+
+function handleLoginSubmit(form) {
+  const email = form.querySelector('#loginEmail')?.value.trim();
+  const password = form.querySelector('#loginPassword')?.value;
+  if (!email || !password) return;
+  clearFormMessages();
+  if (!auth) {
+    showMessage('loginError', 'Authentication is temporarily unavailable. Please try again shortly.');
+    return;
+  }
+  auth.signInWithEmailAndPassword(email, password)
+    .then(() => {
+      renderDropdown(auth.currentUser);
+      closeModal();
+    })
+    .catch((error) => {
+      showMessage('loginError', error?.message || 'Unable to sign in. Please try again.');
+    });
+}
+
+function handleSignupSubmit(form) {
+  const email = form.querySelector('#signupEmail')?.value.trim();
+  const password = form.querySelector('#signupPassword')?.value;
+  if (!email || !password) return;
+  clearFormMessages();
+  if (!auth) {
+    showMessage('signupError', 'Authentication is temporarily unavailable. Please try again shortly.');
+    return;
+  }
+  auth.createUserWithEmailAndPassword(email, password)
+    .then(() => {
+      renderDropdown(auth.currentUser);
+      closeModal();
+    })
+    .catch((error) => {
+      showMessage('signupError', error?.message || 'Unable to create your account. Please try again.');
+    });
+}
+
+function handleResetSubmit(form) {
+  const email = form.querySelector('#resetEmail')?.value.trim();
+  if (!email) return;
+  clearFormMessages();
+  if (!auth) {
+    showMessage('resetError', 'Authentication is temporarily unavailable. Please try again shortly.');
+    return;
+  }
+  auth.sendPasswordResetEmail(email)
+    .then(() => {
+      showMessage('resetSuccess', 'Check your inbox for the reset link.');
+    })
+    .catch((error) => {
+      showMessage('resetError', error?.message || 'We could not send the reset email. Please try again.');
+    });
+}
+
+function handleAdminLoginSubmit(form) {
+  const email = form.querySelector('#adminEmail')?.value.trim();
+  const password = form.querySelector('#adminPassword')?.value;
+  if (!email || !password) return;
+  clearFormMessages();
+  if (!auth) {
+    showMessage('adminLoginError', 'Authentication is temporarily unavailable. Please try again shortly.');
+    return;
+  }
+  auth.signInWithEmailAndPassword(email, password)
+    .then(async (credential) => {
+      const user = credential?.user || auth.currentUser;
+      if (!user) {
+        throw new Error('Administrator sign-in failed. Please try again.');
+      }
+      const tokenResult = await user.getIdTokenResult();
+      const isAdmin = Boolean(tokenResult?.claims?.admin);
+      window.__lastAuthIsAdmin = isAdmin;
+      if (!isAdmin) {
+        await auth.signOut();
+        renderDropdown(null);
+        throw new Error('This account does not have administrator access.');
+      }
+      renderDropdown(user);
+      closeModal();
+      window.location.href = 'admin.html';
+    })
+    .catch((error) => {
+      console.error('Admin sign-in failed:', error);
+      showMessage('adminLoginError', error?.message || 'Unable to sign in as an administrator. Please try again.');
+    });
+}
+
+document.addEventListener('click', (event) => {
+  const googleBtn = event.target.closest('.google-login, .google-btn');
+  if (!googleBtn) {
+    return;
+  }
+  event.preventDefault();
+  if (!auth || typeof firebase === 'undefined' || !firebase.auth?.GoogleAuthProvider) {
+    alert('Authentication is temporarily unavailable. Please try again shortly.');
+    return;
+  }
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider)
+    .then(async (result) => {
+      const user = result?.user || auth.currentUser;
+      renderDropdown(user ?? null);
+      if (user) {
+        try {
+          await updateAdminVisibility(user);
+        } catch (error) {
+          console.error('Failed to refresh admin state after Google sign-in:', error);
         }
-      })
-      .catch((error) => {
-        const resetError = document.getElementById('resetError');
-        if (resetError) {
-          resetError.textContent = error.message;
-          resetError.removeAttribute('hidden');
-        }
-      });
-  });
+      }
+      closeModal();
+      window.location.href = 'dashboard.html';
+    })
+    .catch((error) => {
+      const loginContainer = document.getElementById('loginFormContainer');
+      const targetId = loginContainer && !loginContainer.hasAttribute('hidden') ? 'loginError' : 'signupError';
+      if (targetId) {
+        showMessage(targetId, error?.message || 'Google sign-in failed. Please try again.');
+      } else {
+        alert('Google sign-in error: ' + (error?.message || error));
+      }
+    });
 });
 
 const slideContainer = document.querySelector('.carousel-slide');

@@ -38,10 +38,23 @@ function ensureDependencies() {
   );
 }
 
+function dispatchAuthModalReady(detail = {}) {
+  try {
+    document.dispatchEvent(new CustomEvent('auth-modal:ready', { detail }));
+  } catch (error) {
+    console.error('Failed to notify auth modal readiness:', error);
+  }
+}
+
 function ensureAuthModal() {
-  if (authModalLoaded || document.getElementById('authModal')) {
+  const existingModal = document.getElementById('authModal');
+  if (existingModal) {
     authModalLoaded = true;
+    dispatchAuthModalReady({ source: 'existing' });
     return Promise.resolve();
+  }
+  if (authModalLoaded) {
+    authModalLoaded = false;
   }
   if (authModalPromise) {
     return authModalPromise;
@@ -58,6 +71,7 @@ function ensureAuthModal() {
       template.innerHTML = html.trim();
       document.body.appendChild(template.content);
       authModalLoaded = true;
+      dispatchAuthModalReady({ source: 'fetched' });
     })
     .finally(() => {
       authModalPromise = null;
