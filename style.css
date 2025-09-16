@@ -782,19 +782,37 @@ body.dark-mode .btn:hover {
 
 /* Journey planner layout */
 .planner {
-  max-width: 600px;
+  max-width: 700px;
   margin: 2rem auto;
   padding: 0 1rem;
 }
 .planner-form {
   display: flex;
-  gap: 0.5rem;
-  justify-content: center;
+  flex-direction: column;
+  gap: 1rem;
 }
-.planner-form input {
-  flex: 1;
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.input-group {
+  flex: 1 1 240px;
+  display: flex;
+  flex-direction: column;
+}
+.planner-form fieldset {
+  border: 1px solid #ccc;
+  border-radius: var(--border-radius);
+  padding: 0.75rem 1rem 1rem;
+}
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
 }
 .planner-form button {
+  align-self: flex-start;
   background: var(--accent-blue);
   color: #fff;
   border: none;
