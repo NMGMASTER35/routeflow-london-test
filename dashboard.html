@@ -56,30 +56,65 @@
   <script type="module">
     import {getFavourites, removeFavourite} from './favourites.js';
     import {getRecents} from './recents.js';
+    import {inferFavouriteType, resolveFavouriteTitle, buildFavouriteMeta} from './favourite-utils.js';
 
     window.signOut = () => { firebase.auth().signOut(); };
     window.openModal = () => {};
 
+    function createFavouriteCard(uid, favourite) {
+      const card = document.createElement('article');
+      card.className = 'favourite-item';
+
+      const header = document.createElement('div');
+      header.className = 'favourite-item__header';
+
+      const eyebrow = document.createElement('span');
+      eyebrow.className = 'favourite-item__eyebrow';
+      eyebrow.textContent = inferFavouriteType(favourite);
+      header.appendChild(eyebrow);
+
+      const removeButton = document.createElement('button');
+      removeButton.type = 'button';
+      removeButton.className = 'favourite-item__remove';
+      removeButton.textContent = 'Remove';
+      removeButton.addEventListener('click', () => {
+        removeFavourite(uid, favourite?.id);
+        loadFavourites(uid);
+      });
+      header.appendChild(removeButton);
+
+      const title = resolveFavouriteTitle(favourite);
+      const titleEl = document.createElement('h3');
+      titleEl.className = 'favourite-item__title';
+      titleEl.textContent = title;
+
+      const metaParts = buildFavouriteMeta(favourite, title);
+
+      card.append(header, titleEl);
+
+      if (metaParts.length) {
+        const metaEl = document.createElement('p');
+        metaEl.className = 'favourite-item__meta';
+        metaEl.textContent = metaParts.join(' • ');
+        card.appendChild(metaEl);
+      }
+
+      return card;
+    }
+
     function loadFavourites(uid) {
       const grid = document.getElementById('favouritesGrid');
       grid.innerHTML = '';
-      const favs = getFavourites(uid);
-      if (favs.length === 0) {
-        grid.innerHTML = '<p>No favourites yet.</p>';
+      const favourites = Array.isArray(getFavourites(uid)) ? getFavourites(uid) : [];
+      if (!favourites.length) {
+        const emptyState = document.createElement('p');
+        emptyState.className = 'dashboard-empty';
+        emptyState.textContent = 'No favourites saved yet.';
+        grid.appendChild(emptyState);
         return;
       }
-      favs.forEach(f => {
-        const div = document.createElement('div');
-        div.className = 'favourite-item';
-        div.innerHTML = `<h3>${f.type}</h3><p>${f.value}</p>`;
-        const btn = document.createElement('button');
-        btn.textContent = 'Remove';
-        btn.addEventListener('click', () => {
-          removeFavourite(uid, f.id);
-          loadFavourites(uid);
-        });
-        div.appendChild(btn);
-        grid.appendChild(div);
+      favourites.forEach((favourite) => {
+        grid.appendChild(createFavouriteCard(uid, favourite));
       });
     }
 

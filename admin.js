@@ -8,6 +8,55 @@ const firebaseConfig = {
   appId: "1:368346241440:web:7cc87d551420459251ecc5"
 };
 
+const FALLBACK_ADMIN_OVERRIDES = new Map([
+  [
+    'emKTnjbKIKfBjQzQEvpUOWOpFKc2',
+    {
+      email: 'nmorris210509@gmail.com'
+    }
+  ]
+]);
+
+const normaliseEmail = (value) => (typeof value === 'string' ? value.trim().toLowerCase() : '');
+
+const fallbackHasOverride = (userOrUid) => {
+  if (!userOrUid) return false;
+  const uid = typeof userOrUid === 'string' ? userOrUid : userOrUid?.uid;
+  if (!uid) return false;
+  const override = FALLBACK_ADMIN_OVERRIDES.get(uid);
+  if (!override) return false;
+  if (override.email && typeof userOrUid !== 'string') {
+    const currentEmail = normaliseEmail(userOrUid?.email);
+    const expectedEmail = normaliseEmail(override.email);
+    if (currentEmail && expectedEmail && currentEmail !== expectedEmail) {
+      return false;
+    }
+  }
+  return true;
+};
+
+const resolveAdminStatus = (user, tokenResult) => {
+  const helpers = window.RouteflowAdmin;
+  if (helpers?.isAdminUser) {
+    try {
+      return Boolean(helpers.isAdminUser(user, tokenResult));
+    } catch (error) {
+      console.warn('Admin override helper threw an error, falling back to local checks.', error);
+    }
+  }
+  if (tokenResult?.claims?.admin) {
+    return true;
+  }
+  if (helpers?.hasOverride) {
+    try {
+      return Boolean(helpers.hasOverride(user));
+    } catch (error) {
+      console.warn('Admin override lookup failed, falling back to bundled overrides.', error);
+    }
+  }
+  return fallbackHasOverride(user);
+};
+
 const FIREBASE_WAIT_TIMEOUT = 10000;
 const FIREBASE_POLL_INTERVAL = 100;
 const REDIRECT_DELAY = 4000;
@@ -139,7 +188,7 @@ ensureFirebaseAuth()
 
       try {
         const tokenResult = await user.getIdTokenResult();
-        if (tokenResult?.claims?.admin) {
+        if (resolveAdminStatus(user, tokenResult)) {
           renderAdminDashboard(user);
         } else {
           handleUnauthorized('You are not authorized to access this page.');
