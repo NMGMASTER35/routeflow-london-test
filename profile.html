@@ -50,11 +50,71 @@
           </div>
         </dl>
         <div class="profile-hero__actions">
+          <button type="button" class="profile-hero__button" id="editProfileBtn" data-disabled>Edit profile</button>
           <a href="settings.html" class="profile-hero__button" id="openSettings" data-disabled>Open settings</a>
           <button type="button" class="profile-hero__button profile-hero__button--ghost" id="signOutBtn" data-disabled>Sign out</button>
         </div>
       </div>
     </section>
+
+    <div
+      class="profile-editor"
+      id="profileEditor"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="profileEditorTitle"
+      hidden
+    >
+      <div class="profile-editor__backdrop" data-profile-editor-dismiss></div>
+      <form class="profile-editor__dialog" id="profileEditorForm" novalidate>
+        <header class="profile-editor__header">
+          <h2 id="profileEditorTitle">Edit your profile</h2>
+          <p>Update how you appear across RouteFlow London.</p>
+        </header>
+        <div class="profile-editor__body">
+          <div class="profile-editor__field">
+            <label for="profileEditorDisplayName">Display name</label>
+            <input
+              type="text"
+              id="profileEditorDisplayName"
+              name="displayName"
+              autocomplete="name"
+              maxlength="80"
+              placeholder="Your name"
+            />
+            <p class="profile-editor__help">Leave blank to use your email address instead.</p>
+          </div>
+          <div class="profile-editor__field">
+            <label for="profileEditorGender">Gender</label>
+            <input
+              type="text"
+              id="profileEditorGender"
+              name="gender"
+              maxlength="60"
+              placeholder="E.g. Woman, Man, Non-binary"
+            />
+            <p class="profile-editor__help">Optional. Saved securely via our Neon-backed profile service.</p>
+          </div>
+          <div class="profile-editor__field">
+            <label for="profileEditorAvatar">Avatar</label>
+            <input type="file" id="profileEditorAvatar" name="avatar" accept="image/*" />
+            <p class="profile-editor__help">Images up to 5&nbsp;MB. We'll resize them to fit the profile hero.</p>
+          </div>
+          <p class="profile-editor__error" id="profileEditorError" role="status" aria-live="polite"></p>
+        </div>
+        <footer class="profile-editor__actions">
+          <button type="submit" class="profile-hero__button" id="profileEditorSave">Save changes</button>
+          <button
+            type="button"
+            class="profile-hero__button profile-hero__button--ghost"
+            id="profileEditorCancel"
+            data-profile-editor-dismiss
+          >
+            Cancel
+          </button>
+        </footer>
+      </form>
+    </div>
 
     <section class="profile-grid">
       <article class="profile-card profile-card--stats" id="profileStatsCard">
@@ -117,6 +177,7 @@
 
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyDuedLuagA4IXc9ZMG9wvoak-sRrhtFZfo",

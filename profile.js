@@ -17,6 +17,7 @@ const heroElements = {
   primaryEmail: document.getElementById('profilePrimaryEmail'),
   openSettings: document.getElementById('openSettings'),
   signOut: document.getElementById('signOutBtn'),
+  edit: document.getElementById('editProfileBtn'),
   refresh: document.getElementById('refreshProfile')
 };
 
@@ -36,9 +37,29 @@ const listElements = {
 
 const addNoteButton = document.getElementById('addNoteBtn');
 
+const editorElements = {
+  container: document.getElementById('profileEditor'),
+  form: document.getElementById('profileEditorForm'),
+  displayName: document.getElementById('profileEditorDisplayName'),
+  gender: document.getElementById('profileEditorGender'),
+  avatar: document.getElementById('profileEditorAvatar'),
+  error: document.getElementById('profileEditorError'),
+  saveButton: document.getElementById('profileEditorSave'),
+  cancelButton: document.getElementById('profileEditorCancel')
+};
+
+const PROFILE_ENDPOINT =
+  (typeof window !== 'undefined' && window.RouteflowProfile?.endpoint) || '/api/profile';
+const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024;
+
+const createDefaultProfileExtras = () => ({
+  gender: ''
+});
+
 const state = {
   user: null,
-  isAdmin: false
+  isAdmin: false,
+  profileExtras: createDefaultProfileExtras()
 };
 
 const formatDateTime = (value) => {
@@ -90,6 +111,249 @@ const setActionEnabled = (element, enabled) => {
   } else {
     element.setAttribute('disabled', '');
     element.setAttribute('data-disabled', '');
+  }
+};
+
+const isEditorBusy = () => editorElements.form?.getAttribute('aria-busy') === 'true';
+
+const clearEditorError = () => {
+  if (editorElements.error) {
+    editorElements.error.textContent = '';
+  }
+};
+
+const showEditorError = (message) => {
+  if (editorElements.error) {
+    editorElements.error.textContent = message;
+  }
+};
+
+const setEditorBusy = (busy) => {
+  if (editorElements.form) {
+    editorElements.form.setAttribute('aria-busy', busy ? 'true' : 'false');
+  }
+  [editorElements.saveButton, editorElements.cancelButton].forEach((button) => {
+    if (!button) return;
+    if (busy) {
+      button.setAttribute('disabled', '');
+    } else {
+      button.removeAttribute('disabled');
+    }
+  });
+};
+
+const prefillProfileEditor = () => {
+  const displayName = state.user?.displayName?.trim() || '';
+  const gender = state.profileExtras?.gender || '';
+  if (editorElements.displayName) {
+    editorElements.displayName.value = displayName;
+  }
+  if (editorElements.gender) {
+    editorElements.gender.value = gender;
+  }
+  if (editorElements.avatar) {
+    editorElements.avatar.value = '';
+  }
+  clearEditorError();
+};
+
+const handleEditorKeydown = (event) => {
+  if (event.key === 'Escape' && editorElements.container && !editorElements.container.hidden && !isEditorBusy()) {
+    event.preventDefault();
+    closeProfileEditor();
+  }
+};
+
+const openProfileEditor = () => {
+  if (!state.user || !editorElements.container) return;
+  prefillProfileEditor();
+  editorElements.container.hidden = false;
+  editorElements.container.removeAttribute('aria-hidden');
+  setEditorBusy(false);
+  document.body.classList.add('modal-open');
+  window.requestAnimationFrame(() => {
+    editorElements.displayName?.focus();
+  });
+  document.addEventListener('keydown', handleEditorKeydown);
+};
+
+const closeProfileEditor = () => {
+  if (!editorElements.container) return;
+  editorElements.container.hidden = true;
+  editorElements.container.setAttribute('aria-hidden', 'true');
+  setEditorBusy(false);
+  document.body.classList.remove('modal-open');
+  document.removeEventListener('keydown', handleEditorKeydown);
+  prefillProfileEditor();
+};
+
+const getEditorValues = () => ({
+  displayName: editorElements.displayName?.value.trim() || '',
+  gender: editorElements.gender?.value.trim() || '',
+  avatarFile: editorElements.avatar?.files?.[0] || null
+});
+
+const validateProfileEditor = (values) => {
+  if (values.displayName && values.displayName.length < 2) {
+    return 'Display name must be at least 2 characters.';
+  }
+  if (values.displayName.length > 80) {
+    return 'Display name must be fewer than 80 characters.';
+  }
+  if (values.gender && values.gender.length > 60) {
+    return 'Gender must be 60 characters or fewer.';
+  }
+  if (values.avatarFile) {
+    if (values.avatarFile.size > MAX_AVATAR_SIZE_BYTES) {
+      return 'Avatar images must be 5 MB or smaller.';
+    }
+    if (values.avatarFile.type && !values.avatarFile.type.startsWith('image/')) {
+      return 'Please choose an image file for your avatar.';
+    }
+  }
+  return null;
+};
+
+const uploadAvatar = async (user, file) => {
+  if (!user || !file) return user?.photoURL || '';
+  const storage = firebase?.storage?.();
+  if (!storage) {
+    throw new Error('Firebase storage is not available.');
+  }
+  const safeName = (file.name || 'avatar')
+    .toLowerCase()
+    .replace(/[^a-z0-9.]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  const resolvedName = safeName || `avatar-${Date.now()}`;
+  const path = `avatars/${user.uid}/${Date.now()}-${resolvedName}`;
+  const metadata = { cacheControl: 'public,max-age=3600' };
+  if (file.type) {
+    metadata.contentType = file.type;
+  }
+  const storageRef = storage.ref(path);
+  const snapshot = await storageRef.put(file, metadata);
+  return snapshot.ref.getDownloadURL();
+};
+
+const persistProfileExtras = async (user, extras) => {
+  if (!user?.getIdToken) return null;
+  const token = await user.getIdToken();
+  const payload = {
+    gender: extras.gender || null
+  };
+  const response = await fetch(PROFILE_ENDPOINT, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+  if (response.status === 204) {
+    return null;
+  }
+  if (!response.ok) {
+    throw new Error(`Failed to update profile extras (${response.status})`);
+  }
+  const contentType = response.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    return response.json();
+  }
+  return null;
+};
+
+const fetchProfileExtras = async (user) => {
+  if (!user?.getIdToken) return createDefaultProfileExtras();
+  try {
+    const token = await user.getIdToken();
+    const response = await fetch(PROFILE_ENDPOINT, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    if (response.status === 404) {
+      return createDefaultProfileExtras();
+    }
+    if (!response.ok) {
+      throw new Error(`Failed to load profile extras (${response.status})`);
+    }
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      return createDefaultProfileExtras();
+    }
+    const data = await response.json();
+    return {
+      ...createDefaultProfileExtras(),
+      ...data,
+      gender: typeof data?.gender === 'string' ? data.gender.trim() : ''
+    };
+  } catch (error) {
+    console.warn('Unable to fetch extended profile details.', error);
+    return createDefaultProfileExtras();
+  }
+};
+
+const handleProfileEditorSubmit = async (event) => {
+  event.preventDefault();
+  clearEditorError();
+
+  if (!state.user) {
+    showEditorError('You need to be signed in to update your profile.');
+    return;
+  }
+
+  const values = getEditorValues();
+  const validationError = validateProfileEditor(values);
+  if (validationError) {
+    showEditorError(validationError);
+    return;
+  }
+
+  const hasChanges =
+    values.avatarFile ||
+    values.displayName !== (state.user.displayName || '') ||
+    values.gender !== (state.profileExtras?.gender || '');
+
+  if (!hasChanges) {
+    showEditorError('There are no changes to save.');
+    return;
+  }
+
+  setEditorBusy(true);
+
+  try {
+    let photoURL = state.user.photoURL || '';
+    if (values.avatarFile) {
+      photoURL = await uploadAvatar(state.user, values.avatarFile);
+    }
+
+    await state.user.updateProfile({
+      displayName: values.displayName || null,
+      photoURL: photoURL || null
+    });
+
+    if (values.gender !== (state.profileExtras?.gender || '')) {
+      await persistProfileExtras(state.user, { gender: values.gender });
+    }
+
+    await state.user.reload();
+    const refreshedUser = firebase?.auth?.().currentUser;
+    if (refreshedUser) {
+      state.user = refreshedUser;
+    }
+
+    state.profileExtras = {
+      ...state.profileExtras,
+      gender: values.gender
+    };
+
+    refreshHero();
+    closeProfileEditor();
+  } catch (error) {
+    console.error('Failed to update profile information.', error);
+    showEditorError('We could not save your changes. Please try again.');
+  } finally {
+    setEditorBusy(false);
   }
 };
 
@@ -335,6 +599,7 @@ const refreshHero = () => {
     if (heroElements.primaryEmail) heroElements.primaryEmail.textContent = '—';
     setActionEnabled(heroElements.openSettings, false);
     setActionEnabled(heroElements.signOut, false);
+    setActionEnabled(heroElements.edit, false);
     return;
   }
 
@@ -396,6 +661,7 @@ const refreshHero = () => {
 
   setActionEnabled(heroElements.openSettings, true);
   setActionEnabled(heroElements.signOut, true);
+  setActionEnabled(heroElements.edit, true);
 };
 
 const detectAdminStatus = async (user) => {
@@ -434,6 +700,16 @@ const attachEventHandlers = () => {
     });
   }
 
+  if (heroElements.edit) {
+    heroElements.edit.addEventListener('click', () => {
+      if (!state.user) {
+        alert('Sign in to edit your profile.');
+        return;
+      }
+      openProfileEditor();
+    });
+  }
+
   if (heroElements.refresh) {
     heroElements.refresh.addEventListener('click', () => {
       if (!state.user) return;
@@ -444,6 +720,40 @@ const attachEventHandlers = () => {
         })
         .catch((error) => console.error('Failed to refresh admin status:', error));
       renderAllSections();
+    });
+  }
+
+  if (editorElements.form) {
+    editorElements.form.addEventListener('submit', handleProfileEditorSubmit);
+  }
+
+  if (editorElements.container) {
+    editorElements.container.addEventListener('click', (event) => {
+      const dismissTarget = event.target.closest('[data-profile-editor-dismiss]');
+      if (!dismissTarget || isEditorBusy()) {
+        return;
+      }
+      event.preventDefault();
+      closeProfileEditor();
+    });
+  }
+
+  ['displayName', 'gender'].forEach((key) => {
+    const field = editorElements[key];
+    if (field) {
+      field.addEventListener('input', () => {
+        if (editorElements.error?.textContent) {
+          clearEditorError();
+        }
+      });
+    }
+  });
+
+  if (editorElements.avatar) {
+    editorElements.avatar.addEventListener('input', () => {
+      if (editorElements.error?.textContent) {
+        clearEditorError();
+      }
     });
   }
 
@@ -469,6 +779,12 @@ const initialise = () => {
   firebase?.auth?.().onAuthStateChanged(async (user) => {
     state.user = user || null;
     state.isAdmin = user ? await detectAdminStatus(user) : false;
+    state.profileExtras = user ? await fetchProfileExtras(user) : createDefaultProfileExtras();
+    if (!user) {
+      closeProfileEditor();
+    } else {
+      prefillProfileEditor();
+    }
     refreshHero();
     renderAllSections();
   });
