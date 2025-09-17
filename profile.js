@@ -102,17 +102,17 @@ const resetList = (element, message) => {
   element.appendChild(emptyState);
 };
 
-const renderFavourites = (uid) => {
+const renderFavourites = (uid, favourites = []) => {
   const container = listElements.favourites;
   if (!container) return;
   container.innerHTML = '';
-  const favourites = Array.isArray(getFavourites(uid)) ? getFavourites(uid) : [];
-  if (!favourites.length) {
+  const safeFavourites = Array.isArray(favourites) ? favourites : [];
+  if (!safeFavourites.length) {
     resetList(container, 'You have not saved any favourites yet.');
     return;
   }
 
-  favourites.forEach((favourite) => {
+  safeFavourites.forEach((favourite) => {
     const item = document.createElement('li');
     item.className = 'profile-item';
 
@@ -142,9 +142,22 @@ const renderFavourites = (uid) => {
     removeButton.type = 'button';
     removeButton.className = 'profile-chip';
     removeButton.textContent = 'Remove';
-    removeButton.addEventListener('click', () => {
-      removeFavourite(uid, favourite?.id);
-      renderAllSections();
+    removeButton.addEventListener('click', async () => {
+      if (!uid || !favourite?.id) return;
+      try {
+        setActionEnabled(removeButton, false);
+        await removeFavourite(uid, favourite.id);
+      } catch (error) {
+        console.error('Failed to remove favourite:', error);
+        alert('We could not remove this favourite. Please try again.');
+      } finally {
+        setActionEnabled(removeButton, true);
+      }
+      try {
+        await renderAllSections();
+      } catch (refreshError) {
+        console.error('Failed to refresh profile after removing favourite.', refreshError);
+      }
     });
 
     actions.appendChild(removeButton);
@@ -154,17 +167,17 @@ const renderFavourites = (uid) => {
   });
 };
 
-const renderRecents = (uid) => {
+const renderRecents = (uid, recents = []) => {
   const container = listElements.recents;
   if (!container) return;
   container.innerHTML = '';
-  const recents = Array.isArray(getRecents(uid)) ? getRecents(uid) : [];
-  if (!recents.length) {
+  const safeRecents = Array.isArray(recents) ? recents : [];
+  if (!safeRecents.length) {
     resetList(container, 'Recent lookups will appear here once you start exploring.');
     return;
   }
 
-  recents.forEach((recent) => {
+  safeRecents.forEach((recent) => {
     const item = document.createElement('li');
     item.className = 'profile-item';
 
@@ -190,17 +203,17 @@ const renderRecents = (uid) => {
   });
 };
 
-const renderNotes = (uid) => {
+const renderNotes = (uid, notes = []) => {
   const container = listElements.notes;
   if (!container) return;
   container.innerHTML = '';
-  const notes = Array.isArray(getNotes(uid)) ? getNotes(uid) : [];
-  if (!notes.length) {
+  const safeNotes = Array.isArray(notes) ? notes : [];
+  if (!safeNotes.length) {
     resetList(container, 'Add a note to pin service details or journey reminders.');
     return;
   }
 
-  notes.forEach((note, index) => {
+  safeNotes.forEach((note) => {
     const item = document.createElement('li');
     item.className = 'profile-item profile-note';
 
@@ -219,11 +232,33 @@ const renderNotes = (uid) => {
     editButton.type = 'button';
     editButton.className = 'profile-chip';
     editButton.textContent = 'Edit';
-    editButton.addEventListener('click', () => {
+    editButton.addEventListener('click', async () => {
+      if (!uid || !note?.id) return;
       const updated = prompt('Update your note:', note.text || '');
-      if (updated !== null) {
-        updateNote(uid, index, updated.trim());
-        renderAllSections();
+      if (updated === null) {
+        return;
+      }
+      const nextText = updated.trim();
+      if (!nextText) {
+        alert('Your note cannot be empty.');
+        return;
+      }
+      try {
+        setActionEnabled(editButton, false);
+        await updateNote(uid, note.id, {
+          name: note.name || 'Saved note',
+          text: nextText
+        });
+      } catch (error) {
+        console.error('Failed to update note:', error);
+        alert('We could not update this note. Please try again.');
+      } finally {
+        setActionEnabled(editButton, true);
+      }
+      try {
+        await renderAllSections();
+      } catch (refreshError) {
+        console.error('Failed to refresh profile after updating note.', refreshError);
       }
     });
 
@@ -231,10 +266,22 @@ const renderNotes = (uid) => {
     deleteButton.type = 'button';
     deleteButton.className = 'profile-chip';
     deleteButton.textContent = 'Delete';
-    deleteButton.addEventListener('click', () => {
-      if (confirm('Remove this note?')) {
-        removeNote(uid, index);
-        renderAllSections();
+    deleteButton.addEventListener('click', async () => {
+      if (!uid || !note?.id) return;
+      if (!confirm('Remove this note?')) return;
+      try {
+        setActionEnabled(deleteButton, false);
+        await removeNote(uid, note.id);
+      } catch (error) {
+        console.error('Failed to remove note:', error);
+        alert('We could not remove this note. Please try again.');
+      } finally {
+        setActionEnabled(deleteButton, true);
+      }
+      try {
+        await renderAllSections();
+      } catch (refreshError) {
+        console.error('Failed to refresh profile after removing note.', refreshError);
       }
     });
 
@@ -281,28 +328,30 @@ const renderPreferences = () => {
   });
 };
 
-const renderStats = (uid) => {
-  const favourites = Array.isArray(getFavourites(uid)) ? getFavourites(uid) : [];
-  const notes = Array.isArray(getNotes(uid)) ? getNotes(uid) : [];
-  const recents = Array.isArray(getRecents(uid)) ? getRecents(uid) : [];
+const renderStats = (uid, favourites = [], notes = [], recents = []) => {
+  const safeFavourites = Array.isArray(favourites) ? favourites : [];
+  const safeNotes = Array.isArray(notes) ? notes : [];
+  const safeRecents = Array.isArray(recents) ? recents : [];
 
-  statsElements.favourites.textContent = favourites.length;
-  statsElements.notes.textContent = notes.length;
-  statsElements.recents.textContent = recents.length;
+  statsElements.favourites.textContent = safeFavourites.length;
+  statsElements.notes.textContent = safeNotes.length;
+  statsElements.recents.textContent = safeRecents.length;
 
-  if (!favourites.length && !notes.length) {
+  if (!safeFavourites.length && !safeNotes.length) {
     statsElements.message.textContent = 'Save a favourite or add a note to build your personalised dashboard.';
   } else {
-    statsElements.message.textContent = `You have ${favourites.length} favourite${favourites.length === 1 ? '' : 's'} and ${notes.length} note${notes.length === 1 ? '' : 's'} ready to go.`;
+    statsElements.message.textContent = `You have ${safeFavourites.length} favourite${safeFavourites.length === 1 ? '' : 's'} and ${safeNotes.length} note${safeNotes.length === 1 ? '' : 's'} ready to go.`;
   }
 };
 
-const renderAllSections = () => {
+const renderAllSections = async () => {
   if (!state.user) {
     resetList(listElements.favourites, 'Sign in to start saving favourites.');
     resetList(listElements.recents, 'Sign in to see your recent lookups.');
     resetList(listElements.notes, 'Sign in to write notes.');
-    listElements.preferences.innerHTML = '';
+    if (listElements.preferences) {
+      listElements.preferences.innerHTML = '';
+    }
     statsElements.favourites.textContent = '0';
     statsElements.notes.textContent = '0';
     statsElements.recents.textContent = '0';
@@ -310,11 +359,48 @@ const renderAllSections = () => {
     return;
   }
 
-  renderFavourites(state.user.uid);
-  renderRecents(state.user.uid);
-  renderNotes(state.user.uid);
+  const uid = state.user.uid;
+  const recents = Array.isArray(getRecents(uid)) ? getRecents(uid) : [];
+
+  renderRecents(uid, recents);
   renderPreferences();
-  renderStats(state.user.uid);
+
+  resetList(listElements.favourites, 'Loading your favourites…');
+  resetList(listElements.notes, 'Loading your notes…');
+  statsElements.message.textContent = 'Loading your personalised data…';
+  statsElements.favourites.textContent = '0';
+  statsElements.notes.textContent = '0';
+  statsElements.recents.textContent = String(recents.length);
+
+  const [favouritesResult, notesResult] = await Promise.allSettled([
+    getFavourites(uid),
+    getNotes(uid)
+  ]);
+
+  let favourites = [];
+  let notes = [];
+
+  if (favouritesResult.status === 'fulfilled') {
+    favourites = Array.isArray(favouritesResult.value) ? favouritesResult.value : [];
+    renderFavourites(uid, favourites);
+  } else {
+    console.error('Failed to load favourites for profile view.', favouritesResult.reason);
+    resetList(listElements.favourites, 'We could not load your favourites right now.');
+  }
+
+  if (notesResult.status === 'fulfilled') {
+    notes = Array.isArray(notesResult.value) ? notesResult.value : [];
+    renderNotes(uid, notes);
+  } else {
+    console.error('Failed to load notes for profile view.', notesResult.reason);
+    resetList(listElements.notes, 'We could not load your notes right now.');
+  }
+
+  renderStats(uid, favourites, notes, recents);
+
+  if (favouritesResult.status !== 'fulfilled' || notesResult.status !== 'fulfilled') {
+    statsElements.message.textContent = 'We could not load some of your data. Please try refreshing.';
+  }
 };
 
 const refreshHero = () => {
@@ -435,30 +521,54 @@ const attachEventHandlers = () => {
   }
 
   if (heroElements.refresh) {
-    heroElements.refresh.addEventListener('click', () => {
+    heroElements.refresh.addEventListener('click', async () => {
       if (!state.user) return;
-      detectAdminStatus(state.user)
-        .then((isAdmin) => {
-          state.isAdmin = isAdmin;
-          refreshHero();
-        })
-        .catch((error) => console.error('Failed to refresh admin status:', error));
-      renderAllSections();
+      try {
+        state.isAdmin = await detectAdminStatus(state.user);
+        refreshHero();
+      } catch (error) {
+        console.error('Failed to refresh admin status:', error);
+      }
+      try {
+        await renderAllSections();
+      } catch (error) {
+        console.error('Failed to refresh profile sections after manual refresh.', error);
+      }
     });
   }
 
   if (addNoteButton) {
-    addNoteButton.addEventListener('click', () => {
+    addNoteButton.addEventListener('click', async () => {
       if (!state.user) {
         alert('Sign in to add notes to your profile.');
         return;
       }
-      const title = prompt('What would you like to call this note?', 'New note');
-      if (!title) return;
-      const text = prompt('Add your note details:');
-      if (!text) return;
-      addNote(state.user.uid, { id: Date.now().toString(), name: title.trim(), text: text.trim() });
-      renderAllSections();
+      const titleInput = prompt('What would you like to call this note?', 'New note');
+      if (!titleInput) return;
+      const name = titleInput.trim();
+      if (!name) {
+        alert('Your note title cannot be empty.');
+        return;
+      }
+      const textInput = prompt('Add your note details:');
+      if (!textInput) return;
+      const noteText = textInput.trim();
+      if (!noteText) {
+        alert('Your note cannot be empty.');
+        return;
+      }
+      try {
+        await addNote(state.user.uid, { name, text: noteText });
+      } catch (error) {
+        console.error('Failed to add note for profile view.', error);
+        alert('We could not save this note. Please try again.');
+        return;
+      }
+      try {
+        await renderAllSections();
+      } catch (error) {
+        console.error('Failed to refresh profile after adding note.', error);
+      }
     });
   }
 };
@@ -470,7 +580,11 @@ const initialise = () => {
     state.user = user || null;
     state.isAdmin = user ? await detectAdminStatus(user) : false;
     refreshHero();
-    renderAllSections();
+    try {
+      await renderAllSections();
+    } catch (error) {
+      console.error('Failed to render profile sections after auth state change.', error);
+    }
   });
 };
 

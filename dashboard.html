@@ -77,9 +77,20 @@
       removeButton.type = 'button';
       removeButton.className = 'favourite-item__remove';
       removeButton.textContent = 'Remove';
-      removeButton.addEventListener('click', () => {
-        removeFavourite(uid, favourite?.id);
-        loadFavourites(uid);
+      removeButton.addEventListener('click', async () => {
+        if (!uid || !favourite?.id) {
+          return;
+        }
+        try {
+          removeButton.disabled = true;
+          await removeFavourite(uid, favourite.id);
+          await loadFavourites(uid);
+        } catch (error) {
+          console.error('Failed to remove favourite from dashboard view.', error);
+          alert('We could not remove this favourite. Please try again.');
+        } finally {
+          removeButton.disabled = false;
+        }
       });
       header.appendChild(removeButton);
 
@@ -102,20 +113,35 @@
       return card;
     }
 
-    function loadFavourites(uid) {
+    async function loadFavourites(uid) {
       const grid = document.getElementById('favouritesGrid');
       grid.innerHTML = '';
-      const favourites = Array.isArray(getFavourites(uid)) ? getFavourites(uid) : [];
-      if (!favourites.length) {
+      if (!uid) {
         const emptyState = document.createElement('p');
         emptyState.className = 'dashboard-empty';
-        emptyState.textContent = 'No favourites saved yet.';
+        emptyState.textContent = 'Sign in to manage favourites.';
         grid.appendChild(emptyState);
         return;
       }
-      favourites.forEach((favourite) => {
-        grid.appendChild(createFavouriteCard(uid, favourite));
-      });
+      try {
+        const favourites = await getFavourites(uid);
+        if (!Array.isArray(favourites) || favourites.length === 0) {
+          const emptyState = document.createElement('p');
+          emptyState.className = 'dashboard-empty';
+          emptyState.textContent = 'No favourites saved yet.';
+          grid.appendChild(emptyState);
+          return;
+        }
+        favourites.forEach((favourite) => {
+          grid.appendChild(createFavouriteCard(uid, favourite));
+        });
+      } catch (error) {
+        console.error('Failed to load favourites for dashboard view.', error);
+        const errorState = document.createElement('p');
+        errorState.className = 'dashboard-empty';
+        errorState.textContent = 'We could not load your favourites right now.';
+        grid.appendChild(errorState);
+      }
     }
 
     function loadRecents(uid) {
@@ -151,7 +177,7 @@
       });
     }
 
-    firebase.auth().onAuthStateChanged(user => {
+    firebase.auth().onAuthStateChanged(async user => {
       const title = document.getElementById('welcomeTitle');
       const info = document.getElementById('profileInfo');
       const avatar = document.getElementById('profileAvatar');
@@ -159,7 +185,11 @@
         title.textContent = `Welcome, ${user.email}`;
         avatar.src = user.photoURL || 'user-icon.png';
         info.textContent = '';
-        loadFavourites(user.uid);
+        try {
+          await loadFavourites(user.uid);
+        } catch (error) {
+          console.error('Failed to render favourites on dashboard after sign-in.', error);
+        }
         loadActivity(user.uid);
         loadRecents(user.uid);
       } else {

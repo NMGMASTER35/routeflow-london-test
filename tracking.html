@@ -402,25 +402,48 @@ window.addEventListener('beforeunload', () => {
     const favBtn = document.getElementById('favBtn');
     const noteBtn = document.getElementById('noteBtn');
 
-    favBtn?.addEventListener('click', () => {
+    favBtn?.addEventListener('click', async () => {
       const user = firebase.auth()?.currentUser;
       if (!user || !currentStop) {
         alert('Select a stop and sign in first.');
         return;
       }
-      addFavourite(user.uid, currentStop);
-      favBtn.textContent = '★ Favourited';
+      try {
+        favBtn.disabled = true;
+        await addFavourite(user.uid, currentStop);
+        favBtn.textContent = '★ Favourited';
+      } catch (error) {
+        console.error('Failed to save stop as favourite from tracker view.', error);
+        alert('We could not save this favourite. Please try again.');
+      } finally {
+        favBtn.disabled = false;
+      }
     });
 
-    noteBtn?.addEventListener('click', () => {
+    noteBtn?.addEventListener('click', async () => {
       const user = firebase.auth()?.currentUser;
       if (!user || !currentStop) {
         alert('Select a stop and sign in first.');
         return;
       }
       const text = prompt('Enter a note for this stop:');
-      if (text) {
-        addNote(user.uid, { id: currentStop.id, name: currentStop.name, text });
+      if (!text) {
+        return;
+      }
+      const trimmedText = text.trim();
+      if (!trimmedText) {
+        alert('Your note cannot be empty.');
+        return;
+      }
+      const stopName = (currentStop.name || currentStop.title || currentStop.id || 'Saved stop').toString().trim() || 'Saved stop';
+      try {
+        noteBtn.disabled = true;
+        await addNote(user.uid, { id: currentStop.id, name: stopName, text: trimmedText });
+      } catch (error) {
+        console.error('Failed to add note from tracker view.', error);
+        alert('We could not save this note. Please try again.');
+      } finally {
+        noteBtn.disabled = false;
       }
     });
   </script>
