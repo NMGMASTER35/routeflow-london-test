@@ -221,6 +221,11 @@ body.dark-mode .network-search input {
   border-left: 4px solid transparent;
 }
 
+.network-card--loading {
+  gap: 0.85rem;
+  min-height: 120px;
+}
+
 body.dark-mode .network-card {
   background: var(--card-bg-dark);
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
@@ -321,6 +326,71 @@ body.dark-mode .network-tag {
   flex-direction: column;
   gap: 0.35rem;
   font-size: 0.9rem;
+}
+
+.network-loading-block {
+  position: relative;
+  display: block;
+  height: 0.75rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.1);
+  overflow: hidden;
+}
+
+body.dark-mode .network-loading-block {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.network-loading-block::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0),
+    rgba(255, 255, 255, 0.6),
+    rgba(255, 255, 255, 0)
+  );
+  animation: networkLoadingShimmer 1.4s ease-in-out infinite;
+}
+
+body.dark-mode .network-loading-block::after {
+  background: linear-gradient(
+    90deg,
+    rgba(15, 23, 42, 0),
+    rgba(15, 23, 42, 0.32),
+    rgba(15, 23, 42, 0)
+  );
+}
+
+.network-loading-block--title {
+  height: 1.1rem;
+  width: 60%;
+}
+
+.network-loading-block--status {
+  width: 80%;
+}
+
+.network-loading-block--meta {
+  width: 92%;
+}
+
+.network-loading-block--meta-small {
+  width: 48%;
+}
+
+@keyframes networkLoadingShimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .network-loading-block::after {
+    animation: none;
+  }
 }
 
 .network-card__link {
