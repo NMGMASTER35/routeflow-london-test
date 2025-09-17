@@ -1,11 +1,21 @@
+import {
+  storageAvailable,
+  createId,
+  getStoredWithdrawnRoutes,
+  setStoredWithdrawnRoutes,
+  getRouteTagOverrides,
+  setRouteTagOverrides,
+  STORAGE_KEYS
+} from './data-store.js';
+
 const adminContent = document.getElementById('adminContent');
 const firebaseConfig = {
-  apiKey: "AIzaSyDuedLuagA4IXc9ZMG9wvoak-sRrhtFZfo",
-  authDomain: "routeflow-london.firebaseapp.com",
-  projectId: "routeflow-london",
-  storageBucket: "routeflow-london.firebasestorage.app",
-  messagingSenderId: "368346241440",
-  appId: "1:368346241440:web:7cc87d551420459251ecc5"
+  apiKey: 'AIzaSyDuedLuagA4IXc9ZMG9wvoak-sRrhtFZfo',
+  authDomain: 'routeflow-london.firebaseapp.com',
+  projectId: 'routeflow-london',
+  storageBucket: 'routeflow-london.firebasestorage.app',
+  messagingSenderId: '368346241440',
+  appId: '1:368346241440:web:7cc87d551420459251ecc5'
 };
 
 const FALLBACK_ADMIN_OVERRIDES = new Map([
@@ -16,6 +26,20 @@ const FALLBACK_ADMIN_OVERRIDES = new Map([
     }
   ]
 ]);
+
+const TAG_OPTIONS = ['Regular', 'Night', 'School', 'Special', 'Express'];
+
+const adminState = {
+  withdrawnRoutes: [],
+  routeTagOverrides: [],
+  withdrawnEditId: null,
+  tagEditId: null
+};
+
+const adminViews = {
+  withdrawn: null,
+  tags: null
+};
 
 const normaliseEmail = (value) => (typeof value === 'string' ? value.trim().toLowerCase() : '');
 
@@ -61,6 +85,7 @@ const FIREBASE_WAIT_TIMEOUT = 10000;
 const FIREBASE_POLL_INTERVAL = 100;
 const REDIRECT_DELAY = 4000;
 let redirectTimer = null;
+let storageListenerRegistered = false;
 
 function replaceContent(...nodes) {
   if (!adminContent) return;
@@ -115,28 +140,628 @@ function clearPendingRedirect() {
   }
 }
 
+function updateFeedback(target, text, tone = 'info') {
+  if (!target) return;
+  const content = text ? text.trim() : '';
+  if (!content) {
+    target.hidden = true;
+    target.textContent = '';
+    target.removeAttribute('data-tone');
+    return;
+  }
+  target.hidden = false;
+  target.dataset.tone = tone;
+  target.textContent = content;
+}
+
+function createFeedbackElement() {
+  const element = document.createElement('p');
+  element.className = 'admin-feedback';
+  element.setAttribute('role', 'status');
+  element.setAttribute('aria-live', 'polite');
+  element.hidden = true;
+  return element;
+}
+
+function createActionButton(label, modifier, onClick) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = ['button', 'admin-button', modifier ? `admin-button--${modifier}` : '']
+    .filter(Boolean)
+    .join(' ');
+  button.textContent = label;
+  if (typeof onClick === 'function') {
+    button.addEventListener('click', onClick);
+  }
+  return button;
+}
+
+function createWithdrawnPanel() {
+  const panel = document.createElement('section');
+  panel.className = 'admin-panel';
+  panel.setAttribute('aria-labelledby', 'withdrawnPanelHeading');
+
+  const header = document.createElement('div');
+  header.className = 'admin-panel__header';
+
+  const heading = document.createElement('h2');
+  heading.id = 'withdrawnPanelHeading';
+  heading.textContent = 'Custom withdrawn routes';
+
+  const description = document.createElement('p');
+  description.className = 'admin-panel__description';
+  description.textContent = 'Add new entries to the withdrawn routes archive. Saved routes appear immediately on the public table for this device.';
+
+  header.append(heading, description);
+  panel.append(header);
+
+  const feedback = createFeedbackElement();
+  panel.append(feedback);
+
+  const form = document.createElement('form');
+  form.className = 'admin-form';
+  form.noValidate = true;
+
+  const fieldGrid = document.createElement('div');
+  fieldGrid.className = 'admin-form__grid';
+
+  const fieldDefinitions = [
+    { name: 'route', label: 'Route', required: true, placeholder: 'e.g. 10' },
+    { name: 'start', label: 'Start point', placeholder: 'e.g. Hammersmith' },
+    { name: 'end', label: 'End point', placeholder: "e.g. King's Cross" },
+    { name: 'launched', label: 'Launched', placeholder: 'e.g. 13 August 1988' },
+    { name: 'withdrawn', label: 'Withdrawn', placeholder: 'e.g. 24 November 2018' },
+    { name: 'operator', label: 'Last operator', placeholder: 'e.g. London United' },
+    { name: 'replacedBy', label: 'Replaced by', placeholder: 'e.g. 23' }
+  ];
+
+  const inputs = {};
+
+  fieldDefinitions.forEach((field) => {
+    const group = document.createElement('div');
+    group.className = 'admin-form__group';
+
+    const label = document.createElement('label');
+    label.setAttribute('for', `withdrawn-${field.name}`);
+    label.textContent = field.label;
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.id = `withdrawn-${field.name}`;
+    input.name = field.name;
+    input.placeholder = field.placeholder || '';
+    input.autocomplete = 'off';
+    if (field.required) {
+      input.required = true;
+    }
+
+    group.append(label, input);
+    fieldGrid.append(group);
+    inputs[field.name] = input;
+  });
+
+  form.append(fieldGrid);
+
+  const actions = document.createElement('div');
+  actions.className = 'admin-form__actions';
+
+  const submit = document.createElement('button');
+  submit.type = 'submit';
+  submit.className = 'button admin-button';
+  submit.textContent = 'Add withdrawn route';
+
+  const cancel = document.createElement('button');
+  cancel.type = 'button';
+  cancel.className = 'button admin-button admin-button--secondary';
+  cancel.textContent = 'Cancel edit';
+  cancel.hidden = true;
+
+  actions.append(submit, cancel);
+  form.append(actions);
+  panel.append(form);
+
+  const listWrapper = document.createElement('div');
+  listWrapper.className = 'network-table-wrapper admin-table-wrapper';
+  panel.append(listWrapper);
+
+  const resetForm = () => {
+    form.reset();
+    adminState.withdrawnEditId = null;
+    submit.textContent = 'Add withdrawn route';
+    cancel.hidden = true;
+  };
+
+  const startEdit = (entry) => {
+    adminState.withdrawnEditId = entry.id;
+    submit.textContent = 'Save withdrawn route';
+    cancel.hidden = false;
+    inputs.route.value = entry.route || '';
+    inputs.start.value = entry.start || '';
+    inputs.end.value = entry.end || '';
+    inputs.launched.value = entry.launched || '';
+    inputs.withdrawn.value = entry.withdrawn || '';
+    inputs.operator.value = entry.operator || '';
+    inputs.replacedBy.value = entry.replacedBy || '';
+    inputs.route.focus();
+    updateFeedback(feedback, `Editing withdrawn route ${entry.route}.`, 'info');
+  };
+
+  const renderList = () => {
+    listWrapper.innerHTML = '';
+    const routes = adminState.withdrawnRoutes;
+    if (!routes.length) {
+      const empty = document.createElement('p');
+      empty.className = 'admin-empty';
+      empty.textContent = 'No custom withdrawn routes added yet.';
+      listWrapper.append(empty);
+      return;
+    }
+
+    const table = document.createElement('table');
+    table.className = 'network-table admin-table';
+
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    ['Route', 'Start', 'End', 'Launched', 'Withdrawn', 'Operator', 'Replaced by', 'Actions'].forEach((label) => {
+      const th = document.createElement('th');
+      th.textContent = label;
+      headerRow.append(th);
+    });
+    thead.append(headerRow);
+    table.append(thead);
+
+    const tbody = document.createElement('tbody');
+    routes.forEach((entry) => {
+      const row = document.createElement('tr');
+      const cells = [
+        entry.route,
+        entry.start,
+        entry.end,
+        entry.launched,
+        entry.withdrawn,
+        entry.operator,
+        entry.replacedBy
+      ];
+      cells.forEach((value) => {
+        const cell = document.createElement('td');
+        cell.textContent = value || '—';
+        row.append(cell);
+      });
+
+      const actionsCell = document.createElement('td');
+      actionsCell.className = 'admin-table__actions';
+      const editButton = createActionButton('Edit', 'ghost', () => {
+        startEdit(entry);
+      });
+      const removeButton = createActionButton('Remove', 'danger', () => {
+        const confirmed = window.confirm(`Remove withdrawn route ${entry.route}?`);
+        if (!confirmed) return;
+        adminState.withdrawnRoutes = adminState.withdrawnRoutes.filter((item) => item.id !== entry.id);
+        adminState.withdrawnRoutes = setStoredWithdrawnRoutes(adminState.withdrawnRoutes);
+        if (adminState.withdrawnEditId === entry.id) {
+          resetForm();
+        }
+        renderList();
+        updateFeedback(feedback, `Removed withdrawn route ${entry.route}.`, 'success');
+      });
+      actionsCell.append(editButton, removeButton);
+      row.append(actionsCell);
+      tbody.append(row);
+    });
+
+    table.append(tbody);
+    listWrapper.append(table);
+  };
+
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const routeValue = inputs.route.value.trim();
+    if (!routeValue) {
+      updateFeedback(feedback, 'A route number is required.', 'error');
+      inputs.route.focus();
+      return;
+    }
+
+    const entry = {
+      id: adminState.withdrawnEditId || createId(),
+      route: routeValue,
+      start: inputs.start.value.trim(),
+      end: inputs.end.value.trim(),
+      launched: inputs.launched.value.trim(),
+      withdrawn: inputs.withdrawn.value.trim(),
+      operator: inputs.operator.value.trim(),
+      replacedBy: inputs.replacedBy.value.trim()
+    };
+
+    if (adminState.withdrawnEditId) {
+      const index = adminState.withdrawnRoutes.findIndex((item) => item.id === adminState.withdrawnEditId);
+      if (index !== -1) {
+        adminState.withdrawnRoutes.splice(index, 1, entry);
+      }
+      updateFeedback(feedback, `Updated withdrawn route ${entry.route}.`, 'success');
+    } else {
+      adminState.withdrawnRoutes.push(entry);
+      updateFeedback(feedback, `Added withdrawn route ${entry.route}.`, 'success');
+    }
+
+    adminState.withdrawnRoutes = setStoredWithdrawnRoutes(adminState.withdrawnRoutes);
+    renderList();
+    resetForm();
+    inputs.route.focus();
+  });
+
+  cancel.addEventListener('click', () => {
+    resetForm();
+    updateFeedback(feedback, 'Editing cancelled.', 'info');
+  });
+
+  const refresh = () => {
+    renderList();
+    if (adminState.withdrawnEditId) {
+      const current = adminState.withdrawnRoutes.find((item) => item.id === adminState.withdrawnEditId);
+      if (!current) {
+        resetForm();
+        updateFeedback(feedback, 'The route you were editing is no longer available.', 'info');
+      }
+    }
+  };
+
+  refresh();
+
+  return {
+    element: panel,
+    refresh
+  };
+}
+
+function createTagOverridePanel() {
+  const panel = document.createElement('section');
+  panel.className = 'admin-panel';
+  panel.setAttribute('aria-labelledby', 'tagPanelHeading');
+
+  const header = document.createElement('div');
+  header.className = 'admin-panel__header';
+
+  const heading = document.createElement('h2');
+  heading.id = 'tagPanelHeading';
+  heading.textContent = 'Route service tags';
+
+  const description = document.createElement('p');
+  description.className = 'admin-panel__description';
+  description.textContent = 'Override the tags that appear on the routes page, including night or school designations.';
+
+  header.append(heading, description);
+  panel.append(header);
+
+  const feedback = createFeedbackElement();
+  panel.append(feedback);
+
+  const form = document.createElement('form');
+  form.className = 'admin-form';
+  form.noValidate = true;
+
+  const routeGroup = document.createElement('div');
+  routeGroup.className = 'admin-form__group';
+
+  const routeLabel = document.createElement('label');
+  routeLabel.setAttribute('for', 'tag-route');
+  routeLabel.textContent = 'Route';
+
+  const routeInput = document.createElement('input');
+  routeInput.type = 'text';
+  routeInput.id = 'tag-route';
+  routeInput.name = 'route';
+  routeInput.placeholder = 'e.g. N25';
+  routeInput.autocomplete = 'off';
+  routeInput.required = true;
+
+  routeGroup.append(routeLabel, routeInput);
+  form.append(routeGroup);
+
+  const tagFieldset = document.createElement('fieldset');
+  tagFieldset.className = 'admin-form__group admin-form__group--fieldset';
+
+  const legend = document.createElement('legend');
+  legend.textContent = 'Service tags';
+  tagFieldset.append(legend);
+
+  const checkboxContainer = document.createElement('div');
+  checkboxContainer.className = 'admin-checkboxes';
+  const knownInputs = [];
+
+  TAG_OPTIONS.forEach((tag) => {
+    const wrapper = document.createElement('label');
+    wrapper.className = 'admin-checkbox';
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.value = tag;
+    checkbox.name = 'knownTags';
+    const span = document.createElement('span');
+    span.textContent = tag;
+    wrapper.append(checkbox, span);
+    checkboxContainer.append(wrapper);
+    knownInputs.push(checkbox);
+  });
+
+  tagFieldset.append(checkboxContainer);
+  form.append(tagFieldset);
+
+  const customGroup = document.createElement('div');
+  customGroup.className = 'admin-form__group';
+
+  const customLabel = document.createElement('label');
+  customLabel.setAttribute('for', 'tag-custom');
+  customLabel.textContent = 'Custom tags (comma separated)';
+
+  const customInput = document.createElement('input');
+  customInput.type = 'text';
+  customInput.id = 'tag-custom';
+  customInput.name = 'custom';
+  customInput.placeholder = 'e.g. Express, Limited Stop';
+  customInput.autocomplete = 'off';
+
+  customGroup.append(customLabel, customInput);
+  form.append(customGroup);
+
+  const actions = document.createElement('div');
+  actions.className = 'admin-form__actions';
+
+  const submit = document.createElement('button');
+  submit.type = 'submit';
+  submit.className = 'button admin-button';
+  submit.textContent = 'Save service tags';
+
+  const cancel = document.createElement('button');
+  cancel.type = 'button';
+  cancel.className = 'button admin-button admin-button--secondary';
+  cancel.textContent = 'Cancel edit';
+  cancel.hidden = true;
+
+  actions.append(submit, cancel);
+  form.append(actions);
+  panel.append(form);
+
+  const listWrapper = document.createElement('div');
+  listWrapper.className = 'network-table-wrapper admin-table-wrapper';
+  panel.append(listWrapper);
+
+  const resetForm = () => {
+    form.reset();
+    knownInputs.forEach((checkbox) => {
+      checkbox.checked = false;
+    });
+    adminState.tagEditId = null;
+    submit.textContent = 'Save service tags';
+    cancel.hidden = true;
+  };
+
+  const setFormFromEntry = (entry) => {
+    adminState.tagEditId = entry.id;
+    submit.textContent = 'Update service tags';
+    cancel.hidden = false;
+    routeInput.value = entry.route || '';
+    const knownTagSet = new Set(TAG_OPTIONS);
+    knownInputs.forEach((checkbox) => {
+      checkbox.checked = entry.tags.includes(checkbox.value);
+    });
+    const customTags = entry.tags.filter((tag) => !knownTagSet.has(tag));
+    customInput.value = customTags.join(', ');
+    routeInput.focus();
+    updateFeedback(feedback, `Editing service tags for ${entry.route}.`, 'info');
+  };
+
+  const collectTags = () => {
+    const tags = [];
+    knownInputs.forEach((checkbox) => {
+      if (checkbox.checked && !tags.includes(checkbox.value)) {
+        tags.push(checkbox.value);
+      }
+    });
+    const customTags = customInput.value
+      .split(',')
+      .map((tag) => tag.trim())
+      .filter((tag) => tag && !tags.includes(tag));
+    return [...tags, ...customTags];
+  };
+
+  const renderList = () => {
+    listWrapper.innerHTML = '';
+    const overrides = adminState.routeTagOverrides;
+    if (!overrides.length) {
+      const empty = document.createElement('p');
+      empty.className = 'admin-empty';
+      empty.textContent = 'No route tag overrides saved yet.';
+      listWrapper.append(empty);
+      return;
+    }
+
+    const table = document.createElement('table');
+    table.className = 'network-table admin-table';
+
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    ['Route', 'Tags', 'Actions'].forEach((label) => {
+      const th = document.createElement('th');
+      th.textContent = label;
+      headerRow.append(th);
+    });
+    thead.append(headerRow);
+    table.append(thead);
+
+    const tbody = document.createElement('tbody');
+    overrides.forEach((entry) => {
+      const row = document.createElement('tr');
+      const routeCell = document.createElement('td');
+      routeCell.textContent = entry.route;
+      row.append(routeCell);
+
+      const tagsCell = document.createElement('td');
+      if (entry.tags.length) {
+        const tagList = document.createElement('div');
+        tagList.className = 'admin-tag-list';
+        entry.tags.forEach((tag) => {
+          const badge = document.createElement('span');
+          badge.className = 'admin-tag';
+          badge.textContent = tag;
+          tagList.append(badge);
+        });
+        tagsCell.append(tagList);
+      } else {
+        tagsCell.textContent = '—';
+      }
+      row.append(tagsCell);
+
+      const actionsCell = document.createElement('td');
+      actionsCell.className = 'admin-table__actions';
+      const editButton = createActionButton('Edit', 'ghost', () => {
+        setFormFromEntry(entry);
+      });
+      const removeButton = createActionButton('Remove', 'danger', () => {
+        const confirmed = window.confirm(`Remove tag override for ${entry.route}?`);
+        if (!confirmed) return;
+        adminState.routeTagOverrides = adminState.routeTagOverrides.filter((item) => item.id !== entry.id);
+        adminState.routeTagOverrides = setRouteTagOverrides(adminState.routeTagOverrides);
+        if (adminState.tagEditId === entry.id) {
+          resetForm();
+        }
+        renderList();
+        updateFeedback(feedback, `Removed tags for ${entry.route}.`, 'success');
+      });
+      actionsCell.append(editButton, removeButton);
+      row.append(actionsCell);
+
+      tbody.append(row);
+    });
+
+    table.append(tbody);
+    listWrapper.append(table);
+  };
+
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const routeValue = routeInput.value.trim();
+    if (!routeValue) {
+      updateFeedback(feedback, 'A route number is required.', 'error');
+      routeInput.focus();
+      return;
+    }
+
+    const tags = collectTags();
+    if (!tags.length) {
+      updateFeedback(feedback, 'Select or enter at least one service tag.', 'error');
+      return;
+    }
+
+    const entry = {
+      id: adminState.tagEditId || createId(),
+      route: routeValue,
+      tags
+    };
+
+    if (adminState.tagEditId) {
+      const index = adminState.routeTagOverrides.findIndex((item) => item.id === adminState.tagEditId);
+      if (index !== -1) {
+        adminState.routeTagOverrides.splice(index, 1, entry);
+      }
+      updateFeedback(feedback, `Updated tags for ${entry.route}.`, 'success');
+    } else {
+      adminState.routeTagOverrides.push(entry);
+      updateFeedback(feedback, `Saved tags for ${entry.route}.`, 'success');
+    }
+
+    adminState.routeTagOverrides = setRouteTagOverrides(adminState.routeTagOverrides);
+    renderList();
+    resetForm();
+    routeInput.focus();
+  });
+
+  cancel.addEventListener('click', () => {
+    resetForm();
+    updateFeedback(feedback, 'Editing cancelled.', 'info');
+  });
+
+  const refresh = () => {
+    renderList();
+    if (adminState.tagEditId) {
+      const current = adminState.routeTagOverrides.find((item) => item.id === adminState.tagEditId);
+      if (!current) {
+        resetForm();
+        updateFeedback(feedback, 'The tags you were editing are no longer available.', 'info');
+      }
+    }
+  };
+
+  refresh();
+
+  return {
+    element: panel,
+    refresh
+  };
+}
+
+function handleStorageSync(event) {
+  if (!event || !event.key) return;
+  if (event.key === STORAGE_KEYS.withdrawnRoutes) {
+    adminState.withdrawnRoutes = getStoredWithdrawnRoutes();
+    adminViews.withdrawn?.refresh();
+  }
+  if (event.key === STORAGE_KEYS.routeTagOverrides) {
+    adminState.routeTagOverrides = getRouteTagOverrides();
+    adminViews.tags?.refresh();
+  }
+}
+
 function renderAdminDashboard(user) {
   if (!adminContent) return;
   clearPendingRedirect();
   setBusy(false);
+
+  adminState.withdrawnRoutes = getStoredWithdrawnRoutes();
+  adminState.routeTagOverrides = getRouteTagOverrides();
+
   const section = document.createElement('section');
   section.className = 'admin-dashboard';
 
   const heading = document.createElement('h1');
   heading.id = 'adminDashboardHeading';
   heading.textContent = 'Admin Console';
-  section.append(heading);
 
   const welcome = document.createElement('p');
   const displayName = user.displayName || user.email || 'Administrator';
   welcome.textContent = `Welcome, ${displayName}.`;
-  section.append(welcome);
 
-  const placeholder = document.createElement('p');
-  placeholder.textContent = 'Administrative tools will appear here when they are available.';
-  section.append(placeholder);
+  const intro = document.createElement('p');
+  intro.className = 'admin-dashboard__intro';
+  intro.textContent = 'Manage custom data for RouteFlow London. Changes apply instantly in this browser once saved.';
+
+  section.append(heading, welcome, intro);
+
+  if (!storageAvailable) {
+    const warning = document.createElement('p');
+    warning.className = 'admin-warning';
+    warning.setAttribute('role', 'alert');
+    warning.textContent = 'Local storage is unavailable. Changes will only last until this page is refreshed.';
+    section.append(warning);
+  }
+
+  const panels = document.createElement('div');
+  panels.className = 'admin-panels';
+
+  const withdrawnManager = createWithdrawnPanel();
+  const tagManager = createTagOverridePanel();
+
+  adminViews.withdrawn = withdrawnManager;
+  adminViews.tags = tagManager;
+
+  panels.append(withdrawnManager.element, tagManager.element);
+  section.append(panels);
 
   replaceContent(section);
+
+  if (!storageListenerRegistered) {
+    window.addEventListener('storage', handleStorageSync);
+    storageListenerRegistered = true;
+  }
 }
 
 function ensureFirebaseAuth() {

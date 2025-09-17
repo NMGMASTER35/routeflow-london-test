@@ -1,3 +1,5 @@
+import { getStoredWithdrawnRoutes, STORAGE_KEYS } from './data-store.js';
+
 const selectors = {
   table: document.getElementById('withdrawnTable'),
   search: document.getElementById('withdrawnSearch'),
@@ -10,7 +12,8 @@ const selectors = {
 };
 
 const state = {
-  rows: []
+  rows: [],
+  searchTerm: ''
 };
 
 const normalise = (value) => (typeof value === 'string' ? value.trim() : '');
@@ -57,6 +60,7 @@ const computeStats = () => {
 };
 
 const filterRows = (term) => {
+  state.searchTerm = term;
   const searchTerm = term.toLowerCase();
   let visibleCount = 0;
 
@@ -74,9 +78,47 @@ const filterRows = (term) => {
   }
 };
 
+const renderStoredRoutes = () => {
+  if (!selectors.table) return;
+  const tbody = selectors.table.querySelector('tbody');
+  if (!tbody) return;
+
+  Array.from(tbody.querySelectorAll('tr[data-source="custom"]')).forEach((row) => row.remove());
+
+  const storedRoutes = getStoredWithdrawnRoutes();
+  storedRoutes.forEach((entry) => {
+    const row = document.createElement('tr');
+    row.dataset.source = 'custom';
+    row.classList.add('withdrawn-row--custom');
+    const cells = [
+      entry.route,
+      entry.start,
+      entry.end,
+      entry.launched,
+      entry.withdrawn,
+      entry.operator,
+      entry.replacedBy
+    ];
+    cells.forEach((value) => {
+      const cell = document.createElement('td');
+      cell.textContent = value || '—';
+      row.appendChild(cell);
+    });
+    tbody.appendChild(row);
+  });
+
+  state.rows = Array.from(tbody.querySelectorAll('tr'));
+};
+
+const refreshFromStorage = () => {
+  renderStoredRoutes();
+  computeStats();
+  filterRows(state.searchTerm || '');
+};
+
 const initialise = () => {
   if (!selectors.table) return;
-  state.rows = Array.from(selectors.table.querySelectorAll('tbody tr'));
+  renderStoredRoutes();
   computeStats();
   filterRows('');
 
@@ -90,3 +132,9 @@ if (document.readyState === 'loading') {
 } else {
   initialise();
 }
+
+window.addEventListener('storage', (event) => {
+  if (event.key === STORAGE_KEYS.withdrawnRoutes) {
+    refreshFromStorage();
+  }
+});
