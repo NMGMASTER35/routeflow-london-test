@@ -5,6 +5,8 @@ import {
   setStoredWithdrawnRoutes,
   getRouteTagOverrides,
   setRouteTagOverrides,
+  getStoredBlogPosts,
+  setStoredBlogPosts,
   STORAGE_KEYS
 } from './data-store.js';
 
@@ -33,12 +35,15 @@ const adminState = {
   withdrawnRoutes: [],
   routeTagOverrides: [],
   withdrawnEditId: null,
-  tagEditId: null
+  tagEditId: null,
+  blogPosts: [],
+  blogEditId: null
 };
 
 const adminViews = {
   withdrawn: null,
-  tags: null
+  tags: null,
+  blog: null
 };
 
 const normaliseEmail = (value) => (typeof value === 'string' ? value.trim().toLowerCase() : '');
@@ -699,6 +704,317 @@ function createTagOverridePanel() {
   };
 }
 
+function createBlogPanel() {
+  const panel = document.createElement('section');
+  panel.className = 'admin-panel';
+  panel.setAttribute('aria-labelledby', 'blogPanelHeading');
+
+  const header = document.createElement('div');
+  header.className = 'admin-panel__header';
+
+  const heading = document.createElement('h2');
+  heading.id = 'blogPanelHeading';
+  heading.textContent = 'Blog updates';
+
+  const description = document.createElement('p');
+  description.className = 'admin-panel__description';
+  description.textContent = 'Publish announcements and news that appear on the homepage and blog page.';
+
+  header.append(heading, description);
+  panel.append(header);
+
+  const feedback = createFeedbackElement();
+  panel.append(feedback);
+
+  const form = document.createElement('form');
+  form.className = 'admin-form';
+  form.noValidate = true;
+
+  const grid = document.createElement('div');
+  grid.className = 'admin-form__grid';
+
+  const textGroup = (id, label, placeholder = '', type = 'text') => {
+    const group = document.createElement('div');
+    group.className = 'admin-form__group';
+    const inputLabel = document.createElement('label');
+    inputLabel.setAttribute('for', id);
+    inputLabel.textContent = label;
+    const input = document.createElement('input');
+    input.type = type;
+    input.id = id;
+    input.placeholder = placeholder;
+    input.autocomplete = 'off';
+    group.append(inputLabel, input);
+    return { group, input };
+  };
+
+  const createTextarea = (id, label, placeholder = '') => {
+    const group = document.createElement('div');
+    group.className = 'admin-form__group admin-form__group--stacked';
+    const inputLabel = document.createElement('label');
+    inputLabel.setAttribute('for', id);
+    inputLabel.textContent = label;
+    const textarea = document.createElement('textarea');
+    textarea.id = id;
+    textarea.placeholder = placeholder;
+    textarea.rows = 4;
+    group.append(inputLabel, textarea);
+    return { group, textarea };
+  };
+
+  const inputs = {};
+
+  const titleField = textGroup('blog-title', 'Title', 'e.g. Live tracking gets smarter');
+  inputs.title = titleField.input;
+  inputs.title.required = true;
+  grid.append(titleField.group);
+
+  const authorField = textGroup('blog-author', 'Author', 'RouteFlow London team');
+  inputs.author = authorField.input;
+  grid.append(authorField.group);
+
+  const publishedField = textGroup('blog-published', 'Published on', '2025-05-12T10:00', 'datetime-local');
+  inputs.published = publishedField.input;
+  grid.append(publishedField.group);
+
+  const heroField = textGroup('blog-hero', 'Hero image URL', 'https://example.com/bus.jpg', 'url');
+  inputs.heroImage = heroField.input;
+  grid.append(heroField.group);
+
+  const tagsField = textGroup('blog-tags', 'Tags (comma separated)', 'Planning, Update');
+  inputs.tags = tagsField.input;
+  grid.append(tagsField.group);
+
+  form.append(grid);
+
+  const summaryField = createTextarea('blog-summary', 'Summary', 'A short teaser that appears on the homepage.');
+  inputs.summary = summaryField.textarea;
+  form.append(summaryField.group);
+
+  const contentField = createTextarea('blog-content', 'Full content', 'Add paragraphs separated by a blank line.');
+  inputs.content = contentField.textarea;
+  inputs.content.rows = 6;
+  form.append(contentField.group);
+
+  const featuredGroup = document.createElement('div');
+  featuredGroup.className = 'admin-form__group admin-form__group--checkbox';
+  const featuredLabel = document.createElement('label');
+  const featuredInput = document.createElement('input');
+  featuredInput.type = 'checkbox';
+  featuredInput.id = 'blog-featured';
+  inputs.featured = featuredInput;
+  const featuredText = document.createElement('span');
+  featuredText.textContent = 'Mark as featured';
+  featuredLabel.append(featuredInput, featuredText);
+  featuredGroup.append(featuredLabel);
+  form.append(featuredGroup);
+
+  const actions = document.createElement('div');
+  actions.className = 'admin-form__actions';
+
+  const submit = document.createElement('button');
+  submit.type = 'submit';
+  submit.className = 'button admin-button';
+  submit.textContent = 'Publish post';
+
+  const cancel = document.createElement('button');
+  cancel.type = 'button';
+  cancel.className = 'button admin-button admin-button--secondary';
+  cancel.textContent = 'Cancel edit';
+  cancel.hidden = true;
+
+  actions.append(submit, cancel);
+  form.append(actions);
+  panel.append(form);
+
+  const listWrapper = document.createElement('div');
+  listWrapper.className = 'admin-table-wrapper';
+  panel.append(listWrapper);
+
+  const toLocalInputValue = (isoValue) => {
+    if (!isoValue) return '';
+    const date = new Date(isoValue);
+    if (!Number.isFinite(date.getTime())) return '';
+    const offset = date.getTimezoneOffset();
+    const adjusted = new Date(date.getTime() - offset * 60000);
+    return adjusted.toISOString().slice(0, 16);
+  };
+
+  const fromLocalInputValue = (value) => {
+    if (!value) return new Date().toISOString();
+    const date = new Date(value);
+    if (!Number.isFinite(date.getTime())) return new Date().toISOString();
+    return date.toISOString();
+  };
+
+  const resetForm = () => {
+    form.reset();
+    adminState.blogEditId = null;
+    submit.textContent = 'Publish post';
+    cancel.hidden = true;
+  };
+
+  const startEdit = (entry) => {
+    adminState.blogEditId = entry.id;
+    submit.textContent = 'Save changes';
+    cancel.hidden = false;
+    inputs.title.value = entry.title || '';
+    inputs.author.value = entry.author || '';
+    inputs.summary.value = entry.summary || '';
+    inputs.content.value = entry.content || '';
+    inputs.heroImage.value = entry.heroImage || '';
+    inputs.tags.value = Array.isArray(entry.tags) ? entry.tags.join(', ') : '';
+    inputs.published.value = toLocalInputValue(entry.publishedAt);
+    inputs.featured.checked = Boolean(entry.featured);
+    inputs.title.focus();
+    updateFeedback(feedback, `Editing “${entry.title}”.`, 'info');
+  };
+
+  const renderList = () => {
+    listWrapper.innerHTML = '';
+    const posts = adminState.blogPosts;
+    if (!posts.length) {
+      const empty = document.createElement('p');
+      empty.className = 'admin-empty';
+      empty.textContent = 'No posts published yet. Add your first update above.';
+      listWrapper.append(empty);
+      return;
+    }
+
+    const table = document.createElement('table');
+    table.className = 'network-table admin-table';
+
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    ['Title', 'Published', 'Author', 'Tags', 'Featured', 'Actions'].forEach((label) => {
+      const th = document.createElement('th');
+      th.textContent = label;
+      headerRow.append(th);
+    });
+    thead.append(headerRow);
+    table.append(thead);
+
+    const tbody = document.createElement('tbody');
+    posts.forEach((entry) => {
+      const row = document.createElement('tr');
+
+      const titleCell = document.createElement('td');
+      const strong = document.createElement('strong');
+      strong.textContent = entry.title;
+      titleCell.appendChild(strong);
+      if (entry.summary) {
+        const summary = document.createElement('p');
+        summary.className = 'admin-blog-summary';
+        summary.textContent = entry.summary;
+        titleCell.appendChild(summary);
+      }
+      row.append(titleCell);
+
+      const publishedCell = document.createElement('td');
+      const publishedDate = entry.publishedAt ? new Date(entry.publishedAt) : null;
+      publishedCell.textContent = publishedDate && Number.isFinite(publishedDate.getTime())
+        ? publishedDate.toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+        : '—';
+      row.append(publishedCell);
+
+      const authorCell = document.createElement('td');
+      authorCell.textContent = entry.author || '—';
+      row.append(authorCell);
+
+      const tagsCell = document.createElement('td');
+      tagsCell.textContent = entry.tags?.length ? entry.tags.join(', ') : '—';
+      row.append(tagsCell);
+
+      const featuredCell = document.createElement('td');
+      featuredCell.textContent = entry.featured ? 'Yes' : 'No';
+      row.append(featuredCell);
+
+      const actionsCell = document.createElement('td');
+      actionsCell.className = 'admin-table__actions';
+      const editButton = createActionButton('Edit', 'ghost', () => startEdit(entry));
+      const deleteButton = createActionButton('Delete', 'danger', () => {
+        const confirmed = window.confirm(`Delete “${entry.title}”?`);
+        if (!confirmed) return;
+        adminState.blogPosts = adminState.blogPosts.filter((item) => item.id !== entry.id);
+        adminState.blogPosts = setStoredBlogPosts(adminState.blogPosts);
+        if (adminState.blogEditId === entry.id) {
+          resetForm();
+        }
+        renderList();
+        updateFeedback(feedback, `Deleted “${entry.title}”.`, 'success');
+      });
+      actionsCell.append(editButton, deleteButton);
+      row.append(actionsCell);
+
+      tbody.append(row);
+    });
+
+    table.append(tbody);
+    listWrapper.append(table);
+  };
+
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const titleValue = inputs.title.value.trim();
+    if (!titleValue) {
+      updateFeedback(feedback, 'A title is required before publishing.', 'error');
+      inputs.title.focus();
+      return;
+    }
+
+    const entry = {
+      id: adminState.blogEditId || createId(),
+      title: titleValue,
+      summary: inputs.summary.value.trim(),
+      content: inputs.content.value.trim(),
+      author: inputs.author.value.trim(),
+      heroImage: inputs.heroImage.value.trim(),
+      publishedAt: fromLocalInputValue(inputs.published.value),
+      tags: inputs.tags.value.split(',').map((tag) => tag.trim()).filter(Boolean),
+      featured: inputs.featured.checked
+    };
+
+    if (adminState.blogEditId) {
+      const index = adminState.blogPosts.findIndex((item) => item.id === adminState.blogEditId);
+      if (index !== -1) {
+        adminState.blogPosts.splice(index, 1, entry);
+      }
+      updateFeedback(feedback, `Updated “${entry.title}”.`, 'success');
+    } else {
+      adminState.blogPosts.push(entry);
+      updateFeedback(feedback, `Published “${entry.title}”.`, 'success');
+    }
+
+    adminState.blogPosts = setStoredBlogPosts(adminState.blogPosts);
+    renderList();
+    resetForm();
+    inputs.title.focus();
+  });
+
+  cancel.addEventListener('click', () => {
+    resetForm();
+    updateFeedback(feedback, 'Editing cancelled.', 'info');
+  });
+
+  const refresh = () => {
+    renderList();
+    if (adminState.blogEditId) {
+      const current = adminState.blogPosts.find((item) => item.id === adminState.blogEditId);
+      if (!current) {
+        resetForm();
+        updateFeedback(feedback, 'The post you were editing is no longer available.', 'info');
+      }
+    }
+  };
+
+  refresh();
+
+  return {
+    element: panel,
+    refresh
+  };
+}
+
 function handleStorageSync(event) {
   if (!event || !event.key) return;
   if (event.key === STORAGE_KEYS.withdrawnRoutes) {
@@ -709,6 +1025,10 @@ function handleStorageSync(event) {
     adminState.routeTagOverrides = getRouteTagOverrides();
     adminViews.tags?.refresh();
   }
+  if (event.key === STORAGE_KEYS.blogPosts) {
+    adminState.blogPosts = getStoredBlogPosts();
+    adminViews.blog?.refresh();
+  }
 }
 
 function renderAdminDashboard(user) {
@@ -718,6 +1038,7 @@ function renderAdminDashboard(user) {
 
   adminState.withdrawnRoutes = getStoredWithdrawnRoutes();
   adminState.routeTagOverrides = getRouteTagOverrides();
+  adminState.blogPosts = getStoredBlogPosts();
 
   const section = document.createElement('section');
   section.className = 'admin-dashboard';
@@ -747,13 +1068,15 @@ function renderAdminDashboard(user) {
   const panels = document.createElement('div');
   panels.className = 'admin-panels';
 
+  const blogManager = createBlogPanel();
   const withdrawnManager = createWithdrawnPanel();
   const tagManager = createTagOverridePanel();
 
+  adminViews.blog = blogManager;
   adminViews.withdrawn = withdrawnManager;
   adminViews.tags = tagManager;
 
-  panels.append(withdrawnManager.element, tagManager.element);
+  panels.append(blogManager.element, withdrawnManager.element, tagManager.element);
   section.append(panels);
 
   replaceContent(section);

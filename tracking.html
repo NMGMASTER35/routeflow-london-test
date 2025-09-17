@@ -2,180 +2,107 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tracking | RouteFlow London</title>
   <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png">
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="tracking.css">
   <script src="theme.js" defer></script>
-<body>
-
-<!-- Font Awesome -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-<!-- Google Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Montserrat:wght@600&display=swap" rel="stylesheet">
-
-<div id="navbar-container"></div>
-
-  <main>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>RouteFlow London – Live Arrivals</title>
-<style>
-  :root{
-    --bg:#f7f8fb;
-    --card:#ffffff;
-    --ink:#1a1d21;
-    --muted:#6b7280;
-    --ring:#e5e7eb;
-    --accent:#c8102e;
-    --shadow:0 8px 24px rgba(16,24,40,.06);
-
-    /* Mode colours */
-    --bus:#d01c1f;
-    --tube:#003688;
-    --dlr:#00afad;
-    --overground:#ff6d00;
-    --elizabeth:#6633cc;
-    --tram:#00a650;
-    --river:#0aa7b8;
-    --national:#0b3b8c;
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    margin:0;
-    background:var(--bg);
-    color:black(--ink);
-    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-    display:flex; flex-direction:column; align-items:center;
-  }
-  header{
-    width:100%;
-    padding:24px 16px;
-    background:#fff;
-    border-bottom:1px solid var(--ring);
-    position:sticky; top:0; z-index:10;
-  }
-  .brand{max-width:1100px; margin:0 auto; display:flex; align-items:center; gap:12px;}
-  .brand h1{font-size:20px; font-weight:700; letter-spacing:.2px; margin:0; color:var(--accent)}
-  .brand small{color:var(--muted)}
-  /* Search */
-  .search-wrap{width:100%; max-width:900px; margin:18px auto 8px; padding:0 16px;}
-  .search{
-    position:relative; margin:auto; width:100%;
-    background:var(--card); border:1px solid var(--ring); border-radius:14px; box-shadow:var(--shadow);
-    display:flex; align-items:center; gap:10px; padding:10px 12px;
-  }
-  .search input{
-    flex:1; border:0; outline:0; font-size:16px; padding:10px 12px; background:transparent;
-  }
-  .search button{
-    border:0; background:var(--accent); color:#fff; font-weight:600; padding:10px 14px;
-    border-radius:10px; cursor:pointer;
-  }
-  .search button:disabled{opacity:.5; cursor:not-allowed}
-
-  /* Results dropdown */
-  .results{
-    position:absolute; left:0; right:0; top:calc(100% + 8px);
-    background:var(--card); border:1px solid var(--ring); border-radius:12px; box-shadow:var(--shadow);
-    overflow:auto; max-height:420px; display:none;
-  }
-.result {
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--ring);
-  cursor: pointer;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  color: red; /* <-- change this to your desired color */
-}
-
-.result:last-child {
-  border-bottom: 0; /* just removes the last border, keeps color from above */
-}
-  .result:hover{background:#f3f4f6}
-  .r-main{flex:1}
-  .r-title{font-weight:700}
-  .r-sub{font-size:12px; color:var(--muted); margin-top:2px}
-  .chip{font-size:12px; background:#eef2f7; border:1px solid var(--ring); padding:2px 6px; border-radius:999px}
-
-  /* Layout */
-  .container{width:100%; max-width:1100px; padding:12px 16px; margin-top:8px; display:grid; grid-template-columns:1fr; gap:16px;}
-  @media (min-width:900px){ .container{grid-template-columns: 1fr;} }
-
-  /* Arrivals board */
-  .board{background:var(--card); border:1px solid var(--ring); border-radius:14px; box-shadow:var(--shadow); overflow:hidden;}
-  .board-head{display:flex; justify-content:space-between; align-items:center; padding:14px 16px; background:#fbfbfc; border-bottom:1px solid var(--ring);}
-  .board-title{font-weight:800}
-  .meta{font-size:12px; color:var(--muted)}
-  .actions{display:flex; align-items:center; gap:8px}
-  .action-btn{background:var(--accent); color:#fff; border:0; border-radius:6px; padding:6px 8px; font-size:12px; cursor:pointer}
-  .rows{display:flex; flex-direction:column}
-  .row{
-    display:grid; grid-template-columns: 110px 1fr 110px; gap:12px;
-    padding:12px 16px; border-bottom:1px solid var(--ring); align-items:center;
-  }
-  .row:last-child{border-bottom:0}
-  .badge{
-    justify-self:start; color:#fff; font-weight:800; letter-spacing:.2px;
-    padding:8px 10px; border-radius:10px; display:inline-flex; align-items:center; gap:8px; min-width:90px; justify-content:center;
-    text-transform:uppercase;
-  }
-  .mode-bus{background:Red(--bus)}
-  .mode-tube{background:Blue(--tube)}
-  .mode-dlr{background:lightblue(--dlr)}
-  .mode-overground{background:orange(--overground)}
-  .mode-elizabeth-line{background:purple(--elizabeth)}
-  .mode-tram{background:green(--tram)}
-  .mode-river-bus{background:darkgreen(--river)}
-  .mode-national-rail{background:black(--national)}
-  .dest{display:flex; flex-direction:column}
-  .dest b{font-weight:700}
-  .dest small{color:var(--muted)}
-  .eta{justify-self:end; font-weight:800}
-  .empty{padding:18px; color:var(--muted)}
-</style>
 </head>
 <body>
-  <header>
-    <div class="brand">
-      <h1>RouteFlow London</h1>
-      <small>Live arrivals for buses, tubes, trams & boats</small>
-    </div>
-    <div class="search-wrap">
-      <div class="search" id="searchBox">
-        <input id="q" type="text" placeholder="Search a station name (e.g. Liverpool Street Station) or paste a Stop ID…" autocomplete="off" />
-        <button id="goBtn" disabled>Search</button>
-        <div class="results" id="results"></div>
-      </div>
-    </div>
-  </header>
+  <div id="navbar-container"></div>
 
-  <main class="container">
-    <section class="board" id="board" aria-live="polite">
-      <div class="board-head">
-        <div>
-          <div class="board-title" id="boardTitle">No stop selected</div>
-          <div class="meta" id="boardMeta">Type a station name and choose a stop from the list.</div>
-        </div>
-        <div class="actions">
-          <button class="action-btn" id="favBtn">☆ Favourite</button>
-          <button class="action-btn" id="noteBtn">📝 Add note</button>
-          <div class="meta" id="updated"></div>
-        </div>
+  <main class="tracking-shell">
+    <section class="tracking-hero card">
+      <div class="tracking-hero__content">
+        <p class="tracking-hero__eyebrow">Live arrival board</p>
+        <h1>Track buses, tubes, trams and river services in real time.</h1>
+        <p>Search for any stop or station across the TfL network to see departures update automatically. Save favourites, jot down notes and keep your personal watch list close at hand.</p>
       </div>
-      <div class="rows" id="rows">
-        <div class="empty">Nothing to show yet.</div>
-      </div>
+      <ul class="tracking-hero__highlights">
+        <li>
+          <span>Live refresh</span>
+          <strong>Every 25 seconds</strong>
+        </li>
+        <li>
+          <span>Modes covered</span>
+          <strong>Bus, Tube, DLR, tram, river, rail</strong>
+        </li>
+        <li>
+          <span>Productivity</span>
+          <strong>Notes &amp; favourites built-in</strong>
+        </li>
+      </ul>
+    </section>
+
+    <section class="tracking-layout">
+      <section class="tracking-board card" aria-live="polite">
+        <header class="tracking-board__header">
+          <div>
+            <h2 id="boardTitle">No stop selected</h2>
+            <p id="boardMeta">Type a station or stop name to get started.</p>
+          </div>
+          <div class="tracking-board__actions">
+            <button class="tracking-chip" id="favBtn" type="button">☆ Favourite</button>
+            <button class="tracking-chip" id="noteBtn" type="button">📝 Add note</button>
+            <span class="tracking-board__timestamp" id="updated"></span>
+          </div>
+        </header>
+
+        <div class="tracking-search">
+          <label class="sr-only" for="q">Search for a stop or station</label>
+          <div class="tracking-search__field" id="searchBox">
+            <input id="q" type="text" placeholder="Search a station name or paste a Stop ID…" autocomplete="off" />
+            <button id="goBtn" type="button" disabled>Search</button>
+            <div class="tracking-search__results" id="results"></div>
+          </div>
+        </div>
+
+        <div class="tracking-board__rows" id="rows">
+          <div class="empty">Nothing to show yet.</div>
+        </div>
+      </section>
+
+      <aside class="tracking-side">
+        <article class="tracking-side__card card">
+          <h3>Tips for faster searches</h3>
+          <ul>
+            <li>Paste a StopPoint ID (e.g. 490008660N) to jump straight to arrivals.</li>
+            <li>Use the favourites button to pin key stops to your profile dashboard.</li>
+            <li>Add notes for rare allocations, disruptions or personal reminders.</li>
+          </ul>
+        </article>
+        <article class="tracking-side__card card">
+          <h3>Need planning tools?</h3>
+          <p>Switch to the journey planner to compare multi-mode routes with accessibility filters.</p>
+          <a class="tracking-side__link" href="planning.html">Open journey planner</a>
+        </article>
+      </aside>
     </section>
   </main>
 
-<script>
+  <footer>
+    <div class="footer-links">
+      <a href="about.html">About</a> |
+      <a href="privacy.html">Privacy</a> |
+      <a href="terms.html">Terms</a> |
+      <a href="contact.html">Contact</a>
+    </div>
+    <div class="social-icons">
+      <a href="https://discord.gg/qVf3nN4Mgq"><i class="fa-brands fa-discord"></i></a>
+      <a href="https://www.tiktok.com/@the_bus_father"><i class="fab fa-tiktok"></i></a>
+      <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo"><i class="fab fa-instagram"></i></a>
+    </div>
+    <small>Made for London. Built from scratch.</small>
+  </footer>
+
+  <script src="navbar-loader.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="main.js"></script>
+  <script>
 const APP_KEY = "f17d0725d1654338ab02a361fe41abad";
 const MODES = "bus,tube,overground,dlr,tram,river-bus,national-rail,elizabeth-line";
 const q = document.getElementById('q');
@@ -216,7 +143,6 @@ function formatDistance(m){
   return distanceUnit === "imperial" ? `${(m/1609.344).toFixed(2)} mi` : `${Math.round(m)} m`;
 }
 function modeClass(mode){
-  // Map TfL mode to CSS class
   return `mode-${mode}`;
 }
 function modeIcon(mode){
@@ -242,14 +168,12 @@ async function fetchJSON(url){
 async function search(query){
   if(!query) { results.style.display="none"; return; }
 
-  // If user pasted a StopPoint ID, bypass search
   if(/^\d{8,}[A-Z]?$/i.test(query.trim())){
     results.style.display="none";
     selectStop(query.trim(), "Selected stop");
     return;
   }
 
-  // Use TfL StopPoint Search (path param gives better coverage)
   const searchUrl = `https://api.tfl.gov.uk/StopPoint/Search/${encodeURIComponent(query)}?modes=${encodeURIComponent(MODES)}&maxResults=20&app_key=${APP_KEY}`;
 
   let searchData;
@@ -269,11 +193,9 @@ async function search(query){
     return;
   }
 
-  // For each match, fetch StopPoint details to get stopLetter (platform) and towards and children
   const detailPromises = matches.map(m => fetchJSON(`https://api.tfl.gov.uk/StopPoint/${m.id}?app_key=${APP_KEY}`).catch(()=>null));
   const details = await Promise.all(detailPromises);
 
-  // Expand children so bus stop variants (letters) show individually
   const entries = [];
   details.forEach(sp => {
     if(!sp) return;
@@ -286,7 +208,6 @@ async function search(query){
     }
   });
 
-  // Build results list
   results.innerHTML = entries.map(sp=>{
     const stopName = sp.commonName || sp.name || "";
     const stopLetter = sp.stopLetter || (sp.additionalProperties||[]).find(p=>p.key==="StopLetter")?.value || "";
@@ -328,7 +249,6 @@ async function loadArrivals(stopId, stopName){
   try{
     let data = await fetchJSON(`https://api.tfl.gov.uk/StopPoint/${stopId}/Arrivals?app_key=${APP_KEY}`);
 
-    // If nothing came back, try fetching children and aggregate
     if(!Array.isArray(data) || data.length===0){
       const info = await fetchJSON(`https://api.tfl.gov.uk/StopPoint/${stopId}?app_key=${APP_KEY}`).catch(()=>null);
       if(info && Array.isArray(info.children) && info.children.length){
@@ -345,7 +265,6 @@ async function loadArrivals(stopId, stopName){
       return;
     }
 
-    // Sort by soonest
     data.sort((a,b)=> a.timeToStation - b.timeToStation);
 
     rows.innerHTML = data.map(a=>{
@@ -399,56 +318,66 @@ function selectStop(id, name){
   startRefreshTimer();
 }
 
-/* ---------- wire up ---------- */
-const runSearch = debounce(()=> search(q.value.trim()), 250);
+q.addEventListener('input', debounce((event)=>{
+  const value = event.target.value.trim();
+  goBtn.disabled = !value;
+  search(value);
+}, 250));
 
-q.addEventListener('input', ()=>{
-  goBtn.disabled = q.value.trim().length < 2;
-  runSearch();
-});
-q.addEventListener('focus', ()=>{
-  if(results.innerHTML.trim()) results.style.display="block";
-});
-document.addEventListener('click', (e)=>{
-  if(!document.getElementById('searchBox').contains(e.target)){
-    results.style.display="none";
+q.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    const value = q.value.trim();
+    if (value) {
+      search(value);
+    }
   }
 });
-q.addEventListener('keydown', (e)=>{
-  if(e.key === 'Enter'){
-    e.preventDefault();
-    // If results are visible, do nothing (user can click). If not, force a search.
-    if(results.style.display!=="block") runSearch();
+
+goBtn.addEventListener('click', ()=>{
+  const value = q.value.trim();
+  if(!value) return;
+  search(value);
+});
+
+document.addEventListener('click', (event)=>{
+  if(!event.target.closest('#searchBox')){
+    results.style.display = "none";
   }
 });
-goBtn.addEventListener('click', ()=> runSearch());
 
-</script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-<script src="main.js"></script>
-<script type="module">
-import { addFavourite } from './favourites.js';
-import { addNote } from './notes.js';
-
-const favBtn = document.getElementById('favBtn');
-const noteBtn = document.getElementById('noteBtn');
-
-favBtn.addEventListener('click', () => {
-  const user = firebase.auth().currentUser;
-  if (!user || !currentStop) { alert('Select a stop and sign in first'); return; }
-  addFavourite(user.uid, currentStop);
-  favBtn.textContent = '★ Favourited';
+window.addEventListener('beforeunload', () => {
+  if(refreshTimer) clearInterval(refreshTimer);
 });
+  </script>
+  <script type="module">
+    import { addFavourite } from './favourites.js';
+    import { addNote } from './notes.js';
 
-noteBtn.addEventListener('click', () => {
-  const user = firebase.auth().currentUser;
-  if (!user || !currentStop) { alert('Select a stop and sign in first'); return; }
-  const text = prompt('Enter a note for this stop:');
-  if (text) addNote(user.uid, { id: currentStop.id, name: currentStop.name, text });
-});
-</script>
-<script src="navbar-loader.js"></script>
-<link rel="stylesheet" href="navbar.css" />
+    const favBtn = document.getElementById('favBtn');
+    const noteBtn = document.getElementById('noteBtn');
+
+    favBtn?.addEventListener('click', () => {
+      const user = firebase.auth()?.currentUser;
+      if (!user || !currentStop) {
+        alert('Select a stop and sign in first.');
+        return;
+      }
+      addFavourite(user.uid, currentStop);
+      favBtn.textContent = '★ Favourited';
+    });
+
+    noteBtn?.addEventListener('click', () => {
+      const user = firebase.auth()?.currentUser;
+      if (!user || !currentStop) {
+        alert('Select a stop and sign in first.');
+        return;
+      }
+      const text = prompt('Enter a note for this stop:');
+      if (text) {
+        addNote(user.uid, { id: currentStop.id, name: currentStop.name, text });
+      }
+    });
+  </script>
 </body>
 </html>

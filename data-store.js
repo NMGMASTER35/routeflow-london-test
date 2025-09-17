@@ -2,7 +2,8 @@ const STORAGE_PREFIX = 'routeflow';
 
 export const STORAGE_KEYS = {
   withdrawnRoutes: `${STORAGE_PREFIX}.withdrawnRoutes`,
-  routeTagOverrides: `${STORAGE_PREFIX}.routeTagOverrides`
+  routeTagOverrides: `${STORAGE_PREFIX}.routeTagOverrides`,
+  blogPosts: `${STORAGE_PREFIX}.blogPosts`
 };
 
 const resolveStorage = () => {
@@ -55,9 +56,161 @@ const parseJson = (value, fallback) => {
 
 const normaliseText = (value) => (typeof value === 'string' ? value.trim() : '');
 
+const normaliseUrl = (value) => {
+  const text = normaliseText(value);
+  if (!text) return '';
+  try {
+    const base = typeof window !== 'undefined' && window.location ? window.location.href : undefined;
+    return base ? new URL(text, base).href : new URL(text).href;
+  } catch (error) {
+    return text;
+  }
+};
+
 export const storageAvailable = Boolean(storage);
 
 export const createId = () => `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
+const parseDateValue = (value) => {
+  if (!value && value !== 0) {
+    return new Date();
+  }
+  const date = value instanceof Date ? value : new Date(value);
+  if (!Number.isFinite(date.getTime())) {
+    return new Date();
+  }
+  return date;
+};
+
+const toIsoString = (value) => {
+  try {
+    return parseDateValue(value).toISOString();
+  } catch (error) {
+    return new Date().toISOString();
+  }
+};
+
+const sanitiseTagList = (value) => {
+  if (!value) return [];
+  const source = Array.isArray(value) ? value : String(value).split(',');
+  return source
+    .map((tag) => normaliseText(tag))
+    .filter((tag, index, array) => tag && array.indexOf(tag) === index);
+};
+
+const estimateReadMinutes = (content) => {
+  const text = normaliseText(content);
+  if (!text) return 3;
+  const words = text.split(/\s+/).filter(Boolean).length;
+  const minutes = Math.max(1, Math.round(words / 180));
+  return minutes;
+};
+
+const sanitiseBlogPost = (entry) => {
+  if (!entry || typeof entry !== 'object') return null;
+  const title = normaliseText(entry.title);
+  if (!title) return null;
+  const id = normaliseText(entry.id) || createId();
+  const summary = normaliseText(entry.summary);
+  const content = normaliseText(entry.content);
+  const author = normaliseText(entry.author) || 'RouteFlow London team';
+  const heroImage = normaliseUrl(entry.heroImage);
+  const publishedAt = toIsoString(entry.publishedAt || entry.date);
+  const featured = Boolean(entry.featured);
+  const tags = sanitiseTagList(entry.tags);
+  const readTime = Number.isFinite(Number(entry.readTime)) && Number(entry.readTime) > 0
+    ? Math.round(Number(entry.readTime))
+    : estimateReadMinutes(content || summary);
+
+  return {
+    id,
+    title,
+    summary,
+    content,
+    author,
+    heroImage,
+    publishedAt,
+    tags,
+    featured,
+    readTime
+  };
+};
+
+const sortBlogPostsByDateDesc = (a, b) => {
+  const timeA = parseDateValue(a?.publishedAt).getTime();
+  const timeB = parseDateValue(b?.publishedAt).getTime();
+  return timeB - timeA;
+};
+
+const sanitiseBlogCollection = (collection) => {
+  if (!Array.isArray(collection)) return [];
+  return collection
+    .map((item) => sanitiseBlogPost(item))
+    .filter(Boolean)
+    .sort(sortBlogPostsByDateDesc);
+};
+
+const cloneBlogCollection = (collection) =>
+  Array.isArray(collection)
+    ? collection.map((post) => ({
+        ...post,
+        tags: Array.isArray(post.tags) ? [...post.tags] : []
+      }))
+    : [];
+
+const DEFAULT_BLOG_POSTS = sanitiseBlogCollection([
+  {
+    id: 'blog-city-pulse',
+    title: 'Keeping pace with London\'s network',
+    summary: 'See how RouteFlow London brings live arrivals, rare workings, and smart planning into a single dashboard.',
+    content:
+      'London never stands still—and neither should your travel tools. RouteFlow London now stitches together live arrivals, ' +
+      'service alerts, and enthusiast insights so you can pivot quickly when the network changes. From highlighting rare ' +
+      'allocations to surfacing accessibility information, the platform is designed to feel personal from the moment you sign in.',
+    author: 'RouteFlow London team',
+    publishedAt: '2025-04-18T09:30:00.000Z',
+    tags: ['Product updates']
+  },
+  {
+    id: 'blog-arrivals-refresh',
+    title: 'Live tracking gets a smarter arrivals board',
+    summary: 'The tracking console now groups departures by mode, shows richer stop context, and remembers your favourites.',
+    content:
+      'We have rebuilt the arrivals board with clarity in mind. Search suggestions surface faster, while new layout cues make it ' +
+      'easy to separate buses, trams, river services and more. Pin your go-to stops, add quick notes for special workings, and ' +
+      'watch everything refresh automatically without losing your place.',
+    author: 'Product design',
+    publishedAt: '2025-05-06T07:45:00.000Z',
+    tags: ['Tracking', 'Design']
+  },
+  {
+    id: 'blog-journey-studio',
+    title: 'Planning journeys with confidence',
+    summary: 'Multi-mode filters, accessibility options, and clearer itineraries make the planner ready for every kind of trip.',
+    content:
+      'Tell RouteFlow where you are heading and we\'ll present options that respect the way you travel. Choose the modes you prefer, ' +
+      'filter out stairs or escalators, and compare legs at a glance. Each journey shows interchanges, line colours, and essential ' +
+      'timings so you know exactly what to expect.',
+    author: 'Journey planning',
+    publishedAt: '2025-05-12T11:15:00.000Z',
+    tags: ['Planning']
+  }
+]);
+
+export const getStoredBlogPosts = () => {
+  const raw = readItem(STORAGE_KEYS.blogPosts);
+  const parsed = sanitiseBlogCollection(parseJson(raw, []));
+  if (parsed.length) {
+    return cloneBlogCollection(parsed);
+  }
+  return cloneBlogCollection(DEFAULT_BLOG_POSTS);
+};
+
+export const setStoredBlogPosts = (posts) => {
+  const cleaned = sanitiseBlogCollection(posts);
+  writeItem(STORAGE_KEYS.blogPosts, JSON.stringify(cleaned));
+  return cloneBlogCollection(cleaned);
+};
 
 const sanitiseWithdrawnEntry = (entry) => {
   if (!entry || typeof entry !== 'object') return null;

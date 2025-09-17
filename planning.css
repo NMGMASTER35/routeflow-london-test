@@ -1,0 +1,196 @@
+.planning-shell {
+  max-width: 1180px;
+  margin: 2.5rem auto 4rem;
+  padding: 0 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.planning-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+.planning-hero__eyebrow {
+  margin: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent-blue);
+  font-weight: 700;
+}
+
+.planning-hero__content h1 {
+  margin: 0;
+  font-size: clamp(2rem, 3vw, 2.5rem);
+}
+
+.planning-hero__content p {
+  margin: 0;
+  opacity: 0.8;
+}
+
+.planning-hero__meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.2rem;
+  margin: 0;
+}
+
+.planning-hero__meta div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.planning-hero__meta dt {
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.planning-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 1.8rem;
+}
+
+.planning-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+.planning-form__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.planning-input {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.planning-input input {
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  font: inherit;
+}
+
+.planning-fieldset {
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 14px;
+  padding: 1.2rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.planning-fieldset legend {
+  font-weight: 700;
+}
+
+.planning-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.6rem;
+}
+
+.planning-checkboxes label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.planning-submit {
+  align-self: flex-start;
+  border: none;
+  border-radius: 12px;
+  padding: 0.75rem 1.6rem;
+  background: var(--accent-blue);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(41, 121, 255, 0.22);
+}
+
+.planning-submit:hover,
+.planning-submit:focus-visible {
+  background: var(--accent-blue-dark);
+}
+
+.planning-side {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+.planning-side__card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.planning-side__card ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.planning-results {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.planning-results header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.planning-error {
+  color: var(--primary);
+  font-weight: 600;
+  min-height: 1.2rem;
+}
+
+.planning-results__list {
+  display: grid;
+  gap: 1rem;
+}
+
+.journey-option {
+  border-radius: 16px;
+  border: 1px solid rgba(41, 121, 255, 0.16);
+  padding: 1.2rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  background: rgba(41, 121, 255, 0.05);
+}
+
+.journey-option h3 {
+  margin: 0;
+}
+
+.journey-option ol {
+  margin: 0;
+  padding-left: 1.4rem;
+  display: grid;
+  gap: 0.4rem;
+}
+
+@media (max-width: 960px) {
+  .planning-layout {
+    grid-template-columns: 1fr;
+  }
+}
