@@ -20,7 +20,15 @@ const state = {
   bus: [],
   search: '',
   showIssues: true,
-  showGood: false
+  showGood: false,
+  loading: {
+    rail: false,
+    bus: false
+  },
+  loaded: {
+    rail: false,
+    bus: false
+  }
 };
 
 const normalise = (value) => (typeof value === 'string' ? value.trim() : '');
@@ -47,6 +55,8 @@ const mapLine = (line) => {
 const renderLines = (target, lines) => {
   if (!target) return;
   target.innerHTML = '';
+  target.dataset.loading = 'false';
+  target.removeAttribute('aria-busy');
 
   if (!lines.length) {
     const empty = document.createElement('p');
@@ -91,7 +101,46 @@ const renderLines = (target, lines) => {
       card.appendChild(list);
     }
 
+  target.appendChild(card);
+  });
+};
+
+const renderLoading = (target) => {
+  if (!target) return;
+  target.innerHTML = '';
+  target.dataset.loading = 'true';
+  target.setAttribute('aria-busy', 'true');
+
+  const placeholders = 3;
+
+  for (let index = 0; index < placeholders; index += 1) {
+    const card = document.createElement('article');
+    card.className = 'network-card network-card--loading';
+    card.setAttribute('aria-hidden', 'true');
+
+    const title = document.createElement('span');
+    title.className = 'network-loading-block network-loading-block--title';
+
+    const status = document.createElement('span');
+    status.className = 'network-loading-block network-loading-block--status';
+
+    const metaPrimary = document.createElement('span');
+    metaPrimary.className = 'network-loading-block network-loading-block--meta';
+
+    const metaSecondary = document.createElement('span');
+    metaSecondary.className = 'network-loading-block network-loading-block--meta-small';
+
+    card.append(title, status, metaPrimary, metaSecondary);
     target.appendChild(card);
+  }
+};
+
+const setStatsLoading = () => {
+  const placeholder = '…';
+  Object.values(elements.stats).forEach((statElement) => {
+    if (statElement) {
+      statElement.textContent = placeholder;
+    }
   });
 };
 
@@ -120,12 +169,25 @@ const applyFilters = () => {
     });
   };
 
-  const filteredRail = filterLines(state.rail);
-  const filteredBus = filterLines(state.bus, true);
+  if (state.loading.rail) {
+    renderLoading(elements.railGrid);
+  } else {
+    const filteredRail = filterLines(state.rail);
+    renderLines(elements.railGrid, filteredRail);
+  }
 
-  renderLines(elements.railGrid, filteredRail);
-  renderLines(elements.busGrid, filteredBus);
-  updateStats();
+  if (state.loading.bus) {
+    renderLoading(elements.busGrid);
+  } else {
+    const filteredBus = filterLines(state.bus, true);
+    renderLines(elements.busGrid, filteredBus);
+  }
+
+  if (state.loading.rail || state.loading.bus) {
+    setStatsLoading();
+  } else {
+    updateStats();
+  }
 };
 
 const setFilterState = (button, active) => {
@@ -160,7 +222,7 @@ const handleFilterClick = (event) => {
   applyFilters();
 };
 
-const fetchStatusData = () => {
+const fetchStatusData = async () => {
   const fetchRail = fetch(RAIL_ENDPOINT).then((response) => {
     if (!response.ok) throw new Error('Failed to load rail disruptions');
     return response.json();
@@ -170,28 +232,44 @@ const fetchStatusData = () => {
     return response.json();
   });
 
-  return Promise.allSettled([fetchRail, fetchBus]).then((results) => {
-    const [railResult, busResult] = results;
-    if (railResult.status === 'fulfilled') {
-      state.rail = railResult.value.map(mapLine);
-    } else {
-      console.warn(railResult.reason);
-      state.rail = [];
-    }
-    if (busResult.status === 'fulfilled') {
-      state.bus = busResult.value.map(mapLine);
-    } else {
-      console.warn(busResult.reason);
-      state.bus = [];
-    }
-  });
+  const [railResult, busResult] = await Promise.allSettled([fetchRail, fetchBus]);
+
+  if (railResult.status === 'fulfilled') {
+    state.rail = railResult.value.map(mapLine);
+    state.loaded.rail = true;
+  } else {
+    console.warn(railResult.reason);
+    state.rail = [];
+    state.loaded.rail = false;
+  }
+
+  if (busResult.status === 'fulfilled') {
+    state.bus = busResult.value.map(mapLine);
+    state.loaded.bus = true;
+  } else {
+    console.warn(busResult.reason);
+    state.bus = [];
+    state.loaded.bus = false;
+  }
 };
 
 const refreshData = () => {
+  const shouldShowRailLoader = !state.loaded.rail;
+  const shouldShowBusLoader = !state.loaded.bus;
+
+  if (shouldShowRailLoader || shouldShowBusLoader) {
+    state.loading.rail = shouldShowRailLoader;
+    state.loading.bus = shouldShowBusLoader;
+    applyFilters();
+  }
+
   fetchStatusData()
-    .then(() => applyFilters())
     .catch((error) => {
       console.error('Unable to refresh disruption data:', error);
+    })
+    .finally(() => {
+      state.loading.rail = false;
+      state.loading.bus = false;
       applyFilters();
     });
 };
