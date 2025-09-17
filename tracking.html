@@ -105,6 +105,7 @@
   <script>
 const APP_KEY = "f17d0725d1654338ab02a361fe41abad";
 const MODES = "bus,tube,overground,dlr,tram,river-bus,national-rail,elizabeth-line";
+const LAST_STOP_KEY = 'routeflow.lastStop';
 const q = document.getElementById('q');
 const goBtn = document.getElementById('goBtn');
 const results = document.getElementById('results');
@@ -117,6 +118,41 @@ let refreshTimer = null;
 let currentStop = null;
 let refreshSeconds = 25;
 let distanceUnit = "metric";
+
+function storeLastStop(stop){
+  if(typeof window === 'undefined' || !('localStorage' in window)) return;
+  if(!stop || !stop.id) return;
+  try{
+    window.localStorage.setItem(LAST_STOP_KEY, JSON.stringify({
+      id: stop.id,
+      name: stop.name || '',
+      timestamp: Date.now()
+    }));
+  }catch(e){
+    // ignore storage issues
+  }
+}
+
+function updateTrackingUrl(stop){
+  if(typeof window === 'undefined' || !window.history?.replaceState) return;
+  try{
+    const url = new URL(window.location.href);
+    if(stop && stop.id){
+      url.searchParams.set('stopId', stop.id);
+      if(stop.name){
+        url.searchParams.set('stopName', stop.name);
+      }else{
+        url.searchParams.delete('stopName');
+      }
+    }else{
+      url.searchParams.delete('stopId');
+      url.searchParams.delete('stopName');
+    }
+    window.history.replaceState({}, '', url);
+  }catch(e){
+    // ignore URL update issues
+  }
+}
 
 function loadSettings(){
   try{
@@ -314,6 +350,8 @@ function selectStop(id, name){
   currentStop = { id, name };
   q.value = name;
   results.style.display = "none";
+  updateTrackingUrl(currentStop);
+  storeLastStop(currentStop);
   loadArrivals(id, name);
   startRefreshTimer();
 }
@@ -345,6 +383,13 @@ document.addEventListener('click', (event)=>{
     results.style.display = "none";
   }
 });
+
+const params = new URLSearchParams(window.location.search);
+const initialStopId = params.get('stopId');
+const initialStopName = params.get('stopName');
+if(initialStopId){
+  selectStop(initialStopId, initialStopName || 'Selected stop');
+}
 
 window.addEventListener('beforeunload', () => {
   if(refreshTimer) clearInterval(refreshTimer);

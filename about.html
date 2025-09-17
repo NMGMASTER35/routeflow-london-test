@@ -6,30 +6,130 @@
   <title>About - RouteFlow London</title>
   <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png" />
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
   <script src="theme.js" defer></script>
 </head>
 <body>
-<div id="navbar-container"></div>
+  <div id="navbar-container"></div>
 
-  <section class="card about">
-    <h2>About RouteFlow London</h2>
-    <p>
-      RouteFlow London empowers Londoners and visitors to get the most from the city’s public transport.
-      Our platform is designed to be fast, intuitive, and beautiful—offering a seamless experience whether you use light or dark mode.
-    </p>
-    <p>
-      <span class="accent">Our mission:</span> Make every journey easier, smarter, and more enjoyable.
-    </p>
-  </section>
+  <main class="page-shell">
+    <section class="page-hero">
+      <div class="page-hero__content">
+        <p class="page-hero__eyebrow">About RouteFlow London</p>
+        <h1>Keeping Londoners moving with confident transport insight.</h1>
+        <p class="page-hero__lead">
+          RouteFlow London blends Transport for London data feeds with enthusiast knowledge so planning and tracking journeys
+          feels calm, not chaotic. We obsess over clarity, accessibility, and speed so every rider can make the choices that
+          work best for them.
+        </p>
+      </div>
+      <dl class="page-hero__meta">
+        <div>
+          <dt>Founded</dt>
+          <dd>2024</dd>
+        </div>
+        <div>
+          <dt>Realtime sources</dt>
+          <dd>12+ live feeds</dd>
+        </div>
+        <div>
+          <dt>Community notes</dt>
+          <dd>Updated daily</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="page-card">
+      <h2>What drives us</h2>
+      <p>
+        London moves fast, but information about it shouldn’t overwhelm. RouteFlow London started as a hobby project to tidy
+        the dozens of tabs needed to follow rare workings, route changes, and planned closures. It has since grown into a
+        platform focused on:
+      </p>
+      <ul class="page-list">
+        <li><strong>Clarity first:</strong> Live arrivals and route information are presented with legible typography, soft
+          colour, and straightforward summaries.</li>
+        <li><strong>Accessibility built in:</strong> Dark mode, high-contrast palettes, readable fonts, and reduced motion are
+          core features—not afterthoughts.</li>
+        <li><strong>Community knowledge:</strong> Fleet notes, withdrawn tables, and enthusiast insights are curated so
+          specialists and newcomers alike can explore the network together.</li>
+      </ul>
+    </section>
+
+    <section class="page-columns">
+      <article class="page-card">
+        <h3>For daily commuters</h3>
+        <p>Tools that remove friction when you simply need to get moving:</p>
+        <ul class="page-list">
+          <li>Pin favourite stops and see departures refresh automatically.</li>
+          <li>Compare journey plans with accessibility filters ready to go.</li>
+          <li>Receive calm alerts about disruptions so you can reroute quickly.</li>
+        </ul>
+      </article>
+      <article class="page-card">
+        <h3>For transport enthusiasts</h3>
+        <p>A home for the detail that rarely surfaces in standard travel apps:</p>
+        <ul class="page-list">
+          <li>Track rare workings, heritage runs, and fleet changes as they happen.</li>
+          <li>Explore historical withdrawal data with context-rich notes.</li>
+          <li>Capture observations that sync across devices through your account.</li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="page-card">
+      <h2>How we build</h2>
+      <p>
+        Every feature is shaped by real rider feedback. We prototype quickly, test with the community, and release in
+        manageable increments so updates feel steady rather than disruptive.
+      </p>
+      <div class="page-grid page-grid--compact">
+        <article class="page-mini-card">
+          <h3>Reliable data pipeline</h3>
+          <p>Live arrivals, planned works, and vehicle data are ingested from TfL and processed to keep the interface fast and
+            resilient.</p>
+        </article>
+        <article class="page-mini-card">
+          <h3>Accessible by default</h3>
+          <p>Interfaces are audited against WCAG AA guidance with readable typography, keyboard-friendly navigation, and
+            reduced-motion options.</p>
+        </article>
+        <article class="page-mini-card">
+          <h3>Community collaboration</h3>
+          <p>We publish changelogs and roadmaps so enthusiasts can suggest improvements, report quirks, and celebrate wins with
+            us.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="page-card page-card--highlight">
+      <h2>Join the journey</h2>
+      <p>
+        Have an idea that would make RouteFlow London even better? Whether you are a commuter, driver, controller, or
+        enthusiast, we’d love to hear from you. <a href="contact.html">Send us a message</a> and help shape the next release.
+      </p>
+    </section>
+  </main>
+
   <footer>
     <div class="footer-links">
-      <a href="index.html">Home</a> | 
-      <a href="blog.html">Blog</a> | 
+      <a href="about.html">About</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="terms.html">Terms</a>
       <a href="contact.html">Contact</a>
     </div>
-    <small>© 2025 RouteFlow London</small>
+    <div class="social-icons">
+      <a href="https://discord.gg/qVf3nN4Mgq"><i class="fa-brands fa-discord"></i></a>
+      <a href="https://www.tiktok.com/@the_bus_father"><i class="fab fa-tiktok"></i></a>
+      <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo"><i class="fab fa-instagram"></i></a>
+    </div>
+    <small>Made for London. Built from scratch.</small>
   </footer>
-  <script src="navbar-loader.js" defer></script>
+
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="main.js"></script>
+  <script src="navbar-loader.js"></script>
 </body>
 </html>

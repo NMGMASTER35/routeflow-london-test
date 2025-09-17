@@ -159,31 +159,152 @@ const createBlogElement = (post, variant = 'card', index = 0) => {
   return article;
 };
 
+const normaliseTag = (value) => (typeof value === 'string' ? value.trim().toLowerCase() : '');
+
+const parseTagList = (source) => {
+  if (!source) return [];
+  if (Array.isArray(source)) {
+    return source.map(normaliseTag).filter(Boolean);
+  }
+  return String(source)
+    .split(',')
+    .map(normaliseTag)
+    .filter(Boolean);
+};
+
+const matchesAnyTag = (postTags, filterTags) => {
+  if (!filterTags.length) return true;
+  const tags = Array.isArray(postTags) ? postTags.map(normaliseTag) : [];
+  return filterTags.some((tag) => tags.includes(tag));
+};
+
 const renderBlogLists = () => {
-  const containers = document.querySelectorAll('[data-blog-list]');
+  const containers = Array.from(document.querySelectorAll('[data-blog-list]'));
   if (!containers.length) return;
 
   const posts = getStoredBlogPosts()
     .slice()
     .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
 
-  containers.forEach((container) => {
-    const limit = Number(container.dataset.blogLimit);
-    const variant = container.dataset.blogVariant || 'card';
-    const emptyMessage = container.dataset.blogEmpty || 'No blog posts available yet.';
+  const filterGroups = new Map();
 
-    const subset = Number.isFinite(limit) && limit > 0 ? posts.slice(0, limit) : posts;
+  const renderContainer = (config) => {
+    if (!config.element) return;
+    const limit = config.limit;
+    const variant = config.variant;
+    const emptyMessage = config.emptyMessage;
+
+    let subset = posts.slice();
+    if (config.tags.length) {
+      subset = subset.filter((post) => matchesAnyTag(post.tags, config.tags));
+    }
+
+    if (config.activeFilter && config.activeFilter !== 'all') {
+      subset = subset.filter((post) => matchesAnyTag(post.tags, [config.activeFilter]));
+    }
+
+    if (Number.isFinite(limit) && limit > 0) {
+      subset = subset.slice(0, limit);
+    }
 
     if (!subset.length) {
       const empty = document.createElement('p');
       empty.className = 'blog-empty';
       empty.textContent = emptyMessage;
-      container.replaceChildren(empty);
+      config.element.replaceChildren(empty);
       return;
     }
 
     const elements = subset.map((post, index) => createBlogElement(post, variant, index));
-    container.replaceChildren(...elements);
+    config.element.replaceChildren(...elements);
+  };
+
+  const resolveFilterGroup = (id) => {
+    if (!id) return null;
+    if (filterGroups.has(id)) {
+      return filterGroups.get(id);
+    }
+
+    const element = document.getElementById(id);
+    if (!element) {
+      return null;
+    }
+
+    const buttons = Array.from(element.querySelectorAll('[data-blog-filter]'));
+    const fallback = buttons[0]?.dataset.blogFilter || 'all';
+    const initial = buttons.find((button) => button.dataset.active === 'true')?.dataset.blogFilter || fallback || 'all';
+
+    const group = {
+      id,
+      element,
+      buttons,
+      containers: [],
+      activeFilter: initial,
+      setActive(filter) {
+        const value = filter && filter !== '' ? filter : 'all';
+        this.activeFilter = value;
+        this.buttons.forEach((button) => {
+          const isActive = button.dataset.blogFilter === value || (!button.dataset.blogFilter && value === 'all');
+          button.dataset.active = isActive ? 'true' : 'false';
+          if (button.getAttribute('role') === 'tab') {
+            button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+          }
+        });
+        this.containers.forEach((config) => {
+          config.activeFilter = value;
+          renderContainer(config);
+        });
+      }
+    };
+
+    element.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-blog-filter]');
+      if (!button) return;
+      event.preventDefault();
+      group.setActive(button.dataset.blogFilter || 'all');
+    });
+
+    filterGroups.set(id, group);
+    group.setActive(initial);
+    return group;
+  };
+
+  const configs = containers.map((element) => {
+    const limit = Number(element.dataset.blogLimit);
+    const config = {
+      element,
+      limit: Number.isFinite(limit) && limit > 0 ? limit : null,
+      variant: element.dataset.blogVariant || 'card',
+      emptyMessage: element.dataset.blogEmpty || 'No blog posts available yet.',
+      tags: parseTagList(element.dataset.blogTags),
+      filterGroup: element.dataset.blogFilterGroup || null,
+      activeFilter: 'all'
+    };
+    return config;
+  });
+
+  configs.forEach((config) => {
+    if (config.filterGroup) {
+      const group = resolveFilterGroup(config.filterGroup);
+      if (group) {
+        group.containers.push(config);
+        config.activeFilter = group.activeFilter;
+      }
+    }
+    renderContainer(config);
+  });
+
+  document.querySelectorAll('[data-blog-category-link]').forEach((link) => {
+    link.addEventListener('click', (event) => {
+      const targetFilter = link.dataset.blogCategoryLink;
+      const groupId = link.dataset.blogCategoryGroup;
+      if (!targetFilter || !groupId) return;
+      const group = filterGroups.get(groupId) || resolveFilterGroup(groupId);
+      if (!group) return;
+      event.preventDefault();
+      group.setActive(targetFilter);
+      group.element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   });
 };
 
