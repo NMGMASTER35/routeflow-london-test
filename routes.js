@@ -1,3 +1,5 @@
+import { getRouteTagOverrideMap, normaliseRouteKey, STORAGE_KEYS } from './data-store.js';
+
 const APP_KEY = 'f17d0725d1654338ab02a361fe41abad';
 const ROUTE_ENDPOINT = `https://api.tfl.gov.uk/Line/Mode/bus/Route?app_key=${APP_KEY}`;
 
@@ -44,6 +46,7 @@ const elements = {
 };
 
 const state = {
+  baseRoutes: [],
   routes: [],
   filteredRoutes: [],
   searchTerm: '',
@@ -99,6 +102,28 @@ const updateStats = () => {
   if (elements.stats.total) elements.stats.total.textContent = routes.length.toString();
   if (elements.stats.night) elements.stats.night.textContent = nightCount.toString();
   if (elements.stats.school) elements.stats.school.textContent = schoolCount.toString();
+};
+
+const applyServiceTypeOverrides = (routes) => {
+  const overrides = getRouteTagOverrideMap();
+  if (!overrides.size) {
+    return routes.map((route) => ({ ...route, serviceTypes: [...(route.serviceTypes || [])] }));
+  }
+
+  return routes.map((route) => {
+    const key = normaliseRouteKey(route.name || route.id);
+    if (key && overrides.has(key)) {
+      return {
+        ...route,
+        serviceTypes: [...overrides.get(key)]
+      };
+    }
+
+    return {
+      ...route,
+      serviceTypes: [...(route.serviceTypes || [])]
+    };
+  });
 };
 
 const renderRoutes = () => {
@@ -237,10 +262,18 @@ const fetchRoutes = () => {
     });
 };
 
+const refreshServiceOverrides = () => {
+  if (!state.baseRoutes.length) return;
+  state.routes = applyServiceTypeOverrides(state.baseRoutes);
+  updateStats();
+  applyFilters();
+};
+
 const initialise = async () => {
   attachEvents();
   const routes = await fetchRoutes();
-  state.routes = routes;
+  state.baseRoutes = routes;
+  state.routes = applyServiceTypeOverrides(routes);
   updateStats();
   applyFilters();
 };
@@ -250,3 +283,9 @@ if (document.readyState === 'loading') {
 } else {
   initialise();
 }
+
+window.addEventListener('storage', (event) => {
+  if (event.key === STORAGE_KEYS.routeTagOverrides) {
+    refreshServiceOverrides();
+  }
+});
