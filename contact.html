@@ -6,28 +6,118 @@
   <title>Contact - RouteFlow London</title>
   <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png" />
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
   <script src="theme.js" defer></script>
 </head>
 <body>
-<div id="navbar-container"></div>
-  <section class="card contact">
-    <h2>Contact Us</h2>
-    <form>
-      <input type="text" name="name" placeholder="Your Name" required>
-      <input type="email" name="email" placeholder="Your Email" required>
-      <textarea name="message" rows="5" placeholder="Your Message" required></textarea>
-      <button type="submit" class="button">Send Message</button>
-    </form>
-  </section>
+  <div id="navbar-container"></div>
+
+  <main class="page-shell">
+    <section class="page-hero">
+      <div class="page-hero__content">
+        <p class="page-hero__eyebrow">Get in touch</p>
+        <h1>We’re here to help you plan better journeys.</h1>
+        <p class="page-hero__lead">
+          Whether you’ve spotted a bug, have an idea for a new feature, or want to collaborate on data, drop us a line. We read
+          every message and respond with practical next steps.
+        </p>
+      </div>
+      <dl class="page-hero__meta">
+        <div>
+          <dt>Average response</dt>
+          <dd>Under 2 days</dd>
+        </div>
+        <div>
+          <dt>Support hours</dt>
+          <dd>Mon–Sat</dd>
+        </div>
+        <div>
+          <dt>Community channels</dt>
+          <dd>Discord & socials</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="page-columns">
+      <form class="page-card page-form" aria-labelledby="contactHeading">
+        <h2 id="contactHeading">Send us a message</h2>
+        <label for="contactName">Your name</label>
+        <input type="text" id="contactName" name="name" autocomplete="name" placeholder="Ada Lovelace" required>
+
+        <label for="contactEmail">Email address</label>
+        <input type="email" id="contactEmail" name="email" autocomplete="email" placeholder="you@example.com" required>
+
+        <label for="contactTopic">Topic</label>
+        <input type="text" id="contactTopic" name="topic" placeholder="Feature idea, bug report, data request…">
+
+        <label for="contactMessage">Message</label>
+        <textarea id="contactMessage" name="message" placeholder="Share as much detail as you can" required></textarea>
+
+        <button type="submit">Submit message</button>
+        <p class="legal-updated" aria-live="polite">We’ll confirm receipt instantly and follow up by email.</p>
+      </form>
+
+      <aside class="page-card">
+        <h2>Prefer another channel?</h2>
+        <ul class="page-meta-list">
+          <li>
+            <i class="fa-solid fa-envelope"></i>
+            <span><strong>Email:</strong> <a href="mailto:hello@routeflow.london">hello@routeflow.london</a></span>
+          </li>
+          <li>
+            <i class="fa-brands fa-discord"></i>
+            <span><strong>Discord:</strong> Join <a href="https://discord.gg/qVf3nN4Mgq">RouteFlow London HQ</a> for live chat.</span>
+          </li>
+          <li>
+            <i class="fa-brands fa-instagram"></i>
+            <span><strong>Instagram:</strong> Follow <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo">@thebusfatherofficial</a> for behind-the-scenes updates.</span>
+          </li>
+          <li>
+            <i class="fa-brands fa-tiktok"></i>
+            <span><strong>TikTok:</strong> Catch quick highlights on <a href="https://www.tiktok.com/@the_bus_father">@the_bus_father</a>.</span>
+          </li>
+        </ul>
+      </aside>
+    </section>
+
+    <section class="page-card">
+      <h2>How we handle support</h2>
+      <div class="page-grid page-grid--compact">
+        <article class="page-mini-card">
+          <h3>Human replies</h3>
+          <p>Every response comes from the RouteFlow London team—no generic autoresponders beyond the initial receipt.</p>
+        </article>
+        <article class="page-mini-card">
+          <h3>Prioritised fixes</h3>
+          <p>Critical live data issues are triaged immediately and updates are published in our disruptions feed.</p>
+        </article>
+        <article class="page-mini-card">
+          <h3>Transparent roadmap</h3>
+          <p>Feature requests feed directly into our roadmap. We’ll let you know when something makes it into development.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
   <footer>
     <div class="footer-links">
-      <a href="index.html">Home</a> | 
-      <a href="about.html">About</a> | 
-      <a href="blog.html">Blog</a>
+      <a href="about.html">About</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="terms.html">Terms</a>
+      <a href="contact.html">Contact</a>
     </div>
-    <small>© 2025 RouteFlow London</small>
+    <div class="social-icons">
+      <a href="https://discord.gg/qVf3nN4Mgq"><i class="fa-brands fa-discord"></i></a>
+      <a href="https://www.tiktok.com/@the_bus_father"><i class="fab fa-tiktok"></i></a>
+      <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo"><i class="fab fa-instagram"></i></a>
+    </div>
+    <small>Made for London. Built from scratch.</small>
   </footer>
-  <script src="navbar-loader.js" defer></script>
+
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="main.js"></script>
+  <script src="navbar-loader.js"></script>
 </body>
 </html>

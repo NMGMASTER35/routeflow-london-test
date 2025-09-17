@@ -16,8 +16,8 @@
   <main class="blog-shell">
     <section class="blog-hero card">
       <p class="blog-hero__eyebrow">RouteFlow stories</p>
-      <h1>Updates, release notes and deep dives into London&#39;s network.</h1>
-      <p>Everything published here is managed directly from the admin console, so it&#39;s easy to keep the community informed.</p>
+      <h1>Updates, deep dives and quick reads about travelling smarter in London.</h1>
+      <p>Each article is curated from the admin console so fresh consultations, enthusiast spotlights and weekly news roundups stay easy to browse.</p>
       <div class="blog-hero__meta">
         <div>
           <span class="blog-hero__label">Latest update</span>
@@ -32,10 +32,50 @@
 
     <section class="blog-list card">
       <div class="blog-list__header">
-        <h2>All posts</h2>
-        <p>Catch every announcement, improvement and behind-the-scenes look at RouteFlow London.</p>
+        <div>
+          <h2>Browse by interest</h2>
+          <p>Switch categories to focus on bus models, upcoming consultations or weekly transport highlights.</p>
+        </div>
+        <div class="blog-filters" id="blogFilters" role="tablist" aria-label="Filter blog posts by category">
+          <button type="button" class="blog-filter" data-blog-filter="all" data-active="true" role="tab" aria-selected="true">All updates</button>
+          <button type="button" class="blog-filter" data-blog-filter="Learn about bus models" role="tab" aria-selected="false">Learn about bus models</button>
+          <button type="button" class="blog-filter" data-blog-filter="New London Consultations" role="tab" aria-selected="false">New London Consultations</button>
+          <button type="button" class="blog-filter" data-blog-filter="Weekly London Transport News" role="tab" aria-selected="false">Weekly London Transport News</button>
+        </div>
       </div>
-      <div class="blog-list__grid" data-blog-list data-blog-variant="full" data-blog-empty="No blog posts published yet."></div>
+      <div class="blog-list__grid" data-blog-list data-blog-variant="full" data-blog-empty="No blog posts published yet." data-blog-filter-group="blogFilters"></div>
+    </section>
+
+    <section class="blog-spotlights">
+      <article class="blog-spotlight card">
+        <div class="blog-spotlight__header">
+          <p class="blog-hero__eyebrow">Deep dives</p>
+          <h2>Learn about bus models</h2>
+          <p>Get to know the newest zero-emission types, refurbishments and enthusiast favourites on the road.</p>
+        </div>
+        <div class="blog-spotlight__list" data-blog-list data-blog-variant="compact" data-blog-limit="3" data-blog-tags="Learn about bus models" data-blog-empty="Model spotlights are on their way."></div>
+        <a class="blog-spotlight__link" href="#blogFilters" data-blog-category-group="blogFilters" data-blog-category-link="Learn about bus models">Show all bus model articles</a>
+      </article>
+
+      <article class="blog-spotlight card">
+        <div class="blog-spotlight__header">
+          <p class="blog-hero__eyebrow">Consultations</p>
+          <h2>New London consultations</h2>
+          <p>Track proposals and service changes so you can prepare for what the network might look like next.</p>
+        </div>
+        <div class="blog-spotlight__list" data-blog-list data-blog-variant="compact" data-blog-limit="3" data-blog-tags="New London Consultations" data-blog-empty="Consultation coverage will appear here soon."></div>
+        <a class="blog-spotlight__link" href="#blogFilters" data-blog-category-group="blogFilters" data-blog-category-link="New London Consultations">See consultation updates</a>
+      </article>
+
+      <article class="blog-spotlight card">
+        <div class="blog-spotlight__header">
+          <p class="blog-hero__eyebrow">Roundup</p>
+          <h2>Weekly London transport news</h2>
+          <p>Crisp roundups pull together service changes, rare workings and stories worth sharing each week.</p>
+        </div>
+        <div class="blog-spotlight__list" data-blog-list data-blog-variant="compact" data-blog-limit="3" data-blog-tags="Weekly London Transport News" data-blog-empty="Weekly roundups will appear once published."></div>
+        <a class="blog-spotlight__link" href="#blogFilters" data-blog-category-group="blogFilters" data-blog-category-link="Weekly London Transport News">View weekly news posts</a>
+      </article>
     </section>
   </main>
 

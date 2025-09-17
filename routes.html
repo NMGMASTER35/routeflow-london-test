@@ -16,7 +16,7 @@
     <section class="network-hero">
       <div>
         <h1>London bus routes</h1>
-        <p>Discover current Transport for London bus services, filter by service type, and jump directly into live tracking.</p>
+        <p>Discover every active Transport for London route, preview the stops it serves and step straight into the live tracker without losing context.</p>
       </div>
       <div class="network-hero__stats" id="routeStats">
         <div class="network-stat">
@@ -47,11 +47,55 @@
       </div>
     </section>
 
+    <section class="network-flow card" aria-label="How route previews work">
+      <div class="network-flow__header">
+        <h2 class="network-flow__title">Follow a route from overview to arrivals</h2>
+        <p class="network-flow__intro">Tap any card to open a stop and vehicle preview. Pick a stop and the tracker loads that exact board instantly.</p>
+      </div>
+      <ol class="network-flow__steps">
+        <li>Click a route card to open the overlay with its full stop list and live vehicle registrations.</li>
+        <li>Select a stop to jump into the tracking console with that board already focused.</li>
+        <li>Save the stop, add notes or check disruptions without repeating your search.</li>
+      </ol>
+      <div class="network-flow__actions">
+        <a class="network-flow__link" href="tracking.html">Open live tracker</a>
+        <a class="network-flow__link" href="disruptions.html">Check network disruptions</a>
+      </div>
+    </section>
+
     <section class="network-section">
       <h2 class="network-section__title">Available routes</h2>
       <div class="network-grid" id="routesGrid" aria-live="polite"></div>
     </section>
   </main>
+
+  <div id="routeOverlay" class="route-overlay" hidden>
+    <div class="route-overlay__backdrop" data-route-overlay-dismiss></div>
+    <section class="route-overlay__panel" role="dialog" aria-modal="true" aria-labelledby="routeOverlayTitle">
+      <header class="route-overlay__header">
+        <div>
+          <p class="route-overlay__eyebrow">Route preview</p>
+          <h2 id="routeOverlayTitle">Route details</h2>
+          <p id="routeOverlayMeta" class="route-overlay__meta"></p>
+        </div>
+        <button type="button" class="route-overlay__close" id="routeOverlayClose" aria-label="Close route preview">×</button>
+      </header>
+      <p id="routeOverlayStatus" class="route-overlay__status" role="status" aria-live="polite"></p>
+      <div class="route-overlay__body">
+        <section class="route-overlay__section" aria-labelledby="routeOverlayStopsTitle">
+          <h3 id="routeOverlayStopsTitle">Stops</h3>
+          <div id="routeOverlayStops" class="route-overlay__stops" role="list"></div>
+        </section>
+        <section class="route-overlay__section" aria-labelledby="routeOverlayVehiclesTitle">
+          <h3 id="routeOverlayVehiclesTitle">Active vehicles</h3>
+          <div id="routeOverlayVehicles" class="route-overlay__vehicles" role="list"></div>
+        </section>
+      </div>
+      <footer class="route-overlay__footer">
+        <a class="route-overlay__tracker" id="routeOverlayTracker" href="tracking.html">Open tracker</a>
+      </footer>
+    </section>
+  </div>
 
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
