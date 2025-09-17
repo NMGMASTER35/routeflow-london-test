@@ -13,99 +13,130 @@
 <body>
   <div id="navbar-container"></div>
 
-  <main>
-    <!-- Hero Section -->
-    <section class="landing-hero">
-      <div class="hero-card">
-        <img src="images/New_Routflow_London_Logo.png" alt="RouteFlow London logo" class="hero-logo" />
-        <h1>Welcome to RouteFlow London</h1>
-        <p class="hero-subtitle">Plan journeys, track buses and explore London's network.</p>
-        <div class="hero-buttons">
-          <a class="explore" href="planning.html">Journey Planner</a>
-          <a class="learn" href="tracking.html">Arrival Times</a>
+  <main class="landing">
+    <section class="landing-hero card">
+      <div class="landing-hero__content">
+        <p class="landing-hero__eyebrow">Your companion to London transport</p>
+        <h1>Plan journeys, track arrivals, and follow the network in one place.</h1>
+        <p class="landing-hero__lead">
+          RouteFlow London blends real-time data with enthusiast insights. Check live arrivals across the city, build detailed
+          journeys, and surface the stories behind every route.
+        </p>
+        <div class="landing-hero__actions">
+          <a class="landing-hero__button landing-hero__button--primary" href="tracking.html">
+            <i class="fa-solid fa-wifi"></i>
+            Live tracking
+          </a>
+          <a class="landing-hero__button" href="planning.html">
+            <i class="fa-solid fa-route"></i>
+            Journey planner
+          </a>
+        </div>
+        <dl class="landing-hero__metrics" aria-label="Platform snapshot">
+          <div>
+            <dt>Stops monitored</dt>
+            <dd>20k+</dd>
+          </div>
+          <div>
+            <dt>Journey combinations</dt>
+            <dd>Millions</dd>
+          </div>
+          <div>
+            <dt>Community insights</dt>
+            <dd>Daily</dd>
+          </div>
+        </dl>
+      </div>
+      <div class="landing-hero__preview">
+        <div class="landing-preview">
+          <h2>Live now</h2>
+          <p>See departures update in real time and save the stops that matter most.</p>
+          <ul class="landing-preview__list">
+            <li>
+              <span class="landing-preview__label">Arrivals</span>
+              <strong>Refreshes every 25s</strong>
+            </li>
+            <li>
+              <span class="landing-preview__label">Notes</span>
+              <strong>Pin rare workings</strong>
+            </li>
+            <li>
+              <span class="landing-preview__label">Favourites</span>
+              <strong>Sync across devices</strong>
+            </li>
+          </ul>
+          <a class="landing-preview__cta" href="tracking.html">Open live arrivals</a>
         </div>
       </div>
     </section>
 
-    <!-- Newsletter Section -->
-    <section class="newsletter">
-      <div class="newsletter-box">
-        <h2>Get updates on new features and sightings</h2>
-        <p>Sign up for our newsletter to get the latest on live tracking, rare sightings, and London bus news.</p>
-        <form id="newsletter-form">
-          <input type="email" id="email" placeholder="Enter your email" required />
-          <button type="submit">Subscribe</button>
-        </form>
-        <div class="response" id="response-message"></div>
+    <section class="landing-panels">
+      <article class="landing-panel">
+        <h2>Real-time arrivals</h2>
+        <p>Search any stop or station to see the next departures, grouped by mode with colour-coded badges.</p>
+      </article>
+      <article class="landing-panel">
+        <h2>Multi-mode journey planning</h2>
+        <p>Design trips across bus, Tube, DLR, tram, river and more—with accessibility filters built in.</p>
+      </article>
+      <article class="landing-panel">
+        <h2>Enthusiast archive</h2>
+        <p>Explore withdrawn routes, fleet notes and community sightings straight from the dashboard.</p>
+      </article>
+    </section>
+
+    <section class="landing-tools card">
+      <header class="landing-tools__header">
+        <p class="landing-tools__eyebrow">Essential tools</p>
+        <h2>Made for commuters and enthusiasts alike</h2>
+        <p class="landing-tools__lead">Jump straight into the sections that help you plan, track and analyse London&#39;s network.</p>
+      </header>
+      <div class="landing-tools__grid">
+        <article class="landing-tool landing-tool--accent">
+          <div class="landing-tool__icon" aria-hidden="true"><i class="fa-solid fa-bus"></i></div>
+          <h3>Live tracking</h3>
+          <p>Powerful stop search, instant refreshes, and a personal notebook for rare workings.</p>
+          <a class="landing-tool__link" href="tracking.html">Check arrivals</a>
+        </article>
+        <article class="landing-tool">
+          <div class="landing-tool__icon" aria-hidden="true"><i class="fa-solid fa-map-location-dot"></i></div>
+          <h3>Journey planner</h3>
+          <p>Compare multi-mode options, apply accessibility filters and pick the itinerary that fits.</p>
+          <a class="landing-tool__link" href="planning.html">Plan a journey</a>
+        </article>
+        <article class="landing-tool">
+          <div class="landing-tool__icon" aria-hidden="true"><i class="fa-solid fa-layer-group"></i></div>
+          <h3>Network insights</h3>
+          <p>Deep dive into routes, fleets and historic withdrawals curated for London transport fans.</p>
+          <a class="landing-tool__link" href="routes.html">Explore the data</a>
+        </article>
       </div>
     </section>
 
-    <!-- Carousel Section -->
-    <section class="imagescara">
-      <div class="carousel-container">
-        <div class="carousel-title">New London Buses</div>
-        <button class="carousel-btn prev" aria-label="Previous slide">&lsaquo;</button>
-        <div class="carousel-slide">
-          <figure>
-            <img src="https://static.wikia.nocookie.net/bus-routes-in-london/images/2/25/80403_on_SL3.webp" alt="Enviro 400EV on Route SL3">
-            <figcaption>Enviro 400EV | Route SL3</figcaption>
-          </figure>
-          <figure>
-            <img src="https://southwarknews.co.uk/wp-content/uploads/2024/07/An-image-of-the-new-ie-Tram-bus-which-will-soon-operate-on-Route-358.-Photo-from-Go-Ahead-Mark-Lyons-scaled.jpg" alt="Irizar ie Tram Bus">
-            <figcaption>Irizar ie Tram Bus</figcaption>
-          </figure>
-          <figure>
-            <img src="https://static.wikia.nocookie.net/bus-routes-in-london/images/4/4d/1716-LV24EXC.jpg/revision/latest?cb=20250201152244" alt="Electroliner Kite">
-            <figcaption>Electroliner Kite</figcaption>
-          </figure>
-          <figure>
-            <img src="https://live.staticflickr.com/65535/53653477828_b2582c362c_h.jpg" alt="Volvo BZL">
-            <figcaption>Volvo BZL</figcaption>
-          </figure>
-          <figure>
-            <img src="https://live.staticflickr.com/65535/53811039010_f2d6378c2d_b.jpg" alt="Volvo BZL DD">
-            <figcaption>Volvo BZL DD</figcaption>
-          </figure>
-          <figure>
-            <img src="https://static.wikia.nocookie.net/bus-routes-in-london/images/f/ff/321_EBD.png/revision/latest?cb=20250202221630" alt="BYD BD11">
-            <figcaption>BYD BD11</figcaption>
-          </figure>
-        </div>
-        <button class="carousel-btn next" aria-label="Next slide">&rsaquo;</button>
-        <div class="carousel-dots"></div>
-      </div>
+    <section class="landing-blog card" id="latest-blog">
+      <header class="landing-blog__header">
+        <p class="landing-blog__eyebrow">From the RouteFlow blog</p>
+        <h2>Latest stories and release notes</h2>
+        <p>Fresh updates drop straight onto the homepage once you publish them in the admin console.</p>
+      </header>
+      <div class="landing-blog__grid" data-blog-list data-blog-limit="3" data-blog-variant="card" data-blog-empty="Check back soon for new stories."></div>
+      <footer class="landing-blog__footer">
+        <a class="landing-blog__cta" href="blog.html">Browse all posts</a>
+        <span class="landing-blog__hint">Managed entirely from the admin console.</span>
+      </footer>
     </section>
 
-    <!-- About Section -->
-    <section class="about">
-      <h2>About RouteFlow London</h2>
-      <p>
-        RouteFlow London is a next-generation platform for exploring London's iconic bus network.
-        Track vehicles live, explore rare workings, dive into historical data, and connect with the enthusiast community.
-        Built from scratch for London's unique transit scene.
-      </p>
-    </section>
-
-    <!-- Blog Section -->
-    <section id="blog">
-      <h2>Latest Blog Posts</h2>
-      <div class="blog-preview">
-        <article class="blog-card">
-          <span class="blog-date">May 2025</span>
-          <h3>Hidden Buses of Zone 6</h3>
-          <p>A journey to London's farthest reaches, hunting for rare bus gems and snap-worthy moments.</p>
-        </article>
-        <article class="blog-card">
-          <span class="blog-date">April 2025</span>
-          <h3>Fleet Tech Upgrades</h3>
-          <p>How TfL's newest buses are greener, smarter, and more connected than ever.</p>
-        </article>
-        <article class="blog-card">
-          <span class="blog-date">March 2025</span>
-          <h3>Meet the Enthusiasts</h3>
-          <p>Spotlight on the passionate community tracking London's bus history in real time.</p>
-        </article>
+    <section class="landing-updates card">
+      <div class="landing-updates__content">
+        <h2>Stay in the loop</h2>
+        <p>Subscribe for feature announcements, enthusiast meet-ups and rare vehicle alerts.</p>
       </div>
+      <form id="newsletter-form" class="landing-updates__form">
+        <label for="email" class="sr-only">Email address</label>
+        <input type="email" id="email" placeholder="Enter your email" required />
+        <button type="submit">Subscribe</button>
+        <p class="landing-updates__response" id="response-message" aria-live="polite"></p>
+      </form>
     </section>
   </main>
 
@@ -124,42 +155,10 @@
     <small>Made for London. Built from scratch.</small>
   </footer>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const slide = document.querySelector('.carousel-slide');
-      const figures = slide.querySelectorAll('figure');
-      const prev = document.querySelector('.carousel-btn.prev');
-      const next = document.querySelector('.carousel-btn.next');
-      const dots = document.querySelector('.carousel-dots');
-      let index = 0;
-
-      figures.forEach((_, i) => {
-        const dot = document.createElement('span');
-        dot.className = 'dot' + (i === 0 ? ' active' : '');
-        dot.addEventListener('click', () => moveTo(i));
-        dots.appendChild(dot);
-      });
-
-      function moveTo(i) {
-        index = (i + figures.length) % figures.length;
-        slide.scrollTo({ left: figures[index].offsetLeft, behavior: 'smooth' });
-        updateDots();
-      }
-
-      function updateDots() {
-        dots.querySelectorAll('.dot').forEach((dot, i) => {
-          dot.classList.toggle('active', i === index);
-        });
-      }
-
-      prev.addEventListener('click', () => moveTo(index - 1));
-      next.addEventListener('click', () => moveTo(index + 1));
-    });
-  </script>
   <script src="navbar-loader.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script src="main.js"></script>
+  <script type="module" src="blog.js"></script>
 </body>
 </html>
-

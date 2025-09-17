@@ -7,10 +7,14 @@ const heroElements = {
   avatar: document.getElementById('profileAvatar'),
   role: document.getElementById('profileRole'),
   name: document.getElementById('profileName'),
+  username: document.getElementById('profileUsername'),
   email: document.getElementById('profileEmail'),
+  displayName: document.getElementById('profileDisplayName'),
+  handle: document.getElementById('profileHandle'),
   memberSince: document.getElementById('profileMemberSince'),
   lastActive: document.getElementById('profileLastActive'),
   uid: document.getElementById('profileUid'),
+  primaryEmail: document.getElementById('profilePrimaryEmail'),
   openSettings: document.getElementById('openSettings'),
   signOut: document.getElementById('signOutBtn'),
   refresh: document.getElementById('refreshProfile')
@@ -56,6 +60,26 @@ const shortenUid = (uid) => {
   if (!uid) return '—';
   if (uid.length <= 12) return uid;
   return `${uid.slice(0, 6)}…${uid.slice(-4)}`;
+};
+
+const sanitiseHandle = (value) => {
+  if (!value) return '';
+  return String(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 32);
+};
+
+const deriveUsername = (user) => {
+  if (!user) return '';
+  const providerHandle = sanitiseHandle(user.reloadUserInfo?.screenName || user.reloadUserInfo?.displayName);
+  if (providerHandle) return providerHandle;
+  const displayName = sanitiseHandle(user.displayName);
+  if (displayName) return displayName;
+  const emailHandle = sanitiseHandle(user.email?.split('@')?.[0]);
+  if (emailHandle) return emailHandle;
+  return sanitiseHandle(user.uid);
 };
 
 const setActionEnabled = (element, enabled) => {
@@ -298,16 +322,26 @@ const refreshHero = () => {
     if (heroElements.avatar) heroElements.avatar.src = 'user-icon.png';
     if (heroElements.role) heroElements.role.textContent = 'Guest';
     if (heroElements.name) heroElements.name.textContent = 'Your profile';
+    if (heroElements.username) {
+      heroElements.username.textContent = '';
+      heroElements.username.hidden = true;
+    }
     if (heroElements.email) heroElements.email.textContent = 'Sign in to personalise your RouteFlow London experience.';
+    if (heroElements.displayName) heroElements.displayName.textContent = '—';
+    if (heroElements.handle) heroElements.handle.textContent = '—';
     if (heroElements.memberSince) heroElements.memberSince.textContent = '—';
     if (heroElements.lastActive) heroElements.lastActive.textContent = '—';
     if (heroElements.uid) heroElements.uid.textContent = '—';
+    if (heroElements.primaryEmail) heroElements.primaryEmail.textContent = '—';
     setActionEnabled(heroElements.openSettings, false);
     setActionEnabled(heroElements.signOut, false);
     return;
   }
 
   const { user, isAdmin } = state;
+  const displayName = user.displayName?.trim() || '';
+  const emailAddress = user.email || '';
+  const username = deriveUsername(user);
 
   if (heroElements.avatar) {
     heroElements.avatar.src = user.photoURL || 'user-icon.png';
@@ -319,11 +353,33 @@ const refreshHero = () => {
   }
 
   if (heroElements.name) {
-    heroElements.name.textContent = user.displayName || user.email || 'RouteFlow member';
+    heroElements.name.textContent = displayName || emailAddress || 'RouteFlow member';
+  }
+
+  if (heroElements.username) {
+    if (username) {
+      heroElements.username.textContent = `@${username}`;
+      heroElements.username.hidden = false;
+    } else {
+      heroElements.username.textContent = '';
+      heroElements.username.hidden = true;
+    }
+  }
+
+  if (heroElements.displayName) {
+    heroElements.displayName.textContent = displayName || '—';
+  }
+
+  if (heroElements.handle) {
+    heroElements.handle.textContent = username || '—';
   }
 
   if (heroElements.email) {
-    heroElements.email.textContent = user.email || 'No email linked to this account.';
+    heroElements.email.textContent = emailAddress || 'No email linked to this account.';
+  }
+
+  if (heroElements.primaryEmail) {
+    heroElements.primaryEmail.textContent = emailAddress || '—';
   }
 
   if (heroElements.memberSince) {
