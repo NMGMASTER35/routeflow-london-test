@@ -30,8 +30,9 @@ A unified platform for tracking, planning, and exploring London transport routes
    cp .env.example .env
    ```
    At a minimum you must provide values for `DATABASE_URL` and `FIREBASE_API_KEY`.
-   Provide `TFL_APP_KEY` if you want the static pages (routes, disruptions, tracker)
-   to call TfL APIs without hitting anonymous rate limits.
+   Provide `TFL_APP_KEY` so that the backend can authenticate outgoing TfL requests
+   on behalf of the static pages (routes, disruptions, tracker) without hitting
+   anonymous rate limits.
 2. Navigate to `backend/`
 3. Install dependencies:
    ```sh
@@ -41,6 +42,14 @@ A unified platform for tracking, planning, and exploring London transport routes
    ```sh
    python api.py
    ```
+
+### TfL API proxy endpoints
+
+- The backend exposes a read-only proxy at `/api/tfl/<path>` that forwards
+  requests to the official TfL API and injects any configured credentials.
+- Set `TFL_APP_KEY` (and optionally `TFL_APP_ID` or `TFL_SUBSCRIPTION_KEY`) in
+  your deployment environment so that browser-based pages can call `/api/tfl/...`
+  without exposing secrets.
 
 ## Deployment
 
