@@ -1,8 +1,9 @@
 import os
+import re
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import requests
 from dotenv import load_dotenv
@@ -47,6 +48,146 @@ def get_connection():
 
 
 app = Flask(__name__)
+
+
+FLEET_ADMIN_CODE = os.getenv("FLEET_ADMIN_CODE", "fleet-admin")
+
+FLEET_COLLECTION_BUSES = "fleet_buses"
+FLEET_COLLECTION_PENDING = "fleet_pending"
+FLEET_OPTION_PREFIX = "fleet_option:"
+
+FLEET_OPTION_FIELDS: List[str] = [
+    "operator",
+    "status",
+    "wrap",
+    "vehicleType",
+    "doors",
+    "engineType",
+    "engine",
+    "chassis",
+    "bodyType",
+    "garage",
+    "extras",
+    "length",
+]
+
+DEFAULT_FLEET_OPTIONS: Dict[str, List[str]] = {
+    "operator": [
+        "Abellio London",
+        "Arriva London",
+        "Go-Ahead London",
+        "Metroline",
+        "Stagecoach London",
+    ],
+    "status": ["Active", "Inactive", "Stored"],
+    "wrap": ["Standard", "Heritage", "Advertising wrap", "Special event"],
+    "vehicleType": ["Double Decker", "Single Decker"],
+    "doors": ["1", "2", "3"],
+    "engineType": ["Diesel", "Hybrid", "Electric", "Hydrogen"],
+    "engine": [
+        "Alexander Dennis Enviro400EV",
+        "Volvo B5LH",
+        "Scania N250UD",
+        "Wrightbus Hydrogen",
+    ],
+    "chassis": [
+        "Alexander Dennis",
+        "Scania N-series",
+        "Volvo B5LH",
+        "Wrightbus StreetDeck",
+    ],
+    "bodyType": [
+        "Alexander Dennis Enviro400 MMC",
+        "Wright Gemini 3",
+        "Wright StreetDeck",
+        "Caetano e.City Gold",
+    ],
+    "garage": [
+        "QB (Battersea)",
+        "HT (Holloway)",
+        "LI (Leyton)",
+        "NX (New Cross)",
+        "WJ (Waterloo)",
+    ],
+    "extras": [
+        "New Bus",
+        "Rare Working",
+        "Heritage Fleet",
+        "Route Branding",
+        "Night Bus Allocation",
+        "Training Vehicle",
+    ],
+    "length": ["8.9m", "10.2m", "10.6m", "11.2m", "12.4m"],
+}
+
+DEFAULT_FLEET_BUSES: Dict[str, Dict[str, Any]] = {
+    "BV72YKD": {
+        "regKey": "BV72YKD",
+        "registration": "BV72 YKD",
+        "fleetNumber": "4032",
+        "operator": "Abellio London",
+        "status": "Active",
+        "wrap": "Standard",
+        "vehicleType": "Double Decker",
+        "doors": "2",
+        "engineType": "Electric",
+        "engine": "Alexander Dennis Enviro400EV",
+        "chassis": "Alexander Dennis",
+        "bodyType": "Alexander Dennis Enviro400 MMC",
+        "registrationDate": "2023-01-12",
+        "garage": "QB (Battersea)",
+        "extras": ["New Bus", "Route Branding"],
+        "length": "10.6m",
+        "isNewBus": True,
+        "isRareWorking": False,
+        "createdAt": "2023-01-12T00:00:00.000Z",
+        "lastUpdated": "2024-05-12T10:32:00.000Z",
+    },
+    "LTZ1000": {
+        "regKey": "LTZ1000",
+        "registration": "LTZ 1000",
+        "fleetNumber": "LT1",
+        "operator": "Go-Ahead London",
+        "status": "Active",
+        "wrap": "Heritage",
+        "vehicleType": "Double Decker",
+        "doors": "2",
+        "engineType": "Hybrid",
+        "engine": "Volvo B5LH",
+        "chassis": "Volvo B5LH",
+        "bodyType": "Wright Gemini 3",
+        "registrationDate": "2015-02-28",
+        "garage": "QB (Battersea)",
+        "extras": ["Heritage Fleet", "Rare Working"],
+        "length": "11.2m",
+        "isNewBus": False,
+        "isRareWorking": True,
+        "createdAt": "2015-02-28T00:00:00.000Z",
+        "lastUpdated": "2024-03-18T09:15:00.000Z",
+    },
+    "SN68AEO": {
+        "regKey": "SN68AEO",
+        "registration": "SN68 AEO",
+        "fleetNumber": "11056",
+        "operator": "Stagecoach London",
+        "status": "Active",
+        "wrap": "Advertising wrap",
+        "vehicleType": "Double Decker",
+        "doors": "2",
+        "engineType": "Hybrid",
+        "engine": "Scania N250UD",
+        "chassis": "Scania N-series",
+        "bodyType": "Alexander Dennis Enviro400 MMC",
+        "registrationDate": "2018-11-02",
+        "garage": "LI (Leyton)",
+        "extras": ["Night Bus Allocation"],
+        "length": "10.6m",
+        "isNewBus": False,
+        "isRareWorking": False,
+        "createdAt": "2018-11-02T00:00:00.000Z",
+        "lastUpdated": "2024-04-06T15:45:00.000Z",
+    },
+}
 
 
 class ApiError(Exception):
@@ -167,6 +308,367 @@ def init_database() -> None:
                 );
                 """
             )
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS app_collections (
+                    collection TEXT NOT NULL,
+                    item_id TEXT NOT NULL,
+                    data JSONB NOT NULL,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    PRIMARY KEY (collection, item_id)
+                );
+                """
+            )
+            cursor.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_app_collections_collection
+                ON app_collections (collection);
+                """
+            )
+        connection.commit()
+
+    seed_default_fleet()
+
+
+def iso_now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def normalise_text(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value.strip()
+    return str(value).strip()
+
+
+def normalise_reg_key(value: Any) -> str:
+    text = normalise_text(value).upper()
+    if not text:
+        return ""
+    return re.sub(r"[^A-Z0-9]", "", text)
+
+
+def normalise_option_id(value: Any) -> str:
+    text = normalise_text(value)
+    if not text:
+        return ""
+    normalised = re.sub(r"\s+", " ", text)
+    return normalised.lower()
+
+
+def to_bool(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    text = normalise_text(value).lower()
+    if not text:
+        return False
+    return text in {"1", "true", "yes", "y", "on"}
+
+
+def normalise_date(value: Any) -> str:
+    if value in (None, ""):
+        return ""
+    if isinstance(value, datetime):
+        return value.date().isoformat()
+    text = normalise_text(value)
+    if not text:
+        return ""
+    cleaned = text.replace("Z", "+00:00") if text.endswith("Z") else text
+    try:
+        parsed = datetime.fromisoformat(cleaned)
+        return parsed.date().isoformat()
+    except ValueError:
+        return text
+
+
+def sanitise_extras(value: Any) -> List[str]:
+    if not value:
+        return []
+    if isinstance(value, (list, tuple, set)):
+        source = list(value)
+    else:
+        source = [value]
+    cleaned: List[str] = []
+    for entry in source:
+        text = normalise_text(entry)
+        if text and text not in cleaned:
+            cleaned.append(text)
+    return cleaned
+
+
+def upsert_collection_item(
+    connection,
+    collection: str,
+    item_id: str,
+    data: Dict[str, Any],
+):
+    with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+        cursor.execute(
+            """
+            INSERT INTO app_collections (collection, item_id, data)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (collection, item_id)
+            DO UPDATE SET data = EXCLUDED.data, updated_at = NOW()
+            RETURNING item_id, data, created_at, updated_at
+            """,
+            (collection, item_id, Json(data)),
+        )
+        return cursor.fetchone()
+
+
+def delete_collection_item(connection, collection: str, item_id: str) -> int:
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "DELETE FROM app_collections WHERE collection = %s AND item_id = %s",
+            (collection, item_id),
+        )
+        return cursor.rowcount
+
+
+def fetch_collection_items(connection, collection: str) -> List[Dict[str, Any]]:
+    with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+        cursor.execute(
+            """
+            SELECT item_id, data
+            FROM app_collections
+            WHERE collection = %s
+            ORDER BY updated_at ASC
+            """,
+            (collection,),
+        )
+        return cursor.fetchall() or []
+
+
+def ensure_fleet_option(connection, field: str, value: Any) -> None:
+    if field not in FLEET_OPTION_FIELDS:
+        return
+    text = normalise_text(value)
+    if not text:
+        return
+    collection = f"{FLEET_OPTION_PREFIX}{field}"
+    item_id = normalise_option_id(text)
+    if not item_id:
+        return
+    upsert_collection_item(connection, collection, item_id, {"value": text})
+
+
+def fetch_fleet_options(connection) -> Dict[str, List[str]]:
+    options: Dict[str, List[str]] = {field: [] for field in FLEET_OPTION_FIELDS}
+    for field in FLEET_OPTION_FIELDS:
+        collection = f"{FLEET_OPTION_PREFIX}{field}"
+        rows = fetch_collection_items(connection, collection)
+        values = []
+        for row in rows:
+            data = row.get("data") or {}
+            value = normalise_text(data.get("value"))
+            if value:
+                values.append(value)
+        unique = sorted(set(values), key=lambda item: item.lower())
+        options[field] = unique
+    return options
+
+
+def sanitise_bus_payload(
+    payload: Dict[str, Any],
+    *,
+    fallback_created_at: Optional[str] = None,
+) -> Dict[str, Any]:
+    if not isinstance(payload, dict):
+        raise ApiError("A bus payload is required.", status_code=400)
+
+    registration = normalise_text(payload.get("registration")).upper()
+    reg_key = normalise_reg_key(payload.get("regKey") or registration)
+    if not reg_key:
+        raise ApiError("A vehicle registration is required.", status_code=400)
+
+    registration = registration or reg_key
+    now_iso = iso_now()
+    created_at = normalise_text(payload.get("createdAt")) or fallback_created_at or now_iso
+    last_updated = normalise_text(payload.get("lastUpdated")) or now_iso
+
+    return {
+        "regKey": reg_key,
+        "registration": registration,
+        "fleetNumber": normalise_text(payload.get("fleetNumber")),
+        "operator": normalise_text(payload.get("operator")),
+        "status": normalise_text(payload.get("status")),
+        "wrap": normalise_text(payload.get("wrap")),
+        "vehicleType": normalise_text(payload.get("vehicleType")),
+        "doors": normalise_text(payload.get("doors")),
+        "engineType": normalise_text(payload.get("engineType")),
+        "engine": normalise_text(payload.get("engine")),
+        "chassis": normalise_text(payload.get("chassis")),
+        "bodyType": normalise_text(payload.get("bodyType")),
+        "registrationDate": normalise_date(payload.get("registrationDate")),
+        "garage": normalise_text(payload.get("garage")),
+        "extras": sanitise_extras(payload.get("extras")),
+        "length": normalise_text(payload.get("length")),
+        "isNewBus": to_bool(payload.get("isNewBus")),
+        "isRareWorking": to_bool(payload.get("isRareWorking")),
+        "createdAt": created_at,
+        "lastUpdated": last_updated,
+    }
+
+
+def get_fleet_bus(connection, reg_key: str) -> Optional[Dict[str, Any]]:
+    with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+        cursor.execute(
+            """
+            SELECT item_id, data
+            FROM app_collections
+            WHERE collection = %s AND item_id = %s
+            """,
+            (FLEET_COLLECTION_BUSES, reg_key),
+        )
+        row = cursor.fetchone()
+        if not row:
+            return None
+        data = row.get("data") or {}
+        data.setdefault("regKey", row.get("item_id") or reg_key)
+        data.setdefault("registration", data.get("registration") or data.get("regKey") or reg_key)
+        return data
+
+
+def upsert_fleet_bus(
+    connection,
+    payload: Dict[str, Any],
+    *,
+    fallback_created_at: Optional[str] = None,
+) -> Dict[str, Any]:
+    sanitized = sanitise_bus_payload(payload, fallback_created_at=fallback_created_at)
+
+    for field in FLEET_OPTION_FIELDS:
+        if field == "extras":
+            for tag in sanitized.get("extras", []):
+                ensure_fleet_option(connection, field, tag)
+        else:
+            ensure_fleet_option(connection, field, sanitized.get(field))
+
+    row = upsert_collection_item(
+        connection,
+        FLEET_COLLECTION_BUSES,
+        sanitized["regKey"],
+        sanitized,
+    )
+    return (row or {}).get("data", sanitized)
+
+
+def delete_pending_for_reg(connection, reg_key: str) -> None:
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            DELETE FROM app_collections
+            WHERE collection = %s AND data->>'regKey' = %s
+            """,
+            (FLEET_COLLECTION_PENDING, reg_key),
+        )
+
+
+def get_pending_change(connection, change_id: str) -> Optional[Dict[str, Any]]:
+    with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+        cursor.execute(
+            """
+            SELECT item_id, data
+            FROM app_collections
+            WHERE collection = %s AND item_id = %s
+            """,
+            (FLEET_COLLECTION_PENDING, change_id),
+        )
+        row = cursor.fetchone()
+        if not row:
+            return None
+        data = row.get("data") or {}
+        data.setdefault("id", row.get("item_id") or change_id)
+        return data
+
+
+def create_pending_change(
+    connection,
+    reg_key: str,
+    registration: str,
+    payload: Dict[str, Any],
+) -> Dict[str, Any]:
+    delete_pending_for_reg(connection, reg_key)
+
+    change_id = uuid.uuid4().hex
+    sanitized = sanitise_bus_payload(
+        {**payload, "regKey": reg_key, "registration": registration},
+    )
+    sanitized.pop("createdAt", None)
+    sanitized.pop("lastUpdated", None)
+
+    pending_data = {
+        "id": change_id,
+        "regKey": reg_key,
+        "registration": registration,
+        "submittedAt": iso_now(),
+        "status": "pending",
+        "data": sanitized,
+    }
+
+    upsert_collection_item(
+        connection,
+        FLEET_COLLECTION_PENDING,
+        change_id,
+        pending_data,
+    )
+    return pending_data
+
+
+def fetch_fleet_state(connection) -> Dict[str, Any]:
+    options = fetch_fleet_options(connection)
+
+    buses: Dict[str, Dict[str, Any]] = {}
+    for row in fetch_collection_items(connection, FLEET_COLLECTION_BUSES):
+        data = row.get("data") or {}
+        reg_key = normalise_reg_key(data.get("regKey") or row.get("item_id"))
+        if not reg_key:
+            continue
+        data.setdefault("regKey", reg_key)
+        data.setdefault("registration", data.get("registration") or reg_key)
+        buses[reg_key] = data
+
+    pending: List[Dict[str, Any]] = []
+    for row in fetch_collection_items(connection, FLEET_COLLECTION_PENDING):
+        data = row.get("data") or {}
+        status = normalise_text(data.get("status")) or "pending"
+        if status != "pending":
+            continue
+        data.setdefault("id", row.get("item_id"))
+        pending.append(data)
+    pending.sort(key=lambda item: item.get("submittedAt") or "", reverse=True)
+
+    return {
+        "options": options,
+        "buses": buses,
+        "pendingChanges": pending,
+    }
+
+
+def require_fleet_admin() -> None:
+    if not FLEET_ADMIN_CODE:
+        return
+    provided = normalise_text(request.headers.get("X-Fleet-Admin-Code"))
+    if provided != normalise_text(FLEET_ADMIN_CODE):
+        raise ApiError("Administrator access is required.", status_code=403)
+
+
+def seed_default_fleet() -> None:
+    with get_connection() as connection:
+        for field, values in DEFAULT_FLEET_OPTIONS.items():
+            for value in values:
+                ensure_fleet_option(connection, field, value)
+
+        for reg_key, details in DEFAULT_FLEET_BUSES.items():
+            normalised = normalise_reg_key(reg_key)
+            if not normalised:
+                continue
+            existing = get_fleet_bus(connection, normalised)
+            if existing is None:
+                upsert_fleet_bus(connection, {**details, "regKey": normalised})
+
         connection.commit()
 
 
@@ -398,6 +900,132 @@ def favourites_item(uid: str, favourite_id: str):
         raise ApiError("Favourite not found.", status_code=404)
 
     return jsonify({"status": "deleted"}), 200
+
+
+@app.route("/api/fleet", methods=["GET"])
+def fleet_state():
+    with get_connection() as connection:
+        state = fetch_fleet_state(connection)
+    return jsonify(state)
+
+
+@app.route("/api/fleet/submit", methods=["POST"])
+def fleet_submit():
+    payload = request.get_json(silent=True) or {}
+    bus_payload = payload.get("bus") if isinstance(payload, dict) else None
+    if not isinstance(bus_payload, dict):
+        bus_payload = payload
+
+    registration_text = normalise_text(bus_payload.get("registration")).upper()
+    reg_key = normalise_reg_key(bus_payload.get("regKey") or registration_text)
+    if not reg_key:
+        raise ApiError("A vehicle registration is required.", status_code=400)
+
+    registration = registration_text or reg_key
+
+    with get_connection() as connection:
+        existing = get_fleet_bus(connection, reg_key)
+        if existing is None:
+            now_iso = iso_now()
+            prepared = {
+                **bus_payload,
+                "regKey": reg_key,
+                "registration": registration,
+                "createdAt": bus_payload.get("createdAt") or now_iso,
+                "lastUpdated": now_iso,
+            }
+            bus = upsert_fleet_bus(
+                connection,
+                prepared,
+                fallback_created_at=prepared.get("createdAt"),
+            )
+            connection.commit()
+            return jsonify({"status": "created", "bus": bus}), 201
+
+        pending = create_pending_change(
+            connection,
+            reg_key,
+            registration,
+            {**bus_payload, "regKey": reg_key, "registration": registration},
+        )
+        connection.commit()
+        return jsonify({"status": "pending", "change": pending}), 202
+
+
+@app.route("/api/fleet/options", methods=["POST"])
+def fleet_add_option():
+    require_fleet_admin()
+    payload = request.get_json(silent=True) or {}
+    field = normalise_text(payload.get("field") or payload.get("category"))
+    if field not in FLEET_OPTION_FIELDS:
+        raise ApiError("A valid option field is required.", status_code=400)
+    value = normalise_text(payload.get("value"))
+    if not value:
+        raise ApiError("An option value is required.", status_code=400)
+
+    with get_connection() as connection:
+        ensure_fleet_option(connection, field, value)
+        options = fetch_fleet_options(connection)
+        connection.commit()
+
+    return jsonify({"field": field, "options": options.get(field, [])}), 201
+
+
+@app.route("/api/fleet/pending/<change_id>/approve", methods=["POST"])
+def fleet_approve(change_id: str):
+    require_fleet_admin()
+    change_key = normalise_text(change_id)
+    if not change_key:
+        raise ApiError("A pending change id is required.", status_code=400)
+
+    with get_connection() as connection:
+        pending = get_pending_change(connection, change_key)
+        if pending is None:
+            raise ApiError("Pending update not found.", status_code=404)
+
+        reg_key = normalise_reg_key(pending.get("regKey"))
+        if not reg_key:
+            raise ApiError("Pending update is missing a registration.", status_code=400)
+
+        registration = normalise_text(pending.get("registration")) or reg_key
+        existing = get_fleet_bus(connection, reg_key) or {}
+        merged = {
+            **existing,
+            **(pending.get("data") or {}),
+            "regKey": reg_key,
+            "registration": registration,
+        }
+        created_at = merged.get("createdAt") or existing.get("createdAt") or iso_now()
+        merged["createdAt"] = created_at
+        merged["lastUpdated"] = iso_now()
+
+        bus = upsert_fleet_bus(
+            connection,
+            merged,
+            fallback_created_at=created_at,
+        )
+
+        delete_collection_item(connection, FLEET_COLLECTION_PENDING, pending.get("id") or change_key)
+        connection.commit()
+
+    return jsonify({"status": "approved", "bus": bus})
+
+
+@app.route("/api/fleet/pending/<change_id>/reject", methods=["POST"])
+def fleet_reject(change_id: str):
+    require_fleet_admin()
+    change_key = normalise_text(change_id)
+    if not change_key:
+        raise ApiError("A pending change id is required.", status_code=400)
+
+    with get_connection() as connection:
+        pending = get_pending_change(connection, change_key)
+        if pending is None:
+            raise ApiError("Pending update not found.", status_code=404)
+        delete_collection_item(connection, FLEET_COLLECTION_PENDING, pending.get("id") or change_key)
+        connection.commit()
+
+    return jsonify({"status": "rejected"})
 
 
 @app.route("/api/health", methods=["GET"])
