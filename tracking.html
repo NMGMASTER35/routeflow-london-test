@@ -104,26 +104,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script src="main.js"></script>
   <script>
-const tflKeyState = { warned: false };
-
-function getTflAppKey(){
-  const config = window.__ROUTEFLOW_CONFIG__ || {};
-  const tflConfig = config.tfl || {};
-  const key = typeof tflConfig.appKey === 'string' ? tflConfig.appKey.trim() : '';
-  if(!key && !tflKeyState.warned){
-    console.warn('TfL app key is not configured; tracker requests will use unauthenticated rate limits.');
-    tflKeyState.warned = true;
-  }
-  return key;
-}
-
-function withTflAppKey(url){
-  const key = getTflAppKey();
-  if(!key) return url;
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}app_key=${encodeURIComponent(key)}`;
-}
-
+const TFL_API_BASE = '/api/tfl';
 const MODES = "bus,tube,overground,dlr,tram,river-bus,national-rail,elizabeth-line";
 const LAST_STOP_KEY = 'routeflow.lastStop';
 const q = document.getElementById('q');
@@ -230,14 +211,14 @@ async function search(query){
     return;
   }
 
-  const searchUrl = withTflAppKey(`https://api.tfl.gov.uk/StopPoint/Search/${encodeURIComponent(query)}?modes=${encodeURIComponent(MODES)}&maxResults=20`);
+  const searchUrl = `${TFL_API_BASE}/StopPoint/Search/${encodeURIComponent(query)}?modes=${encodeURIComponent(MODES)}&maxResults=20`;
 
   let searchData;
   try{
     searchData = await fetchJSON(searchUrl);
   }catch(e){
     console.error(e);
-    results.innerHTML = `<div class="result"><div class="r-main"><div class="r-title">Search failed</div><div class="r-sub">Check network/API key</div></div></div>`;
+    results.innerHTML = `<div class="result"><div class="r-main"><div class="r-title">Search failed</div><div class="r-sub">Check your connection</div></div></div>`;
     results.style.display="block";
     return;
   }
@@ -250,7 +231,7 @@ async function search(query){
   }
 
   const detailPromises = matches.map(m =>
-    fetchJSON(withTflAppKey(`https://api.tfl.gov.uk/StopPoint/${encodeURIComponent(m.id)}`)).catch(()=>null)
+    fetchJSON(`${TFL_API_BASE}/StopPoint/${encodeURIComponent(m.id)}`).catch(()=>null)
   );
   const details = await Promise.all(detailPromises);
 
@@ -305,13 +286,13 @@ async function loadArrivals(stopId, stopName){
   rows.innerHTML = `<div class="empty">Loading…</div>`;
 
   try{
-    let data = await fetchJSON(withTflAppKey(`https://api.tfl.gov.uk/StopPoint/${encodeURIComponent(stopId)}/Arrivals`));
+    let data = await fetchJSON(`${TFL_API_BASE}/StopPoint/${encodeURIComponent(stopId)}/Arrivals`);
 
     if(!Array.isArray(data) || data.length===0){
-      const info = await fetchJSON(withTflAppKey(`https://api.tfl.gov.uk/StopPoint/${encodeURIComponent(stopId)}`)).catch(()=>null);
+      const info = await fetchJSON(`${TFL_API_BASE}/StopPoint/${encodeURIComponent(stopId)}`).catch(()=>null);
       if(info && Array.isArray(info.children) && info.children.length){
         const childReqs = info.children.map(c =>
-          fetchJSON(withTflAppKey(`https://api.tfl.gov.uk/StopPoint/${encodeURIComponent(c.id)}/Arrivals`)).catch(()=>[])
+          fetchJSON(`${TFL_API_BASE}/StopPoint/${encodeURIComponent(c.id)}/Arrivals`).catch(()=>[])
         );
         const childData = (await Promise.all(childReqs)).flat();
         data = childData;

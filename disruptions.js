@@ -1,30 +1,10 @@
 const REFRESH_INTERVAL = 120000;
 
-let warnedAboutMissingTflKey = false;
-
-const getTflAppKey = () => {
-  if (typeof window === 'undefined') return '';
-  const key = window.__ROUTEFLOW_CONFIG__?.tfl?.appKey;
-  if (typeof key === 'string' && key.trim()) {
-    return key.trim();
-  }
-  if (!warnedAboutMissingTflKey) {
-    console.warn('TfL app key is not configured; disruption data will use unauthenticated rate limits.');
-    warnedAboutMissingTflKey = true;
-  }
-  return '';
-};
-
-const withTflAppKey = (url) => {
-  const key = getTflAppKey();
-  if (!key) return url;
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}app_key=${encodeURIComponent(key)}`;
-};
+const TFL_API_BASE = '/api/tfl';
 
 const RAIL_ENDPOINT = () =>
-  withTflAppKey('https://api.tfl.gov.uk/Line/Mode/tube,dlr,overground,elizabeth-line/Status?detail=true');
-const BUS_ENDPOINT = () => withTflAppKey('https://api.tfl.gov.uk/Line/Mode/bus/Status?detail=true');
+  `${TFL_API_BASE}/Line/Mode/tube,dlr,overground,elizabeth-line/Status?detail=true`;
+const BUS_ENDPOINT = () => `${TFL_API_BASE}/Line/Mode/bus/Status?detail=true`;
 
 const elements = {
   railGrid: document.getElementById('railGrid'),

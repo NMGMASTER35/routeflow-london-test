@@ -53,6 +53,8 @@ TFL_VEHICLE_API_URL = os.getenv(
 )
 TFL_VEHICLE_PAGE_SIZE = max(_env_int("TFL_VEHICLE_PAGE_SIZE", 500), 1)
 TFL_VEHICLE_MAX_PAGES = max(_env_int("TFL_VEHICLE_MAX_PAGES", 50), 1)
+TFL_API_BASE_URL = (os.getenv("TFL_API_BASE_URL", "https://api.tfl.gov.uk/") or "https://api.tfl.gov.uk/").rstrip("/") + "/"
+TFL_API_TIMEOUT_SECONDS = max(_env_int("TFL_API_TIMEOUT_SECONDS", 15), 1)
 FLEET_AUTO_SYNC_ENABLED = _as_bool(os.getenv("FLEET_AUTO_SYNC_ENABLED"), default=True)
 FLEET_AUTO_SYNC_INTERVAL_SECONDS = max(
     _env_int("FLEET_AUTO_SYNC_INTERVAL_SECONDS", _env_int("FLEET_AUTO_SYNC_INTERVAL", 300)),
@@ -122,6 +124,50 @@ def build_tfl_request_kwargs() -> Dict[str, Any]:
     return kwargs
 
 
+def _build_tfl_api_url(path: str) -> str:
+    normalised_path = str(path or "").lstrip("/")
+    return urljoin(TFL_API_BASE_URL, normalised_path)
+
+
+@app.route("/api/tfl/<path:subpath>", methods=["GET"])
+def proxy_tfl_api(subpath: str) -> Response:
+    upstream_url = _build_tfl_api_url(subpath)
+
+    query_params: List[Tuple[str, str]] = list(request.args.items(multi=True))
+    existing_param_keys: Set[str] = {key for key, _ in query_params}
+
+    proxy_kwargs = build_tfl_request_kwargs()
+    for key, value in proxy_kwargs.get("params", {}).items():
+        if key not in existing_param_keys:
+            query_params.append((key, value))
+
+    headers = dict(proxy_kwargs.get("headers", {}))
+
+    try:
+        upstream_response = requests.get(
+            upstream_url,
+            params=query_params or None,
+            headers=headers or None,
+            timeout=TFL_API_TIMEOUT_SECONDS,
+        )
+    except requests.RequestException as error:
+        app.logger.warning("TfL proxy request failed for %s: %s", upstream_url, error)
+        return jsonify({"error": "Unable to reach TfL API"}), 502
+
+    response = make_response(upstream_response.content, upstream_response.status_code)
+
+    content_type = upstream_response.headers.get("Content-Type")
+    if content_type:
+        response.headers["Content-Type"] = content_type
+
+    for header_name in ("Cache-Control", "ETag", "Last-Modified"):
+        header_value = upstream_response.headers.get(header_name)
+        if header_value:
+            response.headers[header_name] = header_value
+
+    return response
+
+
 @app.route("/config.js")
 def client_config() -> Response:
     firebase_config = {
@@ -136,13 +182,6 @@ def client_config() -> Response:
     payload = {
         "firebase": firebase_config,
     }
-
-    tfl_config = {}
-    if TFL_APP_KEY:
-        tfl_config["appKey"] = TFL_APP_KEY
-
-    if tfl_config:
-        payload["tfl"] = tfl_config
 
     script = "window.__ROUTEFLOW_CONFIG__ = Object.assign({}, window.__ROUTEFLOW_CONFIG__, {});".format(
         json.dumps(payload, separators=(",", ":"))

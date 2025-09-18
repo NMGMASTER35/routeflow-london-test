@@ -1,32 +1,12 @@
 import { getRouteTagOverrideMap, normaliseRouteKey, STORAGE_KEYS } from './data-store.js';
 
-let warnedAboutMissingTflKey = false;
+const TFL_API_BASE = '/api/tfl';
 
-const getTflAppKey = () => {
-  if (typeof window === 'undefined') return '';
-  const key = window.__ROUTEFLOW_CONFIG__?.tfl?.appKey;
-  if (typeof key === 'string' && key.trim()) {
-    return key.trim();
-  }
-  if (!warnedAboutMissingTflKey) {
-    console.warn('TfL app key is not configured; requests will use unauthenticated rate limits.');
-    warnedAboutMissingTflKey = true;
-  }
-  return '';
-};
-
-const withTflAppKey = (url) => {
-  const key = getTflAppKey();
-  if (!key) return url;
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}app_key=${encodeURIComponent(key)}`;
-};
-
-const ROUTE_ENDPOINT = () => withTflAppKey('https://api.tfl.gov.uk/Line/Mode/bus/Route');
+const ROUTE_ENDPOINT = () => `${TFL_API_BASE}/Line/Mode/bus/Route`;
 const ROUTE_STOPS_ENDPOINT = (routeId) =>
-  withTflAppKey(`https://api.tfl.gov.uk/Line/${encodeURIComponent(routeId)}/StopPoints`);
+  `${TFL_API_BASE}/Line/${encodeURIComponent(routeId)}/StopPoints`;
 const ROUTE_VEHICLES_ENDPOINT = (routeId) =>
-  withTflAppKey(`https://api.tfl.gov.uk/Line/${encodeURIComponent(routeId)}/Arrivals`);
+  `${TFL_API_BASE}/Line/${encodeURIComponent(routeId)}/Arrivals`;
 const LAST_ROUTE_KEY = 'routeflow.lastRoute';
 
 const fallbackRoutes = [

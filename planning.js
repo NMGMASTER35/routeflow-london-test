@@ -1,5 +1,7 @@
 // Journey planning logic for Routeflow London
 
+const TFL_API_BASE = '/api/tfl';
+
 document.getElementById('journey-form').addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -23,7 +25,7 @@ document.getElementById('journey-form').addEventListener('submit', async (e) => 
     if (mode.length) params.append('mode', mode.join(','));
     if (accessibility.length) params.append('accessibilityPreference', accessibility.join(','));
 
-    let url = `https://api.tfl.gov.uk/Journey/JourneyResults/${encodeURIComponent(from)}/to/${encodeURIComponent(to)}`;
+    let url = `${TFL_API_BASE}/Journey/JourneyResults/${encodeURIComponent(from)}/to/${encodeURIComponent(to)}`;
     if (params.toString()) url += `?${params.toString()}`;
 
     const res = await fetch(url);
