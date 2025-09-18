@@ -1,6 +1,7 @@
 const NAVBAR_SOURCE = 'components/navbar.html';
 const AUTH_MODAL_SOURCE = 'components/auth-modal.html';
 const AUTH_SCRIPTS = [
+  'config.js',
   'https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js',
   'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js',
   'main.js'

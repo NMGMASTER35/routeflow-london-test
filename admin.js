@@ -11,14 +11,14 @@ import {
 } from './data-store.js';
 
 const adminContent = document.getElementById('adminContent');
-const firebaseConfig = {
-  apiKey: 'AIzaSyDuedLuagA4IXc9ZMG9wvoak-sRrhtFZfo',
-  authDomain: 'routeflow-london.firebaseapp.com',
-  projectId: 'routeflow-london',
-  storageBucket: 'routeflow-london.firebasestorage.app',
-  messagingSenderId: '368346241440',
-  appId: '1:368346241440:web:7cc87d551420459251ecc5'
-};
+function getFirebaseConfig() {
+  const config = window.__ROUTEFLOW_CONFIG__?.firebase;
+  if (!config?.apiKey) {
+    console.error('Firebase configuration is missing. Admin features are unavailable.');
+    return null;
+  }
+  return config;
+}
 
 const FALLBACK_ADMIN_OVERRIDES = new Map([
   [
@@ -1096,7 +1096,12 @@ function ensureFirebaseAuth() {
       if (fb && typeof fb.auth === 'function') {
         try {
           if (!fb.apps.length) {
-            fb.initializeApp(firebaseConfig);
+            const config = getFirebaseConfig();
+            if (!config) {
+              reject(new Error('Firebase configuration not available.'));
+              return;
+            }
+            fb.initializeApp(config);
           }
           const authInstance = fb.auth();
           resolve(authInstance);

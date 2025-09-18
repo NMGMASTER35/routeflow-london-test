@@ -1,12 +1,12 @@
 // Firebase config
-const firebaseConfig = {
-  apiKey: "AIzaSyDuedLuagA4IXc9ZMG9wvoak-sRrhtFZfo",
-  authDomain: "routeflow-london.firebaseapp.com",
-  projectId: "routeflow-london",
-  storageBucket: "routeflow-london.firebasestorage.app",
-  messagingSenderId: "368346241440",
-  appId: "1:368346241440:web:7cc87d551420459251ecc5"
-};
+function resolveFirebaseConfig() {
+  const config = window.__ROUTEFLOW_CONFIG__?.firebase;
+  if (!config?.apiKey) {
+    console.error('Firebase API key is not configured. Authentication features are disabled.');
+    return null;
+  }
+  return config;
+}
 
 const ADMIN_OVERRIDES = new Map([
   [
@@ -58,10 +58,16 @@ window.RouteflowAdmin = Object.freeze({
 
 let auth = null;
 if (typeof firebase !== 'undefined') {
-  if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
+  const firebaseConfig = resolveFirebaseConfig();
+  if (firebaseConfig) {
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    auth = firebase.apps.length ? firebase.auth() : null;
   }
-  auth = firebase.auth();
+  if (!auth) {
+    console.error('Firebase SDK loaded but authentication is unavailable.');
+  }
 } else {
   console.error('Firebase SDK not loaded; authentication is unavailable.');
 }

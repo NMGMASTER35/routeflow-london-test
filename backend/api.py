@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import threading
@@ -37,6 +38,11 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 FIREBASE_API_KEY = os.getenv("FIREBASE_API_KEY")
+FIREBASE_AUTH_DOMAIN = os.getenv("FIREBASE_AUTH_DOMAIN", "routeflow-london.firebaseapp.com")
+FIREBASE_PROJECT_ID = os.getenv("FIREBASE_PROJECT_ID", "routeflow-london")
+FIREBASE_STORAGE_BUCKET = os.getenv("FIREBASE_STORAGE_BUCKET", "routeflow-london.firebasestorage.app")
+FIREBASE_MESSAGING_SENDER_ID = os.getenv("FIREBASE_MESSAGING_SENDER_ID", "368346241440")
+FIREBASE_APP_ID = os.getenv("FIREBASE_APP_ID", "1:368346241440:web:7cc87d551420459251ecc5")
 MAX_CONNECTIONS = int(os.getenv("DB_MAX_CONNECTIONS", "5"))
 TFL_APP_ID = os.getenv("TFL_APP_ID")
 TFL_APP_KEY = os.getenv("TFL_APP_KEY") or os.getenv("TFL_API_KEY") or os.getenv("TFL_KEY")
@@ -114,6 +120,37 @@ def build_tfl_request_kwargs() -> Dict[str, Any]:
     if headers:
         kwargs["headers"] = headers
     return kwargs
+
+
+@app.route("/config.js")
+def client_config() -> Response:
+    firebase_config = {
+        "apiKey": FIREBASE_API_KEY,
+        "authDomain": FIREBASE_AUTH_DOMAIN,
+        "projectId": FIREBASE_PROJECT_ID,
+        "storageBucket": FIREBASE_STORAGE_BUCKET,
+        "messagingSenderId": FIREBASE_MESSAGING_SENDER_ID,
+        "appId": FIREBASE_APP_ID,
+    }
+
+    payload = {
+        "firebase": firebase_config,
+    }
+
+    tfl_config = {}
+    if TFL_APP_KEY:
+        tfl_config["appKey"] = TFL_APP_KEY
+
+    if tfl_config:
+        payload["tfl"] = tfl_config
+
+    script = "window.__ROUTEFLOW_CONFIG__ = Object.assign({}, window.__ROUTEFLOW_CONFIG__, {});".format(
+        json.dumps(payload, separators=(",", ":"))
+    )
+    response = make_response(script)
+    response.headers["Content-Type"] = "application/javascript; charset=utf-8"
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 FLEET_OPTION_FIELDS: List[str] = [
     "operator",
