@@ -829,15 +829,29 @@ def maybe_sync_live_buses(connection, existing_reg_keys: Optional[Set[str]] = No
 
         created: List[Dict[str, Any]] = []
         for reg_key, registration in registrations.items():
-            if reg_key in existing_reg_keys:
+            normalised_key = normalise_reg_key(reg_key)
+            if not normalised_key:
                 continue
-            now_iso = iso_now()
+            if normalised_key in existing_reg_keys:
+                continue
+
+            existing_bus = get_fleet_bus(connection, normalised_key)
+            if existing_bus:
+                existing_reg_keys.add(normalised_key)
+                continue
+
+            seen_at = datetime.now(timezone.utc)
+            now_iso = seen_at.isoformat()
+            registration_date = seen_at.date().isoformat()
             try:
                 bus = upsert_fleet_bus(
                     connection,
                     {
-                        "regKey": reg_key,
+                        "regKey": normalised_key,
                         "registration": registration,
+                        "registrationDate": registration_date,
+                        "isNewBus": True,
+                        "extras": ["New Bus"],
                         "createdAt": now_iso,
                         "lastUpdated": now_iso,
                     },
@@ -845,12 +859,12 @@ def maybe_sync_live_buses(connection, existing_reg_keys: Optional[Set[str]] = No
                 )
             except ApiError as exc:
                 print(
-                    f"[fleet-sync] Skipped vehicle {reg_key}: {exc}",
+                    f"[fleet-sync] Skipped vehicle {normalised_key}: {exc}",
                     flush=True,
                 )
                 continue
             created.append(bus)
-            existing_reg_keys.add(reg_key)
+            existing_reg_keys.add(normalised_key)
 
         if created:
             connection.commit()
