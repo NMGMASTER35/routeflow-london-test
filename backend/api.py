@@ -6,6 +6,7 @@ import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Set, Tuple
+from urllib.parse import parse_qsl, urljoin, urlparse
 
 import requests
 from dotenv import load_dotenv
@@ -44,6 +45,8 @@ TFL_VEHICLE_API_URL = os.getenv(
     "TFL_VEHICLE_API_URL",
     "https://api.tfl.gov.uk/Vehicle/Occupancy/Buses",
 )
+TFL_VEHICLE_PAGE_SIZE = max(_env_int("TFL_VEHICLE_PAGE_SIZE", 500), 1)
+TFL_VEHICLE_MAX_PAGES = max(_env_int("TFL_VEHICLE_MAX_PAGES", 50), 1)
 FLEET_AUTO_SYNC_ENABLED = _as_bool(os.getenv("FLEET_AUTO_SYNC_ENABLED"), default=True)
 FLEET_AUTO_SYNC_INTERVAL_SECONDS = max(
     _env_int("FLEET_AUTO_SYNC_INTERVAL_SECONDS", _env_int("FLEET_AUTO_SYNC_INTERVAL", 300)),
@@ -497,31 +500,145 @@ def extract_vehicle_registration(entry: Any) -> Tuple[str, str]:
     return reg_key, registration
 
 
+def _extract_next_link(payload: Any) -> Optional[str]:
+    queue: List[Any] = [payload]
+    seen: Set[int] = set()
+
+    while queue:
+        current = queue.pop(0)
+        identifier = id(current)
+        if identifier in seen:
+            continue
+        seen.add(identifier)
+
+        if isinstance(current, dict):
+            for key in (
+                "@odata.nextLink",
+                "nextLink",
+                "next",
+                "next_page",
+                "nextPage",
+                "nextUrl",
+                "nextURI",
+                "nextHref",
+            ):
+                if key not in current:
+                    continue
+                value = current.get(key)
+                if isinstance(value, str) and value.strip():
+                    return value.strip()
+                if isinstance(value, dict):
+                    queue.append(value)
+
+            for value in current.values():
+                if isinstance(value, (dict, list)):
+                    queue.append(value)
+
+        elif isinstance(current, list):
+            for item in current:
+                if isinstance(item, (dict, list)):
+                    queue.append(item)
+
+    return None
+
+
+def _prepare_next_request(link: str) -> Tuple[str, Dict[str, Any]]:
+    absolute = urljoin(TFL_VEHICLE_API_URL, str(link))
+    parsed = urlparse(absolute)
+    params = dict(parse_qsl(parsed.query or "", keep_blank_values=False))
+
+    if parsed.scheme and parsed.netloc:
+        base_url = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
+    else:
+        base_url = urljoin(TFL_VEHICLE_API_URL, parsed.path or "")
+
+    base_url = base_url or TFL_VEHICLE_API_URL
+    return base_url, params
+
+
 def fetch_live_bus_registrations() -> Tuple[Dict[str, str], bool]:
     if not TFL_VEHICLE_API_URL:
         return {}, False
 
     kwargs = build_tfl_request_kwargs()
-    try:
-        response = requests.get(TFL_VEHICLE_API_URL, timeout=15, **kwargs)
-        response.raise_for_status()
-    except requests.RequestException as exc:
-        print(f"[fleet-sync] Failed to fetch live vehicle data: {exc}", flush=True)
-        return {}, False
-
-    try:
-        payload = response.json()
-    except ValueError as exc:
-        print(f"[fleet-sync] Invalid JSON payload from vehicle feed: {exc}", flush=True)
-        return {}, False
+    base_params = dict(kwargs.get("params") or {})
+    headers = dict(kwargs.get("headers") or {})
 
     registrations: Dict[str, str] = {}
-    for entry in _iter_vehicle_entries(payload):
-        reg_key, registration = extract_vehicle_registration(entry)
-        if not reg_key or reg_key in registrations:
+    success = False
+
+    manual_page = 1
+    manual_params: Dict[str, Any] = {"page": manual_page}
+    if TFL_VEHICLE_PAGE_SIZE:
+        manual_params["pageSize"] = TFL_VEHICLE_PAGE_SIZE
+
+    next_request: Optional[Tuple[str, Dict[str, Any]]] = (
+        TFL_VEHICLE_API_URL,
+        manual_params,
+    )
+
+    used_next_link = False
+    requests_made = 0
+
+    while next_request and requests_made < TFL_VEHICLE_MAX_PAGES:
+        requests_made += 1
+        url, extra_params = next_request
+        params = dict(base_params)
+        if extra_params:
+            for key, value in extra_params.items():
+                if value not in (None, ""):
+                    params[key] = value
+
+        try:
+            response = requests.get(url, params=params, headers=headers, timeout=30)
+            response.raise_for_status()
+        except requests.RequestException as exc:
+            print(f"[fleet-sync] Failed to fetch live vehicle data: {exc}", flush=True)
+            return registrations, success
+
+        try:
+            payload = response.json()
+        except ValueError as exc:
+            print(f"[fleet-sync] Invalid JSON payload from vehicle feed: {exc}", flush=True)
+            return registrations, success
+
+        success = True
+
+        new_count = 0
+        for entry in _iter_vehicle_entries(payload):
+            reg_key, registration = extract_vehicle_registration(entry)
+            if not reg_key or reg_key in registrations:
+                continue
+            registrations[reg_key] = registration
+            new_count += 1
+
+        link = _extract_next_link(payload)
+        if link:
+            used_next_link = True
+            next_request = _prepare_next_request(link)
             continue
-        registrations[reg_key] = registration
-    return registrations, True
+
+        if new_count == 0:
+            next_request = None
+            break
+
+        if used_next_link:
+            next_request = None
+            break
+
+        manual_page += 1
+        manual_params = {"page": manual_page}
+        if TFL_VEHICLE_PAGE_SIZE:
+            manual_params["pageSize"] = TFL_VEHICLE_PAGE_SIZE
+        next_request = (TFL_VEHICLE_API_URL, manual_params)
+
+    if registrations:
+        print(
+            f"[fleet-sync] Retrieved {len(registrations)} vehicle registrations from TfL feed",
+            flush=True,
+        )
+
+    return registrations, success
 
 
 def upsert_collection_item(
