@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const STORAGE_KEY = "routeflow:fleet-state:v1";
+  const API_BASE_URL = (window.__ROUTEFLOW_API_BASE__ || "/api").replace(/\/$/, "");
   const ADMIN_CODE = "fleet-admin";
 
   const DROPDOWN_FIELDS = [
@@ -160,9 +160,10 @@
     pendingChanges: [],
   };
 
-  const state = loadState();
+  const state = clone(DEFAULT_STATE);
   let isAdmin = false;
   let toastTimeout = null;
+  let isInitialised = false;
 
   document.addEventListener("DOMContentLoaded", () => {
     const elements = getElements();
@@ -170,8 +171,6 @@
       return;
     }
 
-    synchronizeOptionsWithBuses();
-    sortOptionLists();
     populateAllSelects(elements);
     renderOptionList(elements, elements.optionCategory.value);
     renderTable(elements);
@@ -181,6 +180,7 @@
     renderPendingList(elements);
 
     attachEvents(elements);
+    refreshFleetState(elements, { silent: true });
   });
 
   function getElements() {
@@ -337,61 +337,157 @@
     }
   }
 
+  function buildApiUrl(path = "") {
+    const suffix = path.startsWith("/") ? path : `/${path}`;
+    return `${API_BASE_URL}${suffix}`;
+  }
+
+  async function requestJson(path, options = {}) {
+    const url = buildApiUrl(path);
+    const headers = { ...(options.headers || {}) };
+    let body = options.body;
+
+    if (body && !(body instanceof FormData)) {
+      if (!headers["Content-Type"]) {
+        headers["Content-Type"] = "application/json";
+      }
+      if (headers["Content-Type"].includes("application/json") && typeof body !== "string") {
+        body = JSON.stringify(body);
+      }
+    }
+
+    const response = await fetch(url, {
+      method: options.method || "GET",
+      headers,
+      body,
+    });
+
+    const contentType = response.headers.get("content-type") || "";
+    let payload = null;
+    if (contentType.includes("application/json")) {
+      try {
+        payload = await response.json();
+      } catch (error) {
+        payload = null;
+      }
+    }
+
+    if (!response.ok) {
+      const message = payload?.error || `Request failed with status ${response.status}`;
+      const error = new Error(message);
+      error.status = response.status;
+      error.payload = payload;
+      throw error;
+    }
+
+    return payload || {};
+  }
+
+  function getAdminHeaders() {
+    return isAdmin ? { "X-Fleet-Admin-Code": ADMIN_CODE } : {};
+  }
+
+  async function fetchFleetStateFromApi() {
+    return requestJson("/fleet");
+  }
+
+  async function submitFleetUpdateToApi(bus) {
+    return requestJson("/fleet/submit", {
+      method: "POST",
+      body: { bus },
+    });
+  }
+
+  async function addOptionToApi(field, value) {
+    return requestJson("/fleet/options", {
+      method: "POST",
+      headers: {
+        ...getAdminHeaders(),
+      },
+      body: { field, value },
+    });
+  }
+
+  async function approvePendingChangeOnApi(changeId) {
+    return requestJson(`/fleet/pending/${encodeURIComponent(changeId)}/approve`, {
+      method: "POST",
+      headers: {
+        ...getAdminHeaders(),
+      },
+    });
+  }
+
+  async function rejectPendingChangeOnApi(changeId) {
+    return requestJson(`/fleet/pending/${encodeURIComponent(changeId)}/reject`, {
+      method: "POST",
+      headers: {
+        ...getAdminHeaders(),
+      },
+    });
+  }
+
+  async function refreshFleetState(elements, options = {}) {
+    const { silent } = options;
+    try {
+      const remoteState = await fetchFleetStateFromApi();
+      applyFleetState(remoteState);
+      sortOptionLists();
+      populateAllSelects(elements);
+      renderOptionList(elements, elements.optionCategory.value);
+      renderTable(elements);
+      renderHighlights(elements);
+      updateStats(elements);
+      updatePendingBadge(elements);
+      renderPendingList(elements);
+      if (!silent && isInitialised) {
+        showToast(elements.toast, "Fleet database refreshed.", "success");
+      }
+    } catch (error) {
+      console.error("Failed to load fleet state:", error);
+      const message = error?.message || "Unable to load fleet data.";
+      if (!silent) {
+        showToast(elements.toast, message, "error");
+      }
+      if (!isInitialised && elements.formFeedback) {
+        setFormFeedback(elements.formFeedback, message, "error");
+      }
+    } finally {
+      isInitialised = true;
+    }
+  }
+
+  function applyFleetState(remoteState) {
+    if (!remoteState || typeof remoteState !== "object") {
+      return;
+    }
+
+    if (remoteState.options && typeof remoteState.options === "object") {
+      state.options = clone(remoteState.options);
+    }
+
+    if (remoteState.buses && typeof remoteState.buses === "object") {
+      state.buses = {};
+      Object.keys(remoteState.buses).forEach((key) => {
+        const bus = remoteState.buses[key];
+        if (!bus) return;
+        const regKey = normaliseRegKey(bus.regKey || key);
+        if (!regKey) return;
+        state.buses[regKey] = { ...bus, regKey };
+      });
+    }
+
+    if (Array.isArray(remoteState.pendingChanges)) {
+      state.pendingChanges = remoteState.pendingChanges.map((change) => ({
+        ...change,
+      }));
+    } else {
+      state.pendingChanges = [];
+    }
+  }
+
   function normalizeRegistrationInput(input) {
     if (!input) return;
     input.value = input.value.toUpperCase();
-  }
-
-  function loadState() {
-    const base = clone(DEFAULT_STATE);
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (!raw) {
-        return base;
-      }
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === "object") {
-        if (parsed.options) {
-          base.options = mergeOptions(DEFAULT_STATE.options, parsed.options);
-        }
-        if (parsed.buses && typeof parsed.buses === "object") {
-          base.buses = {};
-          Object.keys(parsed.buses).forEach((key) => {
-            const bus = parsed.buses[key];
-            if (!bus) return;
-            const regKey =
-              bus.regKey || normaliseRegKey(bus.registration || key);
-            if (!regKey) return;
-            base.buses[regKey] = {
-              regKey,
-              ...bus,
-              registration: bus.registration || key,
-            };
-          });
-        }
-        if (Array.isArray(parsed.pendingChanges)) {
-          base.pendingChanges = parsed.pendingChanges
-            .map((change) => ({
-              ...change,
-              regKey:
-                change.regKey || normaliseRegKey(change.registration || ""),
-            }))
-            .filter((change) => Boolean(change.regKey));
-        }
-      }
-    } catch (error) {
-      console.warn("Failed to load fleet state:", error);
-    }
-    return base;
-  }
-
-  function saveState() {
-    try {
-      const serialised = JSON.stringify(state);
-      window.localStorage.setItem(STORAGE_KEY, serialised);
-    } catch (error) {
-      console.warn("Unable to save fleet state:", error);
-    }
   }
 
   function clone(value) {
@@ -401,61 +497,11 @@
     return JSON.parse(JSON.stringify(value));
   }
 
-  function mergeOptions(defaults, saved) {
-    const merged = {};
-    const keys = new Set([
-      ...Object.keys(defaults || {}),
-      ...Object.keys(saved || {}),
-    ]);
-    keys.forEach((key) => {
-      const defaultList = Array.isArray(defaults?.[key]) ? defaults[key] : [];
-      const savedList = Array.isArray(saved?.[key]) ? saved[key] : [];
-      merged[key] = Array.from(new Set([...defaultList, ...savedList]));
-    });
-    return merged;
-  }
-
   function normaliseRegKey(value) {
     return (value || "")
       .toString()
       .toUpperCase()
       .replace(/[^A-Z0-9]/g, "");
-  }
-
-  function synchronizeOptionsWithBuses() {
-    let updated = false;
-    Object.values(state.buses).forEach((bus) => {
-      DROPDOWN_FIELDS.forEach((field) => {
-        if (field === "extras") {
-          if (Array.isArray(bus.extras)) {
-            bus.extras.forEach((tag) => {
-              updated = ensureOption(field, tag) || updated;
-            });
-          }
-        } else {
-          const value = bus[field];
-          if (value) {
-            updated = ensureOption(field, value) || updated;
-          }
-        }
-      });
-    });
-    if (updated) {
-      sortOptionLists();
-      saveState();
-    }
-  }
-
-  function ensureOption(field, value) {
-    if (!value) return false;
-    if (!Array.isArray(state.options[field])) {
-      state.options[field] = [];
-    }
-    if (!state.options[field].includes(value)) {
-      state.options[field].push(value);
-      return true;
-    }
-    return false;
   }
 
   function sortOptionLists() {
@@ -706,7 +752,7 @@
     }
   }
 
-  function submitForm(elements) {
+  async function submitForm(elements) {
     const { fleetForm, formFeedback, selects, registrationInput } = elements;
     if (!fleetForm) return;
 
@@ -735,63 +781,49 @@
       selects,
     );
 
-    if (!existing) {
-      state.buses[regKey] = payload;
-      synchronizeOptionsWithBus(payload);
-      sortOptionLists();
-      saveState();
-      populateAllSelects(elements);
-      renderTable(elements);
-      renderHighlights(elements);
-      updateStats(elements);
-      showToast(
-        elements.toast,
-        `Created new profile for ${registration}.`,
-        "success",
-      );
-      setFormFeedback(
-        formFeedback,
-        `Created new profile for ${registration}.`,
-        "success",
-      );
-      prefillForm(elements, payload);
-      return;
-    }
-
-    const pendingChange = {
-      id: `pending-${Date.now()}`,
-      regKey,
-      registration,
-      submittedAt: new Date().toISOString(),
-      data: payload,
-    };
-
-    const existingIndex = state.pendingChanges.findIndex(
-      (change) => change.regKey === regKey,
-    );
-    if (existingIndex >= 0) {
-      state.pendingChanges[existingIndex] = pendingChange;
-    } else {
-      state.pendingChanges.push(pendingChange);
-    }
-
-    saveState();
-    renderTable(elements);
-    updateStats(elements);
-    updatePendingBadge(elements);
-    if (isAdmin) {
-      renderPendingList(elements);
-    }
-    showToast(
-      elements.toast,
-      `Update for ${registration} submitted for approval.`,
-      "info",
-    );
     setFormFeedback(
       formFeedback,
-      `Update for ${registration} submitted for approval.`,
+      existing
+        ? `Submitting update for ${registration}...`
+        : `Creating profile for ${registration}...`,
       "pending",
     );
+
+    try {
+      const result = await submitFleetUpdateToApi(payload);
+      await refreshFleetState(elements, { silent: true });
+      const updated = state.buses[regKey];
+
+      if (result?.status === "created") {
+        showToast(
+          elements.toast,
+          `Created new profile for ${registration}.`,
+          "success",
+        );
+        setFormFeedback(
+          formFeedback,
+          `Created new profile for ${registration}.`,
+          "success",
+        );
+        prefillForm(elements, updated || payload);
+      } else {
+        showToast(
+          elements.toast,
+          `Update for ${registration} submitted for approval.`,
+          "info",
+        );
+        setFormFeedback(
+          formFeedback,
+          `Update for ${registration} submitted for approval.`,
+          "pending",
+        );
+      }
+    } catch (error) {
+      console.error("Failed to submit fleet update:", error);
+      const message = error?.message || "Unable to submit update.";
+      showToast(elements.toast, message, "error");
+      setFormFeedback(formFeedback, message, "error");
+    }
   }
 
   function buildPayload(formData, registration, regKey, existing, selects) {
@@ -838,16 +870,6 @@
       createdAt: existing?.createdAt || nowIso,
       lastUpdated: nowIso,
     };
-  }
-
-  function synchronizeOptionsWithBus(bus) {
-    DROPDOWN_FIELDS.forEach((field) => {
-      if (field === "extras") {
-        (bus.extras || []).forEach((tag) => ensureOption(field, tag));
-      } else {
-        ensureOption(field, bus[field]);
-      }
-    });
   }
 
   function renderPendingList(elements) {
@@ -975,48 +997,47 @@
     return (a ?? "") === (b ?? "");
   }
 
-  function approvePending(elements, id) {
-    const index = state.pendingChanges.findIndex((change) => change.id === id);
-    if (index === -1) return;
-    const change = state.pendingChanges[index];
-    const regKey = change.regKey;
-    state.buses[regKey] = {
-      ...state.buses[regKey],
-      ...change.data,
-      regKey,
-      registration: change.registration,
-      lastUpdated: new Date().toISOString(),
-    };
-    synchronizeOptionsWithBus(state.buses[regKey]);
-    state.pendingChanges.splice(index, 1);
-    sortOptionLists();
-    saveState();
-    populateAllSelects(elements);
-    renderTable(elements);
-    renderHighlights(elements);
-    updateStats(elements);
-    updatePendingBadge(elements);
-    renderPendingList(elements);
-    showToast(
-      elements.toast,
-      `Update for ${change.registration} approved.`,
-      "success",
-    );
+  async function approvePending(elements, id) {
+    if (!isAdmin) {
+      showToast(elements.toast, "Admin access required to approve.", "error");
+      return;
+    }
+    try {
+      const change = state.pendingChanges.find((item) => item.id === id);
+      const response = await approvePendingChangeOnApi(id);
+      const registration =
+        response?.bus?.registration || change?.registration || "registration";
+      await refreshFleetState(elements, { silent: true });
+      showToast(
+        elements.toast,
+        `Update for ${registration} approved.`,
+        "success",
+      );
+    } catch (error) {
+      console.error("Failed to approve fleet update:", error);
+      const message = error?.message || "Unable to approve update.";
+      showToast(elements.toast, message, "error");
+    }
   }
 
-  function rejectPending(elements, id) {
-    const index = state.pendingChanges.findIndex((change) => change.id === id);
-    if (index === -1) return;
-    const change = state.pendingChanges[index];
-    state.pendingChanges.splice(index, 1);
-    saveState();
-    updatePendingBadge(elements);
-    renderPendingList(elements);
-    showToast(
-      elements.toast,
-      `Update for ${change.registration} rejected.`,
-      "info",
-    );
+  async function rejectPending(elements, id) {
+    if (!isAdmin) {
+      showToast(elements.toast, "Admin access required to reject.", "error");
+      return;
+    }
+    try {
+      await rejectPendingChangeOnApi(id);
+      await refreshFleetState(elements, { silent: true });
+      showToast(
+        elements.toast,
+        "Pending update rejected.",
+        "info",
+      );
+    } catch (error) {
+      console.error("Failed to reject fleet update:", error);
+      const message = error?.message || "Unable to reject update.";
+      showToast(elements.toast, message, "error");
+    }
   }
 
   function toggleAdmin(elements) {
@@ -1034,6 +1055,7 @@
       adminToggle.setAttribute("aria-expanded", "true");
       adminPanel.hidden = false;
       renderPendingList(elements);
+      refreshFleetState(elements, { silent: true });
       return;
     }
 
@@ -1062,7 +1084,7 @@
       .join("");
   }
 
-  function addNewOption(elements) {
+  async function addNewOption(elements) {
     const { optionForm, optionCategory } = elements;
     if (!optionForm || !optionCategory) return;
     const formData = new FormData(optionForm);
@@ -1076,26 +1098,36 @@
       );
       return;
     }
-    value = capitalise(value);
-    if (!Array.isArray(state.options[field])) {
-      state.options[field] = [];
-    }
-    if (state.options[field].includes(value)) {
-      showToast(elements.toast, "That option already exists.", "info");
+    if (!isAdmin) {
+      showToast(
+        elements.toast,
+        "Admin access required to add options.",
+        "error",
+      );
       return;
     }
-    state.options[field].push(value);
-    sortOptionLists();
-    saveState();
-    populateAllSelects(elements);
-    renderOptionList(elements, field);
-    optionForm.reset();
-    optionCategory.value = field;
-    showToast(
-      elements.toast,
-      `Added "${value}" to ${FIELD_LABELS[field] || field}.`,
-      "success",
-    );
+    value = capitalise(value);
+    try {
+      const response = await addOptionToApi(field, value);
+      const updatedOptions = Array.isArray(response?.options)
+        ? response.options
+        : [...(state.options[field] || []), value];
+      state.options[field] = updatedOptions;
+      sortOptionLists();
+      populateAllSelects(elements);
+      renderOptionList(elements, field);
+      optionForm.reset();
+      optionCategory.value = field;
+      showToast(
+        elements.toast,
+        `Added "${value}" to ${FIELD_LABELS[field] || field}.`,
+        "success",
+      );
+    } catch (error) {
+      console.error("Failed to add fleet option:", error);
+      const message = error?.message || "Unable to add option.";
+      showToast(elements.toast, message, "error");
+    }
   }
 
   function clearForm(elements) {
