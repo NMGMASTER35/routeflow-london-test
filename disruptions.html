@@ -58,18 +58,22 @@
 
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="config.js"></script>
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyDuedLuagA4IXc9ZMG9wvoak-sRrhtFZfo",
-      authDomain: "routeflow-london.firebaseapp.com",
-      projectId: "routeflow-london",
-      storageBucket: "routeflow-london.firebasestorage.app",
-      messagingSenderId: "368346241440",
-      appId: "1:368346241440:web:7cc87d551420459251ecc5"
-    };
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
+    (function initialiseFirebase() {
+      const firebaseConfig = window.__ROUTEFLOW_CONFIG__?.firebase;
+      if (!firebaseConfig?.apiKey) {
+        console.error('Firebase configuration is missing. Disruptions page authentication will be disabled.');
+        return;
+      }
+      if (typeof firebase === 'undefined') {
+        console.error('Firebase SDK not loaded. Disruptions page authentication will be disabled.');
+        return;
+      }
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+    })();
   </script>
   <script src="navbar-loader.js" defer></script>
   <script type="module" src="disruptions.js"></script>

@@ -25,12 +25,19 @@ A unified platform for tracking, planning, and exploring London transport routes
    ```
 
 ### Backend (Python)
-1. Navigate to `backend/`
-2. Install dependencies:
+1. Copy the example environment file and update it with your secrets:
+   ```sh
+   cp .env.example .env
+   ```
+   At a minimum you must provide values for `DATABASE_URL` and `FIREBASE_API_KEY`.
+   Provide `TFL_APP_KEY` if you want the static pages (routes, disruptions, tracker)
+   to call TfL APIs without hitting anonymous rate limits.
+2. Navigate to `backend/`
+3. Install dependencies:
    ```sh
    pip install -r requirements.txt
    ```
-3. Run the API server:
+4. Run the API server:
    ```sh
    python api.py
    ```

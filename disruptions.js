@@ -1,7 +1,30 @@
-const APP_KEY = 'f17d0725d1654338ab02a361fe41abad';
 const REFRESH_INTERVAL = 120000;
-const RAIL_ENDPOINT = `https://api.tfl.gov.uk/Line/Mode/tube,dlr,overground,elizabeth-line/Status?detail=true&app_key=${APP_KEY}`;
-const BUS_ENDPOINT = `https://api.tfl.gov.uk/Line/Mode/bus/Status?detail=true&app_key=${APP_KEY}`;
+
+let warnedAboutMissingTflKey = false;
+
+const getTflAppKey = () => {
+  if (typeof window === 'undefined') return '';
+  const key = window.__ROUTEFLOW_CONFIG__?.tfl?.appKey;
+  if (typeof key === 'string' && key.trim()) {
+    return key.trim();
+  }
+  if (!warnedAboutMissingTflKey) {
+    console.warn('TfL app key is not configured; disruption data will use unauthenticated rate limits.');
+    warnedAboutMissingTflKey = true;
+  }
+  return '';
+};
+
+const withTflAppKey = (url) => {
+  const key = getTflAppKey();
+  if (!key) return url;
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}app_key=${encodeURIComponent(key)}`;
+};
+
+const RAIL_ENDPOINT = () =>
+  withTflAppKey('https://api.tfl.gov.uk/Line/Mode/tube,dlr,overground,elizabeth-line/Status?detail=true');
+const BUS_ENDPOINT = () => withTflAppKey('https://api.tfl.gov.uk/Line/Mode/bus/Status?detail=true');
 
 const elements = {
   railGrid: document.getElementById('railGrid'),
@@ -223,11 +246,11 @@ const handleFilterClick = (event) => {
 };
 
 const fetchStatusData = async () => {
-  const fetchRail = fetch(RAIL_ENDPOINT).then((response) => {
+  const fetchRail = fetch(RAIL_ENDPOINT()).then((response) => {
     if (!response.ok) throw new Error('Failed to load rail disruptions');
     return response.json();
   });
-  const fetchBus = fetch(BUS_ENDPOINT).then((response) => {
+  const fetchBus = fetch(BUS_ENDPOINT()).then((response) => {
     if (!response.ok) throw new Error('Failed to load bus disruptions');
     return response.json();
   });
