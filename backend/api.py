@@ -1,9 +1,11 @@
 import os
 import re
+import threading
+import time
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import requests
 from dotenv import load_dotenv
@@ -11,11 +13,42 @@ from flask import Flask, Response, jsonify, make_response, request
 from psycopg2.extras import Json, RealDictCursor
 from psycopg2.pool import SimpleConnectionPool
 
+def _as_bool(value, default: bool = False) -> bool:
+    if value is None:
+        return default
+    return str(value).strip().lower() not in {"", "0", "false", "no", "off"}
+
+
+def _env_int(name: str, default: int) -> int:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    text = str(value).strip()
+    if not text:
+        return default
+    try:
+        return int(text)
+    except ValueError:
+        return default
+
+
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 FIREBASE_API_KEY = os.getenv("FIREBASE_API_KEY")
 MAX_CONNECTIONS = int(os.getenv("DB_MAX_CONNECTIONS", "5"))
+TFL_APP_ID = os.getenv("TFL_APP_ID")
+TFL_APP_KEY = os.getenv("TFL_APP_KEY") or os.getenv("TFL_API_KEY") or os.getenv("TFL_KEY")
+TFL_SUBSCRIPTION_KEY = os.getenv("TFL_SUBSCRIPTION_KEY") or os.getenv("TFL_SUBSCRIPTION")
+TFL_VEHICLE_API_URL = os.getenv(
+    "TFL_VEHICLE_API_URL",
+    "https://api.tfl.gov.uk/Vehicle/Occupancy/Buses",
+)
+FLEET_AUTO_SYNC_ENABLED = _as_bool(os.getenv("FLEET_AUTO_SYNC_ENABLED"), default=True)
+FLEET_AUTO_SYNC_INTERVAL_SECONDS = max(
+    _env_int("FLEET_AUTO_SYNC_INTERVAL_SECONDS", _env_int("FLEET_AUTO_SYNC_INTERVAL", 300)),
+    0,
+)
 
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL environment variable is required")
@@ -55,6 +88,29 @@ FLEET_ADMIN_CODE = os.getenv("FLEET_ADMIN_CODE", "fleet-admin")
 FLEET_COLLECTION_BUSES = "fleet_buses"
 FLEET_COLLECTION_PENDING = "fleet_pending"
 FLEET_OPTION_PREFIX = "fleet_option:"
+
+_fleet_sync_lock = threading.Lock()
+_last_fleet_sync_attempt: float = 0.0
+_last_fleet_sync_success: float = 0.0
+
+
+def build_tfl_request_kwargs() -> Dict[str, Any]:
+    params: Dict[str, Any] = {}
+    headers: Dict[str, str] = {}
+
+    if TFL_APP_ID:
+        params["app_id"] = TFL_APP_ID
+    if TFL_APP_KEY:
+        params.setdefault("app_key", TFL_APP_KEY)
+    if TFL_SUBSCRIPTION_KEY:
+        headers["Ocp-Apim-Subscription-Key"] = TFL_SUBSCRIPTION_KEY
+
+    kwargs: Dict[str, Any] = {}
+    if params:
+        kwargs["params"] = params
+    if headers:
+        kwargs["headers"] = headers
+    return kwargs
 
 FLEET_OPTION_FIELDS: List[str] = [
     "operator",
@@ -398,6 +454,76 @@ def sanitise_extras(value: Any) -> List[str]:
     return cleaned
 
 
+def _iter_vehicle_entries(payload: Any):
+    if isinstance(payload, list):
+        for entry in payload:
+            yield from _iter_vehicle_entries(entry)
+        return
+    if isinstance(payload, dict):
+        yield payload
+        for value in payload.values():
+            if isinstance(value, (list, dict)):
+                yield from _iter_vehicle_entries(value)
+        return
+    if payload is not None:
+        yield payload
+
+
+def extract_vehicle_registration(entry: Any) -> Tuple[str, str]:
+    raw_value: Any = None
+    if isinstance(entry, str):
+        raw_value = entry
+    elif isinstance(entry, dict):
+        for key in (
+            "vehicleRegistrationNumber",
+            "registrationNumber",
+            "vehicleId",
+            "vehicleRef",
+            "vehicle",
+            "id",
+        ):
+            if key in entry:
+                raw_value = entry.get(key)
+                if raw_value:
+                    break
+    if raw_value is None:
+        return "", ""
+
+    text = normalise_text(raw_value).upper()
+    reg_key = normalise_reg_key(text)
+    if not reg_key:
+        return "", ""
+    registration = text or reg_key
+    return reg_key, registration
+
+
+def fetch_live_bus_registrations() -> Tuple[Dict[str, str], bool]:
+    if not TFL_VEHICLE_API_URL:
+        return {}, False
+
+    kwargs = build_tfl_request_kwargs()
+    try:
+        response = requests.get(TFL_VEHICLE_API_URL, timeout=15, **kwargs)
+        response.raise_for_status()
+    except requests.RequestException as exc:
+        print(f"[fleet-sync] Failed to fetch live vehicle data: {exc}", flush=True)
+        return {}, False
+
+    try:
+        payload = response.json()
+    except ValueError as exc:
+        print(f"[fleet-sync] Invalid JSON payload from vehicle feed: {exc}", flush=True)
+        return {}, False
+
+    registrations: Dict[str, str] = {}
+    for entry in _iter_vehicle_entries(payload):
+        reg_key, registration = extract_vehicle_registration(entry)
+        if not reg_key or reg_key in registrations:
+            continue
+        registrations[reg_key] = registration
+    return registrations, True
+
+
 def upsert_collection_item(
     connection,
     collection: str,
@@ -555,6 +681,70 @@ def upsert_fleet_bus(
     return (row or {}).get("data", sanitized)
 
 
+def maybe_sync_live_buses(connection, existing_reg_keys: Optional[Set[str]] = None) -> List[Dict[str, Any]]:
+    global _last_fleet_sync_attempt, _last_fleet_sync_success
+
+    if not FLEET_AUTO_SYNC_ENABLED:
+        return []
+
+    if existing_reg_keys is None:
+        existing_reg_keys = set()
+
+    now = time.monotonic()
+    if (
+        FLEET_AUTO_SYNC_INTERVAL_SECONDS > 0
+        and now - _last_fleet_sync_attempt < FLEET_AUTO_SYNC_INTERVAL_SECONDS
+    ):
+        return []
+
+    with _fleet_sync_lock:
+        now = time.monotonic()
+        if (
+            FLEET_AUTO_SYNC_INTERVAL_SECONDS > 0
+            and now - _last_fleet_sync_attempt < FLEET_AUTO_SYNC_INTERVAL_SECONDS
+        ):
+            return []
+
+        _last_fleet_sync_attempt = now
+        registrations, success = fetch_live_bus_registrations()
+        if not success or not registrations:
+            return []
+
+        created: List[Dict[str, Any]] = []
+        for reg_key, registration in registrations.items():
+            if reg_key in existing_reg_keys:
+                continue
+            now_iso = iso_now()
+            try:
+                bus = upsert_fleet_bus(
+                    connection,
+                    {
+                        "regKey": reg_key,
+                        "registration": registration,
+                        "createdAt": now_iso,
+                        "lastUpdated": now_iso,
+                    },
+                    fallback_created_at=now_iso,
+                )
+            except ApiError as exc:
+                print(
+                    f"[fleet-sync] Skipped vehicle {reg_key}: {exc}",
+                    flush=True,
+                )
+                continue
+            created.append(bus)
+            existing_reg_keys.add(reg_key)
+
+        if created:
+            connection.commit()
+            print(
+                f"[fleet-sync] Added {len(created)} new vehicles from TfL feed",
+                flush=True,
+            )
+        _last_fleet_sync_success = time.monotonic()
+        return created
+
+
 def delete_pending_for_reg(connection, reg_key: str) -> None:
     with connection.cursor() as cursor:
         cursor.execute(
@@ -629,6 +819,13 @@ def fetch_fleet_state(connection) -> Dict[str, Any]:
         data.setdefault("regKey", reg_key)
         data.setdefault("registration", data.get("registration") or reg_key)
         buses[reg_key] = data
+
+    existing_keys = set(buses.keys())
+    for bus in maybe_sync_live_buses(connection, existing_keys):
+        reg_key = normalise_reg_key(bus.get("regKey"))
+        if not reg_key:
+            continue
+        buses[reg_key] = bus
 
     pending: List[Dict[str, Any]] = []
     for row in fetch_collection_items(connection, FLEET_COLLECTION_PENDING):
