@@ -140,10 +140,29 @@ body.dark-mode .dashboard .card {
   transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
 }
 
+.dashboard-pill:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .dashboard-pill:hover,
 .dashboard-pill:focus-visible {
   transform: translateY(-3px);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+}
+
+.dashboard-pill[data-connected="true"] {
+  background: rgba(21, 94, 239, 0.22);
+  border-color: rgba(21, 94, 239, 0.4);
+  color: #fff;
+  box-shadow: 0 24px 50px rgba(21, 94, 239, 0.28);
+}
+
+body.dark-mode .dashboard-pill[data-connected="true"] {
+  background: rgba(88, 110, 255, 0.38);
+  border-color: rgba(129, 140, 248, 0.5);
+  color: #fff;
+  box-shadow: 0 30px 60px rgba(88, 110, 255, 0.45);
 }
 
 .dashboard-hero__stats {
@@ -318,6 +337,56 @@ body.dark-mode .dashboard .card {
   margin: 0;
   font-size: 0.9rem;
   color: var(--text-subtle-light);
+}
+
+.dashboard-dialog__options {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.dashboard-dialog__options button {
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(21, 38, 75, 0.12);
+  background: var(--card-bg-light);
+  padding: 0.75rem 1.2rem;
+  font-weight: 600;
+  text-align: left;
+  transition: transform var(--transition), background var(--transition), border-color var(--transition);
+}
+
+.dashboard-dialog__options button:hover,
+.dashboard-dialog__options button:focus-visible {
+  border-color: var(--accent-blue);
+  background: rgba(21, 94, 239, 0.12);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+body.dark-mode .dashboard-dialog__options button {
+  border-color: rgba(129, 140, 248, 0.25);
+  background: rgba(17, 24, 39, 0.88);
+  color: #f6f7ff;
+}
+
+.dashboard-dialog__copy {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text-muted-light);
+}
+
+.dashboard-mini__hint {
+  margin: 0.6rem 0 0;
+  font-size: 0.9rem;
+  color: var(--text-muted-light);
+}
+
+.dashboard-mini__hint--meta {
+  font-weight: 600;
+  color: var(--accent-blue);
+}
+
+body.dark-mode .dashboard-mini__hint--meta {
+  color: rgba(173, 197, 255, 0.92);
 }
 
 .dashboard-card[data-locked-section="true"] {

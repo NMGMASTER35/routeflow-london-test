@@ -17,6 +17,9 @@
     'national-rail': 'var(--national-rail)'
   };
 
+  const API_PROXY_BASE = '/api/tfl';
+  const TFL_API_BASE = 'https://api.tfl.gov.uk';
+
   const elements = {
     searchInput: document.getElementById('trackingSearch'),
     searchButton: document.querySelector('.tracking-search__field button'),
@@ -208,14 +211,42 @@
     return collection.slice().sort((a, b) => getSortValue(a) - getSortValue(b));
   };
 
-  const fetchJson = async (url) => {
-    const response = await fetch(url, { credentials: 'same-origin' });
+  const runFetch = async (url, options = {}) => {
+    const response = await fetch(url, options);
     if (!response.ok) {
       const error = new Error(`Request failed with status ${response.status}`);
       error.status = response.status;
       throw error;
     }
     return response.json();
+  };
+
+  const shouldFallback = (error) => {
+    if (!error || typeof error.status !== 'number') {
+      return true;
+    }
+    if (error.status >= 500) {
+      return true;
+    }
+    return [401, 403, 404, 429].includes(error.status);
+  };
+
+  const buildProxyUrl = (path) => `${API_PROXY_BASE}${path}`;
+  const buildTfLUrl = (path) => `${TFL_API_BASE}${path}`;
+
+  const fetchJson = async (url, { fallbackUrl = null } = {}) => {
+    try {
+      return await runFetch(url, { credentials: 'same-origin' });
+    } catch (error) {
+      if (!fallbackUrl || !shouldFallback(error)) {
+        throw error;
+      }
+      try {
+        return await runFetch(fallbackUrl, { mode: 'cors', credentials: 'omit' });
+      } catch (fallbackError) {
+        throw fallbackError;
+      }
+    }
   };
 
   const loadDepartures = async (stop, { silent = false } = {}) => {
@@ -227,8 +258,8 @@
     }
 
     try {
-      const url = `/api/tfl/StopPoint/${encodeURIComponent(stop.id)}/Arrivals`;
-      const data = await fetchJson(url);
+      const path = `/StopPoint/${encodeURIComponent(stop.id)}/Arrivals`;
+      const data = await fetchJson(buildProxyUrl(path), { fallbackUrl: buildTfLUrl(path) });
       const departures = Array.isArray(data)
         ? sortDepartures(data.map(mapDeparture).filter(Boolean))
         : [];
@@ -351,8 +382,13 @@
 
     const searchToken = ++state.lastSearchToken;
     try {
-      const url = `/api/tfl/StopPoint/Search?modes=bus,tube,dlr,tram,overground,elizabeth-line,river-bus&maxResults=12&query=${encodeURIComponent(trimmed)}`;
-      const response = await fetchJson(url);
+      const params = new URLSearchParams({
+        modes: 'bus,tube,dlr,tram,overground,elizabeth-line,river-bus',
+        maxResults: '12',
+        query: trimmed
+      });
+      const path = `/StopPoint/Search?${params.toString()}`;
+      const response = await fetchJson(buildProxyUrl(path), { fallbackUrl: buildTfLUrl(path) });
       if (searchToken !== state.lastSearchToken) {
         return [];
       }

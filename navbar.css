@@ -7,6 +7,8 @@
   --navbar-border: rgba(17, 25, 53, 0.08);
   --navbar-shadow: 0 20px 60px rgba(15, 23, 42, 0.14);
   --navbar-radius: 18px;
+  --navbar-drawer-bg: rgba(255, 255, 255, 0.96);
+  --navbar-drawer-border: rgba(17, 24, 39, 0.12);
 }
 
 [hidden] {
@@ -44,6 +46,8 @@ body.dark-mode .navbar {
   --navbar-muted: rgba(246, 247, 255, 0.7);
   --navbar-border: rgba(119, 131, 182, 0.22);
   --navbar-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  --navbar-drawer-bg: rgba(7, 11, 22, 0.94);
+  --navbar-drawer-border: rgba(129, 140, 248, 0.32);
 }
 
 .navbar__inner {
@@ -283,8 +287,9 @@ body.dark-mode .navbar__profile-menu {
   right: 0;
   bottom: 0;
   width: min(320px, 80vw);
-  background: var(--card-bg-light);
-  border-left: 1px solid var(--glass-border);
+  background: var(--navbar-drawer-bg);
+  border-left: 1px solid var(--navbar-drawer-border);
+  backdrop-filter: blur(24px);
   box-shadow: -16px 0 60px rgba(17, 24, 39, 0.18);
   transform: translateX(100%);
   transition: transform 0.24s ease;
@@ -293,11 +298,7 @@ body.dark-mode .navbar__profile-menu {
   flex-direction: column;
   gap: 1.4rem;
   z-index: 1300;
-}
-
-body.dark-mode .navbar__drawer {
-  background: rgba(7, 11, 22, 0.95);
-  border-color: rgba(119, 131, 182, 0.2);
+  color: var(--navbar-text);
 }
 
 .navbar__drawer[data-open="true"] {

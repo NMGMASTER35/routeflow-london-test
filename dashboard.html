@@ -35,7 +35,7 @@
       <p class="auth-gate__hint">Routes, disruptions and the Info hub remain public for everyone.</p>
     </div>
   </section>
-  <main id="main-content" class="dashboard" aria-labelledby="dashboard-title">
+  <main id="main-content" class="dashboard" aria-labelledby="dashboard-title" data-auth-locked="true">
     <section class="dashboard-hero card" data-animate="fade-up" data-locked-section data-lock-label="Sign in">
       <div class="dashboard-hero__profile">
         <img src="user-icon.png" alt="User Avatar" id="profileAvatar" />
@@ -265,6 +265,7 @@
     import { getFavourites, removeFavourite } from './favourites.js';
     import { getRecents } from './recents.js';
     import { inferFavouriteType, resolveFavouriteTitle, buildFavouriteMeta } from './favourite-utils.js';
+    import { connectDiscord, disconnectDiscord, subscribeToDiscordStatus, getDiscordStatus, isDiscordConfigured } from './discord-auth.js';
 
     const STORAGE_PREFIX = 'routeflow:gamification';
     const TOAST_DURATION = 4000;
@@ -552,12 +553,117 @@
     const miniGameBody = document.getElementById('miniGameBody');
     const resetTasksButton = document.getElementById('resetTasksButton');
 
+    let discordConnection = getDiscordStatus();
+    let unsubscribeDiscord = null;
+
     const levelLocks = [
       { element: document.getElementById('rolesCard'), level: 5, label: 'Reach Level 5' },
       { element: document.getElementById('miniGamesCard'), level: 3, label: 'Reach Level 3' },
       { element: document.getElementById('challengesCard'), level: 6, label: 'Reach Level 6' },
       { element: document.getElementById('missionsCard'), level: 8, label: 'Level 8 + badges' }
     ];
+
+    const randomItem = (collection) => {
+      if (!Array.isArray(collection) || collection.length === 0) {
+        return null;
+      }
+      const index = Math.floor(Math.random() * collection.length);
+      return collection[index];
+    };
+
+    const shuffleArray = (collection) => {
+      if (!Array.isArray(collection)) return [];
+      const copy = collection.slice();
+      for (let i = copy.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    };
+
+    const MINI_GAME_BANK = Object.freeze({
+      guess: [
+        {
+          id: 'guess-heritage',
+          prompt: 'Which registration carries the heritage wrap that turns heads on Route 11?',
+          hint: 'Think New Routemasters with gold accents.',
+          answers: [
+            { id: 'ltz1000', text: 'LTZ 1000', correct: true, explanation: 'LTZ1000 is Go-Ahead London’s flagship New Routemaster running the heritage duties.' },
+            { id: 'bv72ykd', text: 'BV72 YKD', explanation: 'Abellio’s newest Enviro400EV with route branding, not the heritage wrap.' },
+            { id: 'sn68aeo', text: 'SN68 AEO', explanation: 'Stagecoach’s hybrid Enviro400 MMC that focuses on the 97 out of Leyton.' },
+            { id: 'lj68awu', text: 'LJ68 AWU', explanation: 'A modern double decker on the 29 — no heritage wrap here.' }
+          ]
+        },
+        {
+          id: 'guess-electric',
+          prompt: 'Spot the brand-new electric joining Battersea’s Superloop launch.',
+          hint: 'Look for the registration that begins with BV.',
+          answers: [
+            { id: 'bv72ykd', text: 'BV72 YKD', correct: true, explanation: 'BV72 YKD is Abellio’s Enviro400EV based at Battersea (QB) for Superloop duties.' },
+            { id: 'ltz1000', text: 'LTZ 1000', explanation: 'Iconic, but it is a heritage Routemaster rather than the new EV.' },
+            { id: 'sn68aeo', text: 'SN68 AEO', explanation: 'Runs with Stagecoach in East London rather than the south-west Superloop.' },
+            { id: 'lr61bde', text: 'LR61 BDE', explanation: 'A withdrawn Trident from the archive, not a current EV.' }
+          ]
+        },
+        {
+          id: 'guess-night',
+          prompt: 'Which vehicle is tagged as a rare working with night duties in the fleet tools?',
+          hint: 'Check the extras column for the Night Bus allocation tag.',
+          answers: [
+            { id: 'sn68aeo', text: 'SN68 AEO', correct: true, explanation: 'SN68 AEO is flagged for Night Bus allocation in the RouteFlow fleet database.' },
+            { id: 'bv72ykd', text: 'BV72 YKD', explanation: 'Marked as a new bus with route branding, not as a night working.' },
+            { id: 'ltz1000', text: 'LTZ 1000', explanation: 'Heritage star, but not recorded for night duty allocations.' },
+            { id: 'yy11abc', text: 'YY11 ABC', explanation: 'A decoy registration with no entry in the live records.' }
+          ]
+        }
+      ],
+      puzzle: [
+        {
+          id: 'puzzle-superloop',
+          prompt: 'Rebuild the outer-orbital link: which termini define Superloop SL8?',
+          hint: 'It mirrors the old X140 express corridor.',
+          answers: [
+            { id: 'uxbridge-whitecity', text: 'Uxbridge — White City', correct: true, explanation: 'SL8 links Uxbridge with White City through the Northolt corridor.' },
+            { id: 'croydon-harrow', text: 'Croydon — Harrow', explanation: 'That pairing matches the proposed SL5 instead.' },
+            { id: 'bexleyheath-stratford', text: 'Bexleyheath — Stratford', explanation: 'Those termini belong to the planned SL2 service.' },
+            { id: 'walthamstow-ealing', text: 'Walthamstow — Ealing Broadway', explanation: 'This duo lines up with Superloop SL1, not SL8.' }
+          ]
+        },
+        {
+          id: 'puzzle-nightbus',
+          prompt: 'You’re mapping the N279 for a late-night briefing. Where does it start and finish?',
+          hint: 'Think about the A10 spine north of the river.',
+          answers: [
+            { id: 'walthamcross-trafalgar', text: 'Waltham Cross — Trafalgar Square', correct: true, explanation: 'N279 runs between Waltham Cross and Trafalgar Square via Tottenham and the A10.' },
+            { id: 'croydon-piccadilly', text: 'Croydon — Piccadilly Circus', explanation: 'Closer to the N68 alignment than the N279.' },
+            { id: 'harrow-lewisham', text: 'Harrow — Lewisham', explanation: 'This mixes two separate night routes into one fictional service.' },
+            { id: 'stratford-oxfordcircus', text: 'Stratford — Oxford Circus', explanation: 'That’s more akin to the N205’s coverage.' }
+          ]
+        }
+      ],
+      streak: [
+        {
+          id: 'streak-journal',
+          prompt: 'You’re four days into a streak but heading out to film late-night workings. How do you keep it alive?',
+          answers: [
+            { id: 'log-note', text: 'Log a quick dashboard note before midnight from your phone.', correct: true, explanation: 'Any logged activity before midnight keeps the streak and combo intact.' },
+            { id: 'double-update', text: 'Wait until morning and post two updates together.', explanation: 'Missing midnight breaks the streak even if you post twice tomorrow.' },
+            { id: 'claim-badge', text: 'Claim a badge tomorrow instead of logging tonight.', explanation: 'Badge claims don’t backdate missed days.' },
+            { id: 'save-draft', text: 'Save a fleet draft offline and upload it next week.', explanation: 'Drafts without submission do not count as daily activity.' }
+          ]
+        },
+        {
+          id: 'streak-refresh',
+          prompt: 'The combo timer flashes red with two hours left. What action protects both the streak and combo?',
+          answers: [
+            { id: 'refresh-tracking', text: 'Refresh a tracked stop and log a reliability note right now.', correct: true, explanation: 'Logging live tracking immediately extends both the streak and combo timers.' },
+            { id: 'toggle-theme', text: 'Switch the site theme to dark mode and back again.', explanation: 'Theme changes are personal preference and don’t count towards streaks.' },
+            { id: 'share-social', text: 'Post a screenshot to social media without logging it here.', explanation: 'External shares are great, but only in-app actions extend the streak.' },
+            { id: 'delay-settings', text: 'Wait until tomorrow to update a settings preference.', explanation: 'Delaying until tomorrow lets the streak lapse overnight.' }
+          ]
+        }
+      ]
+    });
 
     const guard = window.RouteflowAuthGate?.create({
       root: rootElement,
@@ -956,8 +1062,23 @@
 
     function renderDiscordStatus() {
       if (!discordButton || !discordStatus) return;
-      discordButton.classList.toggle('is-connected', gamificationState.discordConnected);
-      discordStatus.textContent = gamificationState.discordConnected ? 'Discord linked' : 'Connect Discord';
+      const connected = Boolean(discordConnection?.connected);
+      const configured = isDiscordConfigured();
+      discordButton.classList.toggle('is-connected', connected);
+      discordButton.toggleAttribute('data-connected', connected);
+      if (!configured && !connected) {
+        discordButton.disabled = true;
+        discordStatus.textContent = 'Discord unavailable';
+        return;
+      }
+      discordButton.disabled = false;
+      if (connected) {
+        const profile = discordConnection?.profile;
+        const label = profile?.displayName || profile?.username || 'Discord linked';
+        discordStatus.textContent = `Connected as ${label}`;
+      } else {
+        discordStatus.textContent = 'Connect Discord';
+      }
     }
 
     function renderAll() {
@@ -969,6 +1090,40 @@
       renderChallenges();
       renderMissions();
       renderDiscordStatus();
+    }
+
+    function updateDiscordConnection(status, options = {}) {
+      const next = status && typeof status === 'object' ? status : { connected: false, profile: null };
+      const reason = typeof next.reason === 'string' ? next.reason : null;
+      const previous = Boolean(gamificationState.discordConnected);
+      const connected = Boolean(next.connected);
+      discordConnection = {
+        connected,
+        profile: next.profile || null,
+        expiresAt: next.expiresAt || null,
+        reason
+      };
+      gamificationState.discordConnected = connected;
+      if (options.save !== false) {
+        saveState();
+      }
+      const shouldRenderAll = options.renderAll !== false;
+      if (shouldRenderAll) {
+        renderAll();
+      } else {
+        renderDiscordStatus();
+      }
+      if (options.log !== false && connected !== previous) {
+        if (reason === 'restored' || reason === 'idle') {
+          return;
+        }
+        if (connected) {
+          const label = next.profile?.displayName || next.profile?.username || 'Discord member';
+          logActivity(`Discord account linked (${label})`);
+        } else {
+          logActivity('Discord account disconnected');
+        }
+      }
     }
 
     function registerComboProgress() {
@@ -1093,17 +1248,6 @@
       }
     }
 
-    function toggleDiscord() {
-      gamificationState.discordConnected = !gamificationState.discordConnected;
-      if (gamificationState.discordConnected) {
-        logActivity('Discord account linked');
-      } else {
-        logActivity('Discord account disconnected');
-      }
-      saveState();
-      renderAll();
-    }
-
     function openMiniGame(gameId) {
       const game = gamificationState.miniGames.find((item) => item.id === gameId);
       if (!game) return;
@@ -1115,42 +1259,77 @@
       }
       if (!miniGameDialog || !miniGameTitle || !miniGameBody) return;
       miniGameTitle.textContent = game.title;
-      let bodyHtml = '';
-      if (game.type === 'guess') {
-        bodyHtml = `
-          <p class="dashboard-dialog__lead">Which registration matches the clue: "Go-Ahead’s latest electric on the 36"?</p>
-          <div class="dashboard-dialog__options">
-            <button type="button" data-answer="wrong">VWH 2380 on the 43</button>
-            <button type="button" data-answer="correct">SEe 94 on the 36</button>
-            <button type="button" data-answer="wrong">LT17 on the 15H</button>
-          </div>
-        `;
-      } else if (game.type === 'puzzle') {
-        bodyHtml = `
-          <p class="dashboard-dialog__lead">Select the correct termini for route 135.</p>
-          <div class="dashboard-dialog__options">
-            <button type="button" data-answer="wrong">Ilford Broadway ↔ Hyde Park Corner</button>
-            <button type="button" data-answer="correct">Crossharbour ↔ Old Street</button>
-            <button type="button" data-answer="wrong">Lewisham ↔ North Greenwich</button>
-          </div>
-        `;
-      } else {
-        bodyHtml = `
-          <p class="dashboard-dialog__lead">Lock in today’s streak bonus to keep your combo alive.</p>
-          <div class="dashboard-dialog__options">
-            <button type="button" data-answer="correct">Confirm check-in</button>
-          </div>
-        `;
-      }
-      bodyHtml += `<p class="dashboard-mini__hint">${attemptsLeft} attempt${attemptsLeft === 1 ? '' : 's'} left today</p>`;
-      miniGameBody.innerHTML = bodyHtml;
+      miniGameBody.innerHTML = '';
       miniGameBody.dataset.game = game.id;
+      delete miniGameBody.dataset.correctAnswer;
+      delete miniGameBody.dataset.correctExplanation;
+      delete miniGameBody.dataset.questionId;
+
+      const questionSet = MINI_GAME_BANK[game.type] || [];
+      const question = randomItem(questionSet);
+
+      if (question && typeof question === 'object') {
+        miniGameBody.dataset.questionId = question.id || '';
+        const lead = document.createElement('p');
+        lead.className = 'dashboard-dialog__lead';
+        lead.textContent = question.prompt || 'Ready for a new RouteFlow challenge?';
+        miniGameBody.appendChild(lead);
+
+        if (question.description) {
+          const description = document.createElement('p');
+          description.className = 'dashboard-dialog__copy';
+          description.textContent = question.description;
+          miniGameBody.appendChild(description);
+        }
+
+        if (question.hint) {
+          const hint = document.createElement('p');
+          hint.className = 'dashboard-mini__hint';
+          hint.textContent = question.hint;
+          miniGameBody.appendChild(hint);
+        }
+
+        const optionsWrapper = document.createElement('div');
+        optionsWrapper.className = 'dashboard-dialog__options';
+        const shuffledAnswers = shuffleArray(question.answers || []);
+        const correctAnswer = (Array.isArray(question.answers) ? question.answers : []).find((answer) => answer && answer.correct) || null;
+        shuffledAnswers.forEach((answer) => {
+          if (!answer || typeof answer.text !== 'string') return;
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.dataset.answer = answer.correct ? 'correct' : 'wrong';
+          if (answer.explanation) {
+            button.dataset.explanation = answer.explanation;
+          }
+          button.textContent = answer.text;
+          optionsWrapper.appendChild(button);
+        });
+        miniGameBody.appendChild(optionsWrapper);
+
+        if (correctAnswer) {
+          miniGameBody.dataset.correctAnswer = correctAnswer.text || '';
+          if (correctAnswer.explanation) {
+            miniGameBody.dataset.correctExplanation = correctAnswer.explanation;
+          }
+        }
+      } else {
+        const fallback = document.createElement('p');
+        fallback.className = 'dashboard-dialog__lead';
+        fallback.textContent = 'Mini game content is loading. Please try again in a moment.';
+        miniGameBody.appendChild(fallback);
+      }
+
+      const attemptsMessage = document.createElement('p');
+      attemptsMessage.className = 'dashboard-mini__hint dashboard-mini__hint--meta';
+      attemptsMessage.textContent = `${attemptsLeft} attempt${attemptsLeft === 1 ? '' : 's'} left today`;
+      miniGameBody.appendChild(attemptsMessage);
+
       if (typeof miniGameDialog.showModal === 'function') {
         miniGameDialog.showModal();
       }
     }
 
-    function resolveMiniGame(gameId, success) {
+    function resolveMiniGame(gameId, success, context = {}) {
       const gameIndex = gamificationState.miniGames.findIndex((item) => item.id === gameId);
       if (gameIndex === -1) return;
       const game = gamificationState.miniGames[gameIndex];
@@ -1167,12 +1346,29 @@
           logActivity(`Won mini game: ${game.title}`);
           registerComboProgress();
           updateChallenges('mini-win');
-          if (miniGameBody) {
-            miniGameBody.innerHTML = '<p class="dashboard-dialog__lead">Great work — bonus XP secured.</p>';
-          }
+        }
+        if (miniGameBody) {
+          const explanation = miniGameBody.dataset.correctExplanation;
+          const message = explanation
+            ? `Great work — ${explanation}`
+            : 'Great work — bonus XP secured.';
+          miniGameBody.innerHTML = '';
+          const result = document.createElement('p');
+          result.className = 'dashboard-dialog__lead';
+          result.textContent = message;
+          miniGameBody.appendChild(result);
         }
       } else if (miniGameBody) {
-        miniGameBody.innerHTML = '<p class="dashboard-dialog__lead">Not quite — review the Info hub clues and try again tomorrow.</p>';
+        const answerText = miniGameBody.dataset.correctAnswer || 'the correct answer';
+        const answerExplanation = miniGameBody.dataset.correctExplanation || '';
+        const chosen = context.selectedText ? `You chose ${context.selectedText}. ` : '';
+        const chosenExplanation = context.explanation ? `${context.explanation} ` : '';
+        const message = `${chosen}${chosenExplanation}The correct answer was ${answerText}.${answerExplanation ? ` ${answerExplanation}` : ''}`;
+        miniGameBody.innerHTML = '';
+        const result = document.createElement('p');
+        result.className = 'dashboard-dialog__lead';
+        result.textContent = message;
+        miniGameBody.appendChild(result);
       }
       saveState();
       renderMiniGames();
@@ -1312,6 +1508,7 @@
       currentUid = 'guest';
       gamificationState = loadState(currentUid);
       ensureDailyState(gamificationState);
+      updateDiscordConnection(getDiscordStatus(), { save: false, log: false, renderAll: false });
       if (titleElement) titleElement.textContent = 'Welcome';
       if (infoElement) infoElement.textContent = 'Sign in to save favourites and unlock missions, roles and streak bonuses.';
       if (avatarElement) avatarElement.src = 'user-icon.png';
@@ -1329,6 +1526,7 @@
       currentUid = user.uid;
       gamificationState = loadState(currentUid);
       const { dayDifference } = ensureDailyState(gamificationState);
+      updateDiscordConnection(getDiscordStatus(), { save: false, log: false, renderAll: false });
       if (titleElement) titleElement.textContent = `Welcome, ${user.email || 'Explorer'}`;
       if (infoElement) infoElement.textContent = 'Your rewards sync automatically across devices and Discord.';
       if (avatarElement) avatarElement.src = user.photoURL || 'user-icon.png';
@@ -1396,17 +1594,59 @@
         const answerButton = event.target.closest('[data-answer]');
         if (!answerButton) return;
         const gameId = miniGameBody.dataset.game;
-        resolveMiniGame(gameId, answerButton.dataset.answer === 'correct');
+        const context = {
+          selectedText: answerButton.textContent?.trim() || '',
+          explanation: answerButton.dataset.explanation || ''
+        };
+        resolveMiniGame(gameId, answerButton.dataset.answer === 'correct', context);
       });
     }
 
     if (discordButton) {
-      discordButton.addEventListener('click', toggleDiscord);
+      discordButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        const connected = Boolean(discordConnection?.connected);
+        if (connected) {
+          const confirmed = window.confirm('Disconnect your Discord account from RouteFlow London?');
+          if (confirmed) {
+            disconnectDiscord();
+          }
+          return;
+        }
+        if (!isDiscordConfigured()) {
+          alert('Discord linking is not configured yet. Ask an administrator to provide a Discord client ID.');
+          return;
+        }
+        try {
+          showToast('Redirecting to Discord…');
+        } catch (error) {
+          // Ignore toast errors
+        }
+        try {
+          connectDiscord();
+        } catch (error) {
+          console.error('Discord OAuth start failed', error);
+          alert(error?.message || 'Discord linking is not available right now.');
+        }
+      });
     }
 
     if (resetTasksButton) {
       resetTasksButton.addEventListener('click', resetTasks);
     }
+
+    updateDiscordConnection(discordConnection, { save: false, log: false, renderAll: false });
+    unsubscribeDiscord = subscribeToDiscordStatus((status) => {
+      const shouldLog = typeof status?.reason === 'string';
+      updateDiscordConnection(status, { save: true, log: shouldLog, renderAll: shouldLog });
+    });
+
+    window.addEventListener('beforeunload', () => {
+      if (typeof unsubscribeDiscord === 'function') {
+        unsubscribeDiscord();
+        unsubscribeDiscord = null;
+      }
+    });
 
     subscribeToAuth();
     renderAll();
