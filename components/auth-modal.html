@@ -27,10 +27,6 @@
         Don't have an account?
         <a href="#" id="showSignup" class="auth-modal__link">Create one</a>
       </p>
-      <p class="auth-modal__switch">
-        Managing the platform?
-        <a href="#" id="showAdminLogin" class="auth-modal__link">Administrator sign-in</a>
-      </p>
     </div>
 
     <div class="auth-modal__panel" id="signupFormContainer" hidden>
@@ -53,10 +49,6 @@
         Already have an account?
         <a href="#" id="showLogin" class="auth-modal__link">Log in</a>
       </p>
-      <p class="auth-modal__switch">
-        RouteFlow staff?
-        <a href="#" id="showAdminFromSignup" class="auth-modal__link">Use the admin console</a>
-      </p>
     </div>
 
     <div class="auth-modal__panel" id="resetFormContainer" hidden>
@@ -77,25 +69,5 @@
       </p>
     </div>
 
-    <div class="auth-modal__panel" id="adminFormContainer" hidden>
-      <h2 class="auth-modal__title">Administrator access</h2>
-      <p class="auth-modal__subtitle">Sign in with a RouteFlow London admin account to manage the network.</p>
-      <form id="adminLoginForm" class="auth-modal__form" autocomplete="off">
-        <label class="auth-modal__field" for="adminEmail">
-          <span>Admin email</span>
-          <input type="email" id="adminEmail" name="adminEmail" required autocomplete="username" />
-        </label>
-        <label class="auth-modal__field" for="adminPassword">
-          <span>Password</span>
-          <input type="password" id="adminPassword" name="adminPassword" required autocomplete="current-password" />
-        </label>
-        <button type="submit" class="auth-modal__primary">Enter admin console</button>
-        <div class="auth-modal__error" id="adminLoginError" role="alert" hidden></div>
-      </form>
-      <p class="auth-modal__switch">
-        Need a different sign-in?
-        <a href="#" id="showLoginFromAdmin" class="auth-modal__link">Back to regular login</a>
-      </p>
-    </div>
   </div>
 </div>
