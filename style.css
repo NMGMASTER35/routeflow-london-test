@@ -127,6 +127,10 @@ body[data-overlay-open='true'] {
   overflow: hidden;
 }
 
+[data-auth-locked='true'] {
+  display: none !important;
+}
+
 /* ------------------------------------------------------------
    Base element styling
 ------------------------------------------------------------- */

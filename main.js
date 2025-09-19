@@ -2,10 +2,207 @@
 function resolveFirebaseConfig() {
   const config = window.__ROUTEFLOW_CONFIG__?.firebase;
   if (!config?.apiKey) {
-    console.error('Firebase API key is not configured. Authentication features are disabled.');
     return null;
   }
   return config;
+}
+
+const LOCAL_AUTH_STORAGE_KEY = 'routeflow:local-auth:users';
+const LOCAL_AUTH_SESSION_KEY = 'routeflow:local-auth:session';
+
+const encodePassword = (value) => {
+  if (typeof value !== 'string') {
+    return '';
+  }
+  try {
+    if (typeof TextEncoder !== 'undefined') {
+      const encoder = new TextEncoder();
+      const bytes = encoder.encode(value);
+      let binary = '';
+      bytes.forEach((byte) => {
+        binary += String.fromCharCode(byte);
+      });
+      return btoa(binary);
+    }
+    return btoa(unescape(encodeURIComponent(value)));
+  } catch (error) {
+    console.warn('Routeflow local auth: unable to encode password', error);
+    return String(value ?? '');
+  }
+};
+
+function createLocalAuth() {
+  const listeners = new Set();
+
+  const safeParse = (value, fallback = null) => {
+    if (typeof value !== 'string' || !value) return fallback;
+    try {
+      const parsed = JSON.parse(value);
+      return parsed && typeof parsed === 'object' ? parsed : fallback;
+    } catch (error) {
+      console.warn('Routeflow local auth: failed to parse stored value', error);
+      return fallback;
+    }
+  };
+
+  const loadUsers = () => {
+    if (typeof localStorage === 'undefined') return {};
+    const stored = safeParse(localStorage.getItem(LOCAL_AUTH_STORAGE_KEY), {});
+    return stored && typeof stored === 'object' ? stored : {};
+  };
+
+  const saveUsers = (users) => {
+    if (typeof localStorage === 'undefined') return;
+    try {
+      localStorage.setItem(LOCAL_AUTH_STORAGE_KEY, JSON.stringify(users));
+    } catch (error) {
+      console.warn('Routeflow local auth: unable to persist users', error);
+    }
+  };
+
+  const state = {
+    users: loadUsers(),
+    currentUser: null
+  };
+
+  const notify = () => {
+    const snapshot = state.currentUser ? { ...state.currentUser } : null;
+    listeners.forEach((listener) => {
+      try {
+        listener(snapshot);
+      } catch (error) {
+        console.error('Routeflow local auth: listener error', error);
+      }
+    });
+  };
+
+  const persistSession = (user) => {
+    if (typeof localStorage === 'undefined') return;
+    try {
+      if (user) {
+        localStorage.setItem(LOCAL_AUTH_SESSION_KEY, JSON.stringify({ uid: user.uid, email: user.email }));
+      } else {
+        localStorage.removeItem(LOCAL_AUTH_SESSION_KEY);
+      }
+    } catch (error) {
+      console.warn('Routeflow local auth: unable to persist session', error);
+    }
+  };
+
+  const toUserObject = (record) => {
+    if (!record) return null;
+    const baseName = record.displayName || record.email?.split('@')?.[0] || 'Explorer';
+    return {
+      uid: record.uid,
+      email: record.email,
+      displayName: baseName,
+      getIdTokenResult: async () => ({ claims: { local: true } })
+    };
+  };
+
+  const setCurrentUser = (record) => {
+    state.currentUser = record ? toUserObject(record) : null;
+    persistSession(state.currentUser);
+    notify();
+  };
+
+  const loadSession = () => {
+    if (typeof localStorage === 'undefined') return;
+    const session = safeParse(localStorage.getItem(LOCAL_AUTH_SESSION_KEY));
+    if (!session?.email) {
+      setCurrentUser(null);
+      return;
+    }
+    const emailKey = session.email.toLowerCase();
+    const record = state.users[emailKey];
+    if (record) {
+      setCurrentUser(record);
+    } else {
+      setCurrentUser(null);
+    }
+  };
+
+  const ensurePassword = (password) => encodePassword(password ?? '');
+
+  const generateUid = () => {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    return `local-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
+  };
+
+  loadSession();
+
+  const api = {
+    get currentUser() {
+      return state.currentUser;
+    },
+    async signInWithEmailAndPassword(email, password) {
+      const normalisedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+      if (!normalisedEmail || !password) {
+        throw new Error('Please provide both email and password.');
+      }
+      const record = state.users[normalisedEmail];
+      if (!record) {
+        throw new Error('No account found with that email.');
+      }
+      const storedHash = record.passwordHash || '';
+      if (storedHash !== ensurePassword(password)) {
+        throw new Error('Incorrect password.');
+      }
+      setCurrentUser(record);
+      return { user: state.currentUser };
+    },
+    async createUserWithEmailAndPassword(email, password) {
+      const normalisedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+      if (!normalisedEmail || !password) {
+        throw new Error('Email and password are required.');
+      }
+      if (state.users[normalisedEmail]) {
+        throw new Error('An account already exists with that email.');
+      }
+      const record = {
+        uid: generateUid(),
+        email: email.trim(),
+        displayName: email.trim().split('@')?.[0] || 'Explorer',
+        passwordHash: ensurePassword(password)
+      };
+      state.users[normalisedEmail] = record;
+      saveUsers(state.users);
+      setCurrentUser(record);
+      return { user: state.currentUser };
+    },
+    async sendPasswordResetEmail(email) {
+      const normalisedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+      if (!normalisedEmail) {
+        throw new Error('Please provide an email address.');
+      }
+      if (!state.users[normalisedEmail]) {
+        throw new Error('No account found with that email.');
+      }
+      return { simulated: true };
+    },
+    async signOut() {
+      setCurrentUser(null);
+      return true;
+    },
+    onAuthStateChanged(callback) {
+      if (typeof callback !== 'function') {
+        return () => {};
+      }
+      listeners.add(callback);
+      try {
+        callback(state.currentUser);
+      } catch (error) {
+        console.error('Routeflow local auth: onAuthStateChanged callback failed', error);
+      }
+      return () => {
+        listeners.delete(callback);
+      };
+    }
+  };
+
+  return api;
 }
 
 const ADMIN_OVERRIDES = new Map([
@@ -117,19 +314,19 @@ async function initialiseAuthInstance() {
   await ensureConfigLoaded();
   const firebaseConfig = resolveFirebaseConfig();
   if (!firebaseConfig) {
-    return null;
+    return createLocalAuth();
   }
 
   try {
     await ensureFirebaseScriptsLoaded();
   } catch (error) {
     console.error('Failed to load Firebase SDK:', error);
-    return null;
+    return createLocalAuth();
   }
 
   if (typeof firebase === 'undefined') {
     console.error('Firebase SDK not loaded; authentication is unavailable.');
-    return null;
+    return createLocalAuth();
   }
 
   if (!firebase.apps.length) {
@@ -138,7 +335,7 @@ async function initialiseAuthInstance() {
 
   if (!firebase.apps.length || !firebase.auth) {
     console.error('Firebase SDK loaded but authentication is unavailable.');
-    return null;
+    return createLocalAuth();
   }
 
   return firebase.auth();
@@ -574,8 +771,12 @@ async function handleResetSubmit(form) {
     return;
   }
   try {
-    await instance.sendPasswordResetEmail(email);
-    showMessage('resetSuccess', 'Check your inbox for the reset link.');
+    const result = await instance.sendPasswordResetEmail(email);
+    const simulated = typeof result === 'object' && result !== null && result.simulated;
+    const message = simulated
+      ? 'Password reset link simulated. Set a new password the next time you sign in.'
+      : 'Check your inbox for the reset link.';
+    showMessage('resetSuccess', message);
   } catch (error) {
     showMessage('resetError', error?.message || 'We could not send the reset email. Please try again.');
   }

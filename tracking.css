@@ -67,11 +67,31 @@
   gap: 0.35rem;
 }
 
+body.dark-mode .tracking-hero__highlights li {
+  background: rgba(88, 110, 255, 0.25);
+  color: #f6f7ff;
+}
+
 .tracking-hero__highlights span {
   font-size: 0.8rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   opacity: 0.7;
+}
+
+body.dark-mode .tracking-hero__highlights span {
+  opacity: 0.85;
+  color: rgba(226, 232, 255, 0.85);
+}
+
+body.dark-mode .tracking-hero__content p,
+body.dark-mode .tracking-board__header p {
+  opacity: 0.88;
+}
+
+body.dark-mode .tracking-board__timestamp {
+  opacity: 0.82;
+  color: rgba(214, 222, 255, 0.88);
 }
 
 .tracking-layout {
