@@ -13,12 +13,32 @@
 </head>
 <body>
   <div id="navbar-container"></div>
+  <section
+    class="auth-gate"
+    id="dashboardAuthGate"
+    role="alertdialog"
+    aria-modal="true"
+    aria-labelledby="dashboardGateTitle"
+    aria-live="assertive"
+    hidden
+  >
+    <div class="auth-gate__panel">
+      <p class="auth-gate__eyebrow">Progress locked</p>
+      <h2 class="auth-gate__title" id="dashboardGateTitle">Log in to activate the RouteFlow dashboard</h2>
+      <p class="auth-gate__message" data-auth-gate-message>Sign in to unlock this area.</p>
+      <button type="button" class="auth-gate__cta" data-auth-gate-login>
+        <i class="fa-solid fa-lock-open" aria-hidden="true"></i>
+        <span>Sign in to continue</span>
+      </button>
+      <p class="auth-gate__hint">Routes, disruptions and the Info hub remain public for everyone.</p>
+    </div>
+  </section>
   <main class="dashboard" aria-labelledby="dashboard-title">
-    <section class="dashboard-hero card" data-animate="fade-up">
+    <section class="dashboard-hero card" data-animate="fade-up" data-locked-section data-lock-label="Sign in">
       <div class="dashboard-hero__profile">
         <img src="user-icon.png" alt="User Avatar" id="profileAvatar" />
         <div>
-          <p class="dashboard-hero__eyebrow">Welcome back to RouteFlow London</p>
+          <p class="dashboard-hero__eyebrow">RouteFlow progression</p>
           <h1 id="dashboard-title">Welcome</h1>
           <p id="profileInfo" class="dashboard-hero__hint"></p>
           <div class="dashboard-hero__xp" role="group" aria-label="Experience progress">
@@ -30,6 +50,7 @@
               <div class="dashboard-hero__progress-bar" id="xpProgressBar"></div>
             </div>
             <p class="dashboard-hero__progress-copy"><span id="xpToNext">0</span> XP until the next level.</p>
+            <p class="dashboard-hero__progress-copy" id="dailyCapCopy"><span id="dailyCapText">Daily cap: 0 XP remaining</span></p>
           </div>
         </div>
       </div>
@@ -51,12 +72,16 @@
             <span>Streak</span>
             <strong id="streakValue">0</strong>
           </div>
+          <div>
+            <span>Combo chain</span>
+            <strong id="comboValue">0</strong>
+          </div>
         </div>
       </div>
     </section>
 
     <section class="dashboard-grid">
-      <article class="card dashboard-card" id="tasksCard">
+      <article class="card dashboard-card" id="tasksCard" data-locked-section data-lock-label="Sign in">
         <header class="dashboard-card__header">
           <div>
             <p class="dashboard-card__eyebrow">Daily boosters</p>
@@ -67,7 +92,7 @@
         <ul class="dashboard-task-list" id="taskList"></ul>
       </article>
 
-      <article class="card dashboard-card" id="badgesCard">
+      <article class="card dashboard-card" id="badgesCard" data-locked-section data-lock-label="Sign in">
         <header class="dashboard-card__header">
           <div>
             <p class="dashboard-card__eyebrow">Badge cabinet</p>
@@ -78,7 +103,7 @@
         <div class="dashboard-badge-grid" id="badgeGrid"></div>
       </article>
 
-      <article class="card dashboard-card" id="rolesCard">
+      <article class="card dashboard-card" id="rolesCard" data-locked-section data-lock-label="Sign in">
         <header class="dashboard-card__header">
           <div>
             <p class="dashboard-card__eyebrow">Role sync</p>
@@ -89,7 +114,7 @@
         <div class="dashboard-role-grid" id="roleList"></div>
       </article>
 
-      <article class="card dashboard-card" id="miniGamesCard">
+      <article class="card dashboard-card" id="miniGamesCard" data-locked-section data-lock-label="Sign in">
         <header class="dashboard-card__header">
           <div>
             <p class="dashboard-card__eyebrow">Mini games</p>
@@ -100,7 +125,38 @@
         <div class="dashboard-mini-grid" id="miniGameList"></div>
       </article>
 
-      <article class="card dashboard-card" id="activityCard">
+      <article class="card dashboard-card" id="challengesCard" data-locked-section data-lock-label="Sign in">
+        <header class="dashboard-card__header">
+          <div>
+            <p class="dashboard-card__eyebrow">Challenges</p>
+            <h2>Weekly goals and combo chains</h2>
+          </div>
+          <span class="dashboard-card__meta" id="challengeSummary">Track your streaks</span>
+        </header>
+        <div class="dashboard-challenge-grid">
+          <section aria-labelledby="weeklyChallengesTitle">
+            <h3 id="weeklyChallengesTitle">Weekly challenges</h3>
+            <ul class="dashboard-challenge-list" id="weeklyChallengeList"></ul>
+          </section>
+          <section aria-labelledby="comboChallengesTitle">
+            <h3 id="comboChallengesTitle">Combo milestones</h3>
+            <ul class="dashboard-challenge-list" id="comboChallengeList"></ul>
+          </section>
+        </div>
+      </article>
+
+      <article class="card dashboard-card" id="missionsCard" data-locked-section data-lock-label="Sign in">
+        <header class="dashboard-card__header">
+          <div>
+            <p class="dashboard-card__eyebrow">Missions</p>
+            <h2>Meaningful contributions earn more XP</h2>
+          </div>
+          <span class="dashboard-card__meta" id="missionSummary">0 missions</span>
+        </header>
+        <ul class="dashboard-mission-list" id="missionList"></ul>
+      </article>
+
+      <article class="card dashboard-card" id="activityCard" data-locked-section data-lock-label="Sign in">
         <header class="dashboard-card__header">
           <div>
             <p class="dashboard-card__eyebrow">Timeline</p>
@@ -110,7 +166,7 @@
         <ul id="activityList" class="activity-list"></ul>
       </article>
 
-      <article class="card dashboard-card">
+      <article class="card dashboard-card" data-locked-section data-lock-label="Sign in">
         <header class="dashboard-card__header">
           <div>
             <p class="dashboard-card__eyebrow">Saved stops</p>
@@ -120,7 +176,7 @@
         <div id="favouritesGrid" class="favourites-grid"></div>
       </article>
 
-      <article class="card dashboard-card">
+      <article class="card dashboard-card" data-locked-section data-lock-label="Sign in">
         <header class="dashboard-card__header">
           <div>
             <p class="dashboard-card__eyebrow">Quick access</p>
@@ -169,45 +225,268 @@
     })();
   </script>
   <script src="navbar-loader.js"></script>
+  <script src="auth-guard.js"></script>
   <script type="module">
-    import {getFavourites, removeFavourite} from './favourites.js';
-    import {getRecents} from './recents.js';
-    import {inferFavouriteType, resolveFavouriteTitle, buildFavouriteMeta} from './favourite-utils.js';
+    import { getFavourites, removeFavourite } from './favourites.js';
+    import { getRecents } from './recents.js';
+    import { inferFavouriteType, resolveFavouriteTitle, buildFavouriteMeta } from './favourite-utils.js';
 
     const STORAGE_PREFIX = 'routeflow:gamification';
     const TOAST_DURATION = 4000;
+    const LEVEL_CONFIG = { base: 420, growth: 1.48, maxLevel: 40 };
+
     const DEFAULT_GAMIFICATION = () => ({
-      xp: 1320,
-      streak: 3,
+      xp: 1820,
+      streak: 1,
+      dailyCap: 750,
+      dailyXp: 0,
+      lastDailyReset: null,
+      lastLoginDate: null,
       discordConnected: false,
-      lastMiniGame: null,
+      combo: { current: 0, best: 0 },
       tasks: [
-        { id: 'task-tracking', title: 'Check live tracking', description: 'Open the live arrivals page and refresh a stop.', xp: 60, completed: false, badge: 'badge-tracker' },
-        { id: 'task-planning', title: 'Plan a journey', description: 'Plot a multi-mode route with accessibility filters.', xp: 80, completed: false, badge: 'badge-planner' },
-        { id: 'task-fleet', title: 'Review fleet changes', description: 'Visit the fleet dashboard to log a rare working.', xp: 70, completed: false, badge: 'badge-enthusiast' }
+        {
+          id: 'task-tracking',
+          title: 'Verify live tracking',
+          description: 'Refresh arrivals for a priority stop and log a reliability note.',
+          xp: 90,
+          completed: false,
+          badge: 'badge-tracker',
+          trigger: 'task-core'
+        },
+        {
+          id: 'task-planning',
+          title: 'Plan a multi-mode journey',
+          description: 'Use accessibility filters to craft a trip with at least two modes.',
+          xp: 120,
+          completed: false,
+          badge: 'badge-planner',
+          trigger: 'task-core'
+        },
+        {
+          id: 'task-research',
+          title: 'Submit a fleet insight',
+          description: 'Upload evidence for a rare working or new allocation change.',
+          xp: 160,
+          completed: false,
+          badge: 'badge-researcher',
+          trigger: 'mission-progress'
+        }
       ],
       badges: [
-        { id: 'badge-tracker', title: 'Pulse Watcher', description: 'Complete 5 live tracking sessions.', icon: 'fa-solid fa-wifi', progress: 2, goal: 5, xp: 150, earned: false },
-        { id: 'badge-planner', title: 'Journey Curator', description: 'Plan 10 multimodal trips.', icon: 'fa-solid fa-route', progress: 4, goal: 10, xp: 180, earned: false },
-        { id: 'badge-night', title: 'Night Bus Navigator', description: 'Log arrivals after 23:00 for 3 nights.', icon: 'fa-solid fa-moon', progress: 3, goal: 3, xp: 220, earned: true },
-        { id: 'badge-river', title: 'River Trailblazer', description: 'Track a Thames Clipper sailing.', icon: 'fa-solid fa-ship', progress: 0, goal: 1, xp: 120, earned: false }
+        {
+          id: 'badge-tracker',
+          title: 'Pulse Watcher',
+          tier: 'Bronze',
+          description: 'Complete 5 live tracking sessions.',
+          icon: 'fa-solid fa-wifi',
+          progress: 2,
+          goal: 5,
+          xp: 160,
+          earned: false
+        },
+        {
+          id: 'badge-planner',
+          title: 'Journey Curator',
+          tier: 'Silver',
+          description: 'Plan 10 multimodal trips.',
+          icon: 'fa-solid fa-route',
+          progress: 4,
+          goal: 10,
+          xp: 210,
+          earned: false
+        },
+        {
+          id: 'badge-night',
+          title: 'Night Bus Navigator',
+          tier: 'Event',
+          description: 'Log arrivals after 23:00 for three consecutive nights.',
+          icon: 'fa-solid fa-moon',
+          progress: 3,
+          goal: 3,
+          xp: 260,
+          earned: true,
+          rare: true
+        },
+        {
+          id: 'badge-researcher',
+          title: 'Fleet Researcher',
+          tier: 'Gold',
+          description: 'Approve four operator missions.',
+          icon: 'fa-solid fa-magnifying-glass-chart',
+          progress: 1,
+          goal: 4,
+          xp: 280,
+          earned: false
+        },
+        {
+          id: 'badge-archivist',
+          title: 'Hidden Archivist',
+          tier: 'Hidden',
+          description: 'Complete three hidden Info hub missions.',
+          icon: 'fa-solid fa-lock',
+          progress: 0,
+          goal: 3,
+          xp: 320,
+          earned: false,
+          hidden: true
+        }
       ],
       roles: [
-        { id: 'role-dashboard', platform: 'RouteFlow', title: 'Pathfinder', description: 'Unlocked at Level 5.', active: true },
-        { id: 'role-discord', platform: 'Discord', title: 'Community Pathfinder', description: 'Sync via the RouteFlow bot.', active: false }
+        {
+          id: 'role-dashboard',
+          platform: 'RouteFlow',
+          title: 'Pathfinder',
+          description: 'Unlocked automatically at Level 5.',
+          requirements: { level: 5 },
+          active: false
+        },
+        {
+          id: 'role-spotter',
+          platform: 'RouteFlow',
+          title: 'Bus Spotter',
+          description: 'Reach Level 10 and earn the Pulse Watcher badge.',
+          requirements: { level: 10, badges: ['badge-tracker'] },
+          active: false
+        },
+        {
+          id: 'role-expert',
+          platform: 'RouteFlow',
+          title: 'Route Expert',
+          description: 'Level 16 with Journey Curator and Fleet Researcher badges.',
+          requirements: { level: 16, badges: ['badge-planner', 'badge-researcher'] },
+          active: false
+        },
+        {
+          id: 'role-master',
+          platform: 'Discord',
+          title: 'Fleet Master',
+          description: 'Level 24, rare badge unlocked and Discord linked.',
+          requirements: { level: 24, badges: ['badge-night', 'badge-archivist'], discord: true },
+          active: false
+        }
       ],
       miniGames: [
-        { id: 'mini-trivia', title: 'TfL Trivia Rush', description: 'Answer 3 quick-fire questions.', xp: 160, type: 'trivia', played: false },
-        { id: 'mini-pairs', title: 'Line Match', description: 'Match routes to their colours in under 60s.', xp: 140, type: 'memory', played: false },
-        { id: 'mini-streak', title: 'Streak Builder', description: 'Log in on consecutive days.', xp: 120, type: 'streak', played: false }
+        {
+          id: 'mini-guess',
+          title: 'Guess the Bus',
+          description: 'Identify the working from a cryptic clue.',
+          xp: 180,
+          type: 'guess',
+          attempts: 0,
+          maxAttempts: 2
+        },
+        {
+          id: 'mini-route',
+          title: 'Route Puzzle',
+          description: 'Rebuild a route by picking the correct termini.',
+          xp: 210,
+          type: 'puzzle',
+          attempts: 0,
+          maxAttempts: 1
+        },
+        {
+          id: 'mini-streak',
+          title: 'Streak Builder',
+          description: 'Lock in today’s streak bonus without missing a day.',
+          xp: 150,
+          type: 'streak',
+          attempts: 0,
+          maxAttempts: 1
+        }
+      ],
+      weeklyChallenges: [
+        {
+          id: 'weekly-research',
+          title: 'Research Relay',
+          description: 'Complete three missions approved by admins this week.',
+          progress: 1,
+          goal: 3,
+          xp: 220,
+          penalty: 'Missing a day drops progress by one.',
+          trigger: 'mission-complete'
+        },
+        {
+          id: 'weekly-streak',
+          title: 'Streak Sentinel',
+          description: 'Maintain a five-day login streak.',
+          progress: 2,
+          goal: 5,
+          xp: 260,
+          penalty: 'Break the streak and progress resets.',
+          trigger: 'streak'
+        }
+      ],
+      comboChallenges: [
+        {
+          id: 'combo-mini',
+          title: 'Arcade Combo',
+          description: 'Win two mini-games in a row.',
+          progress: 0,
+          goal: 2,
+          xp: 200,
+          penalty: 'A failed attempt resets the chain.',
+          trigger: 'mini-win'
+        },
+        {
+          id: 'combo-contribution',
+          title: 'Contributor Combo',
+          description: 'Complete three missions without missing a day.',
+          progress: 1,
+          goal: 3,
+          xp: 280,
+          penalty: 'Skip a day and the combo resets.',
+          trigger: 'mission-complete'
+        }
+      ],
+      missions: [
+        {
+          id: 'mission-operator',
+          title: 'Operator insight upload',
+          type: 'Operator',
+          description: 'Submit a researched operator change with supporting evidence.',
+          xp: 180,
+          completed: false,
+          badge: 'badge-researcher'
+        },
+        {
+          id: 'mission-gallery',
+          title: 'Fleet gallery expansion',
+          type: 'Media',
+          description: 'Upload two high-quality fleet images to the carousel.',
+          xp: 220,
+          completed: false,
+          badge: 'badge-archivist'
+        },
+        {
+          id: 'mission-maps',
+          title: 'Interactive map note',
+          type: 'Maps',
+          description: 'Add a verified accessibility note to the live network map.',
+          xp: 200,
+          completed: false,
+          badge: null
+        }
       ]
     });
 
-    const LEVEL_THRESHOLDS = [0, 600, 1400, 2300, 3300, 4500, 6000, 7700, 9600, 11600, 13800];
+    const LEVEL_THRESHOLDS = (() => {
+      const thresholds = [0];
+      let requirement = LEVEL_CONFIG.base;
+      for (let level = 1; level <= LEVEL_CONFIG.maxLevel; level += 1) {
+        thresholds[level] = Math.round((thresholds[level - 1] || 0) + requirement);
+        requirement *= LEVEL_CONFIG.growth;
+      }
+      return thresholds;
+    })();
 
     let currentUid = 'guest';
     let gamificationState = DEFAULT_GAMIFICATION();
     let toastTimeout;
+
+    const rootElement = document.querySelector('.dashboard');
+    const overlayElement = document.getElementById('dashboardAuthGate');
+    const lockedSections = document.querySelectorAll('[data-locked-section]');
 
     const toast = document.getElementById('dashboardToast');
     const levelNumber = document.getElementById('levelNumber');
@@ -222,6 +501,38 @@
     const activeRole = document.getElementById('activeRole');
     const discordButton = document.getElementById('discordConnectButton');
     const discordStatus = document.getElementById('discordStatus');
+    const dailyCapCopy = document.getElementById('dailyCapCopy');
+    const dailyCapText = document.getElementById('dailyCapText');
+    const comboValue = document.getElementById('comboValue');
+    const challengeSummary = document.getElementById('challengeSummary');
+    const missionSummary = document.getElementById('missionSummary');
+    const missionList = document.getElementById('missionList');
+    const weeklyChallengeList = document.getElementById('weeklyChallengeList');
+    const comboChallengeList = document.getElementById('comboChallengeList');
+    const titleElement = document.getElementById('dashboard-title');
+    const infoElement = document.getElementById('profileInfo');
+    const avatarElement = document.getElementById('profileAvatar');
+    const miniGameDialog = document.getElementById('miniGameDialog');
+    const miniGameTitle = document.getElementById('miniGameTitle');
+    const miniGameBody = document.getElementById('miniGameBody');
+    const resetTasksButton = document.getElementById('resetTasksButton');
+
+    const levelLocks = [
+      { element: document.getElementById('rolesCard'), level: 5, label: 'Reach Level 5' },
+      { element: document.getElementById('miniGamesCard'), level: 3, label: 'Reach Level 3' },
+      { element: document.getElementById('challengesCard'), level: 6, label: 'Reach Level 6' },
+      { element: document.getElementById('missionsCard'), level: 8, label: 'Level 8 + badges' }
+    ];
+
+    const guard = window.RouteflowAuthGate?.create({
+      root: rootElement,
+      overlay: overlayElement,
+      lockedSections,
+      lockedMessage: 'Sign in to work through missions and unlock challenging rewards.',
+      errorMessage: 'Authentication is temporarily unavailable. Please try again later.',
+      onLock: handleLock,
+      onUnlock: handleUnlock
+    });
 
     function storageKey(uid) {
       return `${STORAGE_PREFIX}:${uid || 'guest'}`;
@@ -244,10 +555,14 @@
           return {
             ...fallback,
             ...stored,
-            tasks: (stored.tasks || fallback.tasks).map(task => ({ ...task })),
-            badges: (stored.badges || fallback.badges).map(badge => ({ ...badge })),
-            roles: (stored.roles || fallback.roles).map(role => ({ ...role })),
-            miniGames: (stored.miniGames || fallback.miniGames).map(game => ({ ...game }))
+            combo: { ...fallback.combo, ...(stored.combo || {}) },
+            tasks: (stored.tasks || fallback.tasks).map((task) => ({ ...task })),
+            badges: (stored.badges || fallback.badges).map((badge) => ({ ...badge })),
+            roles: (stored.roles || fallback.roles).map((role) => ({ ...role })),
+            miniGames: (stored.miniGames || fallback.miniGames).map((game) => ({ ...game })),
+            weeklyChallenges: (stored.weeklyChallenges || fallback.weeklyChallenges).map((item) => ({ ...item })),
+            comboChallenges: (stored.comboChallenges || fallback.comboChallenges).map((item) => ({ ...item })),
+            missions: (stored.missions || fallback.missions).map((mission) => ({ ...mission }))
           };
         }
       } catch (error) {
@@ -276,50 +591,121 @@
       }, TOAST_DURATION);
     }
 
-    function calculateLevel(xp) {
-      let level = 1;
-      for (let i = 0; i < LEVEL_THRESHOLDS.length; i += 1) {
-        if (xp >= LEVEL_THRESHOLDS[i]) {
-          level = i + 1;
-        }
-      }
-      const prev = LEVEL_THRESHOLDS[level - 1] ?? 0;
-      const next = LEVEL_THRESHOLDS[level] ?? (prev + 1800);
-      const progress = Math.min(1, (xp - prev) / (next - prev));
-      return { level, prev, next, progress };
-    }
-
     function formatNumber(value) {
       return new Intl.NumberFormat('en-GB').format(value);
     }
 
-    function updateLevelUI() {
-      const { xp, streak } = gamificationState;
-      const { level, prev, next, progress } = calculateLevel(xp);
-      levelNumber.textContent = level;
-      xpValue.textContent = formatNumber(xp);
-      const remaining = Math.max(0, next - xp);
-      xpToNext.textContent = formatNumber(remaining);
-      xpProgressBar.style.setProperty('--progress', `${Math.round(progress * 100)}%`);
-      streakValue.textContent = streak;
-      gamificationState.roles = gamificationState.roles.map(role => {
-        if (role.id === 'role-dashboard') {
-          return { ...role, active: level >= 5 };
+    function todayKey() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function daysBetween(current, previous) {
+      if (!current || !previous) return Infinity;
+      const currentDate = new Date(current);
+      const previousDate = new Date(previous);
+      if (!Number.isFinite(currentDate.getTime()) || !Number.isFinite(previousDate.getTime())) {
+        return Infinity;
+      }
+      return Math.round((currentDate - previousDate) / 86400000);
+    }
+
+    function ensureDailyState(state) {
+      let dayDifference = null;
+      if (!state) return { dayDifference };
+      const today = todayKey();
+      if (state.lastDailyReset !== today) {
+        state.dailyXp = 0;
+        state.lastDailyReset = today;
+        state.miniGames = state.miniGames.map((game) => ({ ...game, attempts: 0 }));
+      }
+      if (!state.combo) {
+        state.combo = { current: 0, best: 0 };
+      }
+      const previousLogin = state.lastLoginDate;
+      if (previousLogin !== today) {
+        const diff = daysBetween(today, previousLogin);
+        if (Number.isFinite(diff)) {
+          dayDifference = diff;
+          if (diff === 1) {
+            state.streak = (state.streak || 0) + 1;
+          } else if (diff > 1) {
+            state.streak = 1;
+            state.combo.best = Math.max(state.combo.best || 0, state.combo.current || 0);
+            state.combo.current = 0;
+            state.weeklyChallenges = state.weeklyChallenges.map((challenge) => {
+              const reduced = Math.max(0, (challenge.progress || 0) - 1);
+              return { ...challenge, progress: reduced, missed: challenge.progress > reduced };
+            });
+            state.comboChallenges = state.comboChallenges.map((challenge) => ({
+              ...challenge,
+              progress: 0,
+              missed: challenge.progress > 0
+            }));
+          } else {
+            state.streak = state.streak || 1;
+          }
         }
-        if (role.id === 'role-discord') {
-          return { ...role, active: gamificationState.discordConnected };
+        state.lastLoginDate = today;
+      }
+      state.combo.best = Math.max(state.combo.best || 0, state.combo.current || 0);
+      return { dayDifference };
+    }
+
+    function calculateLevel(xp) {
+      let level = 1;
+      for (let i = 1; i < LEVEL_THRESHOLDS.length; i += 1) {
+        if (xp >= LEVEL_THRESHOLDS[i]) {
+          level = i + 1;
+        } else {
+          break;
         }
-        return role;
+      }
+      const prev = LEVEL_THRESHOLDS[level - 1] ?? 0;
+      const nextRequirement = LEVEL_THRESHOLDS[level] ?? Math.round(prev + LEVEL_CONFIG.base * Math.pow(LEVEL_CONFIG.growth, level - 1));
+      const progress = Math.min(1, (xp - prev) / (nextRequirement - prev));
+      return { level, prev, next: nextRequirement, progress };
+    }
+
+    function updateLevelLocks(level) {
+      levelLocks.forEach((lock) => {
+        if (!lock.element) return;
+        if (level >= lock.level) {
+          lock.element.removeAttribute('data-locked');
+          lock.element.removeAttribute('data-lock-label');
+        } else {
+          lock.element.setAttribute('data-locked', 'true');
+          lock.element.setAttribute('data-lock-label', lock.label);
+        }
       });
-      const active = gamificationState.roles.find(role => role.active);
-      activeRole.textContent = active ? active.title : 'Explorer';
+    }
+
+    function updateLevelUI() {
+      const { xp, streak, dailyCap = 0, dailyXp = 0, combo } = gamificationState;
+      const { level, next, prev, progress } = calculateLevel(xp);
+      if (levelNumber) levelNumber.textContent = level;
+      if (xpValue) xpValue.textContent = formatNumber(xp);
+      const remaining = Math.max(0, next - xp);
+      if (xpToNext) xpToNext.textContent = formatNumber(remaining);
+      if (xpProgressBar) xpProgressBar.style.setProperty('--progress', `${Math.round(progress * 100)}%`);
+      if (streakValue) streakValue.textContent = formatNumber(streak || 0);
+      const capRemaining = Math.max(0, dailyCap - dailyXp);
+      if (dailyCapText) {
+        dailyCapText.textContent = capRemaining > 0
+          ? `Daily cap: ${formatNumber(capRemaining)} XP remaining`
+          : 'Daily cap reached — meaningful contributions reset tomorrow.';
+      }
+      if (comboValue) {
+        comboValue.textContent = formatNumber(combo?.current || 0);
+      }
+      updateLevelLocks(level);
+      return level;
     }
 
     function renderTasks() {
       const list = document.getElementById('taskList');
       if (!list) return;
       list.innerHTML = '';
-      gamificationState.tasks.forEach(task => {
+      gamificationState.tasks.forEach((task) => {
         const item = document.createElement('li');
         item.className = `dashboard-task${task.completed ? ' is-complete' : ''}`;
         item.innerHTML = `
@@ -338,62 +724,112 @@
       });
     }
 
+    function resolveBadgeView(badge) {
+      const isHidden = badge.hidden && !badge.earned && (badge.progress || 0) === 0;
+      const title = isHidden ? 'Hidden challenge' : badge.title;
+      const description = isHidden ? 'Keep exploring RouteFlow London to reveal this badge.' : badge.description;
+      return { title, description };
+    }
+
     function renderBadges() {
       const grid = document.getElementById('badgeGrid');
       if (!grid) return;
       grid.innerHTML = '';
       let earnedCount = 0;
-      gamificationState.badges.forEach(badge => {
+      gamificationState.badges.forEach((badge) => {
         if (badge.earned) earnedCount += 1;
-        const progress = Math.min(1, badge.goal ? badge.progress / badge.goal : 1);
+        const progressValue = Math.min(1, badge.goal ? (badge.progress || 0) / badge.goal : 1);
+        const { title, description } = resolveBadgeView(badge);
         const card = document.createElement('article');
         card.className = `dashboard-badge${badge.earned ? ' is-earned' : ''}`;
         card.innerHTML = `
           <div class="dashboard-badge__icon" aria-hidden="true"><i class="${badge.icon}"></i></div>
           <div class="dashboard-badge__content">
-            <h3>${badge.title}</h3>
-            <p>${badge.description}</p>
-            <div class="dashboard-badge__progress" role="progressbar" aria-valuemin="0" aria-valuemax="${badge.goal}" aria-valuenow="${Math.min(badge.progress, badge.goal)}">
-              <div class="dashboard-badge__progress-bar" style="--progress:${Math.round(progress * 100)}%"></div>
+            <div class="dashboard-badge__header">
+              <h3>${title}</h3>
+              <span class="dashboard-badge__tier">${badge.tier || 'Bronze'}</span>
+            </div>
+            <p>${description}</p>
+            <div class="dashboard-badge__progress" role="progressbar" aria-valuemin="0" aria-valuemax="${badge.goal}" aria-valuenow="${Math.min(badge.progress || 0, badge.goal)}">
+              <div class="dashboard-badge__progress-bar" style="--progress:${Math.round(progressValue * 100)}%"></div>
             </div>
             <div class="dashboard-badge__footer">
-              <span>${badge.goal ? `${Math.min(badge.progress, badge.goal)} / ${badge.goal}` : 'Complete'}</span>
+              <span>${badge.goal ? `${Math.min(badge.progress || 0, badge.goal)} / ${badge.goal}` : 'Complete'}</span>
               <span class="dashboard-badge__xp">${badge.xp} XP</span>
-              ${!badge.earned && progress >= 1 ? '<button type="button" class="dashboard-badge__claim" data-claim="' + badge.id + '">Claim</button>' : ''}
+              ${!badge.earned && progressValue >= 1 ? `<button type="button" class="dashboard-badge__claim" data-claim="${badge.id}">Claim</button>` : ''}
             </div>
           </div>
         `;
         grid.appendChild(card);
       });
-      badgeSummary.textContent = earnedCount;
-      badgeCountLabel.textContent = `${earnedCount} badge${earnedCount === 1 ? '' : 's'} earned`;
+      if (badgeSummary) badgeSummary.textContent = earnedCount;
+      if (badgeCountLabel) {
+        badgeCountLabel.textContent = `${earnedCount}/${gamificationState.badges.length} badges earned`;
+      }
     }
 
-    function renderRoles() {
+    function meetsRoleRequirements(role, level) {
+      const requirements = role.requirements || {};
+      if (requirements.level && level < requirements.level) {
+        return false;
+      }
+      if (requirements.discord && !gamificationState.discordConnected) {
+        return false;
+      }
+      if (Array.isArray(requirements.badges) && requirements.badges.length) {
+        const earned = new Set(
+          gamificationState.badges.filter((badge) => badge.earned).map((badge) => badge.id)
+        );
+        return requirements.badges.every((badgeId) => earned.has(badgeId));
+      }
+      return true;
+    }
+
+    function renderRoles(level) {
       const container = document.getElementById('roleList');
       if (!container) return;
       container.innerHTML = '';
-      gamificationState.roles.forEach(role => {
+      let activeLabel = 'Explorer';
+      gamificationState.roles = gamificationState.roles.map((role) => {
+        const unlocked = meetsRoleRequirements(role, level);
+        const nextState = { ...role, active: unlocked };
         const card = document.createElement('article');
-        card.className = `dashboard-role${role.active ? ' is-active' : ''}`;
+        card.className = `dashboard-role${unlocked ? ' is-active' : ''}`;
+        const requirementParts = [];
+        if (role.requirements?.level) requirementParts.push(`Level ${role.requirements.level}`);
+        if (Array.isArray(role.requirements?.badges) && role.requirements.badges.length) requirementParts.push('Badge requirements met');
+        if (role.requirements?.discord) requirementParts.push('Discord linked');
         card.innerHTML = `
           <header>
             <span class="dashboard-role__platform">${role.platform}</span>
             <h3>${role.title}</h3>
           </header>
           <p>${role.description}</p>
-          <span class="dashboard-role__status">${role.active ? 'Active' : 'Locked'}</span>
+          <span class="dashboard-role__status">${unlocked ? 'Active' : `Locked · ${requirementParts.join(' · ')}`}</span>
         `;
         container.appendChild(card);
+        if (unlocked && !role.requirements?.discord) {
+          activeLabel = role.title;
+        }
+        return nextState;
       });
-      roleSyncStatus.textContent = gamificationState.discordConnected ? 'Synced' : 'Not linked';
+      if (activeRole) activeRole.textContent = activeLabel;
+      if (roleSyncStatus) {
+        roleSyncStatus.textContent = gamificationState.discordConnected ? 'Synced' : 'Not linked';
+      }
     }
 
     function renderMiniGames() {
       const container = document.getElementById('miniGameList');
       if (!container) return;
       container.innerHTML = '';
-      gamificationState.miniGames.forEach(game => {
+      let totalAttempts = 0;
+      let remainingAttempts = 0;
+      gamificationState.miniGames.forEach((game) => {
+        const attempts = game.attempts || 0;
+        totalAttempts += game.maxAttempts;
+        const left = Math.max(0, game.maxAttempts - attempts);
+        remainingAttempts += left;
         const card = document.createElement('article');
         card.className = 'dashboard-mini';
         card.innerHTML = `
@@ -401,12 +837,86 @@
           <p>${game.description}</p>
           <div class="dashboard-mini__footer">
             <span class="dashboard-mini__xp">${game.xp} XP</span>
-            <button type="button" data-mini-game="${game.id}" class="dashboard-mini__button">${game.played ? 'Replay' : 'Play'}</button>
+            <button type="button" data-mini-game="${game.id}" class="dashboard-mini__button" ${left === 0 ? 'disabled' : ''}>${left === 0 ? 'Locked' : 'Play'}</button>
           </div>
+          <p class="dashboard-mini__hint">${left} attempt${left === 1 ? '' : 's'} left today</p>
         `;
         container.appendChild(card);
       });
-      miniGameSummary.textContent = `${gamificationState.miniGames.length} mini games`;
+      if (miniGameSummary) {
+        miniGameSummary.textContent = `${remainingAttempts}/${totalAttempts} attempts left today`;
+      }
+    }
+
+    function renderChallenges() {
+      if (!weeklyChallengeList || !comboChallengeList) return;
+      weeklyChallengeList.innerHTML = '';
+      comboChallengeList.innerHTML = '';
+      const weeklyComplete = gamificationState.weeklyChallenges.filter((challenge) => challenge.progress >= challenge.goal).length;
+      const comboComplete = gamificationState.comboChallenges.filter((challenge) => challenge.progress >= challenge.goal).length;
+
+      const renderChallenge = (target, challenge) => {
+        const percent = Math.min(100, Math.round(((challenge.progress || 0) / challenge.goal) * 100));
+        const item = document.createElement('li');
+        item.className = 'dashboard-challenge';
+        if (challenge.progress >= challenge.goal) {
+          item.dataset.status = 'complete';
+        } else if (challenge.missed) {
+          item.dataset.status = 'missed';
+        }
+        item.innerHTML = `
+          <div class="dashboard-mission__title">
+            <strong>${challenge.title}</strong>
+            <span>${challenge.xp} XP</span>
+          </div>
+          <p class="dashboard-mission__copy">${challenge.description}</p>
+          <div class="dashboard-challenge__meta">
+            <span>${Math.min(challenge.progress || 0, challenge.goal)} / ${challenge.goal}</span>
+            <span>${Math.max(0, challenge.goal - (challenge.progress || 0))} to go</span>
+          </div>
+          <div class="dashboard-challenge__progress" role="progressbar" aria-valuemin="0" aria-valuemax="${challenge.goal}" aria-valuenow="${Math.min(challenge.progress || 0, challenge.goal)}">
+            <div class="dashboard-challenge__progress-bar" style="--progress:${percent}%"></div>
+          </div>
+          ${challenge.penalty ? `<p class="dashboard-challenge__penalty">${challenge.penalty}</p>` : ''}
+        `;
+        target.appendChild(item);
+      };
+
+      gamificationState.weeklyChallenges.forEach((challenge) => renderChallenge(weeklyChallengeList, challenge));
+      gamificationState.comboChallenges.forEach((challenge) => renderChallenge(comboChallengeList, challenge));
+
+      if (challengeSummary) {
+        challengeSummary.textContent = `${weeklyComplete}/${gamificationState.weeklyChallenges.length} weekly • ${comboComplete}/${gamificationState.comboChallenges.length} combo complete`;
+      }
+    }
+
+    function renderMissions() {
+      if (!missionList) return;
+      missionList.innerHTML = '';
+      let completed = 0;
+      gamificationState.missions.forEach((mission) => {
+        if (mission.completed) completed += 1;
+        const item = document.createElement('li');
+        item.className = 'dashboard-mission';
+        if (mission.completed) {
+          item.dataset.status = 'complete';
+        }
+        item.innerHTML = `
+          <div class="dashboard-mission__title">
+            <strong>${mission.title}</strong>
+            <span>${mission.type}</span>
+          </div>
+          <p class="dashboard-mission__copy">${mission.description}</p>
+          <div class="dashboard-mission__meta">
+            <span class="dashboard-mission__xp">+${mission.xp} XP</span>
+            <button type="button" class="dashboard-task__button" data-mission="${mission.id}" ${mission.completed ? 'disabled' : ''}>${mission.completed ? 'Completed' : 'Log completion'}</button>
+          </div>
+        `;
+        missionList.appendChild(item);
+      });
+      if (missionSummary) {
+        missionSummary.textContent = `${completed}/${gamificationState.missions.length} complete`;
+      }
     }
 
     function renderDiscordStatus() {
@@ -416,25 +926,68 @@
     }
 
     function renderAll() {
-      updateLevelUI();
+      const level = updateLevelUI();
       renderTasks();
       renderBadges();
-      renderRoles();
+      renderRoles(level);
       renderMiniGames();
+      renderChallenges();
+      renderMissions();
       renderDiscordStatus();
     }
 
-    function addXp(amount, reason) {
-      gamificationState.xp += amount;
-      if (reason) {
-        showToast(`${reason} • +${amount} XP`);
+    function registerComboProgress() {
+      if (!gamificationState.combo) {
+        gamificationState.combo = { current: 0, best: 0 };
       }
+      gamificationState.combo.current = (gamificationState.combo.current || 0) + 1;
+      gamificationState.combo.best = Math.max(gamificationState.combo.best || 0, gamificationState.combo.current);
+    }
+
+    function updateChallenges(trigger) {
+      const apply = (list) => list.map((challenge) => {
+        if (challenge.trigger !== trigger || challenge.progress >= challenge.goal) {
+          return { ...challenge };
+        }
+        const progress = Math.min(challenge.goal, (challenge.progress || 0) + 1);
+        return { ...challenge, progress, missed: false };
+      });
+      gamificationState.weeklyChallenges = apply(gamificationState.weeklyChallenges);
+      gamificationState.comboChallenges = apply(gamificationState.comboChallenges);
+    }
+
+    function addXp(amount, reason, options = {}) {
+      ensureDailyState(gamificationState);
+      const cap = gamificationState.dailyCap || 0;
+      const used = gamificationState.dailyXp || 0;
+      const remaining = Math.max(0, cap - used);
+      if (remaining <= 0) {
+        showToast('Daily XP cap reached — come back tomorrow.');
+        return 0;
+      }
+      const base = Math.min(amount, remaining);
+      let bonus = 0;
+      if (!options.skipBonus && (gamificationState.streak || 0) >= 3) {
+        const multiplier = Math.min(0.5, ((gamificationState.streak || 0) - 2) * 0.05);
+        bonus = Math.floor(base * multiplier);
+        if (bonus > remaining - base) {
+          bonus = remaining - base;
+        }
+      }
+      const total = base + Math.max(0, bonus);
+      gamificationState.dailyXp = (gamificationState.dailyXp || 0) + total;
+      gamificationState.xp += total;
+      if (bonus > 0) {
+        logActivity(`Streak bonus applied · +${bonus} XP`);
+      }
+      showToast(reason ? `${reason} • +${total} XP` : `+${total} XP earned`);
+      return total;
     }
 
     function incrementBadgeProgress(badgeId) {
-      gamificationState.badges = gamificationState.badges.map(badge => {
+      gamificationState.badges = gamificationState.badges.map((badge) => {
         if (badge.id === badgeId && !badge.earned) {
-          const progress = Math.min(badge.goal, (badge.progress ?? 0) + 1);
+          const progress = Math.min(badge.goal, (badge.progress || 0) + 1);
           return { ...badge, progress };
         }
         return badge;
@@ -444,22 +997,44 @@
     function completeTask(taskId) {
       let awardedXp = 0;
       let taskTitle = '';
-      let badgeRef = null;
-      gamificationState.tasks = gamificationState.tasks.map(task => {
+      gamificationState.tasks = gamificationState.tasks.map((task) => {
         if (task.id === taskId && !task.completed) {
-          awardedXp = task.xp;
+          awardedXp = addXp(task.xp, task.title);
           taskTitle = task.title;
-          badgeRef = task.badge;
+          if (task.badge) {
+            incrementBadgeProgress(task.badge);
+          }
+          registerComboProgress();
+          updateChallenges(task.trigger);
           return { ...task, completed: true };
         }
         return task;
       });
-      if (badgeRef) {
-        incrementBadgeProgress(badgeRef);
-      }
       if (awardedXp) {
-        addXp(awardedXp, `${taskTitle} complete`);
         logActivity(`Completed task: ${taskTitle}`);
+      }
+      saveState();
+      renderAll();
+    }
+
+    function completeMission(missionId) {
+      let missionTitle = '';
+      let awardedXp = 0;
+      gamificationState.missions = gamificationState.missions.map((mission) => {
+        if (mission.id === missionId && !mission.completed) {
+          awardedXp = addXp(mission.xp, mission.title);
+          missionTitle = mission.title;
+          if (mission.badge) {
+            incrementBadgeProgress(mission.badge);
+          }
+          registerComboProgress();
+          updateChallenges('mission-complete');
+          return { ...mission, completed: true };
+        }
+        return mission;
+      });
+      if (awardedXp) {
+        logActivity(`Mission completed: ${missionTitle}`);
       }
       saveState();
       renderAll();
@@ -468,106 +1043,111 @@
     function claimBadge(badgeId) {
       let badgeAward = 0;
       let badgeTitle = '';
-      gamificationState.badges = gamificationState.badges.map(badge => {
-        if (badge.id === badgeId && !badge.earned && badge.progress >= badge.goal) {
-          badgeAward = badge.xp;
+      gamificationState.badges = gamificationState.badges.map((badge) => {
+        if (badge.id === badgeId && !badge.earned && (badge.progress || 0) >= badge.goal) {
+          badgeAward = addXp(badge.xp, `${badge.title} badge`, { skipBonus: true });
           badgeTitle = badge.title;
           return { ...badge, earned: true };
         }
         return badge;
       });
       if (badgeAward) {
-        addXp(badgeAward, `${badgeTitle} badge`);
         logActivity(`Claimed badge: ${badgeTitle}`);
+        saveState();
+        renderAll();
       }
-      saveState();
-      renderAll();
     }
 
     function toggleDiscord() {
       gamificationState.discordConnected = !gamificationState.discordConnected;
       if (gamificationState.discordConnected) {
         logActivity('Discord account linked');
-        showToast('Discord linked — roles syncing now.');
       } else {
         logActivity('Discord account disconnected');
-        showToast('Discord disconnected.');
       }
       saveState();
       renderAll();
     }
 
     function openMiniGame(gameId) {
-      const game = gamificationState.miniGames.find(item => item.id === gameId);
+      const game = gamificationState.miniGames.find((item) => item.id === gameId);
       if (!game) return;
-      const dialog = document.getElementById('miniGameDialog');
-      const title = document.getElementById('miniGameTitle');
-      const body = document.getElementById('miniGameBody');
-      if (!dialog || !title || !body) return;
-
-      title.textContent = game.title;
-      if (game.type === 'trivia') {
-        body.innerHTML = `
-          <p class="dashboard-dialog__lead">Which Underground line opened most recently?</p>
+      const attempts = game.attempts || 0;
+      const attemptsLeft = Math.max(0, game.maxAttempts - attempts);
+      if (attemptsLeft <= 0) {
+        showToast('All attempts used today. Come back after the daily reset.');
+        return;
+      }
+      if (!miniGameDialog || !miniGameTitle || !miniGameBody) return;
+      miniGameTitle.textContent = game.title;
+      let bodyHtml = '';
+      if (game.type === 'guess') {
+        bodyHtml = `
+          <p class="dashboard-dialog__lead">Which registration matches the clue: "Go-Ahead’s latest electric on the 36"?</p>
           <div class="dashboard-dialog__options">
-            <button type="button" data-answer="wrong">Northern Line extension</button>
-            <button type="button" data-answer="correct">Elizabeth line</button>
-            <button type="button" data-answer="wrong">Jubilee Line</button>
+            <button type="button" data-answer="wrong">VWH 2380 on the 43</button>
+            <button type="button" data-answer="correct">SEe 94 on the 36</button>
+            <button type="button" data-answer="wrong">LT17 on the 15H</button>
           </div>
         `;
-      } else if (game.type === 'memory') {
-        body.innerHTML = `
-          <p class="dashboard-dialog__lead">Match the route to its colour:</p>
-          <ul class="dashboard-dialog__list">
-            <li><strong>Route 25</strong> — <span>Red</span></li>
-            <li><strong>Route 205</strong> — <span>Blue</span></li>
-            <li><strong>Route 15</strong> — <span>Heritage Green</span></li>
-          </ul>
-          <p class="dashboard-dialog__hint">Memorise and close the game when you're ready.</p>
-          <button type="button" class="dashboard-dialog__cta" data-complete="${game.id}">Claim XP</button>
+      } else if (game.type === 'puzzle') {
+        bodyHtml = `
+          <p class="dashboard-dialog__lead">Select the correct termini for route 135.</p>
+          <div class="dashboard-dialog__options">
+            <button type="button" data-answer="wrong">Ilford Broadway ↔ Hyde Park Corner</button>
+            <button type="button" data-answer="correct">Crossharbour ↔ Old Street</button>
+            <button type="button" data-answer="wrong">Lewisham ↔ North Greenwich</button>
+          </div>
         `;
       } else {
-        body.innerHTML = `
-          <p class="dashboard-dialog__lead">Keep your streak going! Check in daily to climb the leaderboard.</p>
-          <button type="button" class="dashboard-dialog__cta" data-complete="${game.id}">Log check-in</button>
+        bodyHtml = `
+          <p class="dashboard-dialog__lead">Lock in today’s streak bonus to keep your combo alive.</p>
+          <div class="dashboard-dialog__options">
+            <button type="button" data-answer="correct">Confirm check-in</button>
+          </div>
         `;
       }
-
-      body.querySelectorAll('[data-answer]').forEach(button => {
-        button.addEventListener('click', (event) => {
-          const correct = event.currentTarget.dataset.answer === 'correct';
-          if (correct) {
-            addXp(game.xp, `${game.title} completed`);
-            gamificationState.miniGames = gamificationState.miniGames.map(item => item.id === gameId ? { ...item, played: true } : item);
-            saveState();
-            renderAll();
-            dialog.close();
-          } else {
-            showToast('Not quite! Try again.');
-          }
-        });
-      });
-
-      body.querySelectorAll('[data-complete]').forEach(button => {
-        button.addEventListener('click', () => {
-          addXp(game.xp, `${game.title} completed`);
-          gamificationState.miniGames = gamificationState.miniGames.map(item => item.id === gameId ? { ...item, played: true } : item);
-          saveState();
-          renderAll();
-          dialog.close();
-        });
-      });
-
-      if (typeof dialog.showModal === 'function') {
-        dialog.showModal();
+      bodyHtml += `<p class="dashboard-mini__hint">${attemptsLeft} attempt${attemptsLeft === 1 ? '' : 's'} left today</p>`;
+      miniGameBody.innerHTML = bodyHtml;
+      miniGameBody.dataset.game = game.id;
+      if (typeof miniGameDialog.showModal === 'function') {
+        miniGameDialog.showModal();
       }
     }
 
+    function resolveMiniGame(gameId, success) {
+      const gameIndex = gamificationState.miniGames.findIndex((item) => item.id === gameId);
+      if (gameIndex === -1) return;
+      const game = gamificationState.miniGames[gameIndex];
+      const attempts = game.attempts || 0;
+      if (attempts >= game.maxAttempts) {
+        showToast('All attempts used today.');
+        return;
+      }
+      const updatedGame = { ...game, attempts: attempts + 1 };
+      gamificationState.miniGames.splice(gameIndex, 1, updatedGame);
+      if (success) {
+        const awarded = addXp(game.xp, game.title);
+        if (awarded) {
+          logActivity(`Won mini game: ${game.title}`);
+          registerComboProgress();
+          updateChallenges('mini-win');
+          if (miniGameBody) {
+            miniGameBody.innerHTML = '<p class="dashboard-dialog__lead">Great work — bonus XP secured.</p>';
+          }
+        }
+      } else if (miniGameBody) {
+        miniGameBody.innerHTML = '<p class="dashboard-dialog__lead">Not quite — review the Info hub clues and try again tomorrow.</p>';
+      }
+      saveState();
+      renderMiniGames();
+    }
+
     function resetTasks() {
-      gamificationState.tasks = gamificationState.tasks.map(task => ({ ...task, completed: false }));
+      gamificationState.tasks = gamificationState.tasks.map((task) => ({ ...task, completed: false }));
       saveState();
       renderAll();
-      showToast('Daily tasks reset. Ready when you are!');
+      showToast('Daily tasks reset. Fresh streak starts now.');
     }
 
     function logActivity(message) {
@@ -577,7 +1157,7 @@
       try {
         const history = safeParse(localStorage.getItem(key)) || [];
         history.unshift(message);
-        localStorage.setItem(key, JSON.stringify(history.slice(0, 10)));
+        localStorage.setItem(key, JSON.stringify(history.slice(0, 12)));
       } catch (error) {
         console.warn('RouteFlow dashboard: unable to log activity', error);
       }
@@ -587,23 +1167,18 @@
     function createFavouriteCard(uid, favourite) {
       const card = document.createElement('article');
       card.className = 'favourite-item';
-
       const header = document.createElement('div');
       header.className = 'favourite-item__header';
-
       const eyebrow = document.createElement('span');
       eyebrow.className = 'favourite-item__eyebrow';
       eyebrow.textContent = inferFavouriteType(favourite);
       header.appendChild(eyebrow);
-
       const removeButton = document.createElement('button');
       removeButton.type = 'button';
       removeButton.className = 'favourite-item__remove';
       removeButton.textContent = 'Remove';
       removeButton.addEventListener('click', async () => {
-        if (!uid || !favourite?.id) {
-          return;
-        }
+        if (!uid || !favourite?.id) return;
         try {
           removeButton.disabled = true;
           await removeFavourite(uid, favourite.id);
@@ -616,28 +1191,24 @@
         }
       });
       header.appendChild(removeButton);
-
       const title = resolveFavouriteTitle(favourite);
       const titleEl = document.createElement('h3');
       titleEl.className = 'favourite-item__title';
       titleEl.textContent = title;
-
       const metaParts = buildFavouriteMeta(favourite, title);
-
       card.append(header, titleEl);
-
       if (metaParts.length) {
         const metaEl = document.createElement('p');
         metaEl.className = 'favourite-item__meta';
         metaEl.textContent = metaParts.join(' • ');
         card.appendChild(metaEl);
       }
-
       return card;
     }
 
     async function loadFavourites(uid) {
       const grid = document.getElementById('favouritesGrid');
+      if (!grid) return;
       grid.innerHTML = '';
       if (!uid || uid === 'guest') {
         const emptyState = document.createElement('p');
@@ -669,34 +1240,97 @@
 
     function loadRecents(uid) {
       const list = document.getElementById('recentsList');
+      if (!list) return;
       list.innerHTML = '';
       const recents = getRecents(uid);
-      if (recents.length === 0) {
+      if (!recents.length) {
         list.innerHTML = '<li>No recent items.</li>';
         return;
       }
-      recents.forEach(r => {
+      recents.forEach((recent) => {
         const li = document.createElement('li');
-        const a = document.createElement('a');
-        a.href = r.url;
-        a.textContent = r.title || r.url;
-        li.appendChild(a);
+        const link = document.createElement('a');
+        link.href = recent.url;
+        link.textContent = recent.title || recent.url;
+        li.appendChild(link);
         list.appendChild(li);
       });
     }
 
     function loadActivity(uid) {
       const list = document.getElementById('activityList');
+      if (!list) return;
       list.innerHTML = '';
-      const acts = safeParse(localStorage.getItem(`activity_${uid}`)) || [];
-      if (acts.length === 0) {
+      const history = safeParse(localStorage.getItem(`activity_${uid}`)) || [];
+      if (!history.length) {
         list.innerHTML = '<li>No recent activity.</li>';
         return;
       }
-      acts.forEach(a => {
+      history.forEach((entry) => {
         const li = document.createElement('li');
-        li.textContent = a;
+        li.textContent = entry;
         list.appendChild(li);
+      });
+    }
+
+    function handleLock() {
+      currentUid = 'guest';
+      gamificationState = loadState(currentUid);
+      ensureDailyState(gamificationState);
+      if (titleElement) titleElement.textContent = 'Welcome';
+      if (infoElement) infoElement.textContent = 'Sign in to save favourites and unlock missions, roles and streak bonuses.';
+      if (avatarElement) avatarElement.src = 'user-icon.png';
+      renderAll();
+      loadActivity('guest');
+      loadRecents('guest');
+      const favouritesGrid = document.getElementById('favouritesGrid');
+      if (favouritesGrid) {
+        favouritesGrid.innerHTML = '<p class="dashboard-empty">Sign in to manage favourites.</p>';
+      }
+    }
+
+    async function handleUnlock(user) {
+      if (!user) return;
+      currentUid = user.uid;
+      gamificationState = loadState(currentUid);
+      const { dayDifference } = ensureDailyState(gamificationState);
+      if (titleElement) titleElement.textContent = `Welcome, ${user.email || 'Explorer'}`;
+      if (infoElement) infoElement.textContent = 'Your rewards sync automatically across devices and Discord.';
+      if (avatarElement) avatarElement.src = user.photoURL || 'user-icon.png';
+      if (dayDifference === 1) {
+        updateChallenges('streak');
+      }
+      renderAll();
+      try {
+        await loadFavourites(user.uid);
+      } catch (error) {
+        console.error('Failed to refresh favourites after sign in.', error);
+      }
+      loadActivity(user.uid);
+      loadRecents(user.uid);
+      saveState();
+    }
+
+    function subscribeToAuth() {
+      if (typeof firebase === 'undefined' || !firebase?.auth) {
+        guard?.lock({ reason: 'auth-missing', force: true });
+        handleLock();
+        return;
+      }
+      const auth = firebase.auth();
+      auth.onAuthStateChanged((user) => {
+        if (user) {
+          if (guard) {
+            guard.unlock({ user });
+          } else {
+            handleUnlock(user);
+          }
+        } else {
+          if (guard) {
+            guard.lock({ reason: 'signed-out', force: true });
+          }
+          handleLock();
+        }
       });
     }
 
@@ -706,54 +1340,42 @@
         completeTask(taskButton.dataset.task);
         return;
       }
-
       const badgeButton = event.target.closest('[data-claim]');
       if (badgeButton) {
         claimBadge(badgeButton.dataset.claim);
         return;
       }
-
       const miniButton = event.target.closest('[data-mini-game]');
       if (miniButton) {
         openMiniGame(miniButton.dataset.miniGame);
+        return;
+      }
+      const missionButton = event.target.closest('[data-mission]');
+      if (missionButton) {
+        completeMission(missionButton.dataset.mission);
       }
     });
+
+    if (miniGameBody) {
+      miniGameBody.addEventListener('click', (event) => {
+        const answerButton = event.target.closest('[data-answer]');
+        if (!answerButton) return;
+        const gameId = miniGameBody.dataset.game;
+        resolveMiniGame(gameId, answerButton.dataset.answer === 'correct');
+      });
+    }
 
     if (discordButton) {
       discordButton.addEventListener('click', toggleDiscord);
     }
 
-    const resetTasksButton = document.getElementById('resetTasksButton');
     if (resetTasksButton) {
       resetTasksButton.addEventListener('click', resetTasks);
     }
 
-    firebase.auth().onAuthStateChanged(async user => {
-      const title = document.getElementById('dashboard-title');
-      const info = document.getElementById('profileInfo');
-      const avatar = document.getElementById('profileAvatar');
-      if (user) {
-        currentUid = user.uid;
-        gamificationState = loadState(currentUid);
-        title.textContent = `Welcome, ${user.email}`;
-        avatar.src = user.photoURL || 'user-icon.png';
-        info.textContent = 'Your rewards sync automatically across devices and Discord.';
-        await loadFavourites(user.uid);
-        loadActivity(user.uid);
-        loadRecents(user.uid);
-      } else {
-        currentUid = 'guest';
-        gamificationState = loadState(currentUid);
-        title.textContent = 'Welcome';
-        avatar.src = 'user-icon.png';
-        info.textContent = 'Sign in to save favourites and track your rewards everywhere.';
-        const favouritesGrid = document.getElementById('favouritesGrid');
-        favouritesGrid.innerHTML = '<p class="dashboard-empty">Sign in to manage favourites.</p>';
-        loadActivity('guest');
-        loadRecents('guest');
-      }
-      renderAll();
-    });
+    subscribeToAuth();
+    renderAll();
+
   </script>
 </body>
 </html>

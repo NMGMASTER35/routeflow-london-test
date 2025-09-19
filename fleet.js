@@ -686,7 +686,8 @@
   function renderHighlights(elements) {
     const newList = document.getElementById("newBusList");
     const rareList = document.getElementById("rareWorkingList");
-    if (!newList || !rareList) return;
+    const withdrawnList = document.getElementById("withdrawnHighlightList");
+    if (!newList || !rareList || !withdrawnList) return;
 
     const buses = Object.values(state.buses);
     const newest = buses
@@ -701,6 +702,9 @@
       .sort(
         (a, b) => new Date(b.lastUpdated || 0) - new Date(a.lastUpdated || 0),
       );
+    const withdrawn = buses
+      .filter((bus) => String(bus.status).toLowerCase() !== "active")
+      .sort((a, b) => new Date(b.lastUpdated || b.registrationDate || 0) - new Date(a.lastUpdated || a.registrationDate || 0));
 
     newList.innerHTML = newest.length
       ? newest
@@ -715,10 +719,20 @@
           .map((bus) => highlightItem(bus))
           .join("")
       : '<li class="pending-empty">No rare workings logged yet.</li>';
+
+    withdrawnList.innerHTML = withdrawn.length
+      ? withdrawn
+          .slice(0, 6)
+          .map((bus) => highlightItem(bus))
+          .join("")
+      : '<li class="pending-empty">Withdrawn history unlocks once contributions are approved.</li>';
   }
 
   function highlightItem(bus) {
-    const subtitle = [bus.operator, bus.garage].filter(Boolean).join(" • ");
+    const status = bus.status && String(bus.status).toLowerCase() !== "active" ? bus.status : null;
+    const subtitle = [bus.operator, bus.garage, status]
+      .filter(Boolean)
+      .join(" • ");
     return `<li><span>${escapeHtml(bus.registration)}</span><small>${escapeHtml(subtitle || "Awaiting details")}</small></li>`;
   }
 

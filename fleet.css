@@ -311,6 +311,205 @@ body.dark-mode .fleet-highlight__list li {
   border-color: rgba(148, 163, 184, 0.2);
 }
 
+.fleet-operators__header {
+  display: grid;
+  gap: 1.4rem;
+  align-items: flex-start;
+}
+
+@media (min-width: 768px) {
+  .fleet-operators__header {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+}
+
+.fleet-operators__tabs {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.fleet-operators__tab {
+  border: 1px solid rgba(29, 126, 240, 0.28);
+  background: rgba(29, 126, 240, 0.08);
+  color: var(--primary);
+  border-radius: 999px;
+  padding: 0.5rem 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+
+.fleet-operators__tab.is-active {
+  background: linear-gradient(120deg, rgba(29, 126, 240, 0.85), rgba(0, 54, 136, 0.95));
+  color: #fff;
+  border-color: transparent;
+}
+
+body.dark-mode .fleet-operators__tab {
+  border-color: rgba(148, 172, 214, 0.4);
+  background: rgba(148, 172, 214, 0.14);
+  color: rgba(226, 232, 240, 0.9);
+}
+
+body.dark-mode .fleet-operators__tab.is-active {
+  background: linear-gradient(120deg, rgba(29, 126, 240, 0.7), rgba(76, 161, 255, 0.85));
+  color: #fff;
+}
+
+.fleet-operators__panels {
+  margin-top: 1.4rem;
+}
+
+.fleet-operators__panel {
+  border-radius: 18px;
+  border: 1px solid rgba(29, 126, 240, 0.14);
+  background: rgba(15, 23, 42, 0.04);
+  padding: 1.4rem;
+}
+
+body.dark-mode .fleet-operators__panel {
+  border-color: rgba(148, 172, 214, 0.25);
+  background: rgba(11, 24, 46, 0.78);
+}
+
+.fleet-operators__stats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.9rem;
+}
+
+.fleet-operators__stats li {
+  background: rgba(29, 126, 240, 0.08);
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  line-height: 1.5;
+}
+
+body.dark-mode .fleet-operators__stats li {
+  background: rgba(29, 126, 240, 0.22);
+  color: rgba(226, 232, 240, 0.92);
+}
+
+.fleet-showcase__header {
+  margin-bottom: 1.4rem;
+}
+
+.fleet-carousel {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 1rem;
+  align-items: center;
+}
+
+@media (max-width: 760px) {
+  .fleet-carousel {
+    grid-template-columns: 1fr;
+  }
+
+  .fleet-carousel__control[data-carousel-prev],
+  .fleet-carousel__control[data-carousel-next] {
+    justify-self: center;
+  }
+}
+
+.fleet-carousel__viewport {
+  width: 100%;
+  display: grid;
+}
+
+.fleet-carousel__item {
+  border-radius: 20px;
+  background: rgba(15, 23, 42, 0.04);
+  border: 1px solid rgba(29, 126, 240, 0.14);
+  overflow: hidden;
+  display: grid;
+  gap: 1rem;
+  padding: 1rem 1rem 1.4rem;
+}
+
+body.dark-mode .fleet-carousel__item {
+  background: rgba(11, 24, 46, 0.78);
+  border-color: rgba(148, 172, 214, 0.25);
+}
+
+.fleet-carousel__item img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 14px;
+}
+
+.fleet-carousel__meta h3 {
+  margin: 0;
+}
+
+.fleet-carousel__meta p {
+  margin: 0.4rem 0 0;
+  color: rgba(15, 23, 42, 0.75);
+}
+
+body.dark-mode .fleet-carousel__meta p {
+  color: rgba(226, 232, 240, 0.82);
+}
+
+.fleet-carousel__control {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid rgba(29, 126, 240, 0.25);
+  background: rgba(29, 126, 240, 0.12);
+  color: var(--primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+
+.fleet-carousel__control:hover,
+.fleet-carousel__control:focus-visible {
+  background: rgba(29, 126, 240, 0.28);
+}
+
+body.dark-mode .fleet-carousel__control {
+  border-color: rgba(148, 172, 214, 0.35);
+  background: rgba(148, 172, 214, 0.18);
+  color: rgba(226, 232, 240, 0.9);
+}
+
+.fleet-carousel__dots {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.fleet-carousel__dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(29, 126, 240, 0.25);
+  cursor: pointer;
+}
+
+.fleet-carousel__dot.is-active {
+  background: rgba(29, 126, 240, 0.9);
+}
+
+body.dark-mode .fleet-carousel__dot {
+  background: rgba(148, 172, 214, 0.3);
+}
+
+body.dark-mode .fleet-carousel__dot.is-active {
+  background: rgba(148, 172, 214, 0.9);
+}
+
 .fleet-highlight__list span {
   font-weight: 600;
 }
