@@ -6,668 +6,119 @@
   <title>Tracking | RouteFlow London</title>
   <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png" />
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Montserrat:wght@600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="navbar.css" />
+  <link rel="stylesheet" href="tracking.css" />
   <script src="theme.js" defer></script>
-  <style>
-    :root {
-      --bg: #f7f8fb;
-      --card: #ffffff;
-      --ink: #1a1d21;
-      --muted: #6b7280;
-      --ring: #e5e7eb;
-      --accent: #c8102e;
-      --shadow: 0 8px 24px rgba(16, 24, 40, 0.06);
-      --bus: #d01c1f;
-      --tube: #003688;
-      --dlr: #00afad;
-      --overground: #ff6d00;
-      --elizabeth-line: #6633cc;
-      --tram: #00a650;
-      --river-bus: #0aa7b8;
-      --national-rail: #0b3b8c;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--ink);
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-
-    header.tracking-brand {
-      width: 100%;
-      padding: 24px 16px;
-      background: #fff;
-      border-bottom: 1px solid var(--ring);
-    }
-
-    header.tracking-brand .brand {
-      max-width: 1100px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    header.tracking-brand h1 {
-      font-size: 20px;
-      font-weight: 700;
-      letter-spacing: 0.2px;
-      margin: 0;
-      color: var(--accent);
-    }
-
-    header.tracking-brand small {
-      color: var(--muted);
-    }
-
-    .search-wrap {
-      width: 100%;
-      max-width: 900px;
-      margin: 18px auto 8px;
-      padding: 0 16px;
-    }
-
-    .search {
-      position: relative;
-      width: 100%;
-      background: var(--card);
-      border: 1px solid var(--ring);
-      border-radius: 14px;
-      box-shadow: var(--shadow);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-    }
-
-    .search input {
-      flex: 1;
-      border: 0;
-      outline: 0;
-      font-size: 16px;
-      padding: 10px 12px;
-      background: transparent;
-    }
-
-    .search button {
-      border: 0;
-      background: var(--accent);
-      color: #fff;
-      font-weight: 600;
-      padding: 10px 14px;
-      border-radius: 10px;
-      cursor: pointer;
-    }
-
-    .search button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .results {
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: calc(100% + 8px);
-      background: var(--card);
-      border: 1px solid var(--ring);
-      border-radius: 12px;
-      box-shadow: var(--shadow);
-      overflow: auto;
-      max-height: 420px;
-      display: none;
-      z-index: 20;
-    }
-
-    .result {
-      padding: 12px 14px;
-      border-bottom: 1px solid var(--ring);
-      cursor: pointer;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
-
-    .result:last-child {
-      border-bottom: none;
-    }
-
-    .result:hover {
-      background: #f3f4f6;
-    }
-
-    .r-main {
-      flex: 1;
-    }
-
-    .r-title {
-      font-weight: 700;
-    }
-
-    .r-sub {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 2px;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 1100px;
-      padding: 12px 16px 48px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 16px;
-      flex: 1 0 auto;
-    }
-
-    .board {
-      background: var(--card);
-      border: 1px solid var(--ring);
-      border-radius: 14px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-
-    .board-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 14px 16px;
-      background: #fbfbfc;
-      border-bottom: 1px solid var(--ring);
-      gap: 12px;
-    }
-
-    .board-title {
-      font-weight: 800;
-      margin: 0;
-    }
-
-    .meta {
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-
-    .action-btn {
-      background: var(--accent);
-      color: #fff;
-      border: 0;
-      border-radius: 6px;
-      padding: 6px 8px;
-      font-size: 12px;
-      cursor: pointer;
-    }
-
-    .rows {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .row {
-      display: grid;
-      grid-template-columns: 110px 1fr 110px;
-      gap: 12px;
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--ring);
-      align-items: center;
-    }
-
-    .row:last-child {
-      border-bottom: none;
-    }
-
-    .badge {
-      justify-self: start;
-      color: #fff;
-      font-weight: 800;
-      letter-spacing: 0.2px;
-      padding: 8px 10px;
-      border-radius: 10px;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      min-width: 90px;
-      justify-content: center;
-      text-transform: uppercase;
-    }
-
-    .dest {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .dest b {
-      font-weight: 700;
-    }
-
-    .dest small {
-      color: var(--muted);
-    }
-
-    .eta {
-      justify-self: end;
-      font-weight: 800;
-    }
-
-    .empty {
-      padding: 18px;
-      color: var(--muted);
-      text-align: center;
-    }
-
-    footer.site-footer {
-      text-align: center;
-      padding: 24px 16px;
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    footer.site-footer .footer-links {
-      margin-bottom: 8px;
-    }
-
-    footer.site-footer a {
-      color: inherit;
-      text-decoration: none;
-    }
-
-    footer.site-footer .social-icons {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      margin-bottom: 8px;
-      font-size: 20px;
-    }
-
-    @media (max-width: 720px) {
-      .row {
-        grid-template-columns: 1fr;
-        text-align: center;
-        gap: 8px;
-      }
-
-      .eta {
-        justify-self: center;
-      }
-
-      .actions {
-        justify-content: flex-start;
-      }
-    }
-  </style>
+  <script src="site.js" defer></script>
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
   <div id="navbar-container"></div>
 
-  <header class="tracking-brand">
-    <div class="brand">
-      <h1>RouteFlow London</h1>
-      <small>Live arrivals for buses, tubes, trams & boats</small>
-    </div>
-    <div class="search-wrap">
-      <div class="search" id="searchBox">
-        <input id="q" type="text" placeholder="Search a station name or paste a Stop ID…" autocomplete="off" />
-        <button id="goBtn" type="button" disabled>Search</button>
-        <div class="results" id="results"></div>
+  <main id="main-content" class="tracking-shell" aria-labelledby="trackingTitle">
+    <section class="tracking-hero card">
+      <div class="tracking-hero__content">
+        <p class="tracking-hero__eyebrow">Live vehicle tracking</p>
+        <h1 id="trackingTitle">Check arrivals and rare workings in seconds.</h1>
+        <p>Search by stop, route or location and RouteFlow will surface real-time departures across every TfL mode. Pin the services you rely on and keep an eye on enthusiast favourites.</p>
       </div>
-    </div>
-  </header>
+      <ul class="tracking-hero__highlights" aria-label="Highlights">
+        <li>
+          <span>Coverage</span>
+          <strong>Bus, Tube, Tram, River, DLR</strong>
+        </li>
+        <li>
+          <span>Refresh rate</span>
+          <strong>30 seconds</strong>
+        </li>
+        <li>
+          <span>Notebook</span>
+          <strong>Syncs to dashboard</strong>
+        </li>
+      </ul>
+    </section>
 
-  <main class="container">
-    <section class="board" id="board" aria-live="polite">
-      <div class="board-head">
-        <div>
-          <h2 class="board-title" id="boardTitle">No stop selected</h2>
-          <div class="meta" id="boardMeta">Type a station name and choose a stop from the list.</div>
+    <section class="tracking-layout">
+      <article class="tracking-board card">
+        <header class="tracking-board__header">
+          <div>
+            <h2>Live departures</h2>
+            <p>Search for a stop or route to see vehicles on the move right now.</p>
+          </div>
+          <div class="tracking-board__actions">
+            <span class="tracking-board__timestamp" id="trackingTimestamp">Updated just now</span>
+            <button class="tracking-chip" type="button">Refresh</button>
+          </div>
+        </header>
+        <div class="tracking-search" role="search">
+          <label for="trackingSearch">Search stops, routes or locations</label>
+          <div class="tracking-search__field">
+            <input id="trackingSearch" type="search" placeholder="e.g. 25 to Oxford Circus or Stop F" aria-describedby="trackingSearchHint">
+            <button type="button">Search</button>
+            <div class="tracking-search__results" id="trackingResultsList"></div>
+          </div>
+          <p id="trackingSearchHint" class="planning-note">Use route numbers, stop names or street addresses.</p>
         </div>
-        <div class="actions">
-          <button class="action-btn" id="favBtn" type="button">☆ Favourite</button>
-          <button class="action-btn" id="noteBtn" type="button">📝 Add note</button>
-          <div class="meta" id="updated"></div>
+        <div class="tracking-board__rows" id="trackingRows">
+          <div class="empty" aria-live="polite">Enter a stop or route to load departures.</div>
         </div>
-      </div>
-      <div class="rows" id="rows">
-        <div class="empty">Nothing to show yet.</div>
-      </div>
+      </article>
+
+      <aside class="tracking-side">
+        <article class="card tracking-side__card">
+          <h2>Tips for enthusiasts</h2>
+          <ul>
+            <li>Toggle your favourite operators in <a class="tracking-side__link" href="settings.html">Settings</a> to colour-code departures.</li>
+            <li>Pin interesting workings straight to your <a class="tracking-side__link" href="dashboard.html">dashboard notebook</a>.</li>
+            <li>Use the filters above to switch between bus-only or all modes.</li>
+          </ul>
+        </article>
+        <article class="card tracking-side__card">
+          <h2>Want more context?</h2>
+          <ul>
+            <li><a class="tracking-side__link" href="routes.html">Browse route summaries</a> for allocations and frequencies.</li>
+            <li><a class="tracking-side__link" href="withdrawn.html">See withdrawn vehicles</a> to track heritage appearances.</li>
+            <li><a class="tracking-side__link" href="disruptions.html">Review current disruptions</a> before you travel.</li>
+          </ul>
+        </article>
+      </aside>
     </section>
   </main>
 
-  <footer class="site-footer">
-    <div class="footer-links">
-      <a href="about.html">About</a> |
-      <a href="privacy.html">Privacy</a> |
-      <a href="terms.html">Terms</a> |
-      <a href="contact.html">Contact</a>
+  <footer class="site-footer" aria-label="Footer">
+    <div class="site-footer__inner">
+      <div class="site-footer__brand">
+        <span class="site-footer__name">RouteFlow London</span>
+        <p class="site-footer__description">Live transport guidance built to be clear for every rider.</p>
+      </div>
+      <nav class="site-footer__nav" aria-label="Explore">
+        <a href="index.html">Home</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="tracking.html">Tracking</a>
+        <a href="planning.html">Planning</a>
+        <a href="routes.html">Routes</a>
+        <a href="info.html">Info hub</a>
+      </nav>
+      <nav class="site-footer__nav" aria-label="Support">
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="terms.html">Terms</a>
+        <a href="settings.html">Settings</a>
+      </nav>
+      <div class="site-footer__social" aria-label="Social channels">
+        <a href="https://discord.gg/qVf3nN4Mgq" aria-label="RouteFlow London on Discord"><i class="fa-brands fa-discord"></i></a>
+        <a href="https://www.tiktok.com/@the_bus_father" aria-label="RouteFlow London on TikTok"><i class="fab fa-tiktok"></i></a>
+        <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo" aria-label="RouteFlow London on Instagram"><i class="fab fa-instagram"></i></a>
+      </div>
     </div>
-    <div class="social-icons">
-      <a href="https://discord.gg/qVf3nN4Mgq" aria-label="Discord"><i class="fa-brands fa-discord"></i></a>
-      <a href="https://www.tiktok.com/@the_bus_father" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
-      <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+    <div class="site-footer__meta">
+      <span>&copy; <span data-current-year></span> RouteFlow London. All rights reserved.</span>
+      <span>Made for London. Accessible for everyone.</span>
     </div>
-    <small>Made for London. Built from scratch.</small>
   </footer>
 
-  <script src="config.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-  <script src="main.js"></script>
-  <script>
-const APP_KEY = 'f17d0725d1654338ab02a361fe41abad';
-const withAppKey = (url) => {
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}app_key=${APP_KEY}`;
-};
-const MODES = 'bus,tube,overground,dlr,tram,river-bus,national-rail,elizabeth-line';
-const LAST_STOP_KEY = 'routeflow.lastStop';
-const q = document.getElementById('q');
-const goBtn = document.getElementById('goBtn');
-const results = document.getElementById('results');
-const rows = document.getElementById('rows');
-const boardTitle = document.getElementById('boardTitle');
-const boardMeta = document.getElementById('boardMeta');
-const updated = document.getElementById('updated');
-
-let refreshTimer = null;
-let currentStop = null;
-let refreshSeconds = 25;
-let distanceUnit = 'metric';
-
-function storeLastStop(stop) {
-  if (typeof window === 'undefined' || !('localStorage' in window)) return;
-  if (!stop || !stop.id) return;
-  try {
-    window.localStorage.setItem(LAST_STOP_KEY, JSON.stringify({
-      id: stop.id,
-      name: stop.name || '',
-      timestamp: Date.now()
-    }));
-  } catch (e) {}
-}
-
-function loadSettings() {
-  try {
-    const s = JSON.parse(localStorage.getItem('rfSettings')) || {};
-    refreshSeconds = Number(s.refreshSeconds) || 25;
-    distanceUnit = s.distanceUnit || 'metric';
-  } catch (e) {
-    refreshSeconds = 25;
-    distanceUnit = 'metric';
-  }
-}
-loadSettings();
-
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-function debounce(fn, ms = 300) {
-  let t;
-  return (...args) => {
-    clearTimeout(t);
-    t = setTimeout(() => fn(...args), ms);
-  };
-}
-function minsOrDue(seconds) {
-  const m = Math.round(seconds / 60);
-  return m <= 0 ? 'Due' : `${m} min`;
-}
-function formatDistance(m) {
-  return distanceUnit === 'imperial' ? `${(m / 1609.344).toFixed(2)} mi` : `${Math.round(m)} m`;
-}
-function modeClass(mode) {
-  return `mode-${mode}`;
-}
-function modeIcon(mode) {
-  switch (mode) {
-    case 'bus': return '🚍';
-    case 'tube': return '🚇';
-    case 'dlr': return '🚈';
-    case 'overground': return '🟠';
-    case 'elizabeth-line': return '🟣';
-    case 'tram': return '🚊';
-    case 'river-bus': return '⛴️';
-    case 'national-rail': return '🚆';
-    default: return '🚌';
-  }
-}
-async function fetchJSON(url) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
-}
-
-async function search(query) {
-  if (!query) {
-    results.style.display = 'none';
-    return;
-  }
-
-  if (/^\d{8,}[A-Z]?$/i.test(query.trim())) {
-    results.style.display = 'none';
-    selectStop(query.trim(), 'Selected stop');
-    return;
-  }
-
-  const searchUrl = withAppKey(`https://api.tfl.gov.uk/StopPoint/Search/${encodeURIComponent(query)}?modes=${encodeURIComponent(MODES)}&maxResults=20`);
-
-  let searchData;
-  try {
-    searchData = await fetchJSON(searchUrl);
-  } catch (e) {
-    console.error(e);
-    results.innerHTML = `<div class="result"><div class="r-main"><div class="r-title">Search failed</div><div class="r-sub">Check your connection and try again</div></div></div>`;
-    results.style.display = 'block';
-    return;
-  }
-
-  const matches = (searchData && searchData.matches) ? searchData.matches.slice(0, 20) : [];
-  if (matches.length === 0) {
-    results.innerHTML = `<div class="result"><div class="r-main"><div class="r-title">No results</div><div class="r-sub">Try another station name</div></div></div>`;
-    results.style.display = 'block';
-    return;
-  }
-
-  const detailPromises = matches.map((m) =>
-    fetchJSON(withAppKey(`https://api.tfl.gov.uk/StopPoint/${encodeURIComponent(m.id)}`)).catch(() => null)
-  );
-  const details = await Promise.all(detailPromises);
-
-  const entries = [];
-  details.forEach((sp) => {
-    if (!sp) return;
-    if (Array.isArray(sp.children) && sp.children.length) {
-      sp.children.forEach((child) => entries.push(child));
-    } else {
-      entries.push(sp);
-    }
-  });
-
-  results.innerHTML = entries.map((sp) => {
-    const stopName = sp.commonName || sp.name || '';
-    const stopLetter = sp.stopLetter || (sp.additionalProperties || []).find((p) => p.key === 'StopLetter')?.value || '';
-    const towards = (sp.additionalProperties || []).find((p) => p.key === 'Towards')?.value || '';
-    const mode = (sp.modes && sp.modes[0]) ? sp.modes[0] : 'bus';
-    const icon = modeIcon(mode);
-    const platformText = stopLetter ? `Platform: ${stopLetter}` : 'Platform: –';
-    const towardsText = towards ? `Towards: ${towards}` : 'Towards: –';
-
-    return `
-      <div class="result" data-id="${sp.id}" data-name="${stopName}">
-        <div class="r-main">
-          <div class="r-title">${icon} ${stopName}</div>
-          <div class="r-sub">${platformText} · ${towardsText}</div>
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  Array.from(results.querySelectorAll('.result')).forEach((el) => {
-    el.addEventListener('click', () => {
-      const id = el.getAttribute('data-id');
-      const name = el.getAttribute('data-name');
-      results.style.display = 'none';
-      selectStop(id, name);
-    });
-  });
-
-  results.style.display = 'block';
-}
-
-async function loadArrivals(stopId, stopName) {
-  boardTitle.textContent = stopName || 'Live Arrivals';
-  boardMeta.textContent = 'Fetching live data…';
-  rows.innerHTML = `<div class="empty">Loading…</div>`;
-
-  try {
-    let data = await fetchJSON(withAppKey(`https://api.tfl.gov.uk/StopPoint/${encodeURIComponent(stopId)}/Arrivals`));
-
-    if (!Array.isArray(data) || data.length === 0) {
-      const info = await fetchJSON(withAppKey(`https://api.tfl.gov.uk/StopPoint/${encodeURIComponent(stopId)}`)).catch(() => null);
-      if (info && Array.isArray(info.children) && info.children.length) {
-        const childReqs = info.children.map((c) =>
-          fetchJSON(withAppKey(`https://api.tfl.gov.uk/StopPoint/${encodeURIComponent(c.id)}/Arrivals`)).catch(() => [])
-        );
-        const childData = (await Promise.all(childReqs)).flat();
-        data = childData;
-      }
-    }
-
-    if (!Array.isArray(data) || data.length === 0) {
-      rows.innerHTML = `<div class="empty">No live arrivals right now.</div>`;
-      updated.textContent = new Date().toLocaleTimeString();
-      boardMeta.textContent = '';
-      return;
-    }
-
-    data.sort((a, b) => a.timeToStation - b.timeToStation);
-
-    rows.innerHTML = data.map((a) => {
-      const mode = (a.modeName || 'bus');
-      const badgeClass = modeClass(mode);
-      const icon = modeIcon(mode);
-      const eta = minsOrDue(a.timeToStation);
-      const line = a.lineName || a.lineId || '';
-
-      const details = [];
-      if (a.vehicleId) details.push(`Reg: ${a.vehicleId}`);
-      if (typeof a.distance === 'number') details.push(formatDistance(a.distance));
-      const detailStr = details.join(' • ');
-
-      return `
-        <div class="row">
-          <div class="badge ${badgeClass}" style="background: var(--${mode}, var(--accent))">
-            ${icon} ${line}
-          </div>
-          <div class="dest">
-            <b>${a.destinationName || a.towards || '—'}</b>
-            <small>${detailStr}</small>
-          </div>
-          <div class="eta">${eta}</div>
-        </div>
-      `;
-    }).join('');
-
-    updated.textContent = `Updated ${new Date().toLocaleTimeString()}`;
-    boardMeta.textContent = '';
-    storeLastStop({ id: stopId, name: stopName });
-  } catch (e) {
-    console.error(e);
-    rows.innerHTML = `<div class="empty">Error loading arrivals.</div>`;
-    boardMeta.textContent = 'Please try again.';
-  }
-}
-
-function startRefreshTimer() {
-  if (refreshTimer) clearInterval(refreshTimer);
-  refreshTimer = setInterval(() => {
-    if (currentStop) loadArrivals(currentStop.id, currentStop.name);
-  }, refreshSeconds * 1000);
-}
-
-function selectStop(id, name) {
-  loadSettings();
-  currentStop = { id, name };
-  q.value = name;
-  results.style.display = 'none';
-  loadArrivals(id, name);
-  startRefreshTimer();
-}
-
-const runSearch = debounce(() => search(q.value.trim()), 250);
-
-q.addEventListener('input', () => {
-  goBtn.disabled = q.value.trim().length < 2;
-  runSearch();
-});
-q.addEventListener('focus', () => {
-  if (results.innerHTML.trim()) results.style.display = 'block';
-});
-document.addEventListener('click', (e) => {
-  if (!document.getElementById('searchBox').contains(e.target)) {
-    results.style.display = 'none';
-  }
-});
-q.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    if (results.style.display !== 'block') runSearch();
-  }
-});
-goBtn.addEventListener('click', () => runSearch());
-
-(function restoreLastStop() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(LAST_STOP_KEY));
-    if (saved && saved.id && Date.now() - saved.timestamp < 12 * 60 * 60 * 1000) {
-      selectStop(saved.id, saved.name);
-    }
-  } catch (e) {}
-})();
-  </script>
-  <script type="module">
-import { addFavourite } from './favourites.js';
-import { addNote } from './notes.js';
-
-const favBtn = document.getElementById('favBtn');
-const noteBtn = document.getElementById('noteBtn');
-
-favBtn.addEventListener('click', () => {
-  const user = firebase.auth().currentUser;
-  if (!user || !currentStop) {
-    alert('Select a stop and sign in first');
-    return;
-  }
-  addFavourite(user.uid, currentStop);
-  favBtn.textContent = '★ Favourited';
-});
-
-noteBtn.addEventListener('click', () => {
-  const user = firebase.auth().currentUser;
-  if (!user || !currentStop) {
-    alert('Select a stop and sign in first');
-    return;
-  }
-  const text = prompt('Enter a note for this stop:');
-  if (text) addNote(user.uid, { id: currentStop.id, name: currentStop.name, text });
-});
-  </script>
   <script src="navbar-loader.js"></script>
 </body>
 </html>

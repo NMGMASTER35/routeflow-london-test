@@ -1,10 +1,10 @@
 .planning-shell {
-  max-width: 1180px;
-  margin: 2.5rem auto 4rem;
-  padding: 0 1.5rem;
+  width: var(--content-max);
+  margin: clamp(3rem, 6vw, 4rem) auto clamp(4rem, 8vw, 5rem);
+  padding: 0 clamp(1rem, 4vw, 2.4rem);
   display: flex;
   flex-direction: column;
-  gap: 2.5rem;
+  gap: clamp(2.2rem, 5vw, 3.4rem);
 }
 
 .planning-hero {
@@ -16,20 +16,20 @@
 .planning-hero__eyebrow {
   margin: 0;
   font-size: 0.78rem;
-  letter-spacing: 0.18em;
+  letter-spacing: var(--eyebrow-letter);
   text-transform: uppercase;
-  color: var(--accent-blue);
   font-weight: 700;
+  color: var(--accent-blue);
 }
 
 .planning-hero__content h1 {
   margin: 0;
-  font-size: clamp(2rem, 3vw, 2.5rem);
+  font-size: clamp(2rem, 4vw, 2.6rem);
 }
 
 .planning-hero__content p {
   margin: 0;
-  opacity: 0.8;
+  color: var(--text-muted-light);
 }
 
 .planning-hero__meta {
@@ -43,25 +43,27 @@
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
-}
-
-.planning-hero__meta dt {
-  font-size: 0.8rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  opacity: 0.7;
+  background: var(--surface-muted-light);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.2rem;
+  border: 1px solid rgba(21, 38, 75, 0.08);
 }
 
 .planning-layout {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  gap: 1.8rem;
+  gap: clamp(1.4rem, 4vw, 2.4rem);
 }
 
 .planning-form {
   display: flex;
   flex-direction: column;
   gap: 1.4rem;
+  background: var(--card-bg-light);
+  border-radius: var(--radius-lg);
+  padding: clamp(1.6rem, 4vw, 2.4rem);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-medium);
 }
 
 .planning-form__row {
@@ -78,14 +80,14 @@
 
 .planning-input input {
   padding: 0.75rem 1rem;
-  border-radius: 12px;
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  font: inherit;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong-light);
+  background: var(--card-bg-light);
 }
 
 .planning-fieldset {
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  border-radius: 14px;
+  border: 1px solid var(--border-strong-light);
+  border-radius: var(--radius-md);
   padding: 1.2rem 1.4rem;
   display: flex;
   flex-direction: column;
@@ -103,7 +105,7 @@
 }
 
 .planning-checkboxes label {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
 }
@@ -111,18 +113,18 @@
 .planning-submit {
   align-self: flex-start;
   border: none;
-  border-radius: 12px;
-  padding: 0.75rem 1.6rem;
+  border-radius: 999px;
+  padding: 0.8rem 1.8rem;
   background: var(--accent-blue);
   color: #fff;
   font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 8px 20px rgba(41, 121, 255, 0.22);
+  box-shadow: 0 16px 40px rgba(21, 94, 239, 0.24);
 }
 
 .planning-submit:hover,
 .planning-submit:focus-visible {
-  background: var(--accent-blue-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 22px 56px rgba(21, 94, 239, 0.28);
 }
 
 .planning-side {
@@ -135,13 +137,17 @@
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
+  background: var(--card-bg-light);
+  border-radius: var(--radius-lg);
+  padding: 1.6rem;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-medium);
 }
 
 .planning-side__card ul {
   margin: 0;
   padding-left: 1.1rem;
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: 0.4rem;
 }
 
@@ -149,6 +155,11 @@
   display: flex;
   flex-direction: column;
   gap: 1.2rem;
+  background: var(--card-bg-light);
+  border-radius: var(--radius-lg);
+  padding: clamp(1.4rem, 4vw, 2.2rem);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-medium);
 }
 
 .planning-results header {
@@ -158,38 +169,20 @@
 }
 
 .planning-error {
-  color: var(--primary);
-  font-weight: 600;
-  min-height: 1.2rem;
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  background: rgba(200, 58, 72, 0.1);
+  color: #b42318;
+  border: 1px solid rgba(200, 58, 72, 0.25);
 }
 
-.planning-results__list {
-  display: grid;
-  gap: 1rem;
-}
-
-.journey-option {
-  border-radius: 16px;
-  border: 1px solid rgba(41, 121, 255, 0.16);
-  padding: 1.2rem 1.4rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-  background: rgba(41, 121, 255, 0.05);
-}
-
-.journey-option h3 {
+.planning-note {
   margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-subtle-light);
 }
 
-.journey-option ol {
-  margin: 0;
-  padding-left: 1.4rem;
-  display: grid;
-  gap: 0.4rem;
-}
-
-@media (max-width: 960px) {
+@media (max-width: 900px) {
   .planning-layout {
     grid-template-columns: 1fr;
   }

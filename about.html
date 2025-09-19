@@ -9,19 +9,19 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
   <script src="theme.js" defer></script>
+  <script src="site.js" defer></script>
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
   <div id="navbar-container"></div>
 
-  <main class="page-shell">
+  <main id="main-content" class="page-shell" aria-labelledby="aboutTitle">
     <section class="page-hero">
       <div class="page-hero__content">
         <p class="page-hero__eyebrow">About RouteFlow London</p>
-        <h1>Keeping Londoners moving with confident transport insight.</h1>
+        <h1 id="aboutTitle">Keeping Londoners moving with confident transport insight.</h1>
         <p class="page-hero__lead">
-          RouteFlow London blends Transport for London data feeds with enthusiast knowledge so planning and tracking journeys
-          feels calm, not chaotic. We obsess over clarity, accessibility, and speed so every rider can make the choices that
-          work best for them.
+          RouteFlow London blends Transport for London data feeds with enthusiast knowledge so planning and tracking journeys feels calm, not chaotic. We obsess over clarity, accessibility, and speed so every rider can make the choices that work best for them.
         </p>
       </div>
       <dl class="page-hero__meta">
@@ -43,17 +43,12 @@
     <section class="page-card">
       <h2>What drives us</h2>
       <p>
-        London moves fast, but information about it shouldn’t overwhelm. RouteFlow London started as a hobby project to tidy
-        the dozens of tabs needed to follow rare workings, route changes, and planned closures. It has since grown into a
-        platform focused on:
+        London moves fast, but information about it shouldn’t overwhelm. RouteFlow London started as a hobby project to tidy the dozens of tabs needed to follow rare workings, route changes, and planned closures. It has since grown into a platform focused on:
       </p>
       <ul class="page-list">
-        <li><strong>Clarity first:</strong> Live arrivals and route information are presented with legible typography, soft
-          colour, and straightforward summaries.</li>
-        <li><strong>Accessibility built in:</strong> Dark mode, high-contrast palettes, readable fonts, and reduced motion are
-          core features—not afterthoughts.</li>
-        <li><strong>Community knowledge:</strong> Fleet notes, withdrawn tables, and enthusiast insights are curated so
-          specialists and newcomers alike can explore the network together.</li>
+        <li><strong>Clarity first:</strong> Live arrivals and route information are presented with legible typography, soft colour, and straightforward summaries.</li>
+        <li><strong>Accessibility built in:</strong> Dark mode, high-contrast palettes, readable fonts, and reduced motion are core features—not afterthoughts.</li>
+        <li><strong>Community knowledge:</strong> Fleet notes, withdrawn tables, and enthusiast insights are curated so specialists and newcomers alike can explore the network together.</li>
       </ul>
     </section>
 
@@ -81,24 +76,20 @@
     <section class="page-card">
       <h2>How we build</h2>
       <p>
-        Every feature is shaped by real rider feedback. We prototype quickly, test with the community, and release in
-        manageable increments so updates feel steady rather than disruptive.
+        Every feature is shaped by real rider feedback. We prototype quickly, test with the community, and release in manageable increments so updates feel steady rather than disruptive.
       </p>
       <div class="page-grid page-grid--compact">
         <article class="page-mini-card">
           <h3>Reliable data pipeline</h3>
-          <p>Live arrivals, planned works, and vehicle data are ingested from TfL and processed to keep the interface fast and
-            resilient.</p>
+          <p>Live arrivals, planned works, and vehicle data are ingested from TfL and processed to keep the interface fast and resilient.</p>
         </article>
         <article class="page-mini-card">
           <h3>Accessible by default</h3>
-          <p>Interfaces are audited against WCAG AA guidance with readable typography, keyboard-friendly navigation, and
-            reduced-motion options.</p>
+          <p>Interfaces are audited against WCAG AA guidance with readable typography, keyboard-friendly navigation, and reduced-motion options.</p>
         </article>
         <article class="page-mini-card">
           <h3>Community collaboration</h3>
-          <p>We publish changelogs and roadmaps so enthusiasts can suggest improvements, report quirks, and celebrate wins with
-            us.</p>
+          <p>We publish changelogs and roadmaps so enthusiasts can suggest improvements, report quirks, and celebrate wins with us.</p>
         </article>
       </div>
     </section>
@@ -106,25 +97,42 @@
     <section class="page-card page-card--highlight">
       <h2>Join the journey</h2>
       <p>
-        Have an idea that would make RouteFlow London even better? Whether you are a commuter, driver, controller, or
-        enthusiast, we’d love to hear from you. <a href="contact.html">Send us a message</a> and help shape the next release.
+        Have an idea that would make RouteFlow London even better? Whether you are a commuter, driver, controller, or enthusiast, we’d love to hear from you. <a href="contact.html">Send us a message</a> and help shape the next release.
       </p>
     </section>
   </main>
 
-  <footer>
-    <div class="footer-links">
-      <a href="about.html">About</a>
-      <a href="privacy.html">Privacy</a>
-      <a href="terms.html">Terms</a>
-      <a href="contact.html">Contact</a>
+  <footer class="site-footer" aria-label="Footer">
+    <div class="site-footer__inner">
+      <div class="site-footer__brand">
+        <span class="site-footer__name">RouteFlow London</span>
+        <p class="site-footer__description">Live transport guidance built to be clear for every rider.</p>
+      </div>
+      <nav class="site-footer__nav" aria-label="Explore">
+        <a href="index.html">Home</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="tracking.html">Tracking</a>
+        <a href="planning.html">Planning</a>
+        <a href="routes.html">Routes</a>
+        <a href="info.html">Info hub</a>
+      </nav>
+      <nav class="site-footer__nav" aria-label="Support">
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="terms.html">Terms</a>
+        <a href="settings.html">Settings</a>
+      </nav>
+      <div class="site-footer__social" aria-label="Social channels">
+        <a href="https://discord.gg/qVf3nN4Mgq" aria-label="RouteFlow London on Discord"><i class="fa-brands fa-discord"></i></a>
+        <a href="https://www.tiktok.com/@the_bus_father" aria-label="RouteFlow London on TikTok"><i class="fab fa-tiktok"></i></a>
+        <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo" aria-label="RouteFlow London on Instagram"><i class="fab fa-instagram"></i></a>
+      </div>
     </div>
-    <div class="social-icons">
-      <a href="https://discord.gg/qVf3nN4Mgq"><i class="fa-brands fa-discord"></i></a>
-      <a href="https://www.tiktok.com/@the_bus_father"><i class="fab fa-tiktok"></i></a>
-      <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo"><i class="fab fa-instagram"></i></a>
+    <div class="site-footer__meta">
+      <span>&copy; <span data-current-year></span> RouteFlow London. All rights reserved.</span>
+      <span>Made for London. Accessible for everyone.</span>
     </div>
-    <small>Made for London. Built from scratch.</small>
   </footer>
 
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
