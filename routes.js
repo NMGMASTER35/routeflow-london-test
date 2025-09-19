@@ -1,12 +1,13 @@
 import { getRouteTagOverrideMap, normaliseRouteKey, STORAGE_KEYS } from './data-store.js';
 
-const TFL_API_BASE = '/api/tfl';
+const APP_KEY = 'f17d0725d1654338ab02a361fe41abad';
 
-const ROUTE_ENDPOINT = () => `${TFL_API_BASE}/Line/Mode/bus/Route`;
+const ROUTE_ENDPOINT = () =>
+  `https://api.tfl.gov.uk/Line/Mode/bus/Route?app_key=${APP_KEY}`;
 const ROUTE_STOPS_ENDPOINT = (routeId) =>
-  `${TFL_API_BASE}/Line/${encodeURIComponent(routeId)}/StopPoints`;
+  `https://api.tfl.gov.uk/Line/${encodeURIComponent(routeId)}/StopPoints?app_key=${APP_KEY}`;
 const ROUTE_VEHICLES_ENDPOINT = (routeId) =>
-  `${TFL_API_BASE}/Line/${encodeURIComponent(routeId)}/Arrivals`;
+  `https://api.tfl.gov.uk/Line/${encodeURIComponent(routeId)}/Arrivals?app_key=${APP_KEY}`;
 const LAST_ROUTE_KEY = 'routeflow.lastRoute';
 
 const fallbackRoutes = [

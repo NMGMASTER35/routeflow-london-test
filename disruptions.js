@@ -1,10 +1,10 @@
+const APP_KEY = 'f17d0725d1654338ab02a361fe41abad';
 const REFRESH_INTERVAL = 120000;
 
-const TFL_API_BASE = '/api/tfl';
-
 const RAIL_ENDPOINT = () =>
-  `${TFL_API_BASE}/Line/Mode/tube,dlr,overground,elizabeth-line/Status?detail=true`;
-const BUS_ENDPOINT = () => `${TFL_API_BASE}/Line/Mode/bus/Status?detail=true`;
+  `https://api.tfl.gov.uk/Line/Mode/tube,dlr,overground,elizabeth-line/Status?detail=true&app_key=${APP_KEY}`;
+const BUS_ENDPOINT = () =>
+  `https://api.tfl.gov.uk/Line/Mode/bus/Status?detail=true&app_key=${APP_KEY}`;
 
 const elements = {
   railGrid: document.getElementById('railGrid'),
