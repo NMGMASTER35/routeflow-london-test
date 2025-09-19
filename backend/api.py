@@ -5,7 +5,7 @@ import threading
 import time
 import uuid
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Set, Tuple
 from urllib.parse import parse_qsl, urljoin, urlparse
 
@@ -60,6 +60,60 @@ FLEET_AUTO_SYNC_INTERVAL_SECONDS = max(
     _env_int("FLEET_AUTO_SYNC_INTERVAL_SECONDS", _env_int("FLEET_AUTO_SYNC_INTERVAL", 300)),
     0,
 )
+
+DEFAULT_TFL_REGISTRATION_ENDPOINTS: Tuple[str, ...] = (
+    "Vehicle/Occupancy/Buses",
+    "Line/Mode/bus/Arrivals",
+    "Line/Mode/bus/Status",
+    "Line/Mode/bus/Route/Sequence/all",
+    "StopPoint/Mode/bus",
+    "Vehicle",
+)
+
+
+def _split_config_list(value: Optional[str]) -> List[str]:
+    if not value:
+        return []
+    entries: List[str] = []
+    for line in str(value).replace(";", "\n").splitlines():
+        for item in line.split(","):
+            text = item.strip()
+            if text:
+                entries.append(text)
+    return entries
+
+
+def _unique_sequence(items: List[str]) -> List[str]:
+    seen: Set[str] = set()
+    unique: List[str] = []
+    for item in items:
+        key = item.strip()
+        if not key:
+            continue
+        normalised = key.lower()
+        if normalised in seen:
+            continue
+        seen.add(normalised)
+        unique.append(key)
+    return unique
+
+
+_configured_registration_endpoints = _split_config_list(
+    os.getenv("TFL_REGISTRATION_ENDPOINTS")
+)
+
+_raw_registration_endpoints: List[str] = []
+if TFL_VEHICLE_API_URL:
+    _raw_registration_endpoints.append(TFL_VEHICLE_API_URL)
+if _configured_registration_endpoints:
+    _raw_registration_endpoints.extend(_configured_registration_endpoints)
+else:
+    _raw_registration_endpoints.extend(DEFAULT_TFL_REGISTRATION_ENDPOINTS)
+
+TFL_REGISTRATION_ENDPOINTS: List[str] = _unique_sequence(_raw_registration_endpoints)
+
+NEW_BUS_DURATION = timedelta(hours=24)
+NEW_BUS_EXTRA_LABEL = "New Bus"
 
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL environment variable is required")
@@ -518,6 +572,35 @@ def normalise_date(value: Any) -> str:
         return text
 
 
+def parse_iso_datetime(value: Any) -> Optional[datetime]:
+    if value in (None, ""):
+        return None
+    if isinstance(value, datetime):
+        parsed = value
+    else:
+        text = normalise_text(value)
+        if not text:
+            return None
+        cleaned = text.replace("Z", "+00:00") if text.endswith("Z") else text
+        try:
+            parsed = datetime.fromisoformat(cleaned)
+        except ValueError:
+            return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def normalise_datetime(value: Any) -> str:
+    if value in (None, ""):
+        return ""
+    parsed = parse_iso_datetime(value)
+    if parsed is None:
+        text = normalise_text(value)
+        return text
+    return parsed.isoformat()
+
+
 def sanitise_extras(value: Any) -> List[str]:
     if not value:
         return []
@@ -618,18 +701,19 @@ def _extract_next_link(payload: Any) -> Optional[str]:
     return None
 
 
-def _prepare_next_request(link: str) -> Tuple[str, Dict[str, Any]]:
-    absolute = urljoin(TFL_VEHICLE_API_URL, str(link))
+def _prepare_next_request(link: str, *, base_url: Optional[str] = None) -> Tuple[str, Dict[str, Any]]:
+    reference_base = base_url or TFL_VEHICLE_API_URL
+    absolute = urljoin(reference_base, str(link))
     parsed = urlparse(absolute)
     params = dict(parse_qsl(parsed.query or "", keep_blank_values=False))
 
     if parsed.scheme and parsed.netloc:
-        base_url = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
+        next_base = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
     else:
-        base_url = urljoin(TFL_VEHICLE_API_URL, parsed.path or "")
+        next_base = urljoin(reference_base, parsed.path or "")
 
-    base_url = base_url or TFL_VEHICLE_API_URL
-    return base_url, params
+    next_base = next_base or reference_base
+    return next_base, params
 
 
 def fetch_live_bus_registrations() -> Tuple[Dict[str, str], bool]:
@@ -691,7 +775,7 @@ def fetch_live_bus_registrations() -> Tuple[Dict[str, str], bool]:
         link = _extract_next_link(payload)
         if link:
             used_next_link = True
-            next_request = _prepare_next_request(link)
+            next_request = _prepare_next_request(link, base_url=url)
             continue
 
         if new_count == 0:
@@ -715,6 +799,125 @@ def fetch_live_bus_registrations() -> Tuple[Dict[str, str], bool]:
         )
 
     return registrations, success
+
+
+def _endpoint_matches_vehicle_feed(endpoint: str) -> bool:
+    text = (endpoint or "").strip()
+    if not text:
+        return False
+    lower_value = text.lower()
+    if TFL_VEHICLE_API_URL and lower_value == TFL_VEHICLE_API_URL.strip().lower():
+        return True
+    if lower_value == "vehicle/occupancy/buses":
+        return True
+    try:
+        parsed = urlparse(text)
+    except ValueError:
+        return False
+    path = (parsed.path or "").strip("/").lower()
+    return path == "vehicle/occupancy/buses"
+
+
+def fetch_registrations_from_endpoint(endpoint: str) -> Tuple[Dict[str, str], bool]:
+    target = (endpoint or "").strip()
+    if not target:
+        return {}, False
+
+    if _endpoint_matches_vehicle_feed(target):
+        return fetch_live_bus_registrations()
+
+    url = target if "://" in target else _build_tfl_api_url(target)
+    kwargs = build_tfl_request_kwargs()
+    base_params = dict(kwargs.get("params") or {})
+    headers = dict(kwargs.get("headers") or {})
+
+    registrations: Dict[str, str] = {}
+    success = False
+    next_request: Optional[Tuple[str, Dict[str, Any]]] = (url, None)
+    requests_made = 0
+
+    while next_request and requests_made < TFL_VEHICLE_MAX_PAGES:
+        requests_made += 1
+        request_url, extra_params = next_request
+        params = dict(base_params)
+        if extra_params:
+            for key, value in extra_params.items():
+                if value not in (None, ""):
+                    params[key] = value
+
+        try:
+            response = requests.get(
+                request_url,
+                params=params or None,
+                headers=headers or None,
+                timeout=TFL_API_TIMEOUT_SECONDS,
+            )
+            response.raise_for_status()
+        except requests.RequestException as exc:
+            print(
+                f"[fleet-sync] Failed to fetch vehicle data from {request_url}: {exc}",
+                flush=True,
+            )
+            break
+
+        try:
+            payload = response.json()
+        except ValueError as exc:
+            print(
+                f"[fleet-sync] Invalid JSON payload from {request_url}: {exc}",
+                flush=True,
+            )
+            break
+
+        success = True
+        new_count = 0
+        for entry in _iter_vehicle_entries(payload):
+            reg_key, registration = extract_vehicle_registration(entry)
+            if not reg_key or reg_key in registrations:
+                continue
+            registrations[reg_key] = registration
+            new_count += 1
+
+        link = _extract_next_link(payload)
+        if link:
+            next_request = _prepare_next_request(link, base_url=request_url)
+            continue
+
+        if new_count == 0:
+            next_request = None
+            break
+
+        next_request = None
+
+    if registrations:
+        print(
+            f"[fleet-sync] {len(registrations)} registrations discovered via {target}",
+            flush=True,
+        )
+
+    return registrations, success
+
+
+def fetch_all_bus_registrations() -> Tuple[Dict[str, str], bool]:
+    aggregated: Dict[str, str] = {}
+    any_success = False
+    vehicle_feed_processed = False
+
+    for endpoint in TFL_REGISTRATION_ENDPOINTS:
+        if not endpoint:
+            continue
+        if _endpoint_matches_vehicle_feed(endpoint):
+            if vehicle_feed_processed:
+                continue
+            vehicle_feed_processed = True
+
+        registrations, success = fetch_registrations_from_endpoint(endpoint)
+        if success:
+            any_success = True
+        for reg_key, registration in registrations.items():
+            aggregated.setdefault(reg_key, registration)
+
+    return aggregated, any_success
 
 
 def upsert_collection_item(
@@ -824,11 +1027,55 @@ def sanitise_bus_payload(
         "garage": normalise_text(payload.get("garage")),
         "extras": sanitise_extras(payload.get("extras")),
         "length": normalise_text(payload.get("length")),
+        "newUntil": normalise_datetime(payload.get("newUntil")),
         "isNewBus": to_bool(payload.get("isNewBus")),
         "isRareWorking": to_bool(payload.get("isRareWorking")),
         "createdAt": created_at,
         "lastUpdated": last_updated,
     }
+
+
+def update_new_bus_state(bus: Dict[str, Any], *, now: Optional[datetime] = None) -> bool:
+    if not isinstance(bus, dict):
+        return False
+
+    if now is None:
+        now = datetime.now(timezone.utc)
+
+    raw_new_until = bus.get("newUntil")
+    parsed_new_until = parse_iso_datetime(raw_new_until)
+    extras = sanitise_extras(bus.get("extras"))
+    extras_lower = {normalise_text(tag).lower() for tag in extras}
+    changed = False
+
+    if parsed_new_until and parsed_new_until > now:
+        iso_value = parsed_new_until.isoformat()
+        if normalise_text(raw_new_until) != iso_value:
+            bus["newUntil"] = iso_value
+            changed = True
+        if not bool(bus.get("isNewBus")):
+            bus["isNewBus"] = True
+            changed = True
+        if "new bus" not in extras_lower:
+            extras.append(NEW_BUS_EXTRA_LABEL)
+            bus["extras"] = sanitise_extras(extras)
+            changed = True
+    else:
+        if bool(bus.get("isNewBus")):
+            bus["isNewBus"] = False
+            changed = True
+        if "new bus" in extras_lower:
+            filtered = [tag for tag in extras if normalise_text(tag).lower() != "new bus"]
+            bus["extras"] = sanitise_extras(filtered)
+            changed = True
+        if normalise_text(raw_new_until):
+            bus["newUntil"] = ""
+            changed = True
+
+    if changed:
+        bus["lastUpdated"] = iso_now()
+
+    return changed
 
 
 def get_fleet_bus(connection, reg_key: str) -> Optional[Dict[str, Any]]:
@@ -899,7 +1146,7 @@ def maybe_sync_live_buses(connection, existing_reg_keys: Optional[Set[str]] = No
             return []
 
         _last_fleet_sync_attempt = now
-        registrations, success = fetch_live_bus_registrations()
+        registrations, success = fetch_all_bus_registrations()
         if not success or not registrations:
             return []
 
@@ -919,6 +1166,7 @@ def maybe_sync_live_buses(connection, existing_reg_keys: Optional[Set[str]] = No
             seen_at = datetime.now(timezone.utc)
             now_iso = seen_at.isoformat()
             registration_date = seen_at.date().isoformat()
+            new_until_iso = (seen_at + NEW_BUS_DURATION).isoformat()
             try:
                 bus = upsert_fleet_bus(
                     connection,
@@ -927,7 +1175,8 @@ def maybe_sync_live_buses(connection, existing_reg_keys: Optional[Set[str]] = No
                         "registration": registration,
                         "registrationDate": registration_date,
                         "isNewBus": True,
-                        "extras": ["New Bus"],
+                        "extras": [NEW_BUS_EXTRA_LABEL],
+                        "newUntil": new_until_iso,
                         "createdAt": now_iso,
                         "lastUpdated": now_iso,
                     },
@@ -1018,6 +1267,7 @@ def fetch_fleet_state(connection) -> Dict[str, Any]:
     options = fetch_fleet_options(connection)
 
     buses: Dict[str, Dict[str, Any]] = {}
+    pending_updates: List[Dict[str, Any]] = []
     for row in fetch_collection_items(connection, FLEET_COLLECTION_BUSES):
         data = row.get("data") or {}
         reg_key = normalise_reg_key(data.get("regKey") or row.get("item_id"))
@@ -1025,7 +1275,18 @@ def fetch_fleet_state(connection) -> Dict[str, Any]:
             continue
         data.setdefault("regKey", reg_key)
         data.setdefault("registration", data.get("registration") or reg_key)
+        if update_new_bus_state(data):
+            pending_updates.append(data)
         buses[reg_key] = data
+
+    if pending_updates:
+        for bus in pending_updates:
+            upsert_fleet_bus(
+                connection,
+                bus,
+                fallback_created_at=bus.get("createdAt") or iso_now(),
+            )
+        connection.commit()
 
     existing_keys = set(buses.keys())
     for bus in maybe_sync_live_buses(connection, existing_keys):

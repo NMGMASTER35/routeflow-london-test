@@ -33,6 +33,9 @@ A unified platform for tracking, planning, and exploring London transport routes
    Provide `TFL_APP_KEY` so that the backend can authenticate outgoing TfL requests
    on behalf of the static pages (routes, disruptions, tracker) without hitting
    anonymous rate limits.
+   Optionally provide `TFL_REGISTRATION_ENDPOINTS` (comma or newline separated)
+   to extend the automatic fleet sync to other TfL endpoints that expose vehicle
+   registrations.
 2. Navigate to `backend/`
 3. Install dependencies:
    ```sh

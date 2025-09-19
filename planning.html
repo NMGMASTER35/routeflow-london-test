@@ -3,120 +3,46 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Journey Planning | RouteFlow London</title>
+  <title>Journey Planning | Routeflow London</title>
   <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png">
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="planning.css">
   <script src="theme.js" defer></script>
 </head>
 <body>
   <div id="navbar-container"></div>
-
-  <main class="planning-shell">
-    <section class="planning-hero card">
-      <div class="planning-hero__content">
-        <p class="planning-hero__eyebrow">Multi-mode journey planner</p>
-        <h1>Design journeys across London with accessibility built in.</h1>
-        <p>Choose your start and destination points, filter by transport mode and accessibility preferences, then compare the best itineraries produced by TfL&#39;s journey planner.</p>
-      </div>
-      <dl class="planning-hero__meta">
-        <div>
-          <dt>Covered modes</dt>
-          <dd>Bus, Tube, DLR, tram, river, rail</dd>
-        </div>
-        <div>
-          <dt>Accessibility options</dt>
-          <dd>Stairs, escalators, lifts, step-free</dd>
-        </div>
-        <div>
-          <dt>Powered by</dt>
-          <dd>TfL Journey Planner API</dd>
-        </div>
-      </dl>
-    </section>
-
-    <section class="planning-layout">
-      <form id="journey-form" class="planning-form card">
-        <div class="planning-form__row">
-          <div class="planning-input">
-            <label for="from">From</label>
-            <input type="text" id="from" placeholder="Start location" required>
-          </div>
-          <div class="planning-input">
-            <label for="to">To</label>
-            <input type="text" id="to" placeholder="Destination" required>
-          </div>
-        </div>
-
-        <fieldset class="planning-fieldset">
-          <legend>Modes</legend>
-          <div class="planning-checkboxes">
-            <label><input type="checkbox" name="mode" value="bus" checked> Bus</label>
-            <label><input type="checkbox" name="mode" value="tube" checked> Tube</label>
-            <label><input type="checkbox" name="mode" value="dlr" checked> DLR</label>
-            <label><input type="checkbox" name="mode" value="overground" checked> Overground</label>
-            <label><input type="checkbox" name="mode" value="tram" checked> Tram</label>
-            <label><input type="checkbox" name="mode" value="river-bus" checked> River Bus</label>
-          </div>
-        </fieldset>
-
-        <fieldset class="planning-fieldset">
-          <legend>Accessibility</legend>
-          <div class="planning-checkboxes">
-            <label><input type="checkbox" name="accessibility" value="NoSolidStairs"> No solid stairs</label>
-            <label><input type="checkbox" name="accessibility" value="NoEscalators"> No escalators</label>
-            <label><input type="checkbox" name="accessibility" value="NoElevators"> No elevators</label>
-            <label><input type="checkbox" name="accessibility" value="StepFreeToVehicle"> Step-free to vehicle</label>
-            <label><input type="checkbox" name="accessibility" value="StepFreeToPlatform"> Step-free to platform</label>
-          </div>
-        </fieldset>
-
-        <button type="submit" class="planning-submit">Search journeys</button>
-      </form>
-
-      <aside class="planning-side">
-        <article class="planning-side__card card">
-          <h3>Make the most of your results</h3>
-          <ul>
-            <li>Compare interchange counts to find the most direct route.</li>
-            <li>Use accessibility filters to surface stations with lifts or ramps.</li>
-            <li>Switch to the tracking page to monitor live departures once you&#39;re on your way.</li>
-          </ul>
-        </article>
-      </aside>
-    </section>
-
-    <section class="planning-results card">
-      <header>
-        <h2>Journey options</h2>
-        <p>Results refresh instantly after each search.</p>
-      </header>
-      <div id="error" class="planning-error" role="alert"></div>
-      <div id="results" class="planning-results__list" aria-live="polite"></div>
-    </section>
+  <section class="page-banner">
+    <h1>Journey Planner</h1>
+    <p>Plan your trip across London using TfL data.</p>
+  </section>
+  <main class="planner">
+    <form id="journey-form" class="planner-form">
+      <input type="text" id="from" placeholder="From" required>
+      <input type="text" id="to" placeholder="To" required>
+      <fieldset class="filters">
+        <legend>Modes</legend>
+        <label><input type="checkbox" name="mode" value="bus" checked> Bus</label>
+        <label><input type="checkbox" name="mode" value="tube" checked> Tube</label>
+        <label><input type="checkbox" name="mode" value="dlr" checked> DLR</label>
+        <label><input type="checkbox" name="mode" value="overground" checked> Overground</label>
+        <label><input type="checkbox" name="mode" value="tram" checked> Tram</label>
+        <label><input type="checkbox" name="mode" value="river-bus" checked> River Bus</label>
+      </fieldset>
+      <fieldset class="filters">
+        <legend>Accessibility</legend>
+        <label><input type="checkbox" name="accessibility" value="NoSolidStairs"> No solid stairs</label>
+        <label><input type="checkbox" name="accessibility" value="NoEscalators"> No escalators</label>
+        <label><input type="checkbox" name="accessibility" value="NoElevators"> No elevators</label>
+        <label><input type="checkbox" name="accessibility" value="StepFreeToVehicle"> Step-free to vehicle</label>
+        <label><input type="checkbox" name="accessibility" value="StepFreeToPlatform"> Step-free to platform</label>
+      </fieldset>
+      <button type="submit">Search</button>
+    </form>
+    <div id="error" class="error"></div>
+    <div id="results"></div>
   </main>
-
-  <footer>
-    <div class="footer-links">
-      <a href="about.html">About</a> |
-      <a href="privacy.html">Privacy</a> |
-      <a href="terms.html">Terms</a> |
-      <a href="contact.html">Contact</a>
-    </div>
-    <div class="social-icons">
-      <a href="https://discord.gg/qVf3nN4Mgq"><i class="fa-brands fa-discord"></i></a>
-      <a href="https://www.tiktok.com/@the_bus_father"><i class="fab fa-tiktok"></i></a>
-      <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo"><i class="fab fa-instagram"></i></a>
-    </div>
-    <small>Made for London. Built from scratch.</small>
-  </footer>
-
-  <script src="navbar-loader.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-  <script src="main.js"></script>
   <script src="planning.js"></script>
+  <script src="navbar-loader.js"></script>
 </body>
 </html>

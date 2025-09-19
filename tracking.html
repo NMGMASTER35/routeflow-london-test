@@ -4,86 +4,355 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tracking | RouteFlow London</title>
-  <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png">
-  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="tracking.css">
+  <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png" />
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Montserrat:wght@600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="navbar.css" />
   <script src="theme.js" defer></script>
+  <style>
+    :root {
+      --bg: #f7f8fb;
+      --card: #ffffff;
+      --ink: #1a1d21;
+      --muted: #6b7280;
+      --ring: #e5e7eb;
+      --accent: #c8102e;
+      --shadow: 0 8px 24px rgba(16, 24, 40, 0.06);
+      --bus: #d01c1f;
+      --tube: #003688;
+      --dlr: #00afad;
+      --overground: #ff6d00;
+      --elizabeth-line: #6633cc;
+      --tram: #00a650;
+      --river-bus: #0aa7b8;
+      --national-rail: #0b3b8c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header.tracking-brand {
+      width: 100%;
+      padding: 24px 16px;
+      background: #fff;
+      border-bottom: 1px solid var(--ring);
+    }
+
+    header.tracking-brand .brand {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    header.tracking-brand h1 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      margin: 0;
+      color: var(--accent);
+    }
+
+    header.tracking-brand small {
+      color: var(--muted);
+    }
+
+    .search-wrap {
+      width: 100%;
+      max-width: 900px;
+      margin: 18px auto 8px;
+      padding: 0 16px;
+    }
+
+    .search {
+      position: relative;
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--ring);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+    }
+
+    .search input {
+      flex: 1;
+      border: 0;
+      outline: 0;
+      font-size: 16px;
+      padding: 10px 12px;
+      background: transparent;
+    }
+
+    .search button {
+      border: 0;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .search button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .results {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(100% + 8px);
+      background: var(--card);
+      border: 1px solid var(--ring);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      overflow: auto;
+      max-height: 420px;
+      display: none;
+      z-index: 20;
+    }
+
+    .result {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--ring);
+      cursor: pointer;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .result:last-child {
+      border-bottom: none;
+    }
+
+    .result:hover {
+      background: #f3f4f6;
+    }
+
+    .r-main {
+      flex: 1;
+    }
+
+    .r-title {
+      font-weight: 700;
+    }
+
+    .r-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1100px;
+      padding: 12px 16px 48px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      flex: 1 0 auto;
+    }
+
+    .board {
+      background: var(--card);
+      border: 1px solid var(--ring);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .board-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      background: #fbfbfc;
+      border-bottom: 1px solid var(--ring);
+      gap: 12px;
+    }
+
+    .board-title {
+      font-weight: 800;
+      margin: 0;
+    }
+
+    .meta {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .action-btn {
+      background: var(--accent);
+      color: #fff;
+      border: 0;
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .rows {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 110px 1fr 110px;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--ring);
+      align-items: center;
+    }
+
+    .row:last-child {
+      border-bottom: none;
+    }
+
+    .badge {
+      justify-self: start;
+      color: #fff;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 90px;
+      justify-content: center;
+      text-transform: uppercase;
+    }
+
+    .dest {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .dest b {
+      font-weight: 700;
+    }
+
+    .dest small {
+      color: var(--muted);
+    }
+
+    .eta {
+      justify-self: end;
+      font-weight: 800;
+    }
+
+    .empty {
+      padding: 18px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    footer.site-footer {
+      text-align: center;
+      padding: 24px 16px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    footer.site-footer .footer-links {
+      margin-bottom: 8px;
+    }
+
+    footer.site-footer a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    footer.site-footer .social-icons {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 8px;
+      font-size: 20px;
+    }
+
+    @media (max-width: 720px) {
+      .row {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 8px;
+      }
+
+      .eta {
+        justify-self: center;
+      }
+
+      .actions {
+        justify-content: flex-start;
+      }
+    }
+  </style>
 </head>
 <body>
   <div id="navbar-container"></div>
 
-  <main class="tracking-shell">
-    <section class="tracking-hero card">
-      <div class="tracking-hero__content">
-        <p class="tracking-hero__eyebrow">Live arrival board</p>
-        <h1>Track buses, tubes, trams and river services in real time.</h1>
-        <p>Search for any stop or station across the TfL network to see departures update automatically. Save favourites, jot down notes and keep your personal watch list close at hand.</p>
+  <header class="tracking-brand">
+    <div class="brand">
+      <h1>RouteFlow London</h1>
+      <small>Live arrivals for buses, tubes, trams & boats</small>
+    </div>
+    <div class="search-wrap">
+      <div class="search" id="searchBox">
+        <input id="q" type="text" placeholder="Search a station name or paste a Stop ID…" autocomplete="off" />
+        <button id="goBtn" type="button" disabled>Search</button>
+        <div class="results" id="results"></div>
       </div>
-      <ul class="tracking-hero__highlights">
-        <li>
-          <span>Live refresh</span>
-          <strong>Every 25 seconds</strong>
-        </li>
-        <li>
-          <span>Modes covered</span>
-          <strong>Bus, Tube, DLR, tram, river, rail</strong>
-        </li>
-        <li>
-          <span>Productivity</span>
-          <strong>Notes &amp; favourites built-in</strong>
-        </li>
-      </ul>
-    </section>
+    </div>
+  </header>
 
-    <section class="tracking-layout">
-      <section class="tracking-board card" aria-live="polite">
-        <header class="tracking-board__header">
-          <div>
-            <h2 id="boardTitle">No stop selected</h2>
-            <p id="boardMeta">Type a station or stop name to get started.</p>
-          </div>
-          <div class="tracking-board__actions">
-            <button class="tracking-chip" id="favBtn" type="button">☆ Favourite</button>
-            <button class="tracking-chip" id="noteBtn" type="button">📝 Add note</button>
-            <span class="tracking-board__timestamp" id="updated"></span>
-          </div>
-        </header>
-
-        <div class="tracking-search">
-          <label class="sr-only" for="q">Search for a stop or station</label>
-          <div class="tracking-search__field" id="searchBox">
-            <input id="q" type="text" placeholder="Search a station name or paste a Stop ID…" autocomplete="off" />
-            <button id="goBtn" type="button" disabled>Search</button>
-            <div class="tracking-search__results" id="results"></div>
-          </div>
+  <main class="container">
+    <section class="board" id="board" aria-live="polite">
+      <div class="board-head">
+        <div>
+          <h2 class="board-title" id="boardTitle">No stop selected</h2>
+          <div class="meta" id="boardMeta">Type a station name and choose a stop from the list.</div>
         </div>
-
-        <div class="tracking-board__rows" id="rows">
-          <div class="empty">Nothing to show yet.</div>
+        <div class="actions">
+          <button class="action-btn" id="favBtn" type="button">☆ Favourite</button>
+          <button class="action-btn" id="noteBtn" type="button">📝 Add note</button>
+          <div class="meta" id="updated"></div>
         </div>
-      </section>
-
-      <aside class="tracking-side">
-        <article class="tracking-side__card card">
-          <h3>Tips for faster searches</h3>
-          <ul>
-            <li>Paste a StopPoint ID (e.g. 490008660N) to jump straight to arrivals.</li>
-            <li>Use the favourites button to pin key stops to your profile dashboard.</li>
-            <li>Add notes for rare allocations, disruptions or personal reminders.</li>
-          </ul>
-        </article>
-        <article class="tracking-side__card card">
-          <h3>Need planning tools?</h3>
-          <p>Switch to the journey planner to compare multi-mode routes with accessibility filters.</p>
-          <a class="tracking-side__link" href="planning.html">Open journey planner</a>
-        </article>
-      </aside>
+      </div>
+      <div class="rows" id="rows">
+        <div class="empty">Nothing to show yet.</div>
+      </div>
     </section>
   </main>
 
-  <footer>
+  <footer class="site-footer">
     <div class="footer-links">
       <a href="about.html">About</a> |
       <a href="privacy.html">Privacy</a> |
@@ -91,21 +360,20 @@
       <a href="contact.html">Contact</a>
     </div>
     <div class="social-icons">
-      <a href="https://discord.gg/qVf3nN4Mgq"><i class="fa-brands fa-discord"></i></a>
-      <a href="https://www.tiktok.com/@the_bus_father"><i class="fab fa-tiktok"></i></a>
-      <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo"><i class="fab fa-instagram"></i></a>
+      <a href="https://discord.gg/qVf3nN4Mgq" aria-label="Discord"><i class="fa-brands fa-discord"></i></a>
+      <a href="https://www.tiktok.com/@the_bus_father" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+      <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
     </div>
     <small>Made for London. Built from scratch.</small>
   </footer>
 
   <script src="config.js"></script>
-  <script src="navbar-loader.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script src="main.js"></script>
   <script>
 const TFL_API_BASE = '/api/tfl';
-const MODES = "bus,tube,overground,dlr,tram,river-bus,national-rail,elizabeth-line";
+const MODES = 'bus,tube,overground,dlr,tram,river-bus,national-rail,elizabeth-line';
 const LAST_STOP_KEY = 'routeflow.lastStop';
 const q = document.getElementById('q');
 const goBtn = document.getElementById('goBtn');
@@ -118,339 +386,280 @@ const updated = document.getElementById('updated');
 let refreshTimer = null;
 let currentStop = null;
 let refreshSeconds = 25;
-let distanceUnit = "metric";
+let distanceUnit = 'metric';
 
-function storeLastStop(stop){
-  if(typeof window === 'undefined' || !('localStorage' in window)) return;
-  if(!stop || !stop.id) return;
-  try{
+function storeLastStop(stop) {
+  if (typeof window === 'undefined' || !('localStorage' in window)) return;
+  if (!stop || !stop.id) return;
+  try {
     window.localStorage.setItem(LAST_STOP_KEY, JSON.stringify({
       id: stop.id,
       name: stop.name || '',
       timestamp: Date.now()
     }));
-  }catch(e){
-    // ignore storage issues
-  }
+  } catch (e) {}
 }
 
-function updateTrackingUrl(stop){
-  if(typeof window === 'undefined' || !window.history?.replaceState) return;
-  try{
-    const url = new URL(window.location.href);
-    if(stop && stop.id){
-      url.searchParams.set('stopId', stop.id);
-      if(stop.name){
-        url.searchParams.set('stopName', stop.name);
-      }else{
-        url.searchParams.delete('stopName');
-      }
-    }else{
-      url.searchParams.delete('stopId');
-      url.searchParams.delete('stopName');
-    }
-    window.history.replaceState({}, '', url);
-  }catch(e){
-    // ignore URL update issues
-  }
-}
-
-function loadSettings(){
-  try{
+function loadSettings() {
+  try {
     const s = JSON.parse(localStorage.getItem('rfSettings')) || {};
     refreshSeconds = Number(s.refreshSeconds) || 25;
-    distanceUnit = s.distanceUnit || "metric";
-  }catch(e){
+    distanceUnit = s.distanceUnit || 'metric';
+  } catch (e) {
     refreshSeconds = 25;
-    distanceUnit = "metric";
+    distanceUnit = 'metric';
   }
 }
 loadSettings();
 
-/* ---------- helpers ---------- */
-const sleep = ms => new Promise(r=>setTimeout(r,ms));
-function debounce(fn, ms=300){
-  let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args),ms); };
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+function debounce(fn, ms = 300) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), ms);
+  };
 }
-function minsOrDue(seconds){
-  const m = Math.round(seconds/60);
-  return m <= 0 ? "Due" : `${m} min`;
+function minsOrDue(seconds) {
+  const m = Math.round(seconds / 60);
+  return m <= 0 ? 'Due' : `${m} min`;
 }
-function formatDistance(m){
-  return distanceUnit === "imperial" ? `${(m/1609.344).toFixed(2)} mi` : `${Math.round(m)} m`;
+function formatDistance(m) {
+  return distanceUnit === 'imperial' ? `${(m / 1609.344).toFixed(2)} mi` : `${Math.round(m)} m`;
 }
-function modeClass(mode){
+function modeClass(mode) {
   return `mode-${mode}`;
 }
-function modeIcon(mode){
-  switch(mode){
-    case "bus": return "🚍";
-    case "tube": return "🚇";
-    case "dlr": return "🚈";
-    case "overground": return "🟠";
-    case "elizabeth-line": return "🟣";
-    case "tram": return "🚊";
-    case "river-bus": return "⛴️";
-    case "national-rail": return "🚆";
-    default: return "🚌";
+function modeIcon(mode) {
+  switch (mode) {
+    case 'bus': return '🚍';
+    case 'tube': return '🚇';
+    case 'dlr': return '🚈';
+    case 'overground': return '🟠';
+    case 'elizabeth-line': return '🟣';
+    case 'tram': return '🚊';
+    case 'river-bus': return '⛴️';
+    case 'national-rail': return '🚆';
+    default: return '🚌';
   }
 }
-async function fetchJSON(url){
+async function fetchJSON(url) {
   const res = await fetch(url);
-  if(!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
 
-/* ---------- search ---------- */
-async function search(query){
-  if(!query) { results.style.display="none"; return; }
+async function search(query) {
+  if (!query) {
+    results.style.display = 'none';
+    return;
+  }
 
-  if(/^\d{8,}[A-Z]?$/i.test(query.trim())){
-    results.style.display="none";
-    selectStop(query.trim(), "Selected stop");
+  if (/^\d{8,}[A-Z]?$/i.test(query.trim())) {
+    results.style.display = 'none';
+    selectStop(query.trim(), 'Selected stop');
     return;
   }
 
   const searchUrl = `${TFL_API_BASE}/StopPoint/Search/${encodeURIComponent(query)}?modes=${encodeURIComponent(MODES)}&maxResults=20`;
 
   let searchData;
-  try{
+  try {
     searchData = await fetchJSON(searchUrl);
-  }catch(e){
+  } catch (e) {
     console.error(e);
-    results.innerHTML = `<div class="result"><div class="r-main"><div class="r-title">Search failed</div><div class="r-sub">Check your connection</div></div></div>`;
-    results.style.display="block";
+    results.innerHTML = `<div class="result"><div class="r-main"><div class="r-title">Search failed</div><div class="r-sub">Check your connection and try again</div></div></div>`;
+    results.style.display = 'block';
     return;
   }
 
-  const matches = (searchData && searchData.matches) ? searchData.matches.slice(0,20) : [];
-  if(matches.length === 0){
+  const matches = (searchData && searchData.matches) ? searchData.matches.slice(0, 20) : [];
+  if (matches.length === 0) {
     results.innerHTML = `<div class="result"><div class="r-main"><div class="r-title">No results</div><div class="r-sub">Try another station name</div></div></div>`;
-    results.style.display="block";
+    results.style.display = 'block';
     return;
   }
 
-  const detailPromises = matches.map(m =>
-    fetchJSON(`${TFL_API_BASE}/StopPoint/${encodeURIComponent(m.id)}`).catch(()=>null)
-  );
+  const detailPromises = matches.map((m) => fetchJSON(`${TFL_API_BASE}/StopPoint/${m.id}`).catch(() => null));
   const details = await Promise.all(detailPromises);
 
   const entries = [];
-  details.forEach(sp => {
-    if(!sp) return;
-    if(Array.isArray(sp.children) && sp.children.length){
-      sp.children.forEach(child=>{
-        entries.push(child);
-      });
-    }else{
+  details.forEach((sp) => {
+    if (!sp) return;
+    if (Array.isArray(sp.children) && sp.children.length) {
+      sp.children.forEach((child) => entries.push(child));
+    } else {
       entries.push(sp);
     }
   });
 
-  results.innerHTML = entries.map(sp=>{
-    const stopName = sp.commonName || sp.name || "";
-    const stopLetter = sp.stopLetter || (sp.additionalProperties||[]).find(p=>p.key==="StopLetter")?.value || "";
-    const towards = (sp.additionalProperties||[]).find(p=>p.key==="Towards")?.value || "";
-    const mode = (sp.modes && sp.modes[0]) ? sp.modes[0] : "bus";
+  results.innerHTML = entries.map((sp) => {
+    const stopName = sp.commonName || sp.name || '';
+    const stopLetter = sp.stopLetter || (sp.additionalProperties || []).find((p) => p.key === 'StopLetter')?.value || '';
+    const towards = (sp.additionalProperties || []).find((p) => p.key === 'Towards')?.value || '';
+    const mode = (sp.modes && sp.modes[0]) ? sp.modes[0] : 'bus';
     const icon = modeIcon(mode);
-    const platformText = stopLetter ? `Platform: ${stopLetter}` : `Platform: –`;
-    const towardsText = towards ? `Towards: ${towards}` : `Towards: –`;
+    const platformText = stopLetter ? `Platform: ${stopLetter}` : 'Platform: –';
+    const towardsText = towards ? `Towards: ${towards}` : 'Towards: –';
 
     return `
       <div class="result" data-id="${sp.id}" data-name="${stopName}">
-        <div class="chip ${modeClass(mode)}" style="color:#fff;border-color:transparent;background:inherit;display:none"></div>
         <div class="r-main">
           <div class="r-title">${icon} ${stopName}</div>
-          <div class="r-sub">${platformText} &nbsp;•&nbsp; ${towardsText}</div>
+          <div class="r-sub">${platformText} · ${towardsText}</div>
         </div>
       </div>
     `;
-  }).join("");
+  }).join('');
 
-  Array.from(results.querySelectorAll('.result')).forEach(el=>{
-    el.addEventListener('click', ()=>{
+  Array.from(results.querySelectorAll('.result')).forEach((el) => {
+    el.addEventListener('click', () => {
       const id = el.getAttribute('data-id');
       const name = el.getAttribute('data-name');
-      results.style.display="none";
+      results.style.display = 'none';
       selectStop(id, name);
     });
   });
 
-  results.style.display="block";
+  results.style.display = 'block';
 }
 
-/* ---------- arrivals ---------- */
-async function loadArrivals(stopId, stopName){
-  boardTitle.textContent = stopName || "Live Arrivals";
-  boardMeta.textContent = "Fetching live data…";
+async function loadArrivals(stopId, stopName) {
+  boardTitle.textContent = stopName || 'Live Arrivals';
+  boardMeta.textContent = 'Fetching live data…';
   rows.innerHTML = `<div class="empty">Loading…</div>`;
 
-  try{
-    let data = await fetchJSON(`${TFL_API_BASE}/StopPoint/${encodeURIComponent(stopId)}/Arrivals`);
+  try {
+    let data = await fetchJSON(`${TFL_API_BASE}/StopPoint/${stopId}/Arrivals`);
 
-    if(!Array.isArray(data) || data.length===0){
-      const info = await fetchJSON(`${TFL_API_BASE}/StopPoint/${encodeURIComponent(stopId)}`).catch(()=>null);
-      if(info && Array.isArray(info.children) && info.children.length){
-        const childReqs = info.children.map(c =>
-          fetchJSON(`${TFL_API_BASE}/StopPoint/${encodeURIComponent(c.id)}/Arrivals`).catch(()=>[])
-        );
+    if (!Array.isArray(data) || data.length === 0) {
+      const info = await fetchJSON(`${TFL_API_BASE}/StopPoint/${stopId}`).catch(() => null);
+      if (info && Array.isArray(info.children) && info.children.length) {
+        const childReqs = info.children.map((c) => fetchJSON(`${TFL_API_BASE}/StopPoint/${c.id}/Arrivals`).catch(() => []));
         const childData = (await Promise.all(childReqs)).flat();
         data = childData;
       }
     }
 
-    if(!Array.isArray(data) || data.length===0){
+    if (!Array.isArray(data) || data.length === 0) {
       rows.innerHTML = `<div class="empty">No live arrivals right now.</div>`;
       updated.textContent = new Date().toLocaleTimeString();
-      boardMeta.textContent = "";
+      boardMeta.textContent = '';
       return;
     }
 
-    data.sort((a,b)=> a.timeToStation - b.timeToStation);
+    data.sort((a, b) => a.timeToStation - b.timeToStation);
 
-    rows.innerHTML = data.map(a=>{
-      const mode = (a.modeName || "bus");
+    rows.innerHTML = data.map((a) => {
+      const mode = (a.modeName || 'bus');
       const badgeClass = modeClass(mode);
       const icon = modeIcon(mode);
       const eta = minsOrDue(a.timeToStation);
-      const line = a.lineName || a.lineId || "";
+      const line = a.lineName || a.lineId || '';
 
       const details = [];
-      if(a.vehicleId) details.push(`Reg: ${a.vehicleId}`);
-      if(typeof a.distance === 'number') details.push(formatDistance(a.distance));
+      if (a.vehicleId) details.push(`Reg: ${a.vehicleId}`);
+      if (typeof a.distance === 'number') details.push(formatDistance(a.distance));
       const detailStr = details.join(' • ');
 
       return `
         <div class="row">
-          <div class="badge ${badgeClass}" style="background:var(--${mode.replace(/ /g,'') || 'bus'})">
+          <div class="badge ${badgeClass}" style="background: var(--${mode}, var(--accent))">
             ${icon} ${line}
           </div>
           <div class="dest">
-            <b>${a.destinationName || a.towards || "—"}</b>
+            <b>${a.destinationName || a.towards || '—'}</b>
             <small>${detailStr}</small>
           </div>
           <div class="eta">${eta}</div>
         </div>
       `;
-    }).join("");
+    }).join('');
 
     updated.textContent = `Updated ${new Date().toLocaleTimeString()}`;
-    boardMeta.textContent = "";
-  }catch(e){
+    boardMeta.textContent = '';
+    storeLastStop({ id: stopId, name: stopName });
+  } catch (e) {
     console.error(e);
     rows.innerHTML = `<div class="empty">Error loading arrivals.</div>`;
-    boardMeta.textContent = "Please try again.";
+    boardMeta.textContent = 'Please try again.';
   }
 }
 
-function startRefreshTimer(){
-  if(refreshTimer) clearInterval(refreshTimer);
-  refreshTimer = setInterval(()=> {
-    if(currentStop) loadArrivals(currentStop.id, currentStop.name);
+function startRefreshTimer() {
+  if (refreshTimer) clearInterval(refreshTimer);
+  refreshTimer = setInterval(() => {
+    if (currentStop) loadArrivals(currentStop.id, currentStop.name);
   }, refreshSeconds * 1000);
 }
 
-function selectStop(id, name){
+function selectStop(id, name) {
   loadSettings();
   currentStop = { id, name };
   q.value = name;
-  results.style.display = "none";
-  updateTrackingUrl(currentStop);
-  storeLastStop(currentStop);
+  results.style.display = 'none';
   loadArrivals(id, name);
   startRefreshTimer();
 }
 
-q.addEventListener('input', debounce((event)=>{
-  const value = event.target.value.trim();
-  goBtn.disabled = !value;
-  search(value);
-}, 250));
+const runSearch = debounce(() => search(q.value.trim()), 250);
 
-q.addEventListener('keydown', (event) => {
-  if (event.key === 'Enter') {
-    event.preventDefault();
-    const value = q.value.trim();
-    if (value) {
-      search(value);
+q.addEventListener('input', () => {
+  goBtn.disabled = q.value.trim().length < 2;
+  runSearch();
+});
+q.addEventListener('focus', () => {
+  if (results.innerHTML.trim()) results.style.display = 'block';
+});
+document.addEventListener('click', (e) => {
+  if (!document.getElementById('searchBox').contains(e.target)) {
+    results.style.display = 'none';
+  }
+});
+q.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    if (results.style.display !== 'block') runSearch();
+  }
+});
+goBtn.addEventListener('click', () => runSearch());
+
+(function restoreLastStop() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(LAST_STOP_KEY));
+    if (saved && saved.id && Date.now() - saved.timestamp < 12 * 60 * 60 * 1000) {
+      selectStop(saved.id, saved.name);
     }
-  }
-});
-
-goBtn.addEventListener('click', ()=>{
-  const value = q.value.trim();
-  if(!value) return;
-  search(value);
-});
-
-document.addEventListener('click', (event)=>{
-  if(!event.target.closest('#searchBox')){
-    results.style.display = "none";
-  }
-});
-
-const params = new URLSearchParams(window.location.search);
-const initialStopId = params.get('stopId');
-const initialStopName = params.get('stopName');
-if(initialStopId){
-  selectStop(initialStopId, initialStopName || 'Selected stop');
-}
-
-window.addEventListener('beforeunload', () => {
-  if(refreshTimer) clearInterval(refreshTimer);
-});
+  } catch (e) {}
+})();
   </script>
   <script type="module">
-    import { addFavourite } from './favourites.js';
-    import { addNote } from './notes.js';
+import { addFavourite } from './favourites.js';
+import { addNote } from './notes.js';
 
-    const favBtn = document.getElementById('favBtn');
-    const noteBtn = document.getElementById('noteBtn');
+const favBtn = document.getElementById('favBtn');
+const noteBtn = document.getElementById('noteBtn');
 
-    favBtn?.addEventListener('click', async () => {
-      const user = firebase.auth()?.currentUser;
-      if (!user || !currentStop) {
-        alert('Select a stop and sign in first.');
-        return;
-      }
-      try {
-        favBtn.disabled = true;
-        await addFavourite(user.uid, currentStop);
-        favBtn.textContent = '★ Favourited';
-      } catch (error) {
-        console.error('Failed to save stop as favourite from tracker view.', error);
-        alert('We could not save this favourite. Please try again.');
-      } finally {
-        favBtn.disabled = false;
-      }
-    });
+favBtn.addEventListener('click', () => {
+  const user = firebase.auth().currentUser;
+  if (!user || !currentStop) {
+    alert('Select a stop and sign in first');
+    return;
+  }
+  addFavourite(user.uid, currentStop);
+  favBtn.textContent = '★ Favourited';
+});
 
-    noteBtn?.addEventListener('click', async () => {
-      const user = firebase.auth()?.currentUser;
-      if (!user || !currentStop) {
-        alert('Select a stop and sign in first.');
-        return;
-      }
-      const text = prompt('Enter a note for this stop:');
-      if (!text) {
-        return;
-      }
-      const trimmedText = text.trim();
-      if (!trimmedText) {
-        alert('Your note cannot be empty.');
-        return;
-      }
-      const stopName = (currentStop.name || currentStop.title || currentStop.id || 'Saved stop').toString().trim() || 'Saved stop';
-      try {
-        noteBtn.disabled = true;
-        await addNote(user.uid, { id: currentStop.id, name: stopName, text: trimmedText });
-      } catch (error) {
-        console.error('Failed to add note from tracker view.', error);
-        alert('We could not save this note. Please try again.');
-      } finally {
-        noteBtn.disabled = false;
-      }
-    });
+noteBtn.addEventListener('click', () => {
+  const user = firebase.auth().currentUser;
+  if (!user || !currentStop) {
+    alert('Select a stop and sign in first');
+    return;
+  }
+  const text = prompt('Enter a note for this stop:');
+  if (text) addNote(user.uid, { id: currentStop.id, name: currentStop.name, text });
+});
   </script>
+  <script src="navbar-loader.js"></script>
 </body>
 </html>
