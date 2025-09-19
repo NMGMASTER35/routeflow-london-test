@@ -359,6 +359,16 @@ body.dark-mode .navbar__drawer {
   justify-content: flex-start;
 }
 
+@media (max-width: 720px) {
+  .navbar__auth {
+    display: none;
+  }
+
+  .navbar__actions {
+    gap: 0.5rem;
+  }
+}
+
 @media (max-width: 1024px) {
   .navbar__desktop {
     display: none;

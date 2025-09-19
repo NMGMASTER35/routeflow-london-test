@@ -226,6 +226,7 @@ function closeModal() {
   if (!modal) return;
   modal.removeAttribute('data-open');
   modal.setAttribute('aria-hidden', 'true');
+  modal.setAttribute('hidden', '');
   delete document.body.dataset.authModalOpen;
   clearFormMessages();
   resetAuthForms();
@@ -267,6 +268,7 @@ function showAuthModal(mode = 'login') {
 
   clearFormMessages();
   const activeContainer = setActiveAuthView(mode);
+  modal.removeAttribute('hidden');
   modal.setAttribute('data-open', 'true');
   modal.setAttribute('aria-hidden', 'false');
   document.body.dataset.authModalOpen = 'true';
