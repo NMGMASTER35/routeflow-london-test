@@ -13,94 +13,160 @@
 <body>
   <div id="navbar-container"></div>
 
-  <main class="landing">
-    <section class="landing-hero card">
+  <main class="landing" aria-labelledby="landing-title">
+    <section class="landing-hero card" data-animate="fade-up">
       <div class="landing-hero__content">
-        <p class="landing-hero__eyebrow">Your companion to London transport</p>
-        <h1>Everything you need to move around London with confidence.</h1>
+        <p class="landing-hero__eyebrow">The official London transport companion</p>
+        <h1 id="landing-title">Plan, track and play your way around the capital.</h1>
         <p class="landing-hero__lead">
-          RouteFlow London blends real-time data with enthusiast insights so you can plan smarter journeys, watch departures update in
-          real time, and keep favourite routes close without juggling a dozen tabs.
+          RouteFlow London pairs real-time data with a playful dashboard so you can
+          check arrivals, map complex journeys and unlock rewards without digging through a maze of menus.
         </p>
-        <div class="landing-hero__actions">
-          <a class="landing-hero__button landing-hero__button--primary" href="tracking.html">
+        <div class="landing-hero__actions" role="group">
+          <a class="landing-hero__button landing-hero__button--primary" href="dashboard.html">
+            <i class="fa-solid fa-compass"></i>
+            Open dashboard
+          </a>
+          <a class="landing-hero__button" href="tracking.html">
             <i class="fa-solid fa-wifi"></i>
             Live tracking
           </a>
-          <a class="landing-hero__button" href="planning.html">
-            <i class="fa-solid fa-route"></i>
-            Journey planner
-          </a>
         </div>
-        <dl class="landing-hero__metrics" aria-label="Platform snapshot">
+        <dl class="landing-hero__metrics" aria-label="RouteFlow snapshot">
           <div>
-            <dt>Stops monitored</dt>
-            <dd>20k+</dd>
+            <dt>Network feeds</dt>
+            <dd>Live across TfL</dd>
           </div>
           <div>
-            <dt>Journey combinations</dt>
-            <dd>Millions</dd>
+            <dt>Gamified members</dt>
+            <dd>14k+</dd>
           </div>
           <div>
-            <dt>Community insights</dt>
-            <dd>Daily</dd>
+            <dt>Mini games</dt>
+            <dd>Fresh every week</dd>
           </div>
         </dl>
       </div>
-      <div class="landing-hero__preview">
+      <div class="landing-hero__preview" aria-hidden="true">
         <div class="landing-preview">
-          <h2>Live now</h2>
-          <p>See departures update in real time and save the stops that matter most.</p>
+          <header class="landing-preview__header">
+            <span class="landing-preview__label">Dashboard sneak peek</span>
+            <span class="landing-preview__level">Level 5 &bull; 3,250 XP</span>
+          </header>
           <ul class="landing-preview__list">
             <li>
-              <span class="landing-preview__label">Arrivals</span>
-              <strong>Refreshes every 25s</strong>
+              <strong>Badges unlocked</strong>
+              <span>Night Bus Navigator</span>
             </li>
             <li>
-              <span class="landing-preview__label">Notes</span>
-              <strong>Pin rare workings</strong>
+              <strong>Active role</strong>
+              <span>Community Pathfinder</span>
             </li>
             <li>
-              <span class="landing-preview__label">Favourites</span>
-              <strong>Sync across devices</strong>
+              <strong>Mini game streak</strong>
+              <span>4 days</span>
             </li>
           </ul>
-          <a class="landing-preview__cta" href="tracking.html">Open live arrivals</a>
+          <a class="landing-preview__cta" href="dashboard.html">See the full dashboard</a>
         </div>
       </div>
     </section>
 
-    <section class="landing-panels" aria-label="Highlights">
-      <article class="landing-panel">
+    <section class="landing-panels" aria-label="Key highlights">
+      <article class="landing-panel" data-animate="fade-up">
         <div class="landing-panel__icon" aria-hidden="true">
-          <i class="fa-solid fa-tower-broadcast"></i>
+          <i class="fa-solid fa-satellite-dish"></i>
         </div>
         <div class="landing-panel__content">
-          <h2>Real-time arrivals</h2>
-          <p>Departures refresh automatically with tidy colour-coded lines for every mode across the network.</p>
+          <h2>Live, accurate arrivals</h2>
+          <p>Watch bus, tube and river updates roll in within seconds and pin the stops that matter.</p>
         </div>
       </article>
-      <article class="landing-panel">
+      <article class="landing-panel" data-animate="fade-up" data-animate-delay="100">
         <div class="landing-panel__icon" aria-hidden="true">
           <i class="fa-solid fa-route"></i>
         </div>
         <div class="landing-panel__content">
-          <h2>Multi-mode planning</h2>
-          <p>Compare step-free options, river links and buses side by side to pick the itinerary that fits.</p>
+          <h2>Smarter journey planning</h2>
+          <p>Compare accessible routes, view rare workings and save itineraries straight to your dashboard.</p>
         </div>
       </article>
-      <article class="landing-panel">
+      <article class="landing-panel" data-animate="fade-up" data-animate-delay="200">
         <div class="landing-panel__icon" aria-hidden="true">
-          <i class="fa-solid fa-book-open"></i>
+          <i class="fa-solid fa-chart-line"></i>
         </div>
         <div class="landing-panel__content">
-          <h2>Enthusiast archive</h2>
-          <p>Discover fleet changes, rare workings and withdrawn routes curated by the community.</p>
+          <h2>Insights for enthusiasts</h2>
+          <p>Dive into fleets, withdrawn lines and community notes maintained by London transport fans.</p>
         </div>
       </article>
     </section>
 
-    <section class="landing-tools card">
+    <section class="landing-gamify card" aria-label="Gamified community features">
+      <header class="landing-gamify__header">
+        <p class="landing-gamify__eyebrow">Playful transport community</p>
+        <h2>Earn, sync and compete with RouteFlow Gamification.</h2>
+        <p>Badge up with tasks, sync your Discord role automatically and tackle mini games inspired by the network.</p>
+      </header>
+      <div class="landing-gamify__grid">
+        <article class="landing-gamify__item">
+          <span class="landing-gamify__icon" aria-hidden="true"><i class="fa-solid fa-award"></i></span>
+          <h3>Collect limited badges</h3>
+          <p>Complete daily and weekly tasks to unlock themed badges ranging from Night Bus Navigator to River Trailblazer.</p>
+        </article>
+        <article class="landing-gamify__item">
+          <span class="landing-gamify__icon" aria-hidden="true"><i class="fa-solid fa-user-shield"></i></span>
+          <h3>Unified roles</h3>
+          <p>Your achievements set your title across the dashboard and our Discord server in a single tap.</p>
+        </article>
+        <article class="landing-gamify__item">
+          <span class="landing-gamify__icon" aria-hidden="true"><i class="fa-solid fa-gamepad"></i></span>
+          <h3>Mini games with purpose</h3>
+          <p>Take on quick-fire trivia, route matching and daily streak challenges to earn bonus XP.</p>
+        </article>
+        <article class="landing-gamify__item">
+          <span class="landing-gamify__icon" aria-hidden="true"><i class="fa-brands fa-discord"></i></span>
+          <h3>Discord bot integration</h3>
+          <p>Link your Discord account to receive live notifications, leaderboard updates and exclusive events.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="landing-devices" aria-label="Cross-platform support">
+      <div class="landing-devices__card card" data-animate="fade-up">
+        <h2>Built for every screen.</h2>
+        <p>RouteFlow adapts seamlessly across Android, iOS 16+ and desktop browsers. Controls remain consistent while content reflows so you can check live departures or badges on the go.</p>
+        <ul class="landing-devices__list">
+          <li><i class="fa-brands fa-android" aria-hidden="true"></i> Android phones &amp; tablets</li>
+          <li><i class="fa-brands fa-apple" aria-hidden="true"></i> iPhone &amp; iPad (iOS 16+)</li>
+          <li><i class="fa-brands fa-chrome" aria-hidden="true"></i> Chrome, Edge and Safari</li>
+        </ul>
+      </div>
+      <div class="landing-devices__mock card" aria-hidden="true" data-animate="fade-up" data-animate-delay="120">
+        <div class="landing-devices__screen">
+          <span>Responsive preview</span>
+          <div class="landing-devices__dots">
+            <span></span><span></span><span></span>
+          </div>
+          <div class="landing-devices__grid">
+            <div>
+              <strong>Live arrivals</strong>
+              <p>Swipe friendly cards with colour-coded modes.</p>
+            </div>
+            <div>
+              <strong>Badge tracker</strong>
+              <p>Tap to see what unlocks next.</p>
+            </div>
+            <div>
+              <strong>Discord sync</strong>
+              <p>Roles and notifications stay aligned.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="landing-tools card" aria-label="Core tools">
       <header class="landing-tools__header">
         <p class="landing-tools__eyebrow">Essential tools</p>
         <h2>Made for commuters and enthusiasts alike</h2>
@@ -141,12 +207,12 @@
       </footer>
     </section>
 
-    <section class="landing-updates card">
+    <section class="landing-updates card" aria-label="Newsletter">
       <div class="landing-updates__content">
         <h2>Stay in the loop</h2>
         <p>Subscribe for feature announcements, enthusiast meet-ups and rare vehicle alerts.</p>
       </div>
-      <form id="newsletter-form" class="landing-updates__form">
+      <form id="newsletter-form" class="landing-updates__form" novalidate>
         <label for="email" class="sr-only">Email address</label>
         <input type="email" id="email" placeholder="Enter your email" required />
         <button type="submit">Subscribe</button>
@@ -158,22 +224,35 @@
   <footer>
     <div class="footer-links">
       <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
       <a href="privacy.html">Privacy</a>
       <a href="terms.html">Terms</a>
-      <a href="contact.html">Contact</a>
+      <a href="settings.html">Settings</a>
     </div>
-    <div class="social-icons">
-      <a href="https://discord.gg/qVf3nN4Mgq"><i class="fa-brands fa-discord"></i></a>
-      <a href="https://www.tiktok.com/@the_bus_father"><i class="fab fa-tiktok"></i></a>
-      <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo"><i class="fab fa-instagram"></i></a>
-    </div>
-    <small>Made for London. Built from scratch.</small>
+    <p class="footer-copy">&copy; <span id="copyright-year"></span> RouteFlow London. All rights reserved.</p>
   </footer>
 
   <script src="navbar-loader.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-  <script src="main.js"></script>
-  <script type="module" src="blog.js"></script>
+  <script src="blog.js" type="module"></script>
+  <script>
+    const form = document.getElementById('newsletter-form');
+    const responseMessage = document.getElementById('response-message');
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const emailInput = document.getElementById('email');
+      const email = emailInput.value.trim();
+
+      if (!email) {
+        responseMessage.textContent = 'Please enter your email address.';
+        return;
+      }
+
+      responseMessage.textContent = 'Thanks for subscribing! We\'ll keep you posted.';
+      emailInput.value = '';
+    });
+
+    document.getElementById('copyright-year').textContent = new Date().getFullYear();
+  </script>
 </body>
 </html>
