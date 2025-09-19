@@ -56,21 +56,117 @@ window.RouteflowAdmin = Object.freeze({
   listOverrides: () => Array.from(ADMIN_OVERRIDES.entries()).map(([uid, meta]) => ({ uid, ...meta }))
 });
 
-let auth = null;
-if (typeof firebase !== 'undefined') {
-  const firebaseConfig = resolveFirebaseConfig();
-  if (firebaseConfig) {
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
-    auth = firebase.apps.length ? firebase.auth() : null;
+const CONFIG_SCRIPT_SRC = 'config.js';
+const FIREBASE_SCRIPT_SRCS = [
+  'https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js',
+  'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js'
+];
+
+const loadedScriptPromises = new Map();
+
+function toAbsoluteUrl(src) {
+  try {
+    return new URL(src, document.baseURI).href;
+  } catch (error) {
+    console.warn('Failed to resolve script URL, using raw source.', error);
+    return src;
   }
-  if (!auth) {
-    console.error('Firebase SDK loaded but authentication is unavailable.');
-  }
-} else {
-  console.error('Firebase SDK not loaded; authentication is unavailable.');
 }
+
+function loadExternalScript(src) {
+  const absolute = toAbsoluteUrl(src);
+  if (Array.from(document.scripts).some(script => script.src === absolute)) {
+    return Promise.resolve();
+  }
+  if (loadedScriptPromises.has(absolute)) {
+    return loadedScriptPromises.get(absolute);
+  }
+  const promise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = false;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+    document.head.appendChild(script);
+  });
+  loadedScriptPromises.set(absolute, promise);
+  return promise;
+}
+
+async function ensureConfigLoaded() {
+  if (window.__ROUTEFLOW_CONFIG__?.firebase?.apiKey) {
+    return;
+  }
+  try {
+    await loadExternalScript(CONFIG_SCRIPT_SRC);
+  } catch (error) {
+    console.warn('Failed to load client configuration:', error);
+  }
+}
+
+async function ensureFirebaseScriptsLoaded() {
+  for (const src of FIREBASE_SCRIPT_SRCS) {
+    await loadExternalScript(src);
+  }
+}
+
+let auth = null;
+let authInitPromise = null;
+
+async function initialiseAuthInstance() {
+  await ensureConfigLoaded();
+  const firebaseConfig = resolveFirebaseConfig();
+  if (!firebaseConfig) {
+    return null;
+  }
+
+  try {
+    await ensureFirebaseScriptsLoaded();
+  } catch (error) {
+    console.error('Failed to load Firebase SDK:', error);
+    return null;
+  }
+
+  if (typeof firebase === 'undefined') {
+    console.error('Firebase SDK not loaded; authentication is unavailable.');
+    return null;
+  }
+
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+
+  if (!firebase.apps.length || !firebase.auth) {
+    console.error('Firebase SDK loaded but authentication is unavailable.');
+    return null;
+  }
+
+  return firebase.auth();
+}
+
+function ensureFirebaseAuth() {
+  if (auth) {
+    return Promise.resolve(auth);
+  }
+  if (authInitPromise) {
+    return authInitPromise;
+  }
+  authInitPromise = initialiseAuthInstance()
+    .then(instance => {
+      auth = instance;
+      return instance;
+    })
+    .catch(error => {
+      console.error('Failed to initialise Firebase authentication:', error);
+      return null;
+    })
+    .finally(() => {
+      authInitPromise = null;
+    });
+  return authInitPromise;
+}
+
+const authReady = ensureFirebaseAuth();
 
 // Newsletter form
 document.getElementById('newsletter-form')?.addEventListener('submit', function (e) {
@@ -87,8 +183,7 @@ document.getElementById('newsletter-form')?.addEventListener('submit', function 
 const AUTH_VIEW_IDS = {
   login: 'loginFormContainer',
   signup: 'signupFormContainer',
-  reset: 'resetFormContainer',
-  admin: 'adminFormContainer'
+  reset: 'resetFormContainer'
 };
 
 function setElementHidden(element, hidden) {
@@ -114,13 +209,13 @@ function showMessage(id, message) {
 }
 
 function clearFormMessages() {
-  ['loginError', 'signupError', 'resetError', 'resetSuccess', 'adminLoginError'].forEach(id => {
+  ['loginError', 'signupError', 'resetError', 'resetSuccess'].forEach(id => {
     showMessage(id, '');
   });
 }
 
 function resetAuthForms() {
-  ['loginForm', 'signupForm', 'resetForm', 'adminLoginForm'].forEach(id => {
+  ['loginForm', 'signupForm', 'resetForm'].forEach(id => {
     const form = document.getElementById(id);
     form?.reset();
   });
@@ -236,7 +331,7 @@ function renderDropdown(user) {
 
 window.renderDropdown = renderDropdown;
 
-function handleAuthAction(action) {
+async function handleAuthAction(action) {
   switch (action) {
     case 'login':
       window.dispatchEvent(new Event('navbar:close-overlays'));
@@ -246,70 +341,84 @@ function handleAuthAction(action) {
       window.dispatchEvent(new Event('navbar:close-overlays'));
       showAuthModal('signup');
       break;
-    case 'admin-login':
-      window.dispatchEvent(new Event('navbar:close-overlays'));
-      showAuthModal('admin');
-      break;
-    case 'logout':
-      if (!auth) {
-        console.error('Sign-out requested but Firebase auth is unavailable.');
+    case 'logout': {
+      const instance = await ensureFirebaseAuth();
+      if (!instance) {
+        alert('Authentication is temporarily unavailable. Please try again shortly.');
         return;
       }
-      auth.signOut()
-        .then(() => {
-          window.__lastAuthIsAdmin = false;
-          renderDropdown(null);
-        })
-        .catch(error => {
-          console.error('Failed to sign out:', error);
-        });
+      try {
+        await instance.signOut();
+        window.__lastAuthIsAdmin = false;
+        renderDropdown(null);
+      } catch (error) {
+        console.error('Failed to sign out:', error);
+        alert('Unable to sign out right now. Please try again.');
+      }
       break;
+    }
     case 'profile': {
-      const user = auth?.currentUser;
+      const instance = await ensureFirebaseAuth();
+      if (!instance) {
+        alert('Authentication is temporarily unavailable. Please try again shortly.');
+        return;
+      }
+      const user = instance.currentUser;
       if (user) {
         window.location.href = 'profile.html';
       } else {
-        alert('Not signed in');
+        showAuthModal('login');
       }
       break;
     }
     case 'settings': {
-      const user = auth?.currentUser;
+      const instance = await ensureFirebaseAuth();
+      if (!instance) {
+        alert('Authentication is temporarily unavailable. Please try again shortly.');
+        return;
+      }
+      const user = instance.currentUser;
       if (user) {
         window.location.href = 'settings.html';
       } else {
-        alert('Not signed in');
+        showAuthModal('login');
       }
       break;
     }
     case 'admin': {
-      const user = auth?.currentUser;
+      const instance = await ensureFirebaseAuth();
+      if (!instance) {
+        alert('Authentication is temporarily unavailable. Please try again shortly.');
+        return;
+      }
+      const user = instance.currentUser;
       if (!user) {
-        showAuthModal('admin');
-        break;
+        showAuthModal('login');
+        return;
       }
       const proceed = () => { window.location.href = 'admin.html'; };
       const knownState = window.__lastAuthIsAdmin;
       if (knownState === true) {
         proceed();
-      } else if (knownState === false) {
+        return;
+      }
+      if (knownState === false) {
         alert('This account does not have administrator access.');
-      } else {
-        user.getIdTokenResult()
-          .then(result => {
-            const isAdmin = isAdminUser(user, result);
-            window.__lastAuthIsAdmin = isAdmin;
-            updateAdminVisibility(user);
-            if (isAdmin) {
-              proceed();
-            } else {
-              alert('This account does not have administrator access.');
-            }
-          })
-          .catch(error => {
-            console.error('Failed to verify administrator permissions:', error);
-            alert('Unable to verify administrator access right now. Please try again later.');
-          });
+        return;
+      }
+      try {
+        const result = await user.getIdTokenResult();
+        const isAdmin = isAdminUser(user, result);
+        window.__lastAuthIsAdmin = isAdmin;
+        updateAdminVisibility(user);
+        if (isAdmin) {
+          proceed();
+        } else {
+          alert('This account does not have administrator access.');
+        }
+      } catch (error) {
+        console.error('Failed to verify administrator permissions:', error);
+        alert('Unable to verify administrator access right now. Please try again later.');
       }
       break;
     }
@@ -318,12 +427,23 @@ function handleAuthAction(action) {
   }
 }
 
-auth?.onAuthStateChanged(user => {
-  renderDropdown(user);
+authReady.then(instance => {
+  if (instance) {
+    instance.onAuthStateChanged(user => {
+      renderDropdown(user);
+    });
+  } else {
+    window.__lastAuthIsAdmin = false;
+  }
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-  renderDropdown(auth?.currentUser ?? null);
+  renderDropdown(window.__lastAuthUser ?? null);
+  ensureFirebaseAuth().then(instance => {
+    if (instance) {
+      renderDropdown(instance.currentUser ?? null);
+    }
+  });
 });
 
 document.addEventListener('navbar:auth-action', (event) => {
@@ -357,7 +477,7 @@ document.addEventListener('click', (event) => {
     return;
   }
 
-  const showLogin = event.target.closest('#showLogin, #showLoginFromReset, #showLoginFromAdmin');
+  const showLogin = event.target.closest('#showLogin, #showLoginFromReset');
   if (showLogin) {
     event.preventDefault();
     showAuthModal('login');
@@ -368,13 +488,6 @@ document.addEventListener('click', (event) => {
   if (showReset) {
     event.preventDefault();
     showAuthModal('reset');
-    return;
-  }
-
-  const showAdmin = event.target.closest('#showAdminLogin, #showAdminFromSignup');
-  if (showAdmin) {
-    event.preventDefault();
-    showAuthModal('admin');
     return;
   }
 
@@ -408,134 +521,98 @@ document.addEventListener('submit', (event) => {
   } else if (form.id === 'resetForm') {
     event.preventDefault();
     handleResetSubmit(form);
-  } else if (form.id === 'adminLoginForm') {
-    event.preventDefault();
-    handleAdminLoginSubmit(form);
   }
 });
 
-function handleLoginSubmit(form) {
+async function handleLoginSubmit(form) {
   const email = form.querySelector('#loginEmail')?.value.trim();
   const password = form.querySelector('#loginPassword')?.value;
   if (!email || !password) return;
   clearFormMessages();
-  if (!auth) {
+  const instance = await ensureFirebaseAuth();
+  if (!instance) {
     showMessage('loginError', 'Authentication is temporarily unavailable. Please try again shortly.');
     return;
   }
-  auth.signInWithEmailAndPassword(email, password)
-    .then(() => {
-      renderDropdown(auth.currentUser);
-      closeModal();
-    })
-    .catch((error) => {
-      showMessage('loginError', error?.message || 'Unable to sign in. Please try again.');
-    });
+  try {
+    await instance.signInWithEmailAndPassword(email, password);
+    renderDropdown(instance.currentUser ?? null);
+    closeModal();
+  } catch (error) {
+    showMessage('loginError', error?.message || 'Unable to sign in. Please try again.');
+  }
 }
 
-function handleSignupSubmit(form) {
+async function handleSignupSubmit(form) {
   const email = form.querySelector('#signupEmail')?.value.trim();
   const password = form.querySelector('#signupPassword')?.value;
   if (!email || !password) return;
   clearFormMessages();
-  if (!auth) {
+  const instance = await ensureFirebaseAuth();
+  if (!instance) {
     showMessage('signupError', 'Authentication is temporarily unavailable. Please try again shortly.');
     return;
   }
-  auth.createUserWithEmailAndPassword(email, password)
-    .then(() => {
-      renderDropdown(auth.currentUser);
-      closeModal();
-    })
-    .catch((error) => {
-      showMessage('signupError', error?.message || 'Unable to create your account. Please try again.');
-    });
+  try {
+    await instance.createUserWithEmailAndPassword(email, password);
+    renderDropdown(instance.currentUser ?? null);
+    closeModal();
+  } catch (error) {
+    showMessage('signupError', error?.message || 'Unable to create your account. Please try again.');
+  }
 }
 
-function handleResetSubmit(form) {
+async function handleResetSubmit(form) {
   const email = form.querySelector('#resetEmail')?.value.trim();
   if (!email) return;
   clearFormMessages();
-  if (!auth) {
+  const instance = await ensureFirebaseAuth();
+  if (!instance) {
     showMessage('resetError', 'Authentication is temporarily unavailable. Please try again shortly.');
     return;
   }
-  auth.sendPasswordResetEmail(email)
-    .then(() => {
-      showMessage('resetSuccess', 'Check your inbox for the reset link.');
-    })
-    .catch((error) => {
-      showMessage('resetError', error?.message || 'We could not send the reset email. Please try again.');
-    });
-}
-
-function handleAdminLoginSubmit(form) {
-  const email = form.querySelector('#adminEmail')?.value.trim();
-  const password = form.querySelector('#adminPassword')?.value;
-  if (!email || !password) return;
-  clearFormMessages();
-  if (!auth) {
-    showMessage('adminLoginError', 'Authentication is temporarily unavailable. Please try again shortly.');
-    return;
+  try {
+    await instance.sendPasswordResetEmail(email);
+    showMessage('resetSuccess', 'Check your inbox for the reset link.');
+  } catch (error) {
+    showMessage('resetError', error?.message || 'We could not send the reset email. Please try again.');
   }
-  auth.signInWithEmailAndPassword(email, password)
-    .then(async (credential) => {
-      const user = credential?.user || auth.currentUser;
-      if (!user) {
-        throw new Error('Administrator sign-in failed. Please try again.');
-      }
-      const tokenResult = await user.getIdTokenResult();
-      const isAdmin = isAdminUser(user, tokenResult);
-      window.__lastAuthIsAdmin = isAdmin;
-      if (!isAdmin) {
-        await auth.signOut();
-        renderDropdown(null);
-        throw new Error('This account does not have administrator access.');
-      }
-      renderDropdown(user);
-      closeModal();
-      window.location.href = 'admin.html';
-    })
-    .catch((error) => {
-      console.error('Admin sign-in failed:', error);
-      showMessage('adminLoginError', error?.message || 'Unable to sign in as an administrator. Please try again.');
-    });
 }
 
-document.addEventListener('click', (event) => {
+document.addEventListener('click', async (event) => {
   const googleBtn = event.target.closest('.google-login, .google-btn');
   if (!googleBtn) {
     return;
   }
   event.preventDefault();
-  if (!auth || typeof firebase === 'undefined' || !firebase.auth?.GoogleAuthProvider) {
+  const instance = await ensureFirebaseAuth();
+  if (!instance || typeof firebase === 'undefined' || !firebase.auth?.GoogleAuthProvider) {
     alert('Authentication is temporarily unavailable. Please try again shortly.');
     return;
   }
   const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider)
-    .then(async (result) => {
-      const user = result?.user || auth.currentUser;
-      renderDropdown(user ?? null);
-      if (user) {
-        try {
-          await updateAdminVisibility(user);
-        } catch (error) {
-          console.error('Failed to refresh admin state after Google sign-in:', error);
-        }
+  try {
+    const result = await instance.signInWithPopup(provider);
+    const user = result?.user || instance.currentUser;
+    renderDropdown(user ?? null);
+    if (user) {
+      try {
+        await updateAdminVisibility(user);
+      } catch (error) {
+        console.error('Failed to refresh admin state after Google sign-in:', error);
       }
-      closeModal();
-      window.location.href = 'dashboard.html';
-    })
-    .catch((error) => {
-      const loginContainer = document.getElementById('loginFormContainer');
-      const targetId = loginContainer && !loginContainer.hasAttribute('hidden') ? 'loginError' : 'signupError';
-      if (targetId) {
-        showMessage(targetId, error?.message || 'Google sign-in failed. Please try again.');
-      } else {
-        alert('Google sign-in error: ' + (error?.message || error));
-      }
-    });
+    }
+    closeModal();
+    window.location.href = 'dashboard.html';
+  } catch (error) {
+    const loginContainer = document.getElementById('loginFormContainer');
+    const targetId = loginContainer && !loginContainer.hasAttribute('hidden') ? 'loginError' : 'signupError';
+    if (targetId) {
+      showMessage(targetId, error?.message || 'Google sign-in failed. Please try again.');
+    } else {
+      alert('Google sign-in error: ' + (error?.message || error));
+    }
+  }
 });
 
 const slideContainer = document.querySelector('.carousel-slide');
