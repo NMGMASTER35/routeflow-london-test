@@ -690,7 +690,19 @@ function signOut() {
   </div>
 
 <script>
-const BASE = '/api/tfl';
+const APP_KEY = 'f17d0725d1654338ab02a361fe41abad';
+const API_BASE = 'https://api.tfl.gov.uk';
+
+const buildUrl = (path, params = {}) => {
+  const url = new URL(path, API_BASE);
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      url.searchParams.append(key, value);
+    }
+  });
+  url.searchParams.set('app_key', APP_KEY);
+  return url.toString();
+};
 
 let allRoutes = [];
 let routeMeta = {};
@@ -702,7 +714,7 @@ let currentStopSequences = [];
 
 // Fetch all bus routes with start/destination data
 async function fetchRoutes() {
-  const res = await fetch(`${BASE}/Line/Mode/bus/Route`);
+  const res = await fetch(buildUrl('/Line/Mode/bus/Route'));
   const data = await res.json();
   allRoutes = data;
   routeMeta = {};
@@ -816,7 +828,7 @@ async function loadVehicleRegs(routeId) {
     const batch = stops.slice(index, index + maxConcurrent);
     await Promise.all(batch.map(async stop => {
       try {
-        const res = await fetch(`${BASE}/StopPoint/${stop.id}/Arrivals`);
+        const res = await fetch(buildUrl(`/StopPoint/${encodeURIComponent(stop.id)}/Arrivals`));
         const arrivals = await res.json();
         arrivals.filter(a => a.lineId.toLowerCase() === routeId.toLowerCase()).forEach(a => {
           if (a.vehicleId && !vehicleSet.has(a.vehicleId)) {
@@ -848,7 +860,7 @@ async function loadVehicleRegs(routeId) {
 // Load bus stops for route & direction
 async function loadStops(routeId, direction, branchId = 0) {
   try {
-    const res = await fetch(`${BASE}/Line/${routeId}/Route/Sequence/${direction}`);
+    const res = await fetch(buildUrl(`/Line/${encodeURIComponent(routeId)}/Route/Sequence/${direction}`));
     const data = await res.json();
     currentStopSequences = data.stopPointSequences || [];
     let stops = [];
@@ -875,7 +887,7 @@ async function loadStops(routeId, direction, branchId = 0) {
 async function showArrivals(ev, stopId, stopName, stopLetter) {
   ev.stopPropagation();
   try {
-    const res = await fetch(`${BASE}/StopPoint/${stopId}/Arrivals`);
+    const res = await fetch(buildUrl(`/StopPoint/${encodeURIComponent(stopId)}/Arrivals`));
     const data = await res.json();
     document.getElementById('arrivalTitle').innerHTML = stopName +
       (stopLetter ? `<span class="platform-bubble">${stopLetter}</span>` : '');
@@ -910,7 +922,7 @@ async function showBusStopsForReg(ev, vehicleId) {
   const tbody = document.getElementById('regList');
   tbody.innerHTML = `<tr><td colspan="3">Loading...</td></tr>`;
   try {
-    const res = await fetch(`${BASE}/Vehicle/${vehicleId}/Arrivals`);
+    const res = await fetch(buildUrl(`/Vehicle/${encodeURIComponent(vehicleId)}/Arrivals`));
     const data = await res.json();
     tbody.innerHTML = '';
     if (!data || data.length === 0) {
