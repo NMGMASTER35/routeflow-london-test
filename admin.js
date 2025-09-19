@@ -707,18 +707,18 @@ function createTagOverridePanel() {
 function createBlogPanel() {
   const panel = document.createElement('section');
   panel.className = 'admin-panel';
-  panel.setAttribute('aria-labelledby', 'blogPanelHeading');
+  panel.setAttribute('aria-labelledby', 'infoPanelHeading');
 
   const header = document.createElement('div');
   header.className = 'admin-panel__header';
 
   const heading = document.createElement('h2');
-  heading.id = 'blogPanelHeading';
-  heading.textContent = 'Blog updates';
+  heading.id = 'infoPanelHeading';
+  heading.textContent = 'Info hub updates';
 
   const description = document.createElement('p');
   description.className = 'admin-panel__description';
-  description.textContent = 'Publish announcements and news that appear on the homepage and blog page.';
+  description.textContent = 'Publish briefs and news that appear on the homepage and Info hub.';
 
   header.append(heading, description);
   panel.append(header);
@@ -787,11 +787,11 @@ function createBlogPanel() {
 
   form.append(grid);
 
-  const summaryField = createTextarea('blog-summary', 'Summary', 'A short teaser that appears on the homepage.');
+  const summaryField = createTextarea('blog-summary', 'Summary', 'A short teaser that appears on the homepage and Info hub.');
   inputs.summary = summaryField.textarea;
   form.append(summaryField.group);
 
-  const contentField = createTextarea('blog-content', 'Full content', 'Add paragraphs separated by a blank line.');
+  const contentField = createTextarea('blog-content', 'Full content', 'Add paragraphs separated by a blank line for the Info hub.');
   inputs.content = contentField.textarea;
   inputs.content.rows = 6;
   form.append(contentField.group);
@@ -804,7 +804,7 @@ function createBlogPanel() {
   featuredInput.id = 'blog-featured';
   inputs.featured = featuredInput;
   const featuredText = document.createElement('span');
-  featuredText.textContent = 'Mark as featured';
+  featuredText.textContent = 'Mark as featured brief';
   featuredLabel.append(featuredInput, featuredText);
   featuredGroup.append(featuredLabel);
   form.append(featuredGroup);
@@ -815,7 +815,7 @@ function createBlogPanel() {
   const submit = document.createElement('button');
   submit.type = 'submit';
   submit.className = 'button admin-button';
-  submit.textContent = 'Publish post';
+  submit.textContent = 'Publish brief';
 
   const cancel = document.createElement('button');
   cancel.type = 'button';
@@ -850,7 +850,7 @@ function createBlogPanel() {
   const resetForm = () => {
     form.reset();
     adminState.blogEditId = null;
-    submit.textContent = 'Publish post';
+    submit.textContent = 'Publish brief';
     cancel.hidden = true;
   };
 
@@ -876,7 +876,7 @@ function createBlogPanel() {
     if (!posts.length) {
       const empty = document.createElement('p');
       empty.className = 'admin-empty';
-      empty.textContent = 'No posts published yet. Add your first update above.';
+      empty.textContent = 'No briefs published yet. Add your first update above.';
       listWrapper.append(empty);
       return;
     }
@@ -1002,7 +1002,7 @@ function createBlogPanel() {
       const current = adminState.blogPosts.find((item) => item.id === adminState.blogEditId);
       if (!current) {
         resetForm();
-        updateFeedback(feedback, 'The post you were editing is no longer available.', 'info');
+        updateFeedback(feedback, 'The brief you were editing is no longer available.', 'info');
       }
     }
   };

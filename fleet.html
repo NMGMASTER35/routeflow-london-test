@@ -23,9 +23,29 @@
   </head>
   <body>
     <div id="navbar-container"></div>
+    <section
+      class="auth-gate"
+      id="fleetAuthGate"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="fleetGateTitle"
+      aria-live="assertive"
+      hidden
+    >
+      <div class="auth-gate__panel">
+        <p class="auth-gate__eyebrow">Fleet tools locked</p>
+        <h2 class="auth-gate__title" id="fleetGateTitle">Sign in to browse RouteFlow fleet intelligence</h2>
+        <p class="auth-gate__message" data-auth-gate-message>Sign in to unlock this area.</p>
+        <button type="button" class="auth-gate__cta" data-auth-gate-login>
+          <i class="fa-solid fa-lock-open" aria-hidden="true"></i>
+          <span>Sign in to continue</span>
+        </button>
+        <p class="auth-gate__hint">Routes, disruptions and the Info hub remain open to everyone.</p>
+      </div>
+    </section>
 
-    <main class="fleet-page">
-      <section class="fleet-card fleet-hero">
+    <main class="fleet-page" data-auth-locked="true">
+      <section class="fleet-card fleet-hero" data-locked-section data-lock-label="Sign in">
         <div class="fleet-hero__heading">
           <p class="fleet-hero__eyebrow">Fleet database</p>
           <h1>London buses organised by registration</h1>
@@ -59,7 +79,7 @@
         </dl>
       </section>
 
-      <section class="fleet-card fleet-controls" aria-labelledby="fleetFilters">
+      <section class="fleet-card fleet-controls" data-locked-section data-lock-label="Sign in" aria-labelledby="fleetFilters">
         <div class="fleet-controls__intro">
           <div>
             <h2 id="fleetFilters">Search and filter</h2>
@@ -100,7 +120,52 @@
       </section>
 
       <section
+        class="fleet-card fleet-operators"
+        data-locked-section
+        data-lock-label="Sign in"
+        aria-labelledby="operatorExplorerHeading"
+      >
+        <header class="fleet-operators__header">
+          <div>
+            <p class="fleet-hero__eyebrow">Operator explorer</p>
+            <h2 id="operatorExplorerHeading">Scan the network by operator focus</h2>
+            <p>Switch tabs to compare allocations, engineering notes and upcoming expansions across the biggest London operators.</p>
+          </div>
+          <nav class="fleet-operators__tabs" role="tablist" aria-label="Operator focus">
+            <button type="button" class="fleet-operators__tab is-active" id="operatorTabAbellio" data-operator-tab="abellio" role="tab" aria-selected="true" aria-controls="operatorPanelAbellio">Abellio London</button>
+            <button type="button" class="fleet-operators__tab" id="operatorTabGoAhead" data-operator-tab="goahead" role="tab" aria-selected="false" aria-controls="operatorPanelGoAhead">Go-Ahead London</button>
+            <button type="button" class="fleet-operators__tab" id="operatorTabStagecoach" data-operator-tab="stagecoach" role="tab" aria-selected="false" aria-controls="operatorPanelStagecoach">Stagecoach London</button>
+          </nav>
+        </header>
+        <div class="fleet-operators__panels">
+          <div class="fleet-operators__panel is-active" id="operatorPanelAbellio" data-operator-panel="abellio" role="tabpanel" aria-labelledby="operatorTabAbellio">
+            <ul class="fleet-operators__stats">
+              <li><strong>Electric hubs:</strong> Battersea and Walworth lead zero-emission rollouts.</li>
+              <li><strong>Fleet refresh:</strong> 47 new Enviro400EVs scheduled through Q3.</li>
+              <li><strong>Research missions:</strong> Focus on cross-river services and night allocations.</li>
+            </ul>
+          </div>
+          <div class="fleet-operators__panel" id="operatorPanelGoAhead" data-operator-panel="goahead" role="tabpanel" aria-labelledby="operatorTabGoAhead" hidden>
+            <ul class="fleet-operators__stats">
+              <li><strong>Network reach:</strong> River Road and Camberwell hubs feed express corridors.</li>
+              <li><strong>Hybrid conversions:</strong> Retrofits underway on 25 Gemini 3 units.</li>
+              <li><strong>Badge synergy:</strong> Missions prioritise river services and Thames tunnel diversions.</li>
+            </ul>
+          </div>
+          <div class="fleet-operators__panel" id="operatorPanelStagecoach" data-operator-panel="stagecoach" role="tabpanel" aria-labelledby="operatorTabStagecoach" hidden>
+            <ul class="fleet-operators__stats">
+              <li><strong>Route reshapes:</strong> East London restructures after Superloop launches.</li>
+              <li><strong>Heritage tracking:</strong> Withdrawn Tridents archived with gallery links.</li>
+              <li><strong>Challenge tip:</strong> Combo missions reward engineering note submissions.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section
         class="fleet-card fleet-highlights"
+        data-locked-section
+        data-lock-label="Sign in"
         aria-labelledby="fleetHighlightsHeading"
       >
         <header class="fleet-highlights__header">
@@ -124,11 +189,68 @@
             <h3 id="rareWorkingHighlight">Rare workings</h3>
             <ul id="rareWorkingList" class="fleet-highlight__list"></ul>
           </article>
+          <article class="fleet-highlight" aria-labelledby="withdrawnHighlight">
+            <h3 id="withdrawnHighlight">Withdrawn history</h3>
+            <ul id="withdrawnHighlightList" class="fleet-highlight__list"></ul>
+          </article>
+        </div>
+      </section>
+
+      <section
+        class="fleet-card fleet-showcase"
+        data-locked-section
+        data-lock-label="Sign in"
+        aria-labelledby="fleetShowcaseHeading"
+      >
+        <header class="fleet-showcase__header">
+          <div>
+            <p class="fleet-hero__eyebrow">Gallery missions</p>
+            <h2 id="fleetShowcaseHeading">Carousel snapshots of notable fleet stories</h2>
+            <p>Swipe through bus model profiles, rare liveries and withdrawn legends. Completing gallery missions boosts your XP and badge progress.</p>
+          </div>
+        </header>
+        <div class="fleet-carousel" aria-live="polite">
+          <button type="button" class="fleet-carousel__control" data-carousel-prev aria-label="Show previous fleet story">
+            <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+          </button>
+          <div class="fleet-carousel__viewport" id="fleetCarouselViewport">
+            <article class="fleet-carousel__item is-active" data-carousel-index="0">
+              <img src="bus1.jpg" alt="Go-Ahead London Enviro400EV in service" />
+              <div class="fleet-carousel__meta">
+                <h3>Enviro400EV expansion</h3>
+                <p>Zero-emission deckers roll out across south-west corridors with rapid charging at Battersea and Merton.</p>
+              </div>
+            </article>
+            <article class="fleet-carousel__item" data-carousel-index="1" hidden>
+              <img src="bus2.jpg" alt="Stagecoach London heritage Trident" />
+              <div class="fleet-carousel__meta">
+                <h3>Heritage Trident archive</h3>
+                <p>Withdrawn Tridents receive dedicated history cards, including final workings and enthusiast photography.</p>
+              </div>
+            </article>
+            <article class="fleet-carousel__item" data-carousel-index="2" hidden>
+              <img src="bus3.jpg" alt="Abellio London hydrogen bus" />
+              <div class="fleet-carousel__meta">
+                <h3>Hydrogen pioneers</h3>
+                <p>Hydrogen double-deckers trial new refuelling at Perivale, unlocking hidden badge pathways for data contributors.</p>
+              </div>
+            </article>
+          </div>
+          <button type="button" class="fleet-carousel__control" data-carousel-next aria-label="Show next fleet story">
+            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+          </button>
+        </div>
+        <div class="fleet-carousel__dots" role="tablist" aria-label="Select fleet showcase slide">
+          <button type="button" class="fleet-carousel__dot is-active" data-carousel-dot="0" aria-label="Enviro400EV expansion"></button>
+          <button type="button" class="fleet-carousel__dot" data-carousel-dot="1" aria-label="Heritage Trident archive"></button>
+          <button type="button" class="fleet-carousel__dot" data-carousel-dot="2" aria-label="Hydrogen pioneers"></button>
         </div>
       </section>
 
       <section
         class="fleet-card fleet-table"
+        data-locked-section
+        data-lock-label="Sign in"
         aria-labelledby="fleetTableHeading"
       >
         <div class="fleet-table__header">
@@ -171,7 +293,7 @@
         </p>
       </section>
 
-      <section class="fleet-card fleet-form" aria-labelledby="fleetFormHeading">
+      <section class="fleet-card fleet-form" data-locked-section data-lock-label="Sign in" aria-labelledby="fleetFormHeading">
         <div class="fleet-form__intro">
           <div>
             <p class="fleet-hero__eyebrow">Community updates</p>
@@ -303,6 +425,8 @@
 
       <section
         class="fleet-card fleet-admin"
+        data-locked-section
+        data-lock-label="Sign in"
         aria-labelledby="adminPortalHeading"
       >
         <header class="fleet-admin__intro">
@@ -421,6 +545,145 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="main.js"></script>
+    <script src="auth-guard.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const pageRoot = document.querySelector('.fleet-page');
+        const overlay = document.getElementById('fleetAuthGate');
+        const lockedSections = document.querySelectorAll('[data-locked-section]');
+        const heroLead = document.querySelector('.fleet-hero__lead');
+
+        const gate = window.RouteflowAuthGate?.create({
+          root: pageRoot,
+          overlay,
+          lockedSections,
+          lockedMessage: 'Sign in to unlock fleet analytics, submissions and history archives.',
+          errorMessage: 'Authentication is temporarily unavailable. Please try again later.',
+          onLock: () => {
+            if (heroLead) {
+              heroLead.textContent = 'Create a free account to unlock missions, carousels and role-linked fleet submissions.';
+            }
+          },
+          onUnlock: () => {
+            if (heroLead) {
+              heroLead.textContent = 'Build and maintain a live catalogue of the London fleet. New registrations automatically generate profiles, while enthusiast changes stay in review until an admin approves them.';
+            }
+          }
+        });
+
+        const applyAuthState = (user) => {
+          if (user) {
+            gate?.unlock({ user });
+          } else {
+            gate?.lock({ reason: 'signed-out', force: true });
+          }
+        };
+
+        if (typeof firebase === 'undefined' || !firebase?.auth) {
+          applyAuthState(null);
+        } else {
+          const auth = firebase.auth();
+          auth.onAuthStateChanged((user) => {
+            applyAuthState(user);
+          });
+        }
+
+        const tabs = Array.from(document.querySelectorAll('[data-operator-tab]'));
+        const panels = Array.from(document.querySelectorAll('[data-operator-panel]'));
+        const activateTab = (tab) => {
+          if (!tab) return;
+          const key = tab.dataset.operatorTab;
+          tabs.forEach((candidate) => {
+            const isActive = candidate === tab;
+            candidate.classList.toggle('is-active', isActive);
+            candidate.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            candidate.setAttribute('tabindex', isActive ? '0' : '-1');
+          });
+          panels.forEach((panel) => {
+            const isActive = panel.dataset.operatorPanel === key;
+            panel.classList.toggle('is-active', isActive);
+            panel.toggleAttribute('hidden', !isActive);
+          });
+        };
+
+        tabs.forEach((tab) => {
+          tab.addEventListener('click', () => activateTab(tab));
+        });
+
+        const tablist = document.querySelector('.fleet-operators__tabs');
+        if (tablist) {
+          tablist.addEventListener('keydown', (event) => {
+            if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+            event.preventDefault();
+            const currentIndex = tabs.findIndex((tab) => tab.classList.contains('is-active'));
+            if (event.key === 'Home') {
+              activateTab(tabs[0]);
+              tabs[0]?.focus();
+              return;
+            }
+            if (event.key === 'End') {
+              const lastTab = tabs[tabs.length - 1];
+              activateTab(lastTab);
+              lastTab?.focus();
+              return;
+            }
+            const direction = event.key === 'ArrowLeft' ? -1 : 1;
+            const nextIndex = (currentIndex + direction + tabs.length) % tabs.length;
+            const nextTab = tabs[nextIndex];
+            activateTab(nextTab);
+            nextTab?.focus();
+          });
+        }
+
+        if (!tabs.some((tab) => tab.classList.contains('is-active'))) {
+          activateTab(tabs[0]);
+        } else {
+          tabs.forEach((tab) => {
+            tab.setAttribute('tabindex', tab.classList.contains('is-active') ? '0' : '-1');
+          });
+        }
+
+        const items = Array.from(document.querySelectorAll('.fleet-carousel__item'));
+        const dots = Array.from(document.querySelectorAll('[data-carousel-dot]'));
+        let activeIndex = 0;
+
+        const showSlide = (index) => {
+          if (!items.length) return;
+          const total = items.length;
+          const targetIndex = (index + total) % total;
+          activeIndex = targetIndex;
+          items.forEach((item, itemIndex) => {
+            const isActive = itemIndex === targetIndex;
+            item.classList.toggle('is-active', isActive);
+            item.toggleAttribute('hidden', !isActive);
+          });
+          dots.forEach((dot, dotIndex) => {
+            const isActive = dotIndex === targetIndex;
+            dot.classList.toggle('is-active', isActive);
+            dot.setAttribute('aria-selected', isActive ? 'true' : 'false');
+          });
+        };
+
+        document.querySelector('[data-carousel-prev]')?.addEventListener('click', () => {
+          showSlide(activeIndex - 1);
+        });
+
+        document.querySelector('[data-carousel-next]')?.addEventListener('click', () => {
+          showSlide(activeIndex + 1);
+        });
+
+        dots.forEach((dot) => {
+          dot.addEventListener('click', () => {
+            const next = Number(dot.dataset.carouselDot);
+            if (Number.isInteger(next)) {
+              showSlide(next);
+            }
+          });
+        });
+
+        showSlide(0);
+      });
+    </script>
     <script src="fleet.js"></script>
   </body>
 </html>

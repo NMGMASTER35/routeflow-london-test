@@ -15,7 +15,7 @@ const formatPublishedDate = (value) => {
 
 const resolvePostUrl = (post) => {
   const slug = (post?.id && String(post.id)) || '';
-  return slug ? `blog.html#blog-${slug}` : 'blog.html';
+  return slug ? `info.html#info-${slug}` : 'info.html';
 };
 
 const createTagPill = (tag) => {
@@ -105,7 +105,7 @@ const createHeroImage = (post) => {
   figure.className = 'blog-post__media';
   const image = document.createElement('img');
   image.src = post.heroImage;
-  image.alt = post.title ? `${post.title} illustration` : 'Blog illustration';
+  image.alt = post.title ? `${post.title} illustration` : 'Info illustration';
   figure.appendChild(image);
   return figure;
 };
@@ -116,7 +116,7 @@ const createBlogElement = (post, variant = 'card', index = 0) => {
     .concat(post.featured ? 'blog-post--featured' : [])
     .join(' ');
   if (post.id) {
-    article.id = `blog-${post.id}`;
+    article.id = `info-${post.id}`;
   }
 
   const titleLevel = variant === 'full' ? 'h2' : 'h3';
@@ -151,7 +151,7 @@ const createBlogElement = (post, variant = 'card', index = 0) => {
     const cta = document.createElement('a');
     cta.href = resolvePostUrl(post);
     cta.className = 'blog-post__cta';
-    cta.textContent = 'Read the full update';
+    cta.textContent = 'Read the full brief';
     article.appendChild(cta);
   }
 

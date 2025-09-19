@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Blog - RouteFlow London</title>
+  <title>Info Hub | RouteFlow London</title>
   <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png" />
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -15,16 +15,16 @@
 
   <main class="blog-shell">
     <section class="blog-hero card">
-      <p class="blog-hero__eyebrow">RouteFlow stories</p>
-      <h1>Updates, deep dives and quick reads about travelling smarter in London.</h1>
-      <p>Each article is curated from the admin console so fresh consultations, enthusiast spotlights and weekly news roundups stay easy to browse.</p>
+      <p class="blog-hero__eyebrow">RouteFlow info</p>
+      <h1>Your briefing room for slow-and-steady progress across London transport.</h1>
+      <p>The Info hub blends network explainers, enthusiast research and platform release notes so everyone can catch up before they dive into challenges.</p>
       <div class="blog-hero__meta">
         <div>
-          <span class="blog-hero__label">Latest update</span>
+          <span class="blog-hero__label">Latest brief</span>
           <time id="blogLatestDate">—</time>
         </div>
         <div>
-          <span class="blog-hero__label">Total posts</span>
+          <span class="blog-hero__label">Published briefs</span>
           <strong id="blogTotalPosts">0</strong>
         </div>
       </div>
@@ -33,11 +33,11 @@
     <section class="blog-list card">
       <div class="blog-list__header">
         <div>
-          <h2>Browse by interest</h2>
-          <p>Switch categories to focus on bus models, upcoming consultations or weekly transport highlights.</p>
+          <h2>Browse by focus</h2>
+          <p>Filter the archive to surface operator spotlights, policy updates and enthusiast investigations.</p>
         </div>
-        <div class="blog-filters" id="blogFilters" role="tablist" aria-label="Filter blog posts by category">
-          <button type="button" class="blog-filter" data-blog-filter="all" data-active="true" role="tab" aria-selected="true">All updates</button>
+        <div class="blog-filters" id="blogFilters" role="tablist" aria-label="Filter info briefs by category">
+          <button type="button" class="blog-filter" data-blog-filter="all" data-active="true" role="tab" aria-selected="true">All briefs</button>
           <button type="button" class="blog-filter" data-blog-filter="Learn about bus models" role="tab" aria-selected="false">Learn about bus models</button>
           <button type="button" class="blog-filter" data-blog-filter="New London Consultations" role="tab" aria-selected="false">New London Consultations</button>
           <button type="button" class="blog-filter" data-blog-filter="Weekly London Transport News" role="tab" aria-selected="false">Weekly London Transport News</button>
@@ -50,11 +50,11 @@
       <article class="blog-spotlight card">
         <div class="blog-spotlight__header">
           <p class="blog-hero__eyebrow">Deep dives</p>
-          <h2>Learn about bus models</h2>
-          <p>Get to know the newest zero-emission types, refurbishments and enthusiast favourites on the road.</p>
+          <h2>Bus model deep dives</h2>
+          <p>Get to know the newest zero-emission types, refurbishment programmes and enthusiast favourites on the road.</p>
         </div>
         <div class="blog-spotlight__list" data-blog-list data-blog-variant="compact" data-blog-limit="3" data-blog-tags="Learn about bus models" data-blog-empty="Model spotlights are on their way."></div>
-        <a class="blog-spotlight__link" href="#blogFilters" data-blog-category-group="blogFilters" data-blog-category-link="Learn about bus models">Show all bus model articles</a>
+        <a class="blog-spotlight__link" href="#blogFilters" data-blog-category-group="blogFilters" data-blog-category-link="Learn about bus models">Show all model briefs</a>
       </article>
 
       <article class="blog-spotlight card">
@@ -74,7 +74,7 @@
           <p>Crisp roundups pull together service changes, rare workings and stories worth sharing each week.</p>
         </div>
         <div class="blog-spotlight__list" data-blog-list data-blog-variant="compact" data-blog-limit="3" data-blog-tags="Weekly London Transport News" data-blog-empty="Weekly roundups will appear once published."></div>
-        <a class="blog-spotlight__link" href="#blogFilters" data-blog-category-group="blogFilters" data-blog-category-link="Weekly London Transport News">View weekly news posts</a>
+        <a class="blog-spotlight__link" href="#blogFilters" data-blog-category-group="blogFilters" data-blog-category-link="Weekly London Transport News">View weekly news briefs</a>
       </article>
     </section>
   </main>
@@ -100,7 +100,7 @@
   <script src="main.js"></script>
   <script type="module">
     import { getStoredBlogPosts } from './data-store.js';
-    import './blog.js';
+    import './info.js';
 
     const updateStats = () => {
       const posts = getStoredBlogPosts();
