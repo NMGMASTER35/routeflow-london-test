@@ -1,0 +1,53 @@
+/* Additional layout rules for withdrawn route archives */
+
+.network-table-wrapper {
+  position: relative;
+}
+
+@media (max-width: 640px) {
+  .network-table__actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .network-table__actions a {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media print {
+  body {
+    background: #ffffff;
+    color: #000000;
+  }
+
+  .skip-link,
+  #navbar-container,
+  .site-footer,
+  .network-table__actions a {
+    display: none !important;
+  }
+
+  .network-shell {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+  }
+
+  .network-hero,
+  .network-toolbar {
+    box-shadow: none;
+    border: none;
+    background: transparent;
+  }
+
+  .network-table-wrapper {
+    box-shadow: none;
+    border: 1px solid #000000;
+  }
+
+  .network-table {
+    min-width: 100%;
+  }
+}
