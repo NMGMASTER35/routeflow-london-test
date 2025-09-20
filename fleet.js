@@ -2,7 +2,104 @@
   "use strict";
 
   const API_BASE_URL = (window.__ROUTEFLOW_API_BASE__ || "/api").replace(/\/$/, "");
-  const ADMIN_CODE = "fleet-admin";
+
+  const FALLBACK_ADMIN_OVERRIDES = new Map([
+    [
+      "emKTnjbKIKfBjQzQEvpUOWOpFKc2",
+      {
+        email: "nmorris210509@gmail.com",
+      },
+    ],
+  ]);
+
+  const normaliseEmail = (value) => (typeof value === "string" ? value.trim().toLowerCase() : "");
+
+  const fallbackHasOverride = (userOrUid) => {
+    if (!userOrUid) return false;
+    const uid = typeof userOrUid === "string" ? userOrUid : userOrUid?.uid;
+    if (!uid) return false;
+    const override = FALLBACK_ADMIN_OVERRIDES.get(uid);
+    if (!override) return false;
+    if (override.email && typeof userOrUid !== "string") {
+      const currentEmail = normaliseEmail(userOrUid?.email);
+      const expectedEmail = normaliseEmail(override.email);
+      if (currentEmail && expectedEmail && currentEmail !== expectedEmail) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const resolveAdminStatus = (user, tokenResult) => {
+    const helpers = window.RouteflowAdmin;
+    if (helpers?.isAdminUser) {
+      try {
+        return Boolean(helpers.isAdminUser(user, tokenResult));
+      } catch (error) {
+        console.warn(
+          "Fleet admin: helper-based admin check failed, falling back to bundled overrides.",
+          error,
+        );
+      }
+    }
+    if (tokenResult?.claims?.admin) {
+      return true;
+    }
+    if (helpers?.hasOverride) {
+      try {
+        return Boolean(helpers.hasOverride(user));
+      } catch (error) {
+        console.warn(
+          "Fleet admin: override lookup failed, falling back to bundled overrides.",
+          error,
+        );
+      }
+    }
+    return fallbackHasOverride(user);
+  };
+
+  function getFirebaseConfig() {
+    const config = window.__ROUTEFLOW_CONFIG__?.firebase;
+    if (!config?.apiKey) {
+      console.error("Firebase configuration is missing. Admin features are unavailable.");
+      return null;
+    }
+    return config;
+  }
+
+  function ensureAuthInstance() {
+    const routeflowAuth = window.RouteflowAuth;
+    if (routeflowAuth?.ensure) {
+      try {
+        return Promise.resolve(routeflowAuth.ensure());
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    }
+    if (typeof window.ensureFirebaseAuth === "function") {
+      try {
+        return Promise.resolve(window.ensureFirebaseAuth());
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    }
+    const fb = window.firebase;
+    if (fb && typeof fb.auth === "function") {
+      try {
+        if (!fb.apps.length) {
+          const config = getFirebaseConfig();
+          if (!config) {
+            return Promise.reject(new Error("Firebase configuration not available."));
+          }
+          fb.initializeApp(config);
+        }
+        return Promise.resolve(fb.auth());
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    }
+    return Promise.resolve(null);
+  }
 
   const DROPDOWN_FIELDS = [
     "operator",
@@ -162,14 +259,45 @@
 
   const state = clone(DEFAULT_STATE);
   let isAdmin = false;
+  let currentAdminUser = null;
+  let adminAuthToken = null;
+  let cachedElements = null;
   let toastTimeout = null;
   let isInitialised = false;
+
+  let authSubscriptionStarted = false;
+
+  function applyAdminUi(elements) {
+    if (!elements?.adminToggle) {
+      return;
+    }
+
+    const { adminToggle, adminPanel } = elements;
+
+    if (!isAdmin) {
+      adminToggle.setAttribute("aria-disabled", "true");
+      adminToggle.setAttribute("aria-expanded", "false");
+      adminToggle.textContent = "Admin tools (staff access required)";
+      if (adminPanel && !adminPanel.hidden) {
+        adminPanel.hidden = true;
+      }
+      return;
+    }
+
+    adminToggle.removeAttribute("aria-disabled");
+    const expanded = adminPanel ? !adminPanel.hidden : false;
+    adminToggle.setAttribute("aria-expanded", expanded ? "true" : "false");
+    adminToggle.textContent = expanded ? "Hide admin tools" : "Access admin tools";
+  }
 
   document.addEventListener("DOMContentLoaded", () => {
     const elements = getElements();
     if (!elements) {
       return;
     }
+
+    cachedElements = elements;
+    applyAdminUi(elements);
 
     populateAllSelects(elements);
     renderOptionList(elements, elements.optionCategory.value);
@@ -383,8 +511,17 @@
     return payload || {};
   }
 
-  function getAdminHeaders() {
-    return isAdmin ? { "X-Fleet-Admin-Code": ADMIN_CODE } : {};
+  async function getAdminHeaders() {
+    if (!isAdmin || !currentAdminUser?.getIdToken) {
+      throw new Error("Administrator access is required.");
+    }
+    try {
+      adminAuthToken = await currentAdminUser.getIdToken();
+    } catch (error) {
+      adminAuthToken = null;
+      throw error;
+    }
+    return { Authorization: `Bearer ${adminAuthToken}` };
   }
 
   async function fetchFleetStateFromApi() {
@@ -399,30 +536,27 @@
   }
 
   async function addOptionToApi(field, value) {
+    const headers = await getAdminHeaders();
     return requestJson("/fleet/options", {
       method: "POST",
-      headers: {
-        ...getAdminHeaders(),
-      },
+      headers,
       body: { field, value },
     });
   }
 
   async function approvePendingChangeOnApi(changeId) {
+    const headers = await getAdminHeaders();
     return requestJson(`/fleet/pending/${encodeURIComponent(changeId)}/approve`, {
       method: "POST",
-      headers: {
-        ...getAdminHeaders(),
-      },
+      headers,
     });
   }
 
   async function rejectPendingChangeOnApi(changeId) {
+    const headers = await getAdminHeaders();
     return requestJson(`/fleet/pending/${encodeURIComponent(changeId)}/reject`, {
       method: "POST",
-      headers: {
-        ...getAdminHeaders(),
-      },
+      headers,
     });
   }
 
@@ -892,7 +1026,7 @@
 
     if (!isAdmin) {
       pendingContainer.innerHTML =
-        '<p class="pending-empty">Enter the access code to review pending changes.</p>';
+        '<p class="pending-empty">Sign in as an administrator to review pending changes.</p>';
       return;
     }
 
@@ -1059,30 +1193,119 @@
     if (!adminToggle || !adminPanel) return;
 
     if (!isAdmin) {
-      const code = window.prompt("Enter the admin access code to continue");
-      if (code !== ADMIN_CODE) {
-        showToast(elements.toast, "Incorrect admin code.", "error");
-        return;
-      }
-      isAdmin = true;
-      adminToggle.textContent = "Hide admin tools";
-      adminToggle.setAttribute("aria-expanded", "true");
-      adminPanel.hidden = false;
-      renderPendingList(elements);
-      refreshFleetState(elements, { silent: true });
+      showToast(
+        elements.toast,
+        "Administrator access is required to open these tools.",
+        "error",
+      );
       return;
     }
 
     const expanded = adminToggle.getAttribute("aria-expanded") === "true";
-    adminToggle.setAttribute("aria-expanded", String(!expanded));
-    adminPanel.hidden = expanded;
-    adminToggle.textContent = expanded
-      ? "Access admin tools"
-      : "Hide admin tools";
-    if (!expanded) {
+    const nextExpanded = !expanded;
+    adminToggle.setAttribute("aria-expanded", String(nextExpanded));
+    adminPanel.hidden = !nextExpanded;
+    applyAdminUi(elements);
+    if (nextExpanded) {
       renderPendingList(elements);
     }
   }
+
+  function updateAdminState(user, tokenResult) {
+    const previousAdmin = isAdmin;
+    currentAdminUser = user || null;
+    adminAuthToken = null;
+
+    let resolvedAdmin = false;
+    if (user && tokenResult) {
+      try {
+        resolvedAdmin = Boolean(resolveAdminStatus(user, tokenResult));
+      } catch (error) {
+        console.warn(
+          "Fleet admin: unable to resolve administrator claims, assuming regular member.",
+          error,
+        );
+        resolvedAdmin = false;
+      }
+    }
+
+    isAdmin = resolvedAdmin;
+
+    if (!cachedElements) {
+      return;
+    }
+
+    applyAdminUi(cachedElements);
+    renderPendingList(cachedElements);
+
+    if (isAdmin && !previousAdmin) {
+      refreshFleetState(cachedElements, { silent: true });
+    }
+  }
+
+  async function evaluateAdminUser(user) {
+    if (!user) {
+      updateAdminState(null, null);
+      return;
+    }
+
+    try {
+      const tokenResult = await user.getIdTokenResult();
+      updateAdminState(user, tokenResult);
+    } catch (error) {
+      console.error(
+        "Fleet admin: failed to verify administrator permissions.",
+        error,
+      );
+      updateAdminState(user, null);
+    }
+  }
+
+  function subscribeToAuthChanges() {
+    if (authSubscriptionStarted) {
+      return;
+    }
+    authSubscriptionStarted = true;
+
+    const routeflowAuth = window.RouteflowAuth;
+    const emitState = (authUser) => {
+      evaluateAdminUser(authUser || null);
+    };
+
+    if (routeflowAuth?.subscribe) {
+      if (typeof routeflowAuth.getCurrentUser === "function") {
+        try {
+          emitState(routeflowAuth.getCurrentUser());
+        } catch (error) {
+          console.error(
+            "Fleet admin: failed to read initial authentication state.",
+            error,
+          );
+        }
+      }
+      routeflowAuth.subscribe(emitState);
+      return;
+    }
+
+    ensureAuthInstance()
+      .then((auth) => {
+        if (!auth || typeof auth.onAuthStateChanged !== "function") {
+          emitState(null);
+          return;
+        }
+        emitState(auth.currentUser || null);
+        auth.onAuthStateChanged((authUser) => emitState(authUser || null));
+      })
+      .catch((error) => {
+        console.error(
+          "Fleet admin: failed to initialise authentication observer.",
+          error,
+        );
+        emitState(null);
+      });
+  }
+
+  subscribeToAuthChanges();
 
   function renderOptionList(elements, field) {
     const { optionList } = elements;

@@ -1,4 +1,9 @@
-import { getRouteTagOverrideMap, normaliseRouteKey, STORAGE_KEYS } from './data-store.js';
+import {
+  getRouteTagOverrideMap,
+  normaliseRouteKey,
+  refreshRouteTagOverrides,
+  STORAGE_KEYS
+} from './data-store.js';
 
 const APP_KEY = ''; // ← Add your TfL API key here while testing
 
@@ -138,26 +143,70 @@ const mapStops = (stopPoints = [], sequence = null) => {
     detailMap.set(record.id, record);
   });
 
+  const formatSequenceDirection = (value) => {
+    const text = normalise(value);
+    if (!text) return '';
+    if (text === 'outbound') return 'Outbound';
+    if (text === 'inbound') return 'Inbound';
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  };
+
+  const buildSequenceLabel = (seq, index) => {
+    const direction = formatSequenceDirection(seq?.direction || seq?.lineDirection);
+    const destination = seq?.destinationName || seq?.towards;
+    if (direction && destination) {
+      return `${direction} towards ${destination}`;
+    }
+    if (direction) {
+      return direction;
+    }
+    if (destination) {
+      return `Towards ${destination}`;
+    }
+    if (seq?.name) {
+      return seq.name;
+    }
+    if (seq?.branchId) {
+      return `Branch ${seq.branchId}`;
+    }
+    return `Sequence ${index + 1}`;
+  };
+
+  const sections = [];
+
   if (sequence && Array.isArray(sequence.stopPointSequences)) {
-    const ordered = [];
-    const seen = new Set();
-    sequence.stopPointSequences.forEach((seq) => {
+    sequence.stopPointSequences.forEach((seq, index) => {
       if (!Array.isArray(seq.stopPoint)) return;
+      const seen = new Set();
+      const stops = [];
       seq.stopPoint.forEach((stop) => {
         const record = createRecord(stop, detailMap.get(stop?.id || stop?.naptanId || stop?.stationId) || {});
         if (!record || seen.has(record.id)) return;
         seen.add(record.id);
         const detailed = detailMap.get(record.id);
-        const enriched = detailed ? { ...detailed, order: ordered.length } : { ...record, order: ordered.length };
-        ordered.push(enriched);
+        const enriched = detailed ? { ...detailed, order: stops.length } : { ...record, order: stops.length };
+        stops.push(enriched);
       });
+      if (stops.length) {
+        sections.push({
+          id: seq?.id || seq?.name || `sequence-${index}`,
+          label: buildSequenceLabel(seq, index),
+          stops
+        });
+      }
     });
-    if (ordered.length) {
-      return ordered;
-    }
   }
 
-  return Array.from(detailMap.values()).sort((a, b) => a.order - b.order);
+  if (sections.length) {
+    const combined = sections.flatMap((section) => section.stops);
+    return { sections, all: combined };
+  }
+
+  const fallbackList = Array.from(detailMap.values()).sort((a, b) => a.order - b.order);
+  return {
+    sections: fallbackList.length ? [{ id: 'all', label: null, stops: fallbackList }] : [],
+    all: fallbackList
+  };
 };
 
 const createStopElement = (stop) => {
@@ -186,18 +235,29 @@ const createStopElement = (stop) => {
   return button;
 };
 
-const renderOverlayStops = (stops) => {
+const renderOverlayStops = (sections) => {
   const container = elements.overlay.stops;
   if (!container) return;
   container.innerHTML = '';
-  if (!stops.length) {
+  if (!sections.length) {
     const empty = document.createElement('p');
     empty.className = 'route-overlay__empty';
     empty.textContent = 'Stop list unavailable right now.';
     container.appendChild(empty);
     return;
   }
-  stops.forEach((stop) => container.appendChild(createStopElement(stop)));
+  sections.forEach((section) => {
+    if ((sections.length > 1 || section.label) && section.label) {
+      const heading = document.createElement('p');
+      heading.className = 'route-overlay__direction';
+      heading.textContent = section.label;
+      container.appendChild(heading);
+    }
+    const group = document.createElement('div');
+    group.className = 'route-overlay__stops-group';
+    section.stops.forEach((stop) => group.appendChild(createStopElement(stop)));
+    container.appendChild(group);
+  });
 };
 
 const formatEta = (seconds) => {
@@ -465,11 +525,11 @@ const openRouteOverlay = (route) => {
       if (state.overlay.routeId !== routeId) return;
       const stopsData = stopsResult.status === 'fulfilled' ? stopsResult.value : [];
       const sequenceData = sequenceResult.status === 'fulfilled' ? sequenceResult.value : null;
-      const stops = mapStops(stopsData, sequenceData);
+      const stopResult = mapStops(stopsData, sequenceData);
       const vehicles = mapVehicles(vehiclesResult.status === 'fulfilled' ? vehiclesResult.value : []);
-      renderOverlayStops(stops);
+      renderOverlayStops(stopResult.sections);
       renderOverlayVehicles(vehicles);
-      if (stops.length || vehicles.length) {
+      if (stopResult.all.length || vehicles.length) {
         setOverlayStatus('Select a stop to open live tracking.');
       } else {
         setOverlayStatus('No live data available right now.');
@@ -684,6 +744,11 @@ const refreshServiceOverrides = () => {
 
 const initialise = async () => {
   attachEvents();
+  try {
+    await refreshRouteTagOverrides();
+  } catch (error) {
+    console.warn('Unable to refresh route tag overrides before rendering.', error);
+  }
   const routes = await fetchRoutes();
   state.baseRoutes = routes;
   state.routes = applyServiceTypeOverrides(routes);
@@ -692,9 +757,15 @@ const initialise = async () => {
 };
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initialise, { once: true });
+  document.addEventListener('DOMContentLoaded', () => {
+    initialise().catch((error) => {
+      console.error('Failed to initialise routes view.', error);
+    });
+  }, { once: true });
 } else {
-  initialise();
+  initialise().catch((error) => {
+    console.error('Failed to initialise routes view.', error);
+  });
 }
 
 elements.overlay.close?.addEventListener('click', closeOverlay);

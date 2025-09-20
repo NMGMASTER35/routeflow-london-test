@@ -98,8 +98,43 @@ const PROFILE_ENDPOINT =
 const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024;
 
 const createDefaultProfileExtras = () => ({
-  gender: ''
+  displayName: '',
+  photoURL: '',
+  gender: '',
+  updatedAt: ''
 });
+
+const normaliseProfileExtras = (extras) => {
+  const defaults = createDefaultProfileExtras();
+  if (!extras || typeof extras !== 'object') {
+    return { ...defaults };
+  }
+  const resolved = { ...defaults };
+  if (extras.displayName !== undefined || extras.display_name !== undefined) {
+    resolved.displayName = normaliseProfileText(
+      extras.displayName ?? extras.display_name
+    );
+  }
+  if (
+    extras.photoURL !== undefined ||
+    extras.photoUrl !== undefined ||
+    extras.photo_url !== undefined ||
+    extras.avatar !== undefined
+  ) {
+    resolved.photoURL = normaliseProfileText(
+      extras.photoURL ?? extras.photoUrl ?? extras.photo_url ?? extras.avatar
+    );
+  }
+  if (extras.gender !== undefined) {
+    resolved.gender = normaliseProfileText(extras.gender);
+  }
+  if (extras.updatedAt !== undefined || extras.updated_at !== undefined) {
+    resolved.updatedAt = normaliseProfileText(
+      extras.updatedAt ?? extras.updated_at
+    );
+  }
+  return resolved;
+};
 
 const state = {
   user: null,
@@ -235,7 +270,8 @@ const setEditorBusy = (busy) => {
 };
 
 const prefillProfileEditor = () => {
-  const displayName = normaliseProfileText(state.profileDocument?.displayName)
+  const displayName = normaliseProfileText(state.profileExtras?.displayName)
+    || normaliseProfileText(state.profileDocument?.displayName)
     || normaliseProfileText(state.user?.displayName)
     || '';
   const gender = state.profileExtras?.gender || '';
@@ -447,7 +483,9 @@ const persistProfileExtras = async (user, extras) => {
   if (!user?.getIdToken) return null;
   const token = await user.getIdToken();
   const payload = {
-    gender: extras.gender || null
+    displayName: normaliseProfileText(extras.displayName) || null,
+    photoURL: normaliseProfileText(extras.photoURL) || null,
+    gender: normaliseProfileText(extras.gender) || null
   };
   const response = await fetch(PROFILE_ENDPOINT, {
     method: 'PATCH',
@@ -465,7 +503,8 @@ const persistProfileExtras = async (user, extras) => {
   }
   const contentType = response.headers.get('content-type') || '';
   if (contentType.includes('application/json')) {
-    return response.json();
+    const data = await response.json();
+    return normaliseProfileExtras(data);
   }
   return null;
 };
@@ -490,11 +529,7 @@ const fetchProfileExtras = async (user) => {
       return createDefaultProfileExtras();
     }
     const data = await response.json();
-    return {
-      ...createDefaultProfileExtras(),
-      ...data,
-      gender: typeof data?.gender === 'string' ? data.gender.trim() : ''
-    };
+    return normaliseProfileExtras(data);
   } catch (error) {
     console.warn('Unable to fetch extended profile details.', error);
     return createDefaultProfileExtras();
@@ -517,9 +552,14 @@ const handleProfileEditorSubmit = async (event) => {
     return;
   }
 
+  const currentDisplayName =
+    normaliseProfileText(state.profileExtras?.displayName)
+      || normaliseProfileText(state.user.displayName)
+      || '';
+
   const hasChanges =
     values.avatarFile ||
-    values.displayName !== (state.user.displayName || '') ||
+    values.displayName !== currentDisplayName ||
     values.gender !== (state.profileExtras?.gender || '');
 
   if (!hasChanges) {
@@ -552,9 +592,16 @@ const handleProfileEditorSubmit = async (event) => {
       console.warn('RouteFlow profile: unable to update Firebase profile metadata.', profileSyncError);
     }
 
-    if (values.gender !== (state.profileExtras?.gender || '')) {
-      await persistProfileExtras(state.user, { gender: values.gender });
-    }
+    const extrasPayload = {
+      displayName: values.displayName,
+      gender: values.gender,
+      photoURL
+    };
+
+    const persistedExtras = await persistProfileExtras(state.user, extrasPayload);
+    const resolvedExtras = persistedExtras
+      ? persistedExtras
+      : normaliseProfileExtras(extrasPayload);
 
     if (typeof state.user.reload === 'function') {
       try {
@@ -583,7 +630,7 @@ const handleProfileEditorSubmit = async (event) => {
 
     state.profileExtras = {
       ...state.profileExtras,
-      gender: values.gender
+      ...resolvedExtras
     };
 
     refreshHero();
@@ -931,15 +978,18 @@ const refreshHero = () => {
   const { user, isAdmin } = state;
   const profileData = state.profileDocument || (user?.uid ? getCachedFirebaseProfile(user.uid) : null);
   const emailHandle = normaliseProfileText(user.email?.split('@')?.[0]);
-  const displayName = normaliseProfileText(profileData?.displayName)
+  const extras = state.profileExtras || createDefaultProfileExtras();
+  const displayName = normaliseProfileText(extras.displayName)
+    || normaliseProfileText(profileData?.displayName)
     || normaliseProfileText(user.displayName)
     || emailHandle;
   const emailAddress = user.email || '';
   const username = deriveUsername(user);
 
   if (heroElements.avatar) {
-    heroElements.avatar.src = user.photoURL || 'user-icon.png';
-    heroElements.avatar.alt = user.displayName ? `${user.displayName}'s avatar` : 'Profile avatar';
+    const photoURL = normaliseProfileText(user.photoURL) || normaliseProfileText(extras.photoURL);
+    heroElements.avatar.src = photoURL || 'user-icon.png';
+    heroElements.avatar.alt = displayName ? `${displayName}'s avatar` : 'Profile avatar';
   }
 
   if (heroElements.role) {

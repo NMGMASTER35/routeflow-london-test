@@ -23,6 +23,15 @@ const resolveStorage = () => {
 
 const storage = resolveStorage();
 
+const CONTENT_ENDPOINT =
+  (typeof window !== 'undefined' && window.RouteflowData?.contentEndpoint) || '/api/content';
+
+const COLLECTION_ENDPOINTS = {
+  blogPosts: 'blog-posts',
+  withdrawnRoutes: 'withdrawn-routes',
+  routeTagOverrides: 'route-tags'
+};
+
 const readItem = (key) => {
   if (!storage) return null;
   try {
@@ -269,21 +278,6 @@ const DEFAULT_BLOG_POSTS = sanitiseBlogCollection([
   }
 ]);
 
-export const getStoredBlogPosts = () => {
-  const raw = readItem(STORAGE_KEYS.blogPosts);
-  const parsed = sanitiseBlogCollection(parseJson(raw, []));
-  if (parsed.length) {
-    return cloneBlogCollection(parsed);
-  }
-  return cloneBlogCollection(DEFAULT_BLOG_POSTS);
-};
-
-export const setStoredBlogPosts = (posts) => {
-  const cleaned = sanitiseBlogCollection(posts);
-  writeItem(STORAGE_KEYS.blogPosts, JSON.stringify(cleaned));
-  return cloneBlogCollection(cleaned);
-};
-
 const sanitiseWithdrawnEntry = (entry) => {
   if (!entry || typeof entry !== 'object') return null;
   const route = normaliseText(entry.route);
@@ -327,27 +321,196 @@ const sanitiseCollection = (collection, sanitiser, sort = false) => {
   }
   return cleaned;
 };
+const cloneWithdrawnCollection = (collection) =>
+  Array.isArray(collection) ? collection.map((entry) => ({ ...entry })) : [];
 
-export const getStoredWithdrawnRoutes = () => {
+const cloneRouteTagCollection = (collection) =>
+  Array.isArray(collection)
+    ? collection.map((entry) => ({
+        ...entry,
+        tags: Array.isArray(entry.tags) ? [...entry.tags] : []
+      }))
+    : [];
+
+let blogPostsCache = (() => {
+  const raw = readItem(STORAGE_KEYS.blogPosts);
+  const parsed = sanitiseBlogCollection(parseJson(raw, []));
+  if (parsed.length) {
+    return parsed;
+  }
+  return cloneBlogCollection(DEFAULT_BLOG_POSTS);
+})();
+
+let withdrawnRoutesCache = (() => {
   const raw = readItem(STORAGE_KEYS.withdrawnRoutes);
   return sanitiseCollection(parseJson(raw, []), sanitiseWithdrawnEntry, true);
-};
+})();
 
-export const setStoredWithdrawnRoutes = (routes) => {
-  const cleaned = sanitiseCollection(routes, sanitiseWithdrawnEntry, true);
-  writeItem(STORAGE_KEYS.withdrawnRoutes, JSON.stringify(cleaned));
-  return cleaned;
-};
-
-export const getRouteTagOverrides = () => {
+let routeTagOverridesCache = (() => {
   const raw = readItem(STORAGE_KEYS.routeTagOverrides);
   return sanitiseCollection(parseJson(raw, []), sanitiseRouteTagOverride, true);
+})();
+
+const setBlogPostsCache = (entries, { persist = true } = {}) => {
+  blogPostsCache = sanitiseBlogCollection(entries);
+  if (persist) {
+    writeItem(STORAGE_KEYS.blogPosts, JSON.stringify(blogPostsCache));
+  }
+  return cloneBlogCollection(blogPostsCache);
 };
 
-export const setRouteTagOverrides = (overrides) => {
+const setWithdrawnRoutesCache = (entries, { persist = true } = {}) => {
+  withdrawnRoutesCache = sanitiseCollection(entries, sanitiseWithdrawnEntry, true);
+  if (persist) {
+    writeItem(STORAGE_KEYS.withdrawnRoutes, JSON.stringify(withdrawnRoutesCache));
+  }
+  return cloneWithdrawnCollection(withdrawnRoutesCache);
+};
+
+const setRouteTagOverridesCache = (entries, { persist = true } = {}) => {
+  routeTagOverridesCache = sanitiseCollection(entries, sanitiseRouteTagOverride, true);
+  if (persist) {
+    writeItem(STORAGE_KEYS.routeTagOverrides, JSON.stringify(routeTagOverridesCache));
+  }
+  return cloneRouteTagCollection(routeTagOverridesCache);
+};
+
+const requestContent = async (collectionKey, { signal } = {}) => {
+  const endpoint = `${CONTENT_ENDPOINT}/${collectionKey}`;
+  const response = await fetch(endpoint, { signal });
+  if (!response.ok) {
+    let message = `Failed to load ${collectionKey} (${response.status})`;
+    try {
+      const payload = await response.json();
+      if (payload?.error) {
+        message = payload.error;
+      }
+    } catch (error) {
+      // Ignore JSON parsing issues for error payloads.
+    }
+    throw new Error(message);
+  }
+  try {
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      return [];
+    }
+    const payload = await response.json();
+    return Array.isArray(payload?.items) ? payload.items : [];
+  } catch (error) {
+    return [];
+  }
+};
+
+const persistContent = async (collectionKey, items, authToken) => {
+  if (!authToken) {
+    throw new Error('An administrator token is required to update content.');
+  }
+
+  const endpoint = `${CONTENT_ENDPOINT}/${collectionKey}`;
+  const response = await fetch(endpoint, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${authToken}`
+    },
+    body: JSON.stringify({ items })
+  });
+
+  if (!response.ok) {
+    let message = `Failed to update ${collectionKey} (${response.status})`;
+    try {
+      const payload = await response.json();
+      if (payload?.error) {
+        message = payload.error;
+      }
+    } catch (error) {
+      // Ignore JSON parsing issues on error responses.
+    }
+    const error = new Error(message);
+    error.status = response.status;
+    throw error;
+  }
+
+  try {
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      return items;
+    }
+    const payload = await response.json();
+    if (Array.isArray(payload?.items)) {
+      return payload.items;
+    }
+  } catch (error) {
+    // Ignore JSON parsing issues when persisting.
+  }
+  return items;
+};
+
+export const getStoredBlogPosts = () => cloneBlogCollection(blogPostsCache);
+
+export const refreshBlogPosts = async (options = {}) => {
+  try {
+    const items = await requestContent(COLLECTION_ENDPOINTS.blogPosts, options);
+    setBlogPostsCache(items);
+  } catch (error) {
+    console.warn('Unable to refresh blog posts from the API.', error);
+  }
+  return getStoredBlogPosts();
+};
+
+export const setStoredBlogPosts = async (posts, options = {}) => {
+  const cleaned = sanitiseBlogCollection(posts);
+  const items = await persistContent(
+    COLLECTION_ENDPOINTS.blogPosts,
+    cleaned,
+    options.authToken
+  );
+  return setBlogPostsCache(items);
+};
+
+export const getStoredWithdrawnRoutes = () => cloneWithdrawnCollection(withdrawnRoutesCache);
+
+export const refreshWithdrawnRoutes = async (options = {}) => {
+  try {
+    const items = await requestContent(COLLECTION_ENDPOINTS.withdrawnRoutes, options);
+    setWithdrawnRoutesCache(items);
+  } catch (error) {
+    console.warn('Unable to refresh withdrawn routes from the API.', error);
+  }
+  return getStoredWithdrawnRoutes();
+};
+
+export const setStoredWithdrawnRoutes = async (routes, options = {}) => {
+  const cleaned = sanitiseCollection(routes, sanitiseWithdrawnEntry, true);
+  const items = await persistContent(
+    COLLECTION_ENDPOINTS.withdrawnRoutes,
+    cleaned,
+    options.authToken
+  );
+  return setWithdrawnRoutesCache(items);
+};
+
+export const getRouteTagOverrides = () => cloneRouteTagCollection(routeTagOverridesCache);
+
+export const refreshRouteTagOverrides = async (options = {}) => {
+  try {
+    const items = await requestContent(COLLECTION_ENDPOINTS.routeTagOverrides, options);
+    setRouteTagOverridesCache(items);
+  } catch (error) {
+    console.warn('Unable to refresh route tag overrides from the API.', error);
+  }
+  return getRouteTagOverrides();
+};
+
+export const setRouteTagOverrides = async (overrides, options = {}) => {
   const cleaned = sanitiseCollection(overrides, sanitiseRouteTagOverride, true);
-  writeItem(STORAGE_KEYS.routeTagOverrides, JSON.stringify(cleaned));
-  return cleaned;
+  const items = await persistContent(
+    COLLECTION_ENDPOINTS.routeTagOverrides,
+    cleaned,
+    options.authToken
+  );
+  return setRouteTagOverridesCache(items);
 };
 
 export const normaliseRouteKey = (value) => normaliseText(value).toUpperCase();
@@ -357,7 +520,7 @@ export const getRouteTagOverrideMap = (overrides = getRouteTagOverrides()) => {
   overrides.forEach((entry) => {
     const key = normaliseRouteKey(entry.route);
     if (!key) return;
-    map.set(key, [...entry.tags]);
+    map.set(key, Array.isArray(entry.tags) ? [...entry.tags] : []);
   });
   return map;
 };

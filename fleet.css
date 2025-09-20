@@ -815,14 +815,6 @@ body.dark-mode .fleet-form__extras small {
   align-items: flex-end;
 }
 
-.fleet-admin__hint {
-  color: rgba(15, 23, 42, 0.6);
-}
-
-body.dark-mode .fleet-admin__hint {
-  color: rgba(226, 232, 240, 0.7);
-}
-
 .fleet-admin__panel {
   margin-top: 1.75rem;
   border-top: 1px solid var(--fleet-border-light);

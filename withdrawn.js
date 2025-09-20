@@ -1,4 +1,4 @@
-import { getStoredWithdrawnRoutes, STORAGE_KEYS } from './data-store.js';
+import { getStoredWithdrawnRoutes, refreshWithdrawnRoutes, STORAGE_KEYS } from './data-store.js';
 
 const selectors = {
   table: document.getElementById('withdrawnTable'),
@@ -116,8 +116,13 @@ const refreshFromStorage = () => {
   filterRows(state.searchTerm || '');
 };
 
-const initialise = () => {
+const initialise = async () => {
   if (!selectors.table) return;
+  try {
+    await refreshWithdrawnRoutes();
+  } catch (error) {
+    console.warn('Unable to refresh withdrawn routes before rendering.', error);
+  }
   renderStoredRoutes();
   computeStats();
   filterRows('');
@@ -128,9 +133,15 @@ const initialise = () => {
 };
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initialise, { once: true });
+  document.addEventListener('DOMContentLoaded', () => {
+    initialise().catch((error) => {
+      console.error('Failed to initialise withdrawn routes view.', error);
+    });
+  }, { once: true });
 } else {
-  initialise();
+  initialise().catch((error) => {
+    console.error('Failed to initialise withdrawn routes view.', error);
+  });
 }
 
 window.addEventListener('storage', (event) => {

@@ -1,4 +1,4 @@
-import { getStoredBlogPosts } from './data-store.js';
+import { getStoredBlogPosts, refreshBlogPosts } from './data-store.js';
 
 const formatPublishedDate = (value) => {
   if (!value) return '—';
@@ -249,7 +249,12 @@ const matchesSearchTerm = (post, term) => {
 
 let searchTerm = '';
 
-const renderBlogLists = () => {
+const renderBlogLists = async () => {
+  try {
+    await refreshBlogPosts();
+  } catch (error) {
+    console.warn('Unable to refresh blog posts before rendering.', error);
+  }
   const containers = Array.from(document.querySelectorAll('[data-blog-list]'));
   if (!containers.length) return;
 
@@ -392,9 +397,15 @@ const renderBlogLists = () => {
   }
 };
 
+const initialiseBlogLists = () => {
+  renderBlogLists().catch((error) => {
+    console.error('Failed to render blog lists.', error);
+  });
+};
+
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', renderBlogLists, { once: true });
+  document.addEventListener('DOMContentLoaded', initialiseBlogLists, { once: true });
 } else {
-  renderBlogLists();
+  initialiseBlogLists();
 }
 

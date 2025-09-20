@@ -7,6 +7,9 @@ import {
   setRouteTagOverrides,
   getStoredBlogPosts,
   setStoredBlogPosts,
+  refreshWithdrawnRoutes,
+  refreshRouteTagOverrides,
+  refreshBlogPosts,
   STORAGE_KEYS
 } from './data-store.js';
 
@@ -32,6 +35,7 @@ const FALLBACK_ADMIN_OVERRIDES = new Map([
 const TAG_OPTIONS = ['Regular', 'Night', 'School', 'Special', 'Express'];
 
 const adminState = {
+  user: null,
   withdrawnRoutes: [],
   routeTagOverrides: [],
   withdrawnEditId: null,
@@ -50,6 +54,13 @@ const adminViews = {
 const EMAIL_REGEX = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 const getFirebaseRolesApi = () => window.RouteflowFirebase || null;
+
+const ensureAdminToken = async () => {
+  if (!adminState.user || typeof adminState.user.getIdToken !== 'function') {
+    throw new Error('Administrator authentication is unavailable.');
+  }
+  return adminState.user.getIdToken();
+};
 
 const formatDisplayName = (value) => (typeof value === 'string' ? value.trim() : '');
 
@@ -343,16 +354,23 @@ function createWithdrawnPanel() {
       const editButton = createActionButton('Edit', 'ghost', () => {
         startEdit(entry);
       });
-      const removeButton = createActionButton('Remove', 'danger', () => {
+      const removeButton = createActionButton('Remove', 'danger', async () => {
         const confirmed = window.confirm(`Remove withdrawn route ${entry.route}?`);
         if (!confirmed) return;
-        adminState.withdrawnRoutes = adminState.withdrawnRoutes.filter((item) => item.id !== entry.id);
-        adminState.withdrawnRoutes = setStoredWithdrawnRoutes(adminState.withdrawnRoutes);
-        if (adminState.withdrawnEditId === entry.id) {
-          resetForm();
+        const nextRoutes = adminState.withdrawnRoutes.filter((item) => item.id !== entry.id);
+        try {
+          const token = await ensureAdminToken();
+          const persisted = await setStoredWithdrawnRoutes(nextRoutes, { authToken: token });
+          adminState.withdrawnRoutes = persisted;
+          if (adminState.withdrawnEditId === entry.id) {
+            resetForm();
+          }
+          renderList();
+          updateFeedback(feedback, `Removed withdrawn route ${entry.route}.`, 'success');
+        } catch (error) {
+          console.error('Failed to remove withdrawn route.', error);
+          updateFeedback(feedback, 'Unable to remove this withdrawn route. Please try again.', 'error');
         }
-        renderList();
-        updateFeedback(feedback, `Removed withdrawn route ${entry.route}.`, 'success');
       });
       actionsCell.append(editButton, removeButton);
       row.append(actionsCell);
@@ -363,7 +381,7 @@ function createWithdrawnPanel() {
     listWrapper.append(table);
   };
 
-  form.addEventListener('submit', (event) => {
+  form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const routeValue = inputs.route.value.trim();
     if (!routeValue) {
@@ -383,21 +401,29 @@ function createWithdrawnPanel() {
       replacedBy: inputs.replacedBy.value.trim()
     };
 
+    let nextRoutes = [...adminState.withdrawnRoutes];
     if (adminState.withdrawnEditId) {
       const index = adminState.withdrawnRoutes.findIndex((item) => item.id === adminState.withdrawnEditId);
       if (index !== -1) {
-        adminState.withdrawnRoutes.splice(index, 1, entry);
+        nextRoutes.splice(index, 1, entry);
       }
       updateFeedback(feedback, `Updated withdrawn route ${entry.route}.`, 'success');
     } else {
-      adminState.withdrawnRoutes.push(entry);
+      nextRoutes.push(entry);
       updateFeedback(feedback, `Added withdrawn route ${entry.route}.`, 'success');
     }
 
-    adminState.withdrawnRoutes = setStoredWithdrawnRoutes(adminState.withdrawnRoutes);
-    renderList();
-    resetForm();
-    inputs.route.focus();
+    try {
+      const token = await ensureAdminToken();
+      const persisted = await setStoredWithdrawnRoutes(nextRoutes, { authToken: token });
+      adminState.withdrawnRoutes = persisted;
+      renderList();
+      resetForm();
+      inputs.route.focus();
+    } catch (error) {
+      console.error('Failed to save withdrawn route.', error);
+      updateFeedback(feedback, 'We could not save this withdrawn route. Please try again.', 'error');
+    }
   });
 
   cancel.addEventListener('click', () => {
@@ -843,16 +869,23 @@ function createTagOverridePanel() {
       const editButton = createActionButton('Edit', 'ghost', () => {
         setFormFromEntry(entry);
       });
-      const removeButton = createActionButton('Remove', 'danger', () => {
+      const removeButton = createActionButton('Remove', 'danger', async () => {
         const confirmed = window.confirm(`Remove tag override for ${entry.route}?`);
         if (!confirmed) return;
-        adminState.routeTagOverrides = adminState.routeTagOverrides.filter((item) => item.id !== entry.id);
-        adminState.routeTagOverrides = setRouteTagOverrides(adminState.routeTagOverrides);
-        if (adminState.tagEditId === entry.id) {
-          resetForm();
+        const nextOverrides = adminState.routeTagOverrides.filter((item) => item.id !== entry.id);
+        try {
+          const token = await ensureAdminToken();
+          const persisted = await setRouteTagOverrides(nextOverrides, { authToken: token });
+          adminState.routeTagOverrides = persisted;
+          if (adminState.tagEditId === entry.id) {
+            resetForm();
+          }
+          renderList();
+          updateFeedback(feedback, `Removed tags for ${entry.route}.`, 'success');
+        } catch (error) {
+          console.error('Failed to remove route tags.', error);
+          updateFeedback(feedback, 'Unable to remove these service tags. Please try again.', 'error');
         }
-        renderList();
-        updateFeedback(feedback, `Removed tags for ${entry.route}.`, 'success');
       });
       actionsCell.append(editButton, removeButton);
       row.append(actionsCell);
@@ -864,7 +897,7 @@ function createTagOverridePanel() {
     listWrapper.append(table);
   };
 
-  form.addEventListener('submit', (event) => {
+  form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const routeValue = routeInput.value.trim();
     if (!routeValue) {
@@ -885,21 +918,29 @@ function createTagOverridePanel() {
       tags
     };
 
+    let nextOverrides = [...adminState.routeTagOverrides];
     if (adminState.tagEditId) {
       const index = adminState.routeTagOverrides.findIndex((item) => item.id === adminState.tagEditId);
       if (index !== -1) {
-        adminState.routeTagOverrides.splice(index, 1, entry);
+        nextOverrides.splice(index, 1, entry);
       }
       updateFeedback(feedback, `Updated tags for ${entry.route}.`, 'success');
     } else {
-      adminState.routeTagOverrides.push(entry);
+      nextOverrides.push(entry);
       updateFeedback(feedback, `Saved tags for ${entry.route}.`, 'success');
     }
 
-    adminState.routeTagOverrides = setRouteTagOverrides(adminState.routeTagOverrides);
-    renderList();
-    resetForm();
-    routeInput.focus();
+    try {
+      const token = await ensureAdminToken();
+      const persisted = await setRouteTagOverrides(nextOverrides, { authToken: token });
+      adminState.routeTagOverrides = persisted;
+      renderList();
+      resetForm();
+      routeInput.focus();
+    } catch (error) {
+      console.error('Failed to save route tag override.', error);
+      updateFeedback(feedback, 'We could not save these service tags. Please try again.', 'error');
+    }
   });
 
   cancel.addEventListener('click', () => {
@@ -1154,16 +1195,23 @@ function createBlogPanel() {
       const actionsCell = document.createElement('td');
       actionsCell.className = 'admin-table__actions';
       const editButton = createActionButton('Edit', 'ghost', () => startEdit(entry));
-      const deleteButton = createActionButton('Delete', 'danger', () => {
+      const deleteButton = createActionButton('Delete', 'danger', async () => {
         const confirmed = window.confirm(`Delete “${entry.title}”?`);
         if (!confirmed) return;
-        adminState.blogPosts = adminState.blogPosts.filter((item) => item.id !== entry.id);
-        adminState.blogPosts = setStoredBlogPosts(adminState.blogPosts);
-        if (adminState.blogEditId === entry.id) {
-          resetForm();
+        const nextPosts = adminState.blogPosts.filter((item) => item.id !== entry.id);
+        try {
+          const token = await ensureAdminToken();
+          const persisted = await setStoredBlogPosts(nextPosts, { authToken: token });
+          adminState.blogPosts = persisted;
+          if (adminState.blogEditId === entry.id) {
+            resetForm();
+          }
+          renderList();
+          updateFeedback(feedback, `Deleted “${entry.title}”.`, 'success');
+        } catch (error) {
+          console.error('Failed to delete blog post.', error);
+          updateFeedback(feedback, 'Unable to delete this brief. Please try again.', 'error');
         }
-        renderList();
-        updateFeedback(feedback, `Deleted “${entry.title}”.`, 'success');
       });
       actionsCell.append(editButton, deleteButton);
       row.append(actionsCell);
@@ -1175,7 +1223,7 @@ function createBlogPanel() {
     listWrapper.append(table);
   };
 
-  form.addEventListener('submit', (event) => {
+  form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const titleValue = inputs.title.value.trim();
     if (!titleValue) {
@@ -1196,21 +1244,29 @@ function createBlogPanel() {
       featured: inputs.featured.checked
     };
 
+    let nextPosts = [...adminState.blogPosts];
     if (adminState.blogEditId) {
       const index = adminState.blogPosts.findIndex((item) => item.id === adminState.blogEditId);
       if (index !== -1) {
-        adminState.blogPosts.splice(index, 1, entry);
+        nextPosts.splice(index, 1, entry);
       }
       updateFeedback(feedback, `Updated “${entry.title}”.`, 'success');
     } else {
-      adminState.blogPosts.push(entry);
+      nextPosts.push(entry);
       updateFeedback(feedback, `Published “${entry.title}”.`, 'success');
     }
 
-    adminState.blogPosts = setStoredBlogPosts(adminState.blogPosts);
-    renderList();
-    resetForm();
-    inputs.title.focus();
+    try {
+      const token = await ensureAdminToken();
+      const persisted = await setStoredBlogPosts(nextPosts, { authToken: token });
+      adminState.blogPosts = persisted;
+      renderList();
+      resetForm();
+      inputs.title.focus();
+    } catch (error) {
+      console.error('Failed to save blog post.', error);
+      updateFeedback(feedback, 'We could not save this brief. Please try again.', 'error');
+    }
   });
 
   cancel.addEventListener('click', () => {
@@ -1253,10 +1309,21 @@ function handleStorageSync(event) {
   }
 }
 
-function renderAdminDashboard(user) {
+async function renderAdminDashboard(user) {
   if (!adminContent) return;
   clearPendingRedirect();
-  setBusy(false);
+  adminState.user = user;
+  setBusy(true);
+
+  try {
+    await Promise.all([
+      refreshWithdrawnRoutes(),
+      refreshRouteTagOverrides(),
+      refreshBlogPosts()
+    ]);
+  } catch (error) {
+    console.warn('Admin dashboard: failed to refresh initial data.', error);
+  }
 
   adminState.withdrawnRoutes = getStoredWithdrawnRoutes();
   adminState.routeTagOverrides = getRouteTagOverrides();
@@ -1390,6 +1457,7 @@ function renderAdminDashboard(user) {
   section.append(panels);
 
   replaceContent(section);
+  setBusy(false);
 
   if (!storageListenerRegistered) {
     window.addEventListener('storage', handleStorageSync);
@@ -1448,7 +1516,7 @@ const handleAuthUser = async (user) => {
   try {
     const tokenResult = await user.getIdTokenResult();
     if (resolveAdminStatus(user, tokenResult)) {
-      renderAdminDashboard(user);
+      await renderAdminDashboard(user);
     } else {
       handleUnauthorized('You are not authorized to access this page.');
     }
