@@ -1,10 +1,18 @@
-const APP_KEY = 'f17d0725d1654338ab02a361fe41abad';
+const APP_KEY = ''; // ← Add your TfL API key here while testing
 const REFRESH_INTERVAL = 120000;
 
+const withAppKey = (url) => {
+  if (!APP_KEY) {
+    return url;
+  }
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}app_key=${encodeURIComponent(APP_KEY)}`;
+};
+
 const RAIL_ENDPOINT = () =>
-  `https://api.tfl.gov.uk/Line/Mode/tube,dlr,overground,elizabeth-line/Status?detail=true&app_key=${APP_KEY}`;
+  withAppKey('https://api.tfl.gov.uk/Line/Mode/tube,dlr,overground,elizabeth-line/Status?detail=true');
 const BUS_ENDPOINT = () =>
-  `https://api.tfl.gov.uk/Line/Mode/bus/Status?detail=true&app_key=${APP_KEY}`;
+  withAppKey('https://api.tfl.gov.uk/Line/Mode/bus/Status?detail=true');
 
 const elements = {
   railGrid: document.getElementById('railGrid'),
@@ -31,6 +39,10 @@ const state = {
   loaded: {
     rail: false,
     bus: false
+  },
+  pendingReveal: {
+    rail: false,
+    bus: false
   }
 };
 
@@ -55,8 +67,48 @@ const mapLine = (line) => {
   };
 };
 
-const renderLines = (target, lines) => {
+const createLineCard = (line) => {
+  const card = document.createElement('article');
+  card.className = 'network-card';
+  card.dataset.state = line.isGood ? 'good' : 'issue';
+
+  const title = document.createElement('h3');
+  title.className = 'network-card__title';
+  title.textContent = line.name;
+
+  const status = document.createElement('p');
+  status.className = 'network-card__status';
+  status.textContent = line.status;
+
+  card.append(title, status);
+
+  if (line.reasons.length) {
+    line.reasons.forEach((reason) => {
+      const paragraph = document.createElement('p');
+      paragraph.className = 'network-card__meta';
+      paragraph.textContent = reason;
+      card.appendChild(paragraph);
+    });
+  }
+
+  if (line.disruptions.length) {
+    const list = document.createElement('ul');
+    list.className = 'network-card__list';
+    line.disruptions.forEach((note) => {
+      const item = document.createElement('li');
+      item.textContent = note;
+      list.appendChild(item);
+    });
+    card.appendChild(list);
+  }
+
+  return card;
+};
+
+const renderLines = (target, lines, options = {}) => {
   if (!target) return;
+  const { progressive = false } = options;
+
   target.innerHTML = '';
   target.dataset.loading = 'false';
   target.removeAttribute('aria-busy');
@@ -69,43 +121,26 @@ const renderLines = (target, lines) => {
     return;
   }
 
-  lines.forEach((line) => {
-    const card = document.createElement('article');
-    card.className = 'network-card';
-    card.dataset.state = line.isGood ? 'good' : 'issue';
+  if (!progressive) {
+    const fragment = document.createDocumentFragment();
+    lines.forEach((line) => {
+      fragment.appendChild(createLineCard(line));
+    });
+    target.appendChild(fragment);
+    return;
+  }
 
-    const title = document.createElement('h3');
-    title.className = 'network-card__title';
-    title.textContent = line.name;
-
-    const status = document.createElement('p');
-    status.className = 'network-card__status';
-    status.textContent = line.status;
-
-    card.append(title, status);
-
-    if (line.reasons.length) {
-      line.reasons.forEach((reason) => {
-        const paragraph = document.createElement('p');
-        paragraph.className = 'network-card__meta';
-        paragraph.textContent = reason;
-        card.appendChild(paragraph);
-      });
+  let index = 0;
+  const appendNext = () => {
+    if (index >= lines.length) return;
+    target.appendChild(createLineCard(lines[index]));
+    index += 1;
+    if (index < lines.length) {
+      requestAnimationFrame(appendNext);
     }
+  };
 
-    if (line.disruptions.length) {
-      const list = document.createElement('ul');
-      list.className = 'network-card__list';
-      line.disruptions.forEach((note) => {
-        const item = document.createElement('li');
-        item.textContent = note;
-        list.appendChild(item);
-      });
-      card.appendChild(list);
-    }
-
-  target.appendChild(card);
-  });
+  appendNext();
 };
 
 const renderLoading = (target) => {
@@ -176,14 +211,16 @@ const applyFilters = () => {
     renderLoading(elements.railGrid);
   } else {
     const filteredRail = filterLines(state.rail);
-    renderLines(elements.railGrid, filteredRail);
+    renderLines(elements.railGrid, filteredRail, { progressive: state.pendingReveal.rail });
+    state.pendingReveal.rail = false;
   }
 
   if (state.loading.bus) {
     renderLoading(elements.busGrid);
   } else {
     const filteredBus = filterLines(state.bus, true);
-    renderLines(elements.busGrid, filteredBus);
+    renderLines(elements.busGrid, filteredBus, { progressive: state.pendingReveal.bus });
+    state.pendingReveal.bus = false;
   }
 
   if (state.loading.rail || state.loading.bus) {
@@ -225,56 +262,35 @@ const handleFilterClick = (event) => {
   applyFilters();
 };
 
-const fetchStatusData = async () => {
-  const fetchRail = fetch(RAIL_ENDPOINT()).then((response) => {
-    if (!response.ok) throw new Error('Failed to load rail disruptions');
-    return response.json();
-  });
-  const fetchBus = fetch(BUS_ENDPOINT()).then((response) => {
-    if (!response.ok) throw new Error('Failed to load bus disruptions');
-    return response.json();
-  });
-
-  const [railResult, busResult] = await Promise.allSettled([fetchRail, fetchBus]);
-
-  if (railResult.status === 'fulfilled') {
-    state.rail = railResult.value.map(mapLine);
-    state.loaded.rail = true;
-  } else {
-    console.warn(railResult.reason);
-    state.rail = [];
-    state.loaded.rail = false;
+const loadLines = async (key, endpoint) => {
+  const shouldShowLoader = !state.loaded[key];
+  state.loading[key] = true;
+  if (shouldShowLoader) {
+    applyFilters();
   }
 
-  if (busResult.status === 'fulfilled') {
-    state.bus = busResult.value.map(mapLine);
-    state.loaded.bus = true;
-  } else {
-    console.warn(busResult.reason);
-    state.bus = [];
-    state.loaded.bus = false;
+  try {
+    const response = await fetch(endpoint());
+    if (!response.ok) {
+      throw new Error(`Failed to load ${key} disruptions`);
+    }
+    const payload = await response.json();
+    state[key] = Array.isArray(payload) ? payload.map(mapLine) : [];
+    state.loaded[key] = true;
+    state.pendingReveal[key] = true;
+  } catch (error) {
+    console.warn(error);
+    state[key] = [];
+    state.loaded[key] = false;
+  } finally {
+    state.loading[key] = false;
+    applyFilters();
   }
 };
 
 const refreshData = () => {
-  const shouldShowRailLoader = !state.loaded.rail;
-  const shouldShowBusLoader = !state.loaded.bus;
-
-  if (shouldShowRailLoader || shouldShowBusLoader) {
-    state.loading.rail = shouldShowRailLoader;
-    state.loading.bus = shouldShowBusLoader;
-    applyFilters();
-  }
-
-  fetchStatusData()
-    .catch((error) => {
-      console.error('Unable to refresh disruption data:', error);
-    })
-    .finally(() => {
-      state.loading.rail = false;
-      state.loading.bus = false;
-      applyFilters();
-    });
+  loadLines('rail', RAIL_ENDPOINT);
+  loadLines('bus', BUS_ENDPOINT);
 };
 
 const attachEvents = () => {

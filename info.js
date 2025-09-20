@@ -178,6 +178,27 @@ const matchesAnyTag = (postTags, filterTags) => {
   return filterTags.some((tag) => tags.includes(tag));
 };
 
+const collectSearchText = (post) => {
+  const parts = [];
+  if (post.title) parts.push(post.title);
+  if (post.summary) parts.push(post.summary);
+  if (post.author) parts.push(post.author);
+  if (Array.isArray(post.tags)) parts.push(post.tags.join(' '));
+  if (post.content) parts.push(post.content);
+  return parts
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+};
+
+const matchesSearchTerm = (post, term) => {
+  if (!term) return true;
+  return collectSearchText(post).includes(term);
+};
+
+let searchTerm = '';
+
 const renderBlogLists = () => {
   const containers = Array.from(document.querySelectorAll('[data-blog-list]'));
   if (!containers.length) return;
@@ -203,6 +224,10 @@ const renderBlogLists = () => {
       subset = subset.filter((post) => matchesAnyTag(post.tags, [config.activeFilter]));
     }
 
+    if (searchTerm) {
+      subset = subset.filter((post) => matchesSearchTerm(post, searchTerm));
+    }
+
     if (Number.isFinite(limit) && limit > 0) {
       subset = subset.slice(0, limit);
     }
@@ -210,7 +235,7 @@ const renderBlogLists = () => {
     if (!subset.length) {
       const empty = document.createElement('p');
       empty.className = 'blog-empty';
-      empty.textContent = emptyMessage;
+      empty.textContent = searchTerm ? 'No briefs match your search just yet.' : emptyMessage;
       config.element.replaceChildren(empty);
       return;
     }
@@ -306,6 +331,15 @@ const renderBlogLists = () => {
       group.element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   });
+
+  const searchInput = document.getElementById('blogSearch');
+  if (searchInput) {
+    searchInput.addEventListener('input', (event) => {
+      const value = typeof event.target.value === 'string' ? event.target.value.trim().toLowerCase() : '';
+      searchTerm = value;
+      configs.forEach((config) => renderContainer(config));
+    });
+  }
 };
 
 if (document.readyState === 'loading') {
