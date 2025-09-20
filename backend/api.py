@@ -1,12 +1,15 @@
 import json
 import os
 import re
+import statistics
 import threading
 import time
 import uuid
+from collections import Counter, defaultdict
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from math import atan2, cos, radians, sin, sqrt
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple
 from urllib.parse import parse_qsl, urljoin, urlparse
 
 import requests
@@ -118,6 +121,23 @@ TFL_REGISTRATION_ENDPOINTS: List[str] = _unique_sequence(_raw_registration_endpo
 
 NEW_BUS_DURATION = timedelta(days=FLEET_VEHICLE_HISTORY_DAYS)
 NEW_BUS_EXTRA_LABEL = "New Bus"
+
+NEW_BUS_PRIMARY_WINDOW_DAYS = 30
+NEW_BUS_AUTO_EXPIRE_DAYS = 45
+NEW_BUS_MAX_EXTENSION_DAYS = 60
+NEW_BUS_LOW_ACTIVITY_THRESHOLD = 0.1
+
+RARE_SHARE_THRESHOLD = 0.01
+RARE_MIN_SIGHTINGS = 3
+RARE_ZSCORE_THRESHOLD = -2.5
+RARE_DECAY_DAYS = 14
+RARE_OPERATOR_MISMATCH_THRESHOLD = 2
+RARE_OPERATOR_MISMATCH_WINDOW_MINUTES = 45
+
+BADGE_NEW_BUS = "new-bus"
+BADGE_RARE_WORKING = "rare-working"
+BADGE_LOAN = "loan-guest"
+BADGE_WITHDRAWN = "withdrawn"
 
 DEFAULT_ADMIN_UIDS: Set[str] = {
     "emKTnjbKIKfBjQzQEvpUOWOpFKc2",
@@ -622,6 +642,150 @@ def init_database() -> None:
                 ON app_collections (collection);
                 """
             )
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS operators (
+                    operator_id SERIAL PRIMARY KEY,
+                    slug TEXT NOT NULL UNIQUE,
+                    name TEXT NOT NULL,
+                    short_name TEXT,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                );
+                """
+            )
+            cursor.execute(
+                """
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_operators_name_lower
+                ON operators ((lower(name)));
+                """
+            )
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS buses (
+                    reg TEXT PRIMARY KEY,
+                    registration TEXT NOT NULL,
+                    vehicle_id TEXT,
+                    fleet_number TEXT,
+                    operator_id INTEGER REFERENCES operators(operator_id),
+                    home_operator_id INTEGER REFERENCES operators(operator_id),
+                    status TEXT,
+                    vehicle_type TEXT,
+                    wrap TEXT,
+                    first_seen TIMESTAMPTZ NOT NULL,
+                    last_seen TIMESTAMPTZ NOT NULL,
+                    current_route TEXT,
+                    last_route_update TIMESTAMPTZ,
+                    usual_routes JSONB NOT NULL DEFAULT '{}'::jsonb,
+                    badges JSONB NOT NULL DEFAULT '[]'::jsonb,
+                    badge_overrides JSONB NOT NULL DEFAULT '{}'::jsonb,
+                    new_badge_reactivated_at TIMESTAMPTZ,
+                    new_badge_extended_until TIMESTAMPTZ,
+                    rare_badge_started_at TIMESTAMPTZ,
+                    rare_badge_last_seen_at TIMESTAMPTZ,
+                    rare_badge_suppressed_until TIMESTAMPTZ,
+                    rare_badge_decay_at TIMESTAMPTZ,
+                    rare_score JSONB NOT NULL DEFAULT '{}'::jsonb,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                );
+                """
+            )
+            cursor.execute(
+                """
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_buses_registration_lower
+                ON buses ((lower(registration)));
+                """
+            )
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS bus_sightings (
+                    sighting_id BIGSERIAL PRIMARY KEY,
+                    reg TEXT NOT NULL REFERENCES buses(reg) ON DELETE CASCADE,
+                    seen_at TIMESTAMPTZ NOT NULL,
+                    lat DOUBLE PRECISION,
+                    lon DOUBLE PRECISION,
+                    route TEXT,
+                    stop_code TEXT,
+                    destination TEXT,
+                    operator_id INTEGER REFERENCES operators(operator_id),
+                    raw JSONB,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    UNIQUE (reg, seen_at)
+                );
+                """
+            )
+            cursor.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_bus_sightings_reg_seen
+                ON bus_sightings (reg, seen_at DESC);
+                """
+            )
+            cursor.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_bus_sightings_route_seen
+                ON bus_sightings (route, seen_at DESC);
+                """
+            )
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS bus_history (
+                    history_id BIGSERIAL PRIMARY KEY,
+                    reg TEXT NOT NULL REFERENCES buses(reg) ON DELETE CASCADE,
+                    event_type TEXT NOT NULL,
+                    event_ts TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    details JSONB NOT NULL DEFAULT '{}'::jsonb,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                );
+                """
+            )
+            cursor.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_bus_history_reg_ts
+                ON bus_history (reg, event_ts DESC);
+                """
+            )
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS edit_requests (
+                    request_id UUID PRIMARY KEY,
+                    reg TEXT NOT NULL REFERENCES buses(reg) ON DELETE CASCADE,
+                    action TEXT NOT NULL,
+                    badge TEXT,
+                    payload JSONB,
+                    status TEXT NOT NULL DEFAULT 'pending',
+                    created_by TEXT,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    reviewed_by TEXT,
+                    reviewed_at TIMESTAMPTZ,
+                    reviewer_notes TEXT
+                );
+                """
+            )
+            cursor.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_edit_requests_status
+                ON edit_requests (status);
+                """
+            )
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS planned_diversions (
+                    diversion_id BIGSERIAL PRIMARY KEY,
+                    route TEXT NOT NULL,
+                    start_at TIMESTAMPTZ NOT NULL,
+                    end_at TIMESTAMPTZ NOT NULL,
+                    source TEXT,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                );
+                """
+            )
+            cursor.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_planned_diversions_route
+                ON planned_diversions (route, start_at, end_at);
+                """
+            )
         connection.commit()
 
     seed_default_fleet()
@@ -721,6 +885,1398 @@ def sanitise_extras(value: Any) -> List[str]:
         if text and text not in cleaned:
             cleaned.append(text)
     return cleaned
+
+
+def slugify(value: Any) -> str:
+    text = normalise_text(value)
+    if not text:
+        return ""
+    slug = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
+    return slug or ""
+
+
+def operator_slug_from_name(name: str) -> str:
+    slug = slugify(name)
+    if slug:
+        return slug
+    return uuid.uuid4().hex
+
+
+def normalise_operator_name(value: Any) -> str:
+    text = normalise_text(value)
+    if not text:
+        return ""
+    return re.sub(r"\s+", " ", text)
+
+
+def ensure_operator(connection, name: Any, short_name: Optional[str] = None) -> Optional[int]:
+    operator_name = normalise_operator_name(name)
+    if not operator_name:
+        return None
+    slug = operator_slug_from_name(operator_name)
+    short = normalise_text(short_name) or None
+
+    with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+        cursor.execute(
+            """
+            SELECT operator_id, short_name
+            FROM operators
+            WHERE lower(name) = lower(%s)
+            LIMIT 1
+            """,
+            (operator_name,),
+        )
+        row = cursor.fetchone()
+        if row:
+            operator_id = row.get("operator_id")
+            if operator_id and short and not normalise_text(row.get("short_name")):
+                cursor.execute(
+                    """
+                    UPDATE operators
+                    SET short_name = %s,
+                        updated_at = NOW()
+                    WHERE operator_id = %s
+                    """,
+                    (short, operator_id),
+                )
+            return operator_id
+
+        cursor.execute(
+            """
+            INSERT INTO operators (slug, name, short_name)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (slug) DO UPDATE SET
+                name = EXCLUDED.name,
+                short_name = COALESCE(EXCLUDED.short_name, operators.short_name),
+                updated_at = NOW()
+            RETURNING operator_id
+            """,
+            (slug, operator_name, short),
+        )
+        created = cursor.fetchone()
+    if created:
+        return created.get("operator_id")
+    return None
+
+
+def fetch_operator_by_id(connection, operator_id: Optional[int]) -> Optional[Dict[str, Any]]:
+    if not operator_id:
+        return None
+    with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+        cursor.execute(
+            """
+            SELECT operator_id, slug, name, short_name, created_at, updated_at
+            FROM operators
+            WHERE operator_id = %s
+            """,
+            (operator_id,),
+        )
+        return cursor.fetchone()
+
+
+def serialise_operator(row: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    if not row:
+        return None
+    return {
+        "id": row.get("operator_id"),
+        "slug": row.get("slug"),
+        "name": row.get("name"),
+        "shortName": row.get("short_name"),
+        "createdAt": normalise_datetime(row.get("created_at")),
+        "updatedAt": normalise_datetime(row.get("updated_at")),
+    }
+
+
+STATUS_ALIASES: Dict[str, str] = {
+    "active": "Active",
+    "in service": "Active",
+    "in-service": "Active",
+    "factory": "Factory",
+    "awaiting service": "Awaiting Service",
+    "awaiting-service": "Awaiting Service",
+    "awaiting_service": "Awaiting Service",
+    "inactive": "Inactive",
+    "stored": "Stored",
+    "withdrawn": "Withdrawn",
+}
+
+
+def normalise_status(value: Any) -> str:
+    text = normalise_text(value)
+    if not text:
+        return ""
+    lowered = text.lower()
+    if lowered in STATUS_ALIASES:
+        return STATUS_ALIASES[lowered]
+    return text.title()
+
+
+def normalise_vehicle_type(value: Any) -> str:
+    text = normalise_text(value)
+    if not text:
+        return "Bus"
+    lowered = text.lower()
+    if "double" in lowered and "deck" in lowered:
+        return "Double Decker"
+    if "single" in lowered and "deck" in lowered:
+        return "Single Decker"
+    return text
+
+
+def normalise_wrap(value: Any) -> Optional[str]:
+    text = normalise_text(value)
+    return text or None
+
+
+def fetch_bus_row(connection, reg: Any) -> Optional[Dict[str, Any]]:
+    reg_key = normalise_reg_key(reg)
+    if not reg_key:
+        return None
+    with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+        cursor.execute(
+            """
+            SELECT *
+            FROM buses
+            WHERE reg = %s
+            """,
+            (reg_key,),
+        )
+        return cursor.fetchone()
+
+
+def coerce_float(value: Any) -> Optional[float]:
+    if value in (None, ""):
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+EARTH_RADIUS_METRES = 6371000.0
+
+
+def haversine_distance_metres(
+    lat1: Optional[float],
+    lon1: Optional[float],
+    lat2: Optional[float],
+    lon2: Optional[float],
+) -> float:
+    if None in (lat1, lon1, lat2, lon2):
+        return 0.0
+    phi1 = radians(lat1)
+    phi2 = radians(lat2)
+    delta_phi = radians(lat2 - lat1)
+    delta_lambda = radians(lon2 - lon1)
+    a = sin(delta_phi / 2) ** 2 + cos(phi1) * cos(phi2) * sin(delta_lambda / 2) ** 2
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+    return EARTH_RADIUS_METRES * c
+
+
+def create_bus_profile(
+    connection,
+    reg_key: str,
+    registration: str,
+    seen_at: datetime,
+    payload: Dict[str, Any],
+    operator_id: Optional[int],
+) -> Dict[str, Any]:
+    vehicle_id = normalise_text(payload.get("vehicleId") or payload.get("vehicle_id")) or None
+    fleet_number = normalise_text(payload.get("fleetNumber") or payload.get("fleet_number")) or None
+    status = normalise_status(payload.get("status")) or "Active"
+    vehicle_type = normalise_vehicle_type(payload.get("vehicleType") or payload.get("vehicle_type"))
+    wrap = normalise_wrap(payload.get("wrap"))
+    route = normalise_text(payload.get("route")) or None
+    new_reactivation_at = seen_at
+    new_extended_until = seen_at + timedelta(days=NEW_BUS_AUTO_EXPIRE_DAYS)
+
+    with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+        cursor.execute(
+            """
+            INSERT INTO buses (
+                reg,
+                registration,
+                vehicle_id,
+                fleet_number,
+                operator_id,
+                home_operator_id,
+                status,
+                vehicle_type,
+                wrap,
+                first_seen,
+                last_seen,
+                current_route,
+                last_route_update,
+                usual_routes,
+                badges,
+                badge_overrides,
+                new_badge_reactivated_at,
+                new_badge_extended_until,
+                rare_score
+            )
+            VALUES (
+                %s, %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s, %s,
+                %s, %s, %s, '{}'::jsonb,
+                %s, %s, %s
+            )
+            ON CONFLICT (reg) DO UPDATE SET
+                registration = EXCLUDED.registration,
+                vehicle_id = COALESCE(EXCLUDED.vehicle_id, buses.vehicle_id),
+                fleet_number = COALESCE(EXCLUDED.fleet_number, buses.fleet_number),
+                operator_id = COALESCE(EXCLUDED.operator_id, buses.operator_id),
+                home_operator_id = COALESCE(buses.home_operator_id, EXCLUDED.home_operator_id),
+                status = COALESCE(EXCLUDED.status, buses.status),
+                vehicle_type = COALESCE(EXCLUDED.vehicle_type, buses.vehicle_type),
+                wrap = COALESCE(EXCLUDED.wrap, buses.wrap),
+                first_seen = LEAST(buses.first_seen, EXCLUDED.first_seen),
+                last_seen = GREATEST(buses.last_seen, EXCLUDED.last_seen),
+                current_route = COALES(EXCLUDED.current_route, buses.current_route),
+                last_route_update = COALES(EXCLUDED.last_route_update, buses.last_route_update),
+                updated_at = NOW()
+            RETURNING *
+            """,
+            (
+                reg_key,
+                registration,
+                vehicle_id,
+                fleet_number,
+                operator_id,
+                operator_id,
+                status,
+                vehicle_type,
+                wrap,
+                seen_at,
+                seen_at,
+                route,
+                seen_at if route else None,
+                Json({}),
+                Json([]),
+                new_reactivation_at,
+                new_extended_until,
+                Json({}),
+            ),
+        )
+        return cursor.fetchone() or {}
+
+
+def update_bus_record(
+    connection,
+    reg_key: str,
+    updates: Dict[str, Any],
+) -> Optional[Dict[str, Any]]:
+    if not updates:
+        return fetch_bus_row(connection, reg_key)
+
+    assignments: List[str] = []
+    values: List[Any] = []
+    for column, value in updates.items():
+        assignments.append(f"{column} = %s")
+        values.append(value)
+    assignments.append("updated_at = NOW()")
+    values.append(reg_key)
+
+    sql = "UPDATE buses SET " + ", ".join(assignments) + " WHERE reg = %s RETURNING *"
+
+    with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+        cursor.execute(sql, values)
+        return cursor.fetchone()
+
+
+def record_bus_history(
+    connection,
+    reg_key: str,
+    event_type: str,
+    details: Optional[Dict[str, Any]] = None,
+    event_ts: Optional[datetime] = None,
+) -> None:
+    payload = details or {}
+    timestamp = event_ts or datetime.now(timezone.utc)
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            INSERT INTO bus_history (reg, event_type, event_ts, details)
+            VALUES (%s, %s, %s, %s)
+            """,
+            (reg_key, event_type, timestamp, Json(payload)),
+        )
+
+
+def upsert_bus_sighting(
+    connection,
+    reg_key: str,
+    seen_at: datetime,
+    payload: Dict[str, Any],
+    operator_id: Optional[int],
+) -> Optional[Dict[str, Any]]:
+    lat = coerce_float(
+        payload.get("lat")
+        or payload.get("latitude")
+        or payload.get("position", {}).get("lat")
+    )
+    lon = coerce_float(
+        payload.get("lon")
+        or payload.get("lng")
+        or payload.get("longitude")
+        or payload.get("position", {}).get("lon")
+        or payload.get("position", {}).get("lng")
+    )
+    route = normalise_text(
+        payload.get("route")
+        or payload.get("lineName")
+        or payload.get("line")
+        or payload.get("routeId")
+    )
+    stop_code = normalise_text(
+        payload.get("stopCode")
+        or payload.get("stop_id")
+        or payload.get("stopPointId")
+    )
+    destination = normalise_text(
+        payload.get("destination")
+        or payload.get("destinationName")
+        or payload.get("headsign")
+    )
+
+    with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+        cursor.execute(
+            """
+            INSERT INTO bus_sightings (
+                reg,
+                seen_at,
+                lat,
+                lon,
+                route,
+                stop_code,
+                destination,
+                operator_id,
+                raw
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (reg, seen_at) DO UPDATE SET
+                lat = EXCLUDED.lat,
+                lon = EXCLUDED.lon,
+                route = EXCLUDED.route,
+                stop_code = EXCLUDED.stop_code,
+                destination = EXCLUDED.destination,
+                operator_id = EXCLUDED.operator_id,
+                raw = EXCLUDED.raw
+            RETURNING sighting_id, reg, seen_at, lat, lon, route, stop_code, destination, operator_id, created_at
+            """,
+            (
+                reg_key,
+                seen_at,
+                lat,
+                lon,
+                route or None,
+                stop_code or None,
+                destination or None,
+                operator_id,
+                Json(payload),
+            ),
+        )
+        return cursor.fetchone()
+
+
+def compute_usual_routes(
+    connection,
+    reg_key: str,
+    now: Optional[datetime] = None,
+) -> Tuple[Dict[str, Dict[str, Any]], int]:
+    reference = now or datetime.now(timezone.utc)
+    window_start = reference - timedelta(days=90)
+
+    with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+        cursor.execute(
+            """
+            SELECT route, COUNT(*) AS count, MAX(seen_at) AS last_seen
+            FROM bus_sightings
+            WHERE reg = %s AND seen_at >= %s AND route IS NOT NULL AND route <> ''
+            GROUP BY route
+            ORDER BY count DESC
+            """,
+            (reg_key, window_start),
+        )
+        rows = cursor.fetchall()
+
+    distribution: Dict[str, Dict[str, Any]] = {}
+    total = 0
+    for row in rows:
+        route = normalise_text(row.get("route"))
+        if not route:
+            continue
+        count_value = row.get("count") or 0
+        try:
+            count = int(count_value)
+        except (TypeError, ValueError):
+            count = 0
+        total += count
+        distribution[route] = {
+            "count": count,
+            "share": 0.0,
+            "lastSeen": normalise_datetime(row.get("last_seen")),
+        }
+
+    if total > 0:
+        for details in distribution.values():
+            details["share"] = round(details["count"] / total, 6)
+
+    return distribution, total
+
+
+def is_planned_diversion(
+    connection,
+    route: Optional[str],
+    seen_at: Optional[datetime],
+) -> bool:
+    if not route or not seen_at:
+        return False
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT 1
+            FROM planned_diversions
+            WHERE route ILIKE %s
+              AND start_at <= %s
+              AND end_at >= %s
+            LIMIT 1
+            """,
+            (route, seen_at, seen_at),
+        )
+        return cursor.fetchone() is not None
+
+
+def count_operator_mismatch_sightings(
+    connection,
+    reg_key: str,
+    operator_id: int,
+    seen_at: datetime,
+    window_minutes: int = RARE_OPERATOR_MISMATCH_WINDOW_MINUTES,
+) -> int:
+    window_start = seen_at - timedelta(minutes=window_minutes)
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT COUNT(*)
+            FROM bus_sightings
+            WHERE reg = %s
+              AND operator_id = %s
+              AND seen_at >= %s
+              AND seen_at <= %s
+            """,
+            (reg_key, operator_id, window_start, seen_at),
+        )
+        row = cursor.fetchone()
+    return int(row[0]) if row and row[0] is not None else 0
+
+
+def calculate_route_z_score(counts: Sequence[int], target: int) -> Optional[float]:
+    valid = [value for value in counts if value is not None]
+    if not valid:
+        return None
+    if len(valid) == 1:
+        base = valid[0]
+        if base == 0:
+            return None
+        return (target - base) / max(base, 1)
+    mean = statistics.mean(valid)
+    stdev = statistics.pstdev(valid)
+    if stdev == 0:
+        if mean == 0:
+            return None
+        return (target - mean) / mean
+    return (target - mean) / stdev
+
+
+def compute_speed_sparkline(
+    connection,
+    reg_key: str,
+    now: Optional[datetime] = None,
+) -> List[Dict[str, Any]]:
+    reference = now or datetime.now(timezone.utc)
+    window_start = reference - timedelta(minutes=10)
+    with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+        cursor.execute(
+            """
+            SELECT seen_at, lat, lon
+            FROM bus_sightings
+            WHERE reg = %s AND seen_at >= %s
+            ORDER BY seen_at ASC
+            """,
+            (reg_key, window_start),
+        )
+        rows = cursor.fetchall()
+
+    sparkline: List[Dict[str, Any]] = []
+    previous: Optional[Dict[str, Any]] = None
+
+    for row in rows:
+        if previous:
+            prev_seen = previous.get("seen_at")
+            seen_at = row.get("seen_at")
+            if prev_seen and seen_at and seen_at > prev_seen:
+                distance = haversine_distance_metres(
+                    previous.get("lat"),
+                    previous.get("lon"),
+                    row.get("lat"),
+                    row.get("lon"),
+                )
+                elapsed = (seen_at - prev_seen).total_seconds()
+                if elapsed > 0:
+                    speed_kph = (distance / elapsed) * 3.6
+                    sparkline.append(
+                        {
+                            "ts": normalise_datetime(seen_at),
+                            "kph": round(speed_kph, 2),
+                        }
+                    )
+        previous = row
+
+    return sparkline
+
+
+def evaluate_new_bus_state(
+    bus_row: Dict[str, Any],
+    total_sightings: int,
+    now: datetime,
+) -> Tuple[bool, Optional[datetime], Dict[str, Any]]:
+    first_seen = parse_iso_datetime(bus_row.get("first_seen"))
+    reactivated_at = parse_iso_datetime(bus_row.get("new_badge_reactivated_at"))
+    extended_until = parse_iso_datetime(bus_row.get("new_badge_extended_until"))
+
+    is_new = False
+    base = None
+    reason = ""
+
+    if first_seen and now - first_seen <= timedelta(days=NEW_BUS_PRIMARY_WINDOW_DAYS):
+        is_new = True
+        base = first_seen
+        reason = "first-seen"
+    elif reactivated_at and now - reactivated_at <= timedelta(days=NEW_BUS_AUTO_EXPIRE_DAYS):
+        is_new = True
+        base = reactivated_at
+        reason = "reactivated"
+
+    expiry: Optional[datetime] = None
+    if is_new and base:
+        expiry = base + timedelta(days=NEW_BUS_AUTO_EXPIRE_DAYS)
+        daily_activity = total_sightings / max(90, 1)
+        if daily_activity <= NEW_BUS_LOW_ACTIVITY_THRESHOLD:
+            extended_cap = base + timedelta(days=NEW_BUS_MAX_EXTENSION_DAYS)
+            if expiry < extended_cap:
+                expiry = extended_cap
+    elif extended_until and extended_until > now:
+        is_new = True
+        expiry = extended_until
+        reason = reason or "extended"
+
+    state = {
+        "reason": reason,
+        "expiresAt": expiry,
+    }
+
+    return is_new, expiry, state
+
+
+def evaluate_rare_working_state(
+    connection,
+    bus_row: Dict[str, Any],
+    route: Optional[str],
+    seen_at: datetime,
+    distribution: Dict[str, Dict[str, Any]],
+    total_sightings: int,
+    operator_id: Optional[int],
+    now: datetime,
+) -> Dict[str, Any]:
+    route_key = normalise_text(route)
+    route_data = distribution.get(route_key) if route_key else None
+    route_count = route_data.get("count") if route_data else 0
+    share = route_data.get("share") if route_data else 0.0
+
+    counts = [item.get("count") or 0 for item in distribution.values()]
+    if route_key and route_key not in distribution:
+        counts.append(route_count)
+    z_score = calculate_route_z_score(counts, route_count or 0)
+
+    triggered = False
+    reason = None
+
+    if route_key:
+        if share < RARE_SHARE_THRESHOLD and route_count < RARE_MIN_SIGHTINGS:
+            triggered = True
+            reason = "low-share"
+        elif z_score is not None and z_score < RARE_ZSCORE_THRESHOLD:
+            triggered = True
+            reason = "z-score"
+
+    operator_loan = False
+    home_operator_id = bus_row.get("home_operator_id")
+    if (
+        operator_id
+        and home_operator_id
+        and operator_id != home_operator_id
+        and bus_row.get("reg")
+    ):
+        mismatch_count = count_operator_mismatch_sightings(
+            connection, bus_row["reg"], operator_id, seen_at
+        )
+        if mismatch_count >= RARE_OPERATOR_MISMATCH_THRESHOLD:
+            triggered = True
+            operator_loan = True
+            reason = "operator-loan"
+
+    suppressed_until = parse_iso_datetime(bus_row.get("rare_badge_suppressed_until"))
+    if suppressed_until and seen_at < suppressed_until:
+        triggered = False
+        reason = None
+
+    if triggered and route_key and is_planned_diversion(connection, route_key, seen_at):
+        triggered = False
+        reason = None
+
+    last_trigger = parse_iso_datetime(bus_row.get("rare_badge_last_seen_at"))
+    decay_at = parse_iso_datetime(bus_row.get("rare_badge_decay_at"))
+
+    if triggered:
+        last_trigger = seen_at
+        decay_at = seen_at + timedelta(days=RARE_DECAY_DAYS)
+    elif last_trigger and now - last_trigger >= timedelta(days=RARE_DECAY_DAYS):
+        decay_at = None
+
+    active = triggered or (decay_at is not None and decay_at > now)
+
+    return {
+        "active": active,
+        "triggered": triggered,
+        "reason": reason,
+        "lastTrigger": last_trigger,
+        "decayAt": decay_at,
+        "share": share,
+        "count": route_count,
+        "zScore": z_score,
+        "operatorLoan": operator_loan,
+    }
+
+
+def badge_slug(value: Any) -> str:
+    text = slugify(value)
+    return text.replace("--", "-") if text else ""
+
+
+def apply_badge_overrides(
+    badges: Iterable[str],
+    overrides: Optional[Dict[str, Any]],
+) -> List[str]:
+    active = {badge_slug(badge) for badge in badges if badge}
+    if not overrides:
+        return sorted(active)
+
+    for key, config in overrides.items():
+        slug = badge_slug(key)
+        if not slug:
+            continue
+        state: Dict[str, Any]
+        if isinstance(config, dict):
+            state = config
+        else:
+            state = {"pinned": bool(config)}
+        if any(state.get(flag) for flag in ("suppressed", "disabled", "unpinned")):
+            active.discard(slug)
+        if state.get("pinned") or state.get("enabled"):
+            active.add(slug)
+
+    return sorted(active)
+
+
+def record_bus_sighting(
+    connection,
+    payload: Dict[str, Any],
+    now: Optional[datetime] = None,
+) -> Optional[Dict[str, Any]]:
+    if not payload:
+        return None
+
+    now_dt = now or datetime.now(timezone.utc)
+    reg_key, fallback_registration = extract_vehicle_registration(payload)
+    if not reg_key:
+        return None
+
+    registration = normalise_text(payload.get("registration")) or fallback_registration
+    seen_at = (
+        parse_iso_datetime(
+            payload.get("timestamp")
+            or payload.get("seenAt")
+            or payload.get("seen_at")
+            or payload.get("recordedAt")
+        )
+        or now_dt
+    )
+    if seen_at > now_dt + timedelta(minutes=5):
+        seen_at = now_dt
+
+    operator_name = (
+        payload.get("operator")
+        or payload.get("operatorName")
+        or payload.get("operator_name")
+    )
+    operator_short = (
+        payload.get("operatorShort")
+        or payload.get("operatorShortName")
+        or payload.get("operatorCode")
+    )
+    operator_id = ensure_operator(connection, operator_name, operator_short)
+
+    bus_row = fetch_bus_row(connection, reg_key)
+    created = False
+    if not bus_row:
+        bus_row = create_bus_profile(
+            connection,
+            reg_key,
+            registration,
+            seen_at,
+            payload,
+            operator_id,
+        )
+        created = True
+        record_bus_history(
+            connection,
+            reg_key,
+            "profile-created",
+            {"registration": registration},
+            event_ts=seen_at,
+        )
+
+    updates: Dict[str, Any] = {}
+    history_events: List[Tuple[str, Dict[str, Any], datetime]] = []
+
+    local_bus = dict(bus_row)
+    local_bus.setdefault("reg", reg_key)
+
+    if registration and registration != bus_row.get("registration"):
+        updates["registration"] = registration
+        local_bus["registration"] = registration
+
+    vehicle_id = normalise_text(payload.get("vehicleId") or payload.get("vehicle_id"))
+    if vehicle_id and vehicle_id != normalise_text(bus_row.get("vehicle_id")):
+        updates["vehicle_id"] = vehicle_id
+        local_bus["vehicle_id"] = vehicle_id
+
+    fleet_number = normalise_text(payload.get("fleetNumber") or payload.get("fleet_number"))
+    if fleet_number and fleet_number != normalise_text(bus_row.get("fleet_number")):
+        updates["fleet_number"] = fleet_number
+        local_bus["fleet_number"] = fleet_number
+
+    old_status = bus_row.get("status")
+    status = normalise_status(payload.get("status")) or old_status
+    if status and status != old_status:
+        updates["status"] = status
+        local_bus["status"] = status
+        history_events.append(("status-updated", {"from": old_status, "to": status}, seen_at))
+        if status == "Active" and old_status and old_status.lower() in {
+            "factory",
+            "awaiting service",
+            "awaiting-service",
+        }:
+            updates["new_badge_reactivated_at"] = seen_at
+            local_bus["new_badge_reactivated_at"] = seen_at
+
+    if operator_id:
+        old_operator_id = bus_row.get("operator_id")
+        if old_operator_id != operator_id:
+            updates["operator_id"] = operator_id
+            local_bus["operator_id"] = operator_id
+            history_events.append(
+                (
+                    "operator-updated",
+                    {
+                        "from": old_operator_id,
+                        "to": operator_id,
+                    },
+                    seen_at,
+                )
+            )
+        if not bus_row.get("home_operator_id"):
+            updates.setdefault("home_operator_id", operator_id)
+            local_bus["home_operator_id"] = operator_id
+
+    wrap = normalise_wrap(payload.get("wrap"))
+    if wrap is not None and wrap != bus_row.get("wrap"):
+        updates["wrap"] = wrap
+        local_bus["wrap"] = wrap
+
+    vehicle_type = normalise_vehicle_type(payload.get("vehicleType") or payload.get("vehicle_type"))
+    if vehicle_type and vehicle_type != bus_row.get("vehicle_type"):
+        updates["vehicle_type"] = vehicle_type
+        local_bus["vehicle_type"] = vehicle_type
+
+    existing_last_seen = parse_iso_datetime(bus_row.get("last_seen"))
+    if not existing_last_seen or seen_at > existing_last_seen:
+        updates["last_seen"] = seen_at
+        local_bus["last_seen"] = seen_at
+    else:
+        local_bus["last_seen"] = existing_last_seen
+
+    if created:
+        local_bus.setdefault("first_seen", seen_at)
+
+    route_text = normalise_text(
+        payload.get("route")
+        or payload.get("lineName")
+        or payload.get("line")
+        or payload.get("routeId")
+    )
+    if route_text:
+        updates["current_route"] = route_text
+        updates["last_route_update"] = seen_at
+        local_bus["current_route"] = route_text
+        local_bus["last_route_update"] = seen_at
+
+    sighting = upsert_bus_sighting(connection, reg_key, seen_at, payload, operator_id)
+
+    distribution, total_sightings = compute_usual_routes(connection, reg_key, now=now_dt)
+
+    is_new, new_expiry, new_state = evaluate_new_bus_state(local_bus, total_sightings, now_dt)
+    rare_state = evaluate_rare_working_state(
+        connection,
+        local_bus,
+        route_text,
+        seen_at,
+        distribution,
+        total_sightings,
+        operator_id,
+        now_dt,
+    )
+
+    candidate_badges: Set[str] = set()
+    if is_new:
+        candidate_badges.add(BADGE_NEW_BUS)
+    if local_bus.get("status") == "Withdrawn":
+        candidate_badges.add(BADGE_WITHDRAWN)
+    if rare_state.get("active"):
+        candidate_badges.add(BADGE_RARE_WORKING)
+    if rare_state.get("operatorLoan"):
+        candidate_badges.add(BADGE_LOAN)
+
+    overrides = bus_row.get("badge_overrides") if isinstance(bus_row.get("badge_overrides"), dict) else None
+    final_badges = apply_badge_overrides(candidate_badges, overrides)
+
+    updates["badges"] = Json(final_badges)
+    updates["usual_routes"] = Json(distribution)
+    updates["rare_score"] = Json(
+        {
+            "route": route_text,
+            "count": rare_state.get("count"),
+            "share": rare_state.get("share"),
+            "zScore": rare_state.get("zScore"),
+            "reason": rare_state.get("reason"),
+            "operatorLoan": rare_state.get("operatorLoan"),
+            "active": rare_state.get("active"),
+            "lastTrigger": normalise_datetime(rare_state.get("lastTrigger")),
+        }
+    )
+    if new_expiry:
+        updates["new_badge_extended_until"] = new_expiry
+    if rare_state.get("lastTrigger"):
+        updates["rare_badge_last_seen_at"] = rare_state.get("lastTrigger")
+        local_bus["rare_badge_last_seen_at"] = rare_state.get("lastTrigger")
+    if rare_state.get("decayAt") is not None:
+        updates["rare_badge_decay_at"] = rare_state.get("decayAt")
+    if rare_state.get("triggered") and not bus_row.get("rare_badge_started_at"):
+        updates["rare_badge_started_at"] = seen_at
+
+    updated_bus = update_bus_record(connection, reg_key, updates) or fetch_bus_row(connection, reg_key)
+
+    for event_type, details, event_ts in history_events:
+        record_bus_history(connection, reg_key, event_type, details, event_ts=event_ts)
+
+    if rare_state.get("triggered"):
+        record_bus_history(
+            connection,
+            reg_key,
+            "rare-working",
+            {
+                "route": route_text,
+                "reason": rare_state.get("reason"),
+                "operatorLoan": rare_state.get("operatorLoan"),
+            },
+            event_ts=seen_at,
+        )
+
+    result = {
+        "bus": updated_bus,
+        "sighting": sighting,
+        "distribution": distribution,
+        "badges": final_badges,
+        "newState": {
+            **new_state,
+            "isNew": is_new,
+        },
+        "rareState": rare_state,
+    }
+    return result
+
+
+def fetch_recent_sightings(
+    connection,
+    reg_key: str,
+    limit: int = 20,
+) -> List[Dict[str, Any]]:
+    with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+        cursor.execute(
+            """
+            SELECT sighting_id, reg, seen_at, lat, lon, route, stop_code, destination, operator_id, created_at
+            FROM bus_sightings
+            WHERE reg = %s
+            ORDER BY seen_at DESC
+            LIMIT %s
+            """,
+            (reg_key, max(1, limit)),
+        )
+        return cursor.fetchall() or []
+
+
+def serialise_sighting(row: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    if not row:
+        return None
+    return {
+        "id": row.get("sighting_id"),
+        "reg": row.get("reg"),
+        "seenAt": normalise_datetime(row.get("seen_at")),
+        "lat": row.get("lat"),
+        "lon": row.get("lon"),
+        "route": row.get("route"),
+        "stopCode": row.get("stop_code"),
+        "destination": row.get("destination"),
+        "operatorId": row.get("operator_id"),
+        "createdAt": normalise_datetime(row.get("created_at")),
+    }
+
+
+def fetch_bus_history(
+    connection,
+    reg_key: str,
+    limit: int = 50,
+) -> List[Dict[str, Any]]:
+    with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+        cursor.execute(
+            """
+            SELECT history_id, event_type, event_ts, details, created_at
+            FROM bus_history
+            WHERE reg = %s
+            ORDER BY event_ts DESC
+            LIMIT %s
+            """,
+            (reg_key, max(1, limit)),
+        )
+        return cursor.fetchall() or []
+
+
+def serialise_history_event(row: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "id": row.get("history_id"),
+        "type": row.get("event_type"),
+        "occurredAt": normalise_datetime(row.get("event_ts")),
+        "createdAt": normalise_datetime(row.get("created_at")),
+        "details": row.get("details") or {},
+    }
+
+
+def serialise_bus_profile(
+    connection,
+    bus_row: Dict[str, Any],
+    *,
+    include_sightings: bool = False,
+    include_history: bool = False,
+    include_speed: bool = False,
+    now: Optional[datetime] = None,
+) -> Dict[str, Any]:
+    if not bus_row:
+        return {}
+
+    reg_key = bus_row.get("reg") or bus_row.get("reg_key")
+    now_dt = now or datetime.now(timezone.utc)
+
+    badges = bus_row.get("badges") or []
+    if isinstance(badges, str):
+        badges = [badges]
+
+    distribution_raw = bus_row.get("usual_routes") or {}
+    if not isinstance(distribution_raw, dict):
+        distribution_raw = {}
+
+    total_sightings = sum((details.get("count") or 0) for details in distribution_raw.values())
+    is_new, new_expiry, new_state = evaluate_new_bus_state(bus_row, total_sightings, now_dt)
+
+    rare_score = bus_row.get("rare_score") or {}
+    if not isinstance(rare_score, dict):
+        rare_score = {}
+
+    operator = serialise_operator(fetch_operator_by_id(connection, bus_row.get("operator_id")))
+    home_operator = serialise_operator(fetch_operator_by_id(connection, bus_row.get("home_operator_id")))
+
+    last_seen_dt = parse_iso_datetime(bus_row.get("last_seen"))
+    age_seconds = None
+    freshness_state = "unknown"
+    if last_seen_dt:
+        age_seconds = max((now_dt - last_seen_dt).total_seconds(), 0.0)
+        freshness_state = "live" if age_seconds <= 90 else "stale"
+
+    profile = {
+        "reg": reg_key,
+        "registration": bus_row.get("registration"),
+        "vehicleId": bus_row.get("vehicle_id"),
+        "fleetNumber": bus_row.get("fleet_number"),
+        "status": bus_row.get("status"),
+        "vehicleType": bus_row.get("vehicle_type"),
+        "wrap": bus_row.get("wrap"),
+        "firstSeen": normalise_datetime(bus_row.get("first_seen")),
+        "lastSeen": normalise_datetime(last_seen_dt),
+        "currentRoute": bus_row.get("current_route"),
+        "lastRouteUpdate": normalise_datetime(bus_row.get("last_route_update")),
+        "operator": operator,
+        "homeOperator": home_operator,
+        "badges": badges,
+        "badgeOverrides": bus_row.get("badge_overrides") or {},
+        "usualRoutes": distribution_raw,
+        "rareScore": rare_score,
+        "newState": {
+            **new_state,
+            "isNew": is_new,
+            "expiresAt": normalise_datetime(new_expiry),
+        },
+        "freshness": {
+            "status": freshness_state,
+            "ageSeconds": age_seconds,
+        },
+        "createdAt": normalise_datetime(bus_row.get("created_at")),
+        "updatedAt": normalise_datetime(bus_row.get("updated_at")),
+    }
+
+    if include_sightings and reg_key:
+        profile["sightings"] = [
+            serialise_sighting(row)
+            for row in fetch_recent_sightings(connection, reg_key)
+        ]
+
+    if include_history and reg_key:
+        profile["history"] = [
+            serialise_history_event(row)
+            for row in fetch_bus_history(connection, reg_key)
+        ]
+
+    if include_speed and reg_key:
+        profile["speedSparkline"] = compute_speed_sparkline(connection, reg_key, now=now_dt)
+
+    profile["rareState"] = {
+        "active": bool(rare_score.get("active")),
+        "route": rare_score.get("route"),
+        "count": rare_score.get("count"),
+        "share": rare_score.get("share"),
+        "zScore": rare_score.get("zScore"),
+        "reason": rare_score.get("reason"),
+        "operatorLoan": rare_score.get("operatorLoan"),
+        "lastTrigger": rare_score.get("lastTrigger"),
+    }
+
+    return profile
+
+
+def serialise_bus_summary(
+    row: Dict[str, Any],
+    *,
+    now: Optional[datetime] = None,
+) -> Dict[str, Any]:
+    now_dt = now or datetime.now(timezone.utc)
+    last_seen_dt = parse_iso_datetime(row.get("last_seen"))
+    age_seconds = None
+    if last_seen_dt:
+        age_seconds = max((now_dt - last_seen_dt).total_seconds(), 0.0)
+    badges = row.get("badges") or []
+    if isinstance(badges, str):
+        badges = [badges]
+    return {
+        "reg": row.get("reg"),
+        "registration": row.get("registration"),
+        "fleetNumber": row.get("fleet_number"),
+        "status": row.get("status"),
+        "lastSeen": normalise_datetime(last_seen_dt),
+        "ageSeconds": age_seconds,
+        "badges": badges,
+        "currentRoute": row.get("current_route"),
+        "operatorId": row.get("operator_id"),
+    }
+
+
+def search_buses(
+    connection,
+    query: Optional[str],
+    *,
+    limit: int = 25,
+) -> List[Dict[str, Any]]:
+    pattern = f"%{query or ''}%"
+    with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+        cursor.execute(
+            """
+            SELECT *
+            FROM buses
+            WHERE (%s = '%%')
+               OR reg ILIKE %s
+               OR registration ILIKE %s
+               OR fleet_number ILIKE %s
+               OR current_route ILIKE %s
+            ORDER BY last_seen DESC
+            LIMIT %s
+            """,
+            (pattern, pattern, pattern, pattern, pattern, max(1, limit)),
+        )
+        return cursor.fetchall() or []
+
+
+def list_rare_buses(
+    connection,
+    *,
+    limit: int = 50,
+) -> List[Dict[str, Any]]:
+    with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+        cursor.execute(
+            """
+            SELECT *
+            FROM buses
+            WHERE badges @> %s
+               OR (rare_score->>'active')::BOOLEAN IS TRUE
+            ORDER BY COALESCE(rare_badge_last_seen_at, last_seen) DESC
+            LIMIT %s
+            """,
+            (Json([BADGE_RARE_WORKING]), max(1, limit)),
+        )
+        return cursor.fetchall() or []
+
+
+def normalise_edit_action(value: Any) -> str:
+    text = normalise_text(value)
+    if not text:
+        return ""
+    lowered = text.replace("-", "_").replace(" ", "_").lower()
+    if lowered in {"pin", "pin_badge", "badge_pin"}:
+        return "pin_badge"
+    if lowered in {"unpin", "unpin_badge", "remove_badge", "suppress_badge"}:
+        return "unpin_badge"
+    return lowered
+
+
+def create_edit_request(
+    connection,
+    reg_key: str,
+    action: str,
+    badge: Optional[str],
+    payload: Optional[Dict[str, Any]] = None,
+    *,
+    user_id: Optional[str] = None,
+) -> Dict[str, Any]:
+    request_id = uuid.uuid4()
+    badge_slug_value = badge_slug(badge)
+    with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+        cursor.execute(
+            """
+            INSERT INTO edit_requests (
+                request_id,
+                reg,
+                action,
+                badge,
+                payload,
+                status,
+                created_by
+            )
+            VALUES (%s, %s, %s, %s, %s, 'pending', %s)
+            RETURNING *
+            """,
+            (request_id, reg_key, action, badge_slug_value or None, Json(payload or {}), user_id),
+        )
+        return cursor.fetchone() or {}
+
+
+def fetch_edit_requests(
+    connection,
+    *,
+    status: Optional[str] = None,
+    limit: int = 100,
+) -> List[Dict[str, Any]]:
+    with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+        if status:
+            cursor.execute(
+                """
+                SELECT *
+                FROM edit_requests
+                WHERE status = %s
+                ORDER BY created_at DESC
+                LIMIT %s
+                """,
+                (status, max(1, limit)),
+            )
+        else:
+            cursor.execute(
+                """
+                SELECT *
+                FROM edit_requests
+                ORDER BY created_at DESC
+                LIMIT %s
+                """,
+                (max(1, limit),),
+            )
+        return cursor.fetchall() or []
+
+
+def get_edit_request(connection, request_id: str) -> Optional[Dict[str, Any]]:
+    request_key = normalise_text(request_id)
+    if not request_key:
+        return None
+    with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+        cursor.execute(
+            """
+            SELECT *
+            FROM edit_requests
+            WHERE request_id::text = %s
+            """,
+            (request_key,),
+        )
+        return cursor.fetchone()
+
+
+def update_edit_request_status(
+    connection,
+    request_id: str,
+    *,
+    status: str,
+    reviewer: Optional[str] = None,
+    notes: Optional[str] = None,
+) -> Optional[Dict[str, Any]]:
+    with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+        cursor.execute(
+            """
+            UPDATE edit_requests
+            SET status = %s,
+                reviewed_by = %s,
+                reviewed_at = NOW(),
+                reviewer_notes = %s
+            WHERE request_id::text = %s
+            RETURNING *
+            """,
+            (status, reviewer, notes, normalise_text(request_id)),
+        )
+        return cursor.fetchone()
+
+
+def serialise_edit_request(row: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    if not row:
+        return None
+    payload = row.get("payload") if isinstance(row.get("payload"), dict) else {}
+    return {
+        "id": str(row.get("request_id")),
+        "reg": row.get("reg"),
+        "action": row.get("action"),
+        "badge": row.get("badge"),
+        "payload": payload,
+        "status": row.get("status"),
+        "createdBy": row.get("created_by"),
+        "createdAt": normalise_datetime(row.get("created_at")),
+        "reviewedBy": row.get("reviewed_by"),
+        "reviewedAt": normalise_datetime(row.get("reviewed_at")),
+        "notes": row.get("reviewer_notes"),
+    }
+
+
+def apply_badge_override_update(
+    connection,
+    bus_row: Dict[str, Any],
+    badge: str,
+    *,
+    pinned: bool,
+    reviewer: Optional[str] = None,
+) -> Dict[str, Any]:
+    reg_key = bus_row.get("reg")
+    if not reg_key:
+        raise ApiError("Bus registration missing for override.", status_code=400)
+
+    overrides = bus_row.get("badge_overrides")
+    if not isinstance(overrides, dict):
+        overrides = {}
+
+    badge_key = badge_slug(badge)
+    if not badge_key:
+        raise ApiError("A badge is required for override.", status_code=400)
+
+    existing = overrides.get(badge_key)
+    if isinstance(existing, dict):
+        config = dict(existing)
+    else:
+        config = {}
+
+    config["updatedAt"] = iso_now()
+    if reviewer:
+        config["updatedBy"] = reviewer
+    config["pinned"] = bool(pinned)
+    if not pinned:
+        config["suppressed"] = True
+    else:
+        config.pop("suppressed", None)
+    overrides[badge_key] = config
+
+    final_badges = apply_badge_overrides(bus_row.get("badges") or [], overrides)
+
+    updates = {
+        "badge_overrides": Json(overrides),
+        "badges": Json(final_badges),
+    }
+    updated = update_bus_record(connection, reg_key, updates) or fetch_bus_row(connection, reg_key)
+
+    record_bus_history(
+        connection,
+        reg_key,
+        "badge-override",
+        {
+            "badge": badge_key,
+            "pinned": pinned,
+            "reviewedBy": reviewer,
+        },
+    )
+
+    return updated or bus_row
+
+
+def apply_edit_request_effect(
+    connection,
+    request_row: Dict[str, Any],
+    reviewer: Optional[str] = None,
+) -> Dict[str, Any]:
+    reg_key = request_row.get("reg")
+    if not reg_key:
+        raise ApiError("Edit request is missing a vehicle registration.", status_code=400)
+
+    bus_row = fetch_bus_row(connection, reg_key)
+    if not bus_row:
+        raise ApiError("Bus not found for edit request.", status_code=404)
+
+    action = normalise_edit_action(request_row.get("action"))
+    badge_value = request_row.get("badge")
+
+    if action == "pin_badge":
+        return apply_badge_override_update(
+            connection,
+            bus_row,
+            badge_value or BADGE_RARE_WORKING,
+            pinned=True,
+            reviewer=reviewer,
+        )
+    if action == "unpin_badge":
+        return apply_badge_override_update(
+            connection,
+            bus_row,
+            badge_value or BADGE_RARE_WORKING,
+            pinned=False,
+            reviewer=reviewer,
+        )
+
+    raise ApiError("Unsupported edit request action.", status_code=400)
 
 
 def _iter_vehicle_entries(payload: Any):
@@ -2556,6 +4112,308 @@ def favourites_item(uid: str, favourite_id: str):
         raise ApiError("Favourite not found.", status_code=404)
 
     return jsonify({"status": "deleted"}), 200
+
+
+@app.route("/api/fleet/<reg_key>", methods=["GET"])
+def fleet_profile(reg_key: str):
+    reg = normalise_reg_key(reg_key)
+    if not reg:
+        raise ApiError("A valid vehicle registration is required.", status_code=400)
+
+    with get_connection() as connection:
+        bus_row = fetch_bus_row(connection, reg)
+        if not bus_row:
+            raise ApiError("Bus not found.", status_code=404)
+        profile = serialise_bus_profile(
+            connection,
+            bus_row,
+            include_sightings=True,
+            include_history=True,
+            include_speed=True,
+        )
+    return jsonify({"bus": profile})
+
+
+@app.route("/api/fleet/<reg_key>/sightings", methods=["GET"])
+def fleet_profile_sightings(reg_key: str):
+    reg = normalise_reg_key(reg_key)
+    if not reg:
+        raise ApiError("A valid vehicle registration is required.", status_code=400)
+    limit = request.args.get("limit", "50")
+    try:
+        limit_value = max(1, min(int(limit), 500))
+    except ValueError:
+        limit_value = 50
+
+    with get_connection() as connection:
+        bus_row = fetch_bus_row(connection, reg)
+        if not bus_row:
+            raise ApiError("Bus not found.", status_code=404)
+        rows = fetch_recent_sightings(connection, reg, limit=limit_value)
+        sightings = [serialise_sighting(row) for row in rows]
+    return jsonify({"reg": reg, "sightings": sightings})
+
+
+@app.route("/api/fleet/<reg_key>/history", methods=["GET"])
+def fleet_profile_history(reg_key: str):
+    reg = normalise_reg_key(reg_key)
+    if not reg:
+        raise ApiError("A valid vehicle registration is required.", status_code=400)
+    limit = request.args.get("limit", "100")
+    try:
+        limit_value = max(1, min(int(limit), 500))
+    except ValueError:
+        limit_value = 100
+
+    with get_connection() as connection:
+        bus_row = fetch_bus_row(connection, reg)
+        if not bus_row:
+            raise ApiError("Bus not found.", status_code=404)
+        rows = fetch_bus_history(connection, reg, limit=limit_value)
+        history = [serialise_history_event(row) for row in rows]
+    return jsonify({"reg": reg, "history": history})
+
+
+@app.route("/api/fleet/search", methods=["GET"])
+def fleet_search_endpoint():
+    query = request.args.get("q", "")
+    limit = request.args.get("limit", "25")
+    try:
+        limit_value = max(1, min(int(limit), 100))
+    except ValueError:
+        limit_value = 25
+
+    with get_connection() as connection:
+        rows = search_buses(connection, query, limit=limit_value)
+        now = datetime.now(timezone.utc)
+        results = [serialise_bus_summary(row, now=now) for row in rows]
+    return jsonify({"results": results, "query": query})
+
+
+@app.route("/api/fleet/rare", methods=["GET"])
+def fleet_rare_endpoint():
+    limit = request.args.get("limit", "50")
+    try:
+        limit_value = max(1, min(int(limit), 100))
+    except ValueError:
+        limit_value = 50
+
+    with get_connection() as connection:
+        rows = list_rare_buses(connection, limit=limit_value)
+        now = datetime.now(timezone.utc)
+        results = [serialise_bus_summary(row, now=now) for row in rows]
+    return jsonify({"results": results})
+
+
+@app.route("/api/fleet/sightings", methods=["POST"])
+def fleet_ingest_sightings():
+    payload = request.get_json(silent=True) or {}
+    entries = payload.get("sightings") if isinstance(payload, dict) else None
+    if entries is None:
+        entries = [payload]
+    if not isinstance(entries, list):
+        raise ApiError("Sighting payload must be a list or object.", status_code=400)
+
+    results: List[Dict[str, Any]] = []
+    errors: List[Dict[str, Any]] = []
+
+    with get_connection() as connection:
+        for entry in entries:
+            if not isinstance(entry, dict):
+                errors.append({"error": "invalid", "entry": entry})
+                continue
+            try:
+                outcome = record_bus_sighting(connection, entry)
+                connection.commit()
+            except ApiError as exc:
+                connection.rollback()
+                errors.append(
+                    {
+                        "error": str(exc),
+                        "registration": entry.get("registration") or entry.get("vehicleId"),
+                    }
+                )
+                continue
+            except Exception as exc:
+                connection.rollback()
+                errors.append(
+                    {
+                        "error": str(exc),
+                        "registration": entry.get("registration") or entry.get("vehicleId"),
+                    }
+                )
+                continue
+
+            if outcome:
+                results.append(
+                    {
+                        "reg": outcome["bus"].get("reg") if outcome.get("bus") else None,
+                        "badges": outcome.get("badges"),
+                        "sighting": serialise_sighting(outcome.get("sighting")),
+                    }
+                )
+
+    status_code = 200 if not errors else 207
+    return jsonify({"ingested": len(results), "results": results, "errors": errors}), status_code
+
+
+@app.route("/api/operators", methods=["GET"])
+def operators_list():
+    with get_connection() as connection:
+        with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute(
+                """
+                SELECT o.*, COUNT(b.reg) AS fleet_size
+                FROM operators o
+                LEFT JOIN buses b ON b.operator_id = o.operator_id
+                GROUP BY o.operator_id
+                ORDER BY o.name ASC
+                """
+            )
+            rows = cursor.fetchall() or []
+    operators = []
+    for row in rows:
+        operator = serialise_operator(row)
+        if operator:
+            operator["fleetSize"] = int(row.get("fleet_size") or 0)
+            operators.append(operator)
+    return jsonify({"operators": operators})
+
+
+@app.route("/api/operators/<int:operator_id>", methods=["GET"])
+def operators_detail(operator_id: int):
+    limit = request.args.get("limit", "100")
+    try:
+        limit_value = max(1, min(int(limit), 200))
+    except ValueError:
+        limit_value = 100
+
+    with get_connection() as connection:
+        operator_row = fetch_operator_by_id(connection, operator_id)
+        if not operator_row:
+            raise ApiError("Operator not found.", status_code=404)
+        with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute(
+                """
+                SELECT *
+                FROM buses
+                WHERE operator_id = %s
+                ORDER BY last_seen DESC
+                LIMIT %s
+                """,
+                (operator_id, limit_value),
+            )
+            rows = cursor.fetchall() or []
+        now = datetime.now(timezone.utc)
+        fleet = [serialise_bus_summary(row, now=now) for row in rows]
+        operator = serialise_operator(operator_row)
+        operator["fleetSize"] = len(fleet)
+    return jsonify({"operator": operator, "buses": fleet})
+
+
+@app.route("/api/edits", methods=["GET", "POST"])
+def edits_collection():
+    if request.method == "GET":
+        status_filter = normalise_text(request.args.get("status")) or None
+        limit = request.args.get("limit", "100")
+        try:
+            limit_value = max(1, min(int(limit), 500))
+        except ValueError:
+            limit_value = 100
+        with get_connection() as connection:
+            rows = fetch_edit_requests(connection, status=status_filter, limit=limit_value)
+        edits = [serialise_edit_request(row) for row in rows if row]
+        return jsonify({"edits": edits})
+
+    payload = request.get_json(silent=True) or {}
+    reg_input = payload.get("reg") or payload.get("registration")
+    reg = normalise_reg_key(reg_input)
+    if not reg:
+        raise ApiError("A vehicle registration is required.", status_code=400)
+
+    action = normalise_edit_action(payload.get("action"))
+    if action not in {"pin_badge", "unpin_badge"}:
+        raise ApiError("Unsupported edit action.", status_code=400)
+
+    badge_value = payload.get("badge") or payload.get("label") or BADGE_RARE_WORKING
+    user_id = normalise_text(payload.get("userId") or payload.get("submittedBy")) or None
+    extra_payload = payload.get("payload") if isinstance(payload.get("payload"), dict) else {}
+
+    with get_connection() as connection:
+        bus_row = fetch_bus_row(connection, reg)
+        if not bus_row:
+            raise ApiError("Bus not found.", status_code=404)
+        request_row = create_edit_request(
+            connection,
+            reg,
+            action,
+            badge_value,
+            extra_payload,
+            user_id=user_id,
+        )
+        connection.commit()
+
+        edit = serialise_edit_request(request_row)
+    return jsonify({"edit": edit}), 201
+
+
+@app.route("/api/edits/<request_id>/approve", methods=["POST"])
+def edits_approve(request_id: str):
+    require_fleet_admin()
+    payload = request.get_json(silent=True) or {}
+    reviewer = normalise_text(payload.get("reviewer") or payload.get("reviewedBy")) or None
+    notes = payload.get("notes")
+
+    with get_connection() as connection:
+        row = get_edit_request(connection, request_id)
+        if not row:
+            raise ApiError("Edit request not found.", status_code=404)
+        if row.get("status") != "pending":
+            raise ApiError("Edit request has already been processed.", status_code=409)
+        updated_bus = apply_edit_request_effect(connection, row, reviewer)
+        updated_request = update_edit_request_status(
+            connection,
+            request_id,
+            status="approved",
+            reviewer=reviewer,
+            notes=notes if notes is None else str(notes),
+        )
+        profile = serialise_bus_profile(connection, updated_bus)
+        connection.commit()
+
+    return jsonify({
+        "status": "approved",
+        "edit": serialise_edit_request(updated_request),
+        "bus": profile,
+    })
+
+
+@app.route("/api/edits/<request_id>/reject", methods=["POST"])
+def edits_reject(request_id: str):
+    require_fleet_admin()
+    payload = request.get_json(silent=True) or {}
+    reviewer = normalise_text(payload.get("reviewer") or payload.get("reviewedBy")) or None
+    notes = payload.get("notes")
+
+    with get_connection() as connection:
+        row = get_edit_request(connection, request_id)
+        if not row:
+            raise ApiError("Edit request not found.", status_code=404)
+        if row.get("status") != "pending":
+            raise ApiError("Edit request has already been processed.", status_code=409)
+        updated_request = update_edit_request_status(
+            connection,
+            request_id,
+            status="rejected",
+            reviewer=reviewer,
+            notes=notes if notes is None else str(notes),
+        )
+        connection.commit()
+
+    return jsonify({
+        "status": "rejected",
+        "edit": serialise_edit_request(updated_request),
+    })
 
 
 @app.route("/api/fleet", methods=["GET"])
