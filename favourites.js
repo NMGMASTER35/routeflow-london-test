@@ -17,12 +17,33 @@ const parseJsonResponse = async (response) => {
   return null;
 };
 
-const getCurrentUser = () => firebase?.auth?.()?.currentUser || null;
+const getCurrentUser = () => {
+  const routeflowAuth = window.RouteflowAuth;
+  if (routeflowAuth?.getCurrentUser) {
+    try {
+      return routeflowAuth.getCurrentUser();
+    } catch (error) {
+      console.error('RouteFlow favourites: unable to read user from RouteflowAuth.', error);
+    }
+  }
+  try {
+    if (typeof firebase !== 'undefined' && typeof firebase.auth === 'function') {
+      const auth = firebase.auth();
+      return auth?.currentUser || null;
+    }
+  } catch (error) {
+    console.error('RouteFlow favourites: unable to resolve Firebase auth user.', error);
+  }
+  return null;
+};
 
 const ensureAuthenticatedUser = (uid) => {
   const user = getCurrentUser();
   if (!user || user.uid !== uid) {
     throw new Error('You must be signed in to manage favourites.');
+  }
+  if (typeof user.getIdToken !== 'function') {
+    throw new Error('This action requires a connected RouteFlow account.');
   }
   return user;
 };

@@ -11,7 +11,15 @@
       <form id="loginForm" class="auth-modal__form" autocomplete="off">
         <label class="auth-modal__field" for="loginEmail">
           <span>Email</span>
-          <input type="email" id="loginEmail" name="loginEmail" required autocomplete="username" />
+          <input
+            type="email"
+            id="loginEmail"
+            name="loginEmail"
+            required
+            autocomplete="username"
+            inputmode="email"
+            data-single-email
+          />
         </label>
         <label class="auth-modal__field" for="loginPassword">
           <span>Password</span>
@@ -36,7 +44,15 @@
       <form id="signupForm" class="auth-modal__form" autocomplete="off">
         <label class="auth-modal__field" for="signupEmail">
           <span>Email</span>
-          <input type="email" id="signupEmail" name="signupEmail" required autocomplete="username" />
+          <input
+            type="email"
+            id="signupEmail"
+            name="signupEmail"
+            required
+            autocomplete="username"
+            inputmode="email"
+            data-single-email
+          />
         </label>
         <label class="auth-modal__field" for="signupPassword">
           <span>Password</span>
@@ -58,7 +74,15 @@
       <form id="resetForm" class="auth-modal__form" autocomplete="off">
         <label class="auth-modal__field" for="resetEmail">
           <span>Email</span>
-          <input type="email" id="resetEmail" name="resetEmail" required autocomplete="email" />
+          <input
+            type="email"
+            id="resetEmail"
+            name="resetEmail"
+            required
+            autocomplete="email"
+            inputmode="email"
+            data-single-email
+          />
         </label>
         <button type="submit" class="auth-modal__primary">Send reset link</button>
         <div class="auth-modal__message" id="resetSuccess" role="status" hidden></div>

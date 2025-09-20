@@ -8,6 +8,8 @@
     'main.js'
   ];
 
+  const LAST_USER_SUMMARY_KEY = 'routeflow:auth:last-user';
+
   const scriptPromises = new Map();
   let authModalLoaded = false;
   let authModalPromise = null;
@@ -38,6 +40,45 @@
       (chain, src) => chain.then(() => ensureScript(src)),
       Promise.resolve()
     );
+  }
+
+  function readStoredUserSummary() {
+    if (typeof localStorage === 'undefined') return null;
+    try {
+      const raw = localStorage.getItem(LAST_USER_SUMMARY_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch (error) {
+      console.warn('RouteFlow navbar: failed to parse cached auth summary.', error);
+      return null;
+    }
+  }
+
+  function applySummaryToNavbar(navRoot, summary) {
+    if (!navRoot) return;
+    const displayName = summary?.displayName || summary?.email || 'Account';
+
+    navRoot.querySelectorAll('[data-profile-label]').forEach((label) => {
+      label.textContent = displayName;
+    });
+
+    navRoot.querySelectorAll('[data-profile-name]').forEach((label) => {
+      label.textContent = displayName;
+    });
+
+    navRoot.querySelectorAll('[data-profile-email]').forEach((emailEl) => {
+      if (!emailEl) return;
+      if (summary?.email && summary.email !== displayName) {
+        emailEl.textContent = summary.email;
+        emailEl.removeAttribute('hidden');
+        emailEl.setAttribute('aria-hidden', 'false');
+      } else {
+        emailEl.textContent = '';
+        emailEl.setAttribute('hidden', '');
+        emailEl.setAttribute('aria-hidden', 'true');
+      }
+    });
   }
 
   function dispatchAuthModalReady(detail = {}) {
@@ -127,6 +168,8 @@
   function initNavbar(container, dependenciesReadyPromise = Promise.resolve()) {
     const navRoot = container.querySelector('.navbar');
     if (!navRoot) return;
+
+    applySummaryToNavbar(navRoot, readStoredUserSummary());
 
     const toggleButton = navRoot.querySelector('#navbarToggle');
     const drawer = navRoot.querySelector('#navbarDrawer');
@@ -248,9 +291,22 @@
       }));
     });
 
+    navRoot.addEventListener('click', (event) => {
+      const quickLink = event.target.closest('[data-profile-nav]');
+      if (!quickLink) return;
+      closeProfileMenus();
+      closeDrawer();
+    });
+
     window.addEventListener('navbar:close-overlays', () => {
       closeProfileMenus();
       closeDrawer();
+    });
+
+    window.addEventListener('storage', (event) => {
+      if (event.key === LAST_USER_SUMMARY_KEY) {
+        applySummaryToNavbar(navRoot, readStoredUserSummary());
+      }
     });
 
     const refreshAuthState = () => {
@@ -269,8 +325,27 @@
     ensureAuthModal().catch(() => {});
 
     window.signOut = window.signOut || function () {
+      const routeflowAuth = window.RouteflowAuth;
+      const ensure = routeflowAuth?.ensure || window.ensureFirebaseAuth;
+      if (typeof ensure === 'function') {
+        ensure()
+          .then((authInstance) => {
+            if (authInstance?.signOut) {
+              return authInstance.signOut();
+            }
+            return null;
+          })
+          .catch((error) => {
+            console.error('RouteFlow navbar: failed to sign out via ensure helper.', error);
+          });
+        return;
+      }
       if (window.firebase?.auth) {
-        window.firebase.auth().signOut();
+        try {
+          window.firebase.auth().signOut();
+        } catch (error) {
+          console.error('RouteFlow navbar: direct Firebase sign-out failed.', error);
+        }
       }
     };
     window.openModal = window.openModal || function () {};
