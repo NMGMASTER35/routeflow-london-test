@@ -90,34 +90,60 @@
         <i class="fa-solid fa-xmark" aria-hidden="true"></i>
       </button>
     </div>
-    <nav class="navbar__drawer-nav" aria-label="Mobile navigation">
-      <ul class="navbar__drawer-list" role="list">
-        <li><a class="navbar__drawer-link" data-nav-link href="index.html">Home</a></li>
-        <li><a class="navbar__drawer-link" data-nav-link href="dashboard.html">Dashboard</a></li>
-        <li><a class="navbar__drawer-link" data-nav-link href="tracking.html">Tracking</a></li>
-        <li><a class="navbar__drawer-link" data-nav-link href="planning.html">Planning</a></li>
-        <li><a class="navbar__drawer-link" data-nav-link href="info.html">Info Hub</a></li>
-        <li><a class="navbar__drawer-link" data-nav-link href="routes.html">Routes</a></li>
-        <li><a class="navbar__drawer-link" data-nav-link href="withdrawn.html">Withdrawn</a></li>
-        <li><a class="navbar__drawer-link" data-nav-link href="disruptions.html">Disruptions</a></li>
-        <li><a class="navbar__drawer-link" data-nav-link href="fleet.html">Fleet</a></li>
-      </ul>
-      <div class="navbar__drawer-divider" role="separator"></div>
-      <div class="navbar__drawer-auth" data-auth-container>
+    <div class="navbar__drawer-scroll">
+      <section class="navbar__drawer-profile" data-auth-state="signed-in" hidden>
+        <div class="navbar__drawer-profile-header">
+          <div class="navbar__drawer-avatar" aria-hidden="true">
+            <i class="fa-regular fa-circle-user"></i>
+          </div>
+          <div class="navbar__drawer-profile-text">
+            <span class="navbar__drawer-profile-name" data-profile-name>Account</span>
+            <span class="navbar__drawer-profile-email" data-profile-email hidden aria-hidden="true"></span>
+          </div>
+        </div>
+        <button type="button" class="navbar__drawer-profile-manage" data-auth-action="profile">
+          Manage account
+        </button>
+      </section>
+
+      <nav class="navbar__drawer-nav" aria-label="Mobile navigation">
+        <h2 class="navbar__drawer-section-title">Browse</h2>
+        <ul class="navbar__drawer-list" role="list">
+          <li><a class="navbar__drawer-link" data-nav-link href="index.html">Home</a></li>
+          <li><a class="navbar__drawer-link" data-nav-link href="dashboard.html">Dashboard</a></li>
+          <li><a class="navbar__drawer-link" data-nav-link href="tracking.html">Tracking</a></li>
+          <li><a class="navbar__drawer-link" data-nav-link href="planning.html">Planning</a></li>
+          <li><a class="navbar__drawer-link" data-nav-link href="info.html">Info Hub</a></li>
+          <li><a class="navbar__drawer-link" data-nav-link href="routes.html">Routes</a></li>
+          <li><a class="navbar__drawer-link" data-nav-link href="withdrawn.html">Withdrawn</a></li>
+          <li><a class="navbar__drawer-link" data-nav-link href="disruptions.html">Disruptions</a></li>
+          <li><a class="navbar__drawer-link" data-nav-link href="fleet.html">Fleet</a></li>
+        </ul>
+      </nav>
+
+      <div class="navbar__drawer-divider" role="separator" aria-hidden="true"></div>
+
+      <section class="navbar__drawer-actions" data-auth-container aria-label="Account actions">
         <div class="navbar__drawer-section" data-auth-state="signed-out">
-          <button type="button" class="navbar__drawer-action" data-auth-action="login">Login</button>
-          <button type="button" class="navbar__drawer-action navbar__drawer-action--primary" data-auth-action="signup">Sign Up</button>
+          <h2 class="navbar__drawer-section-title">Your RouteFlow account</h2>
+          <p class="navbar__drawer-copy">Sign in to sync favourites, badges and saved trips everywhere.</p>
+          <div class="navbar__drawer-buttons">
+            <button type="button" class="navbar__drawer-action navbar__drawer-button navbar__drawer-button--ghost" data-auth-action="login">Login</button>
+            <button type="button" class="navbar__drawer-action navbar__drawer-button navbar__drawer-button--primary" data-auth-action="signup">Sign Up</button>
+          </div>
         </div>
         <div class="navbar__drawer-section" data-auth-state="signed-in" hidden>
-          <a href="profile.html" class="navbar__drawer-action" data-auth-action="profile">Profile</a>
-          <a href="dashboard.html" class="navbar__drawer-action" data-auth-action="dashboard">Dashboard</a>
-          <a href="fleet.html" class="navbar__drawer-action" data-auth-action="fleet">Fleet</a>
-          <a href="settings.html" class="navbar__drawer-action" data-auth-action="settings">Settings</a>
-          <a href="admin.html" class="navbar__drawer-action" data-auth-action="admin" data-requires-admin hidden aria-hidden="true">Admin</a>
-          <button type="button" class="navbar__drawer-action navbar__drawer-action--destructive" data-auth-action="logout">Logout</button>
+          <h2 class="navbar__drawer-section-title">Quick actions</h2>
+          <div class="navbar__drawer-buttons navbar__drawer-buttons--stacked">
+            <a href="dashboard.html" class="navbar__drawer-action navbar__drawer-button" data-auth-action="dashboard">Dashboard</a>
+            <a href="fleet.html" class="navbar__drawer-action navbar__drawer-button" data-auth-action="fleet">Fleet</a>
+            <a href="settings.html" class="navbar__drawer-action navbar__drawer-button" data-auth-action="settings">Settings</a>
+            <a href="admin.html" class="navbar__drawer-action navbar__drawer-button" data-auth-action="admin" data-requires-admin hidden aria-hidden="true">Admin</a>
+            <button type="button" class="navbar__drawer-action navbar__drawer-button navbar__drawer-button--destructive" data-auth-action="logout">Log out</button>
+          </div>
         </div>
-      </div>
-    </nav>
+      </section>
+    </div>
   </aside>
   <div class="navbar__backdrop" id="navbarBackdrop" data-visible="false" aria-hidden="true"></div>
 </nav>

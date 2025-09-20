@@ -81,6 +81,26 @@
     });
   }
 
+  function deriveSummaryFromAuth(user, summary) {
+    if (summary && typeof summary === 'object') {
+      return summary;
+    }
+    if (!user) {
+      return null;
+    }
+    const email = typeof user.email === 'string' ? user.email : null;
+    const displayName = typeof user.displayName === 'string' && user.displayName
+      ? user.displayName
+      : (email || 'Account');
+    return {
+      uid: user.uid || null,
+      email,
+      displayName,
+      providerId: user.providerId || null,
+      timestamp: Date.now()
+    };
+  }
+
   function dispatchAuthModalReady(detail = {}) {
     try {
       document.dispatchEvent(new CustomEvent('auth-modal:ready', { detail }));
@@ -168,6 +188,20 @@
   function initNavbar(container, dependenciesReadyPromise = Promise.resolve()) {
     const navRoot = container.querySelector('.navbar');
     if (!navRoot) return;
+
+    const stateStore = container;
+    if (stateStore.__navbarAuthEventHandler) {
+      document.removeEventListener('routeflow:auth-state', stateStore.__navbarAuthEventHandler);
+      stateStore.__navbarAuthEventHandler = null;
+    }
+    if (typeof stateStore.__navbarAuthUnsubscribe === 'function') {
+      try {
+        stateStore.__navbarAuthUnsubscribe();
+      } catch (error) {
+        console.warn('RouteFlow navbar: failed to clean up previous auth subscription.', error);
+      }
+      stateStore.__navbarAuthUnsubscribe = null;
+    }
 
     applySummaryToNavbar(navRoot, readStoredUserSummary());
 
@@ -317,12 +351,83 @@
     };
 
     if (dependenciesReadyPromise && typeof dependenciesReadyPromise.then === 'function') {
-      dependenciesReadyPromise.then(refreshAuthState);
+      dependenciesReadyPromise
+        .then(() => {
+          refreshAuthState();
+          const routeflowAuth = window.RouteflowAuth;
+          const applyFromApi = () => {
+            const api = window.RouteflowAuth;
+            if (!api) return;
+            const summary = (typeof api.getLastKnownSummary === 'function'
+              ? api.getLastKnownSummary()
+              : (typeof api.getStoredSummary === 'function' ? api.getStoredSummary() : null))
+              || null;
+            if (summary) {
+              applySummaryToNavbar(navRoot, summary);
+            }
+          };
+          const subscribe = () => {
+            const api = window.RouteflowAuth;
+            if (!api?.subscribe || typeof stateStore.__navbarAuthUnsubscribe === 'function') {
+              return;
+            }
+            try {
+              const unsubscribe = api.subscribe((user, summary) => {
+                const nextSummary = (typeof api.getLastKnownSummary === 'function'
+                  ? api.getLastKnownSummary()
+                  : deriveSummaryFromAuth(user, summary));
+                applySummaryToNavbar(navRoot, nextSummary);
+              });
+              if (typeof unsubscribe === 'function') {
+                stateStore.__navbarAuthUnsubscribe = () => {
+                  try {
+                    unsubscribe();
+                  } catch (error) {
+                    console.warn('RouteFlow navbar: failed to remove auth subscription.', error);
+                  } finally {
+                    stateStore.__navbarAuthUnsubscribe = null;
+                  }
+                };
+              }
+            } catch (error) {
+              console.warn('RouteFlow navbar: failed to subscribe to RouteflowAuth updates.', error);
+            }
+          };
+          applyFromApi();
+          subscribe();
+          if (routeflowAuth?.ready && typeof routeflowAuth.ready.then === 'function') {
+            routeflowAuth.ready
+              .then(() => {
+                applyFromApi();
+                subscribe();
+              })
+              .catch(() => {
+                subscribe();
+              });
+          } else {
+            subscribe();
+          }
+        })
+        .catch((error) => {
+          console.warn('RouteFlow navbar: failed to synchronise auth state.', error);
+        });
     } else {
       refreshAuthState();
     }
 
     ensureAuthModal().catch(() => {});
+
+    const handleAuthEvent = (event) => {
+      const detail = event?.detail || {};
+      const summary = detail.summary
+        || deriveSummaryFromAuth(detail.user, detail.user?.summary)
+        || null;
+      if (summary || detail.state === 'signed-out') {
+        applySummaryToNavbar(navRoot, summary);
+      }
+    };
+    document.addEventListener('routeflow:auth-state', handleAuthEvent);
+    stateStore.__navbarAuthEventHandler = handleAuthEvent;
 
     window.signOut = window.signOut || function () {
       const routeflowAuth = window.RouteflowAuth;
