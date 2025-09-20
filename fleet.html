@@ -399,6 +399,26 @@
               <span>Length</span>
               <select id="lengthSelect" name="length"></select>
             </label>
+            <label for="busImages" class="fleet-form__files">
+              <span>Gallery images</span>
+              <input
+                id="busImages"
+                name="images"
+                type="file"
+                accept="image/*"
+                multiple
+                aria-describedby="imageHelp"
+              />
+              <small id="imageHelp"
+                >Attach up to three images (max 2&nbsp;MB each). Uploads are sent for admin
+                approval.</small
+              >
+            </label>
+            <ul
+              id="imagePreviewList"
+              class="fleet-form__uploads"
+              aria-live="polite"
+            ></ul>
           </div>
           <div class="fleet-form__toggles">
             <label class="fleet-checkbox">
@@ -425,89 +445,14 @@
         </form>
       </section>
 
-      <section
-        class="fleet-card fleet-admin"
-        data-locked-section
-        data-lock-label="Sign in"
-        aria-labelledby="adminPortalHeading"
-      >
-        <header class="fleet-admin__intro">
-          <div>
-            <p class="fleet-hero__eyebrow">Admin portal</p>
-            <h2 id="adminPortalHeading">
-              Approve community changes and manage dropdowns
-            </h2>
-            <p>
-              Use the admin tools to vet pending edits and curate the lists that
-              power each dropdown menu.
-            </p>
-          </div>
-          <div class="fleet-admin__actions">
-            <button
-              id="adminToggle"
-              class="button-primary"
-              type="button"
-              aria-expanded="false"
-              aria-controls="adminPanel"
-            >
-              Access admin tools
-            </button>
-          </div>
-        </header>
-        <div id="adminPanel" class="fleet-admin__panel" hidden>
-          <div class="fleet-admin__grid">
-            <section
-              aria-labelledby="pendingHeading"
-              class="fleet-admin__pending"
-            >
-              <div class="fleet-admin__section-header">
-                <h3 id="pendingHeading">Pending approvals</h3>
-                <span id="pendingCount" class="fleet-admin__badge"
-                  >0 pending</span
-                >
-              </div>
-              <div id="pendingContainer" class="pending-list"></div>
-            </section>
-            <section
-              aria-labelledby="optionsHeading"
-              class="fleet-admin__options"
-            >
-              <h3 id="optionsHeading">Manage dropdown options</h3>
-              <form id="optionForm" class="option-form">
-                <label for="optionCategory">Field</label>
-                <select id="optionCategory" name="category">
-                  <option value="operator">Operator</option>
-                  <option value="status">Status</option>
-                  <option value="wrap">Wrap</option>
-                  <option value="vehicleType">Vehicle type</option>
-                  <option value="doors">Doors</option>
-                  <option value="engineType">Engine type</option>
-                  <option value="engine">Engine</option>
-                  <option value="chassis">Chassis</option>
-                  <option value="bodyType">Body type</option>
-                  <option value="garage">Garage</option>
-                  <option value="extras">Extras</option>
-                  <option value="length">Length</option>
-                </select>
-                <label for="optionValue">New option</label>
-                <input
-                  id="optionValue"
-                  name="value"
-                  type="text"
-                  placeholder="Enter new option"
-                />
-                <button type="submit" class="button-primary">Add option</button>
-              </form>
-              <div>
-                <h4 id="optionListHeading">Current options</h4>
-                <ul
-                  id="optionList"
-                  class="option-list"
-                  aria-labelledby="optionListHeading"
-                ></ul>
-              </div>
-            </section>
-          </div>
+      <section class="fleet-card fleet-admin-note" aria-labelledby="fleetAdminNote">
+        <div>
+          <p class="fleet-hero__eyebrow">Admin update</p>
+          <h2 id="fleetAdminNote">Fleet moderation has moved</h2>
+          <p>
+            Administrators can now review submissions and manage dropdown values from the
+            dedicated <a href="admin.html">RouteFlow admin portal</a>.
+          </p>
         </div>
       </section>
     </main>

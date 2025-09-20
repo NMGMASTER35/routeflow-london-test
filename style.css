@@ -2237,6 +2237,113 @@ body.dark-mode .admin-panel__description {
   color: rgba(226, 232, 240, 0.75);
 }
 
+.fleet-admin-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.fleet-admin-panel__actions a {
+  text-decoration: none;
+}
+
+.fleet-admin-panel__summary {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  margin: 0;
+}
+
+.fleet-admin-panel__summary dt {
+  margin: 0;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted-light);
+}
+
+body.dark-mode .fleet-admin-panel__summary dt {
+  color: rgba(226, 232, 240, 0.68);
+}
+
+.fleet-admin-panel__summary dd {
+  margin: 0;
+  font-size: 1.65rem;
+  font-weight: 700;
+}
+
+.fleet-admin-panel__last-updated {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted-light);
+}
+
+body.dark-mode .fleet-admin-panel__last-updated {
+  color: rgba(226, 232, 240, 0.68);
+}
+
+.fleet-admin-panel__pending {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.fleet-admin-panel__pending h3,
+.fleet-admin-panel__options h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.fleet-admin-panel__pending-description,
+.fleet-admin-panel__options-description {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--text-muted-light);
+}
+
+body.dark-mode .fleet-admin-panel__pending-description,
+body.dark-mode .fleet-admin-panel__options-description {
+  color: rgba(226, 232, 240, 0.7);
+}
+
+.fleet-admin-panel__pending-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.fleet-admin-panel__options {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.fleet-admin-panel__option-values {
+  min-height: 48px;
+}
+
+.fleet-admin-panel__option-values ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.fleet-admin-panel__option-values li {
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.06);
+  font-size: 0.85rem;
+}
+
+body.dark-mode .fleet-admin-panel__option-values li {
+  background: rgba(148, 163, 184, 0.16);
+  color: rgba(226, 232, 240, 0.92);
+}
+
 .admin-form {
   display: flex;
   flex-direction: column;
