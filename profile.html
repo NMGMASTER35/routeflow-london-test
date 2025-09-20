@@ -118,6 +118,52 @@
       </form>
     </div>
 
+    <div
+      class="profile-note-modal"
+      id="profileNoteModal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="profileNoteTitle"
+      hidden
+    >
+      <div class="profile-note-modal__backdrop" data-note-modal-dismiss></div>
+      <form class="profile-note-modal__dialog" id="profileNoteForm" novalidate>
+        <header class="profile-note-modal__header">
+          <h2 id="profileNoteTitle">Create a personal note</h2>
+          <p>Pin reminders about disruptions, journeys, or fleet sightings only you can see.</p>
+        </header>
+        <div class="profile-note-modal__body">
+          <label class="profile-note-modal__field" for="profileNoteName">
+            <span>Title</span>
+            <input
+              type="text"
+              id="profileNoteName"
+              name="noteName"
+              required
+              maxlength="120"
+              placeholder="Service change or journey"
+            />
+          </label>
+          <label class="profile-note-modal__field" for="profileNoteContent">
+            <span>Details</span>
+            <textarea
+              id="profileNoteContent"
+              name="noteContent"
+              required
+              rows="5"
+              maxlength="1000"
+              placeholder="Write a quick reminder for yourself"
+            ></textarea>
+          </label>
+          <p class="profile-note-modal__error" id="profileNoteError" role="alert" aria-live="assertive"></p>
+        </div>
+        <footer class="profile-note-modal__actions">
+          <button type="submit" class="profile-chip profile-chip--primary" id="profileNoteSave">Save note</button>
+          <button type="button" class="profile-chip profile-chip--ghost" id="profileNoteCancel" data-note-modal-dismiss>Cancel</button>
+        </footer>
+      </form>
+    </div>
+
     <section class="profile-grid">
       <article class="profile-card profile-card--stats" id="profileStatsCard">
         <header class="profile-card__header">
