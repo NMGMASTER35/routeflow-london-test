@@ -9,6 +9,9 @@ function resolveFirebaseConfig() {
 
 const LOCAL_AUTH_STORAGE_KEY = 'routeflow:local-auth:users';
 const LOCAL_AUTH_SESSION_KEY = 'routeflow:local-auth:session';
+const AUTH_MODAL_SOURCE = 'components/auth-modal.html';
+
+let ensureAuthModalPromise = null;
 
 const encodePassword = (value) => {
   if (typeof value !== 'string') {
@@ -418,6 +421,41 @@ function resetAuthForms() {
   });
 }
 
+async function ensureAuthModalElement() {
+  const existing = document.getElementById('authModal');
+  if (existing) {
+    return existing;
+  }
+
+  if (ensureAuthModalPromise) {
+    return ensureAuthModalPromise;
+  }
+
+  ensureAuthModalPromise = fetch(AUTH_MODAL_SOURCE)
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`Failed to load authentication modal (${response.status})`);
+      }
+      return response.text();
+    })
+    .then((html) => {
+      const template = document.createElement('template');
+      template.innerHTML = html.trim();
+      const fragment = template.content.cloneNode(true);
+      document.body.appendChild(fragment);
+      const modal = document.getElementById('authModal');
+      if (modal) {
+        document.dispatchEvent(new CustomEvent('auth-modal:ready', { detail: { source: 'fallback' } }));
+      }
+      return modal;
+    })
+    .finally(() => {
+      ensureAuthModalPromise = null;
+    });
+
+  return ensureAuthModalPromise;
+}
+
 function closeModal() {
   const modal = document.getElementById('authModal');
   if (!modal) return;
@@ -452,24 +490,29 @@ function setActiveAuthView(mode) {
   return activeContainer;
 }
 
-function showAuthModal(mode = 'login') {
-  const modal = document.getElementById('authModal');
-  if (!modal) {
-    const handleReady = () => {
-      document.removeEventListener('auth-modal:ready', handleReady);
-      showAuthModal(mode);
-    };
-    document.addEventListener('auth-modal:ready', handleReady, { once: true });
-    return;
-  }
+async function showAuthModal(mode = 'login') {
+  try {
+    let modal = document.getElementById('authModal');
+    if (!modal) {
+      modal = await ensureAuthModalElement();
+    }
 
-  clearFormMessages();
-  const activeContainer = setActiveAuthView(mode);
-  modal.removeAttribute('hidden');
-  modal.setAttribute('data-open', 'true');
-  modal.setAttribute('aria-hidden', 'false');
-  document.body.dataset.authModalOpen = 'true';
-  focusFirstField(activeContainer);
+    if (!modal) {
+      throw new Error('Authentication modal element is unavailable.');
+    }
+
+    clearFormMessages();
+    const activeContainer = setActiveAuthView(mode);
+    modal.removeAttribute('hidden');
+    modal.setAttribute('data-open', 'true');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.dataset.authModalOpen = 'true';
+    focusFirstField(activeContainer);
+    document.dispatchEvent(new CustomEvent('auth-modal:open', { detail: { view: mode } }));
+  } catch (error) {
+    console.error('Failed to display authentication modal:', error);
+    alert('Authentication is temporarily unavailable. Please try again shortly.');
+  }
 }
 
 window.openModal = showAuthModal;

@@ -17,9 +17,40 @@
 
   <main id="main-content" class="blog-shell" aria-labelledby="infoTitle">
     <section class="blog-hero card">
-      <p class="blog-hero__eyebrow">RouteFlow info</p>
-      <h1 id="infoTitle">Your briefing room for slow-and-steady progress across London transport.</h1>
-      <p>The Info hub blends network explainers, enthusiast research and platform release notes so everyone can catch up before they dive into challenges.</p>
+      <div class="blog-hero__content">
+        <p class="blog-hero__eyebrow">RouteFlow info</p>
+        <h1 id="infoTitle">Your briefing room for confident journeys across London transport.</h1>
+        <p>Browse explainers, enthusiast research and release notes in one organised hub. Use the quick links or search to jump straight to what matters.</p>
+        <div class="blog-hero__actions" role="group" aria-label="Jump to popular topics">
+          <a
+            class="blog-hero__action"
+            href="#infoCollections"
+            data-blog-category-group="blogFilters"
+            data-blog-category-link="Learn about bus models"
+          >
+            <i class="fa-solid fa-bus" aria-hidden="true"></i>
+            <span>Bus models</span>
+          </a>
+          <a
+            class="blog-hero__action"
+            href="#infoCollections"
+            data-blog-category-group="blogFilters"
+            data-blog-category-link="New London Consultations"
+          >
+            <i class="fa-solid fa-scroll" aria-hidden="true"></i>
+            <span>Consultations</span>
+          </a>
+          <a
+            class="blog-hero__action"
+            href="#infoCollections"
+            data-blog-category-group="blogFilters"
+            data-blog-category-link="Weekly London Transport News"
+          >
+            <i class="fa-solid fa-newspaper" aria-hidden="true"></i>
+            <span>Weekly news</span>
+          </a>
+        </div>
+      </div>
       <div class="blog-hero__meta">
         <div>
           <span class="blog-hero__label">Latest brief</span>
@@ -32,20 +63,44 @@
       </div>
     </section>
 
-    <section class="blog-list card">
-      <div class="blog-list__header">
-        <div>
-          <h2>Browse by focus</h2>
-          <p>Filter the archive to surface operator spotlights, policy updates and enthusiast investigations.</p>
+    <section class="blog-collections" id="infoCollections">
+      <aside class="blog-collections__panel card">
+        <div class="blog-collections__intro">
+          <h2>Filter the library</h2>
+          <p>Search by keyword or pick a focus area to surface the briefs you need.</p>
         </div>
-        <div class="blog-filters" id="blogFilters" role="tablist" aria-label="Filter info briefs by category">
+        <label class="blog-search" for="blogSearch">
+          <span>Search briefs</span>
+          <input type="search" id="blogSearch" placeholder="Search by topic, route or keyword" autocomplete="off" />
+        </label>
+        <div
+          class="blog-collections__filters"
+          id="blogFilters"
+          role="tablist"
+          aria-label="Filter info briefs by category"
+        >
           <button type="button" class="blog-filter" data-blog-filter="all" data-active="true" role="tab" aria-selected="true">All briefs</button>
           <button type="button" class="blog-filter" data-blog-filter="Learn about bus models" role="tab" aria-selected="false">Learn about bus models</button>
           <button type="button" class="blog-filter" data-blog-filter="New London Consultations" role="tab" aria-selected="false">New London Consultations</button>
           <button type="button" class="blog-filter" data-blog-filter="Weekly London Transport News" role="tab" aria-selected="false">Weekly London Transport News</button>
         </div>
-      </div>
-      <div class="blog-list__grid" data-blog-list data-blog-variant="full" data-blog-empty="No blog posts published yet." data-blog-filter-group="blogFilters"></div>
+        <p class="blog-collections__hint">Tip: combine a category with search to get straight to the right brief.</p>
+      </aside>
+      <section class="blog-collections__results card" aria-labelledby="infoCollectionsHeading">
+        <div class="blog-list__header">
+          <div>
+            <h2 id="infoCollectionsHeading">Latest briefs</h2>
+            <p>Fresh guidance and roundups, updated whenever new posts publish.</p>
+          </div>
+        </div>
+        <div
+          class="blog-list__grid"
+          data-blog-list
+          data-blog-variant="full"
+          data-blog-empty="No briefs match your filters yet."
+          data-blog-filter-group="blogFilters"
+        ></div>
+      </section>
     </section>
 
     <section class="blog-spotlights">

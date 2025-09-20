@@ -1,6 +1,6 @@
 // Journey planning logic for Routeflow London
 
-const APP_KEY = 'f17d0725d1654338ab02a361fe41abad';
+const APP_KEY = ''; // ← Add your TfL API key here while testing
 
 document.getElementById('journey-form').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -24,7 +24,7 @@ document.getElementById('journey-form').addEventListener('submit', async (e) => 
     const params = new URLSearchParams();
     if (mode.length) params.append('mode', mode.join(','));
     if (accessibility.length) params.append('accessibilityPreference', accessibility.join(','));
-    params.append('app_key', APP_KEY);
+    if (APP_KEY) params.append('app_key', APP_KEY);
 
     let url = `https://api.tfl.gov.uk/Journey/JourneyResults/${encodeURIComponent(from)}/to/${encodeURIComponent(to)}`;
     if (params.toString()) url += `?${params.toString()}`;

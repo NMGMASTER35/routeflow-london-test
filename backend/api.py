@@ -237,9 +237,10 @@ def client_config() -> Response:
         "firebase": firebase_config,
     }
 
-    script = "window.__ROUTEFLOW_CONFIG__ = Object.assign({}, window.__ROUTEFLOW_CONFIG__, {});".format(
-        json.dumps(payload, separators=(",", ":"))
-    )
+    payload_json = json.dumps(payload, separators=(",", ":"))
+    script = (
+        "window.__ROUTEFLOW_CONFIG__ = Object.assign({{}}, window.__ROUTEFLOW_CONFIG__ || {{}}, {payload});"
+    ).format(payload=payload_json)
     response = make_response(script)
     response.headers["Content-Type"] = "application/javascript; charset=utf-8"
     response.headers["Cache-Control"] = "no-store"
