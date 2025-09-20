@@ -60,6 +60,10 @@ FLEET_AUTO_SYNC_INTERVAL_SECONDS = max(
     _env_int("FLEET_AUTO_SYNC_INTERVAL_SECONDS", _env_int("FLEET_AUTO_SYNC_INTERVAL", 300)),
     0,
 )
+FLEET_VEHICLE_HISTORY_DAYS = max(
+    _env_int("FLEET_VEHICLE_HISTORY_DAYS", _env_int("FLEET_HISTORY_DAYS", 30)),
+    1,
+)
 
 DEFAULT_TFL_REGISTRATION_ENDPOINTS: Tuple[str, ...] = (
     "Vehicle/Occupancy/Buses",
@@ -112,7 +116,7 @@ else:
 
 TFL_REGISTRATION_ENDPOINTS: List[str] = _unique_sequence(_raw_registration_endpoints)
 
-NEW_BUS_DURATION = timedelta(hours=24)
+NEW_BUS_DURATION = timedelta(days=FLEET_VEHICLE_HISTORY_DAYS)
 NEW_BUS_EXTRA_LABEL = "New Bus"
 
 if not DATABASE_URL:
@@ -660,6 +664,281 @@ def extract_vehicle_registration(entry: Any) -> Tuple[str, str]:
     return reg_key, registration
 
 
+_DATETIME_KEYWORDS: Tuple[str, ...] = (
+    "timestamp",
+    "last",
+    "updated",
+    "recorded",
+    "reported",
+    "observed",
+    "captured",
+    "logged",
+    "date",
+    "time",
+    "seen",
+)
+
+_DATETIME_SKIP_KEYWORDS: Tuple[str, ...] = (
+    "arrival",
+    "expected",
+    "countdown",
+    "tostation",
+    "tostop",
+    "towards",
+    "ttl",
+    "interval",
+    "deviation",
+)
+
+
+def _parse_any_datetime(value: Any) -> Optional[datetime]:
+    parsed = parse_iso_datetime(value)
+    if parsed is not None:
+        return parsed
+
+    if isinstance(value, (int, float)):
+        try:
+            timestamp = float(value)
+        except (TypeError, ValueError):
+            return None
+        if timestamp > 10**12:
+            timestamp /= 1000.0
+        try:
+            return datetime.fromtimestamp(timestamp, tz=timezone.utc)
+        except (OverflowError, OSError, ValueError):
+            return None
+
+    text = normalise_text(value)
+    if not text:
+        return None
+
+    if text.endswith("Z") and "+" not in text[text.rfind("Z") :]:
+        parsed = parse_iso_datetime(text)
+        if parsed is not None:
+            return parsed
+
+    match = re.search(r"/Date\((?P<stamp>-?\d+)(?:[+-]\d+)?\)/", text)
+    if match:
+        try:
+            millis = int(match.group("stamp")) / 1000.0
+            return datetime.fromtimestamp(millis, tz=timezone.utc)
+        except (OverflowError, OSError, ValueError):
+            return None
+
+    digits = re.sub(r"[^0-9]", "", text)
+    if len(digits) >= 10:
+        try:
+            seconds = int(digits[:13]) / 1000.0 if len(digits) >= 13 else int(digits[:10])
+            return datetime.fromtimestamp(seconds, tz=timezone.utc)
+        except (OverflowError, OSError, ValueError):
+            pass
+
+    for fmt in (
+        "%Y-%m-%d %H:%M:%S",
+        "%Y/%m/%d %H:%M:%S",
+        "%d/%m/%Y %H:%M:%S",
+        "%d-%m-%Y %H:%M:%S",
+        "%Y-%m-%d",
+        "%d/%m/%Y",
+        "%d-%m-%Y",
+    ):
+        try:
+            parsed = datetime.strptime(text, fmt)
+        except ValueError:
+            continue
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc)
+
+    return None
+
+
+def _should_consider_datetime_key(key: str) -> bool:
+    lower_key = key.lower()
+    if any(skip in lower_key for skip in _DATETIME_SKIP_KEYWORDS):
+        return False
+    return any(token in lower_key for token in _DATETIME_KEYWORDS)
+
+
+def _collect_datetime_candidates(payload: Any, results: List[datetime]) -> None:
+    if isinstance(payload, dict):
+        for raw_key, value in payload.items():
+            if isinstance(value, (dict, list)):
+                _collect_datetime_candidates(value, results)
+            if value in (None, ""):
+                continue
+            if isinstance(value, (int, float)):
+                parsed = _parse_any_datetime(value)
+                if parsed is not None:
+                    results.append(parsed)
+                    continue
+            if not isinstance(value, str):
+                continue
+            key = normalise_text(raw_key)
+            if not key:
+                continue
+            if not _should_consider_datetime_key(key) and "T" not in value:
+                continue
+            parsed = _parse_any_datetime(value)
+            if parsed is not None:
+                results.append(parsed)
+    elif isinstance(payload, list):
+        for item in payload:
+            _collect_datetime_candidates(item, results)
+
+
+def extract_latest_vehicle_timestamp(entry: Any) -> Optional[datetime]:
+    candidates: List[datetime] = []
+    _collect_datetime_candidates(entry, candidates)
+    valid = [dt for dt in candidates if dt.year >= 2000]
+    if not valid:
+        return None
+    return max(valid)
+
+
+def _extract_field_value(entry: Any, candidate_keys: Tuple[str, ...]) -> str:
+    if not candidate_keys:
+        return ""
+    lowered = [key.lower() for key in candidate_keys]
+    queue: List[Any] = [entry]
+
+    while queue:
+        current = queue.pop(0)
+        if isinstance(current, dict):
+            for raw_key, value in current.items():
+                if isinstance(value, (dict, list)):
+                    queue.append(value)
+                key = normalise_text(raw_key).lower()
+                if not key:
+                    continue
+                if any(candidate == key or candidate in key for candidate in lowered):
+                    text = normalise_text(value)
+                    if text:
+                        return text
+        elif isinstance(current, list):
+            queue.extend(current)
+
+    return ""
+
+
+def fetch_recent_vehicle_snapshots(days: int) -> Tuple[List[Dict[str, Any]], bool]:
+    if not TFL_VEHICLE_API_URL:
+        return [], False
+
+    kwargs = build_tfl_request_kwargs()
+    base_params = dict(kwargs.get("params") or {})
+    headers = dict(kwargs.get("headers") or {})
+
+    manual_page = 1
+    manual_params: Dict[str, Any] = {"page": manual_page}
+    if TFL_VEHICLE_PAGE_SIZE:
+        manual_params["pageSize"] = TFL_VEHICLE_PAGE_SIZE
+
+    next_request: Optional[Tuple[str, Dict[str, Any]]] = (
+        TFL_VEHICLE_API_URL,
+        manual_params,
+    )
+
+    requests_made = 0
+    success = False
+    snapshots: Dict[str, Dict[str, Any]] = {}
+    now_utc = datetime.now(timezone.utc)
+    threshold = now_utc - timedelta(days=days)
+
+    while next_request and requests_made < TFL_VEHICLE_MAX_PAGES:
+        requests_made += 1
+        url, extra_params = next_request
+        params = dict(base_params)
+        if extra_params:
+            for key, value in extra_params.items():
+                if value not in (None, ""):
+                    params[key] = value
+
+        try:
+            response = requests.get(url, params=params, headers=headers, timeout=30)
+            response.raise_for_status()
+        except requests.RequestException as exc:
+            print(f"[fleet-sync] Failed to fetch vehicle history: {exc}", flush=True)
+            break
+
+        try:
+            payload = response.json()
+        except ValueError as exc:
+            print(f"[fleet-sync] Invalid JSON payload from vehicle history: {exc}", flush=True)
+            break
+
+        success = True
+
+        for entry in _iter_vehicle_entries(payload):
+            reg_key, registration = extract_vehicle_registration(entry)
+            if not reg_key:
+                continue
+
+            seen_at = extract_latest_vehicle_timestamp(entry) or now_utc
+            if seen_at > now_utc:
+                seen_at = now_utc
+            if seen_at < threshold:
+                continue
+
+            vehicle_id = _extract_field_value(
+                entry,
+                ("vehicleId", "vehicleRef", "vehicleNumber", "vehicleCode"),
+            )
+            line_label = _extract_field_value(
+                entry,
+                ("lineName", "lineId", "routeId", "serviceId"),
+            )
+
+            extras: List[str] = []
+            if line_label:
+                extras.append(f"Line {line_label}")
+            if vehicle_id and vehicle_id.upper() != registration.upper():
+                extras.append(f"Vehicle ID {vehicle_id}")
+            extras.append(f"Seen {seen_at.date().isoformat()}")
+
+            existing = snapshots.get(reg_key)
+            if existing and existing.get("seenAt") >= seen_at:
+                continue
+
+            snapshots[reg_key] = {
+                "regKey": reg_key,
+                "registration": registration,
+                "seenAt": seen_at,
+                "vehicleId": vehicle_id,
+                "line": line_label,
+                "extras": extras,
+            }
+
+        link = _extract_next_link(payload)
+        if link:
+            next_request = _prepare_next_request(link, base_url=url)
+            continue
+
+        if manual_params.get("page") == manual_page and len(snapshots) == 0:
+            next_request = None
+            break
+
+        manual_page += 1
+        manual_params = {"page": manual_page}
+        if TFL_VEHICLE_PAGE_SIZE:
+            manual_params["pageSize"] = TFL_VEHICLE_PAGE_SIZE
+        next_request = (TFL_VEHICLE_API_URL, manual_params)
+
+    ordered = sorted(
+        snapshots.values(),
+        key=lambda item: item.get("seenAt") or threshold,
+        reverse=True,
+    )
+
+    if ordered:
+        print(
+            f"[fleet-sync] Collated {len(ordered)} vehicle snapshots from TfL history feed",
+            flush=True,
+        )
+
+    return ordered, success
+
+
 def _extract_next_link(payload: Any) -> Optional[str]:
     queue: List[Any] = [payload]
     seen: Set[int] = set()
@@ -1122,11 +1401,77 @@ def upsert_fleet_bus(
     return (row or {}).get("data", sanitized)
 
 
-def maybe_sync_live_buses(connection, existing_reg_keys: Optional[Set[str]] = None) -> List[Dict[str, Any]]:
+def replace_fleet_with_snapshots(
+    connection,
+    snapshots: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    if not snapshots:
+        return []
+
+    delete_all_fleet_buses(connection)
+
+    created: List[Dict[str, Any]] = []
+    for snapshot in snapshots:
+        reg_key = normalise_reg_key(snapshot.get("regKey"))
+        registration = normalise_text(snapshot.get("registration")) or reg_key
+        if not reg_key or not registration:
+            continue
+
+        seen_at = snapshot.get("seenAt")
+        if isinstance(seen_at, datetime):
+            seen_dt = seen_at.astimezone(timezone.utc)
+        else:
+            seen_dt = parse_iso_datetime(seen_at) or datetime.now(timezone.utc)
+
+        seen_iso = seen_dt.isoformat()
+        new_until_iso = (seen_dt + NEW_BUS_DURATION).isoformat()
+
+        extras = sanitise_extras(snapshot.get("extras"))
+
+        payload = {
+            "regKey": reg_key,
+            "registration": registration,
+            "fleetNumber": normalise_text(snapshot.get("vehicleId")),
+            "status": "Active",
+            "vehicleType": "Bus",
+            "extras": extras,
+            "newUntil": new_until_iso,
+            "isNewBus": True,
+            "createdAt": seen_iso,
+            "lastUpdated": seen_iso,
+        }
+
+        try:
+            bus = upsert_fleet_bus(
+                connection,
+                payload,
+                fallback_created_at=seen_iso,
+            )
+        except ApiError as exc:
+            print(
+                f"[fleet-sync] Skipped snapshot for {reg_key}: {exc}",
+                flush=True,
+            )
+            continue
+
+        created.append(bus)
+
+    if created:
+        connection.commit()
+    else:
+        connection.rollback()
+
+    return created
+
+
+def maybe_sync_live_buses(
+    connection,
+    existing_reg_keys: Optional[Set[str]] = None,
+) -> Tuple[List[Dict[str, Any]], bool]:
     global _last_fleet_sync_attempt, _last_fleet_sync_success
 
     if not FLEET_AUTO_SYNC_ENABLED:
-        return []
+        return [], False
 
     if existing_reg_keys is None:
         existing_reg_keys = set()
@@ -1136,7 +1481,7 @@ def maybe_sync_live_buses(connection, existing_reg_keys: Optional[Set[str]] = No
         FLEET_AUTO_SYNC_INTERVAL_SECONDS > 0
         and now - _last_fleet_sync_attempt < FLEET_AUTO_SYNC_INTERVAL_SECONDS
     ):
-        return []
+        return [], False
 
     with _fleet_sync_lock:
         now = time.monotonic()
@@ -1144,12 +1489,29 @@ def maybe_sync_live_buses(connection, existing_reg_keys: Optional[Set[str]] = No
             FLEET_AUTO_SYNC_INTERVAL_SECONDS > 0
             and now - _last_fleet_sync_attempt < FLEET_AUTO_SYNC_INTERVAL_SECONDS
         ):
-            return []
+            return [], False
 
         _last_fleet_sync_attempt = now
+        snapshots, history_success = fetch_recent_vehicle_snapshots(
+            FLEET_VEHICLE_HISTORY_DAYS
+        )
+        if history_success and snapshots:
+            created = replace_fleet_with_snapshots(connection, snapshots)
+            if created:
+                _last_fleet_sync_success = time.monotonic()
+                print(
+                    f"[fleet-sync] Rebuilt {len(created)} vehicles from TfL vehicle history feed",
+                    flush=True,
+                )
+                return created, True
+            print(
+                "[fleet-sync] TfL vehicle history feed returned no usable entries; falling back to incremental sync",
+                flush=True,
+            )
+
         registrations, success = fetch_all_bus_registrations()
         if not success or not registrations:
-            return []
+            return [], False
 
         created: List[Dict[str, Any]] = []
         for reg_key, registration in registrations.items():
@@ -1199,7 +1561,7 @@ def maybe_sync_live_buses(connection, existing_reg_keys: Optional[Set[str]] = No
                 flush=True,
             )
         _last_fleet_sync_success = time.monotonic()
-        return created
+        return created, False
 
 
 def delete_pending_for_reg(connection, reg_key: str) -> None:
@@ -1210,6 +1572,17 @@ def delete_pending_for_reg(connection, reg_key: str) -> None:
             WHERE collection = %s AND data->>'regKey' = %s
             """,
             (FLEET_COLLECTION_PENDING, reg_key),
+        )
+
+
+def delete_all_fleet_buses(connection) -> None:
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            DELETE FROM app_collections
+            WHERE collection = %s
+            """,
+            (FLEET_COLLECTION_BUSES,),
         )
 
 
@@ -1290,7 +1663,10 @@ def fetch_fleet_state(connection) -> Dict[str, Any]:
         connection.commit()
 
     existing_keys = set(buses.keys())
-    for bus in maybe_sync_live_buses(connection, existing_keys):
+    synced_buses, replaced = maybe_sync_live_buses(connection, existing_keys)
+    if replaced:
+        buses = {}
+    for bus in synced_buses:
         reg_key = normalise_reg_key(bus.get("regKey"))
         if not reg_key:
             continue
