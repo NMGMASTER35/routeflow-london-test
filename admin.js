@@ -34,6 +34,42 @@ const FALLBACK_ADMIN_OVERRIDES = new Map([
 
 const TAG_OPTIONS = ['Regular', 'Night', 'School', 'Special', 'Express'];
 
+const FLEET_API_BASE = (window.__ROUTEFLOW_API_BASE__ || '/api').replace(/\/$/, '');
+
+const FLEET_FIELD_LABELS = {
+  fleetNumber: 'Fleet number',
+  operator: 'Operator',
+  status: 'Status',
+  wrap: 'Wrap / livery',
+  vehicleType: 'Vehicle type',
+  doors: 'Doors',
+  engineType: 'Engine type',
+  engine: 'Engine',
+  chassis: 'Chassis',
+  bodyType: 'Body type',
+  registrationDate: 'Registration date',
+  garage: 'Garage',
+  extras: 'Extras',
+  length: 'Length',
+  isNewBus: 'New bus',
+  isRareWorking: 'Rare working'
+};
+
+const FLEET_OPTION_FIELDS = [
+  'operator',
+  'status',
+  'wrap',
+  'vehicleType',
+  'doors',
+  'engineType',
+  'engine',
+  'chassis',
+  'bodyType',
+  'garage',
+  'extras',
+  'length'
+];
+
 const adminState = {
   user: null,
   withdrawnRoutes: [],
@@ -48,7 +84,8 @@ const adminViews = {
   withdrawn: null,
   tags: null,
   blog: null,
-  roles: null
+  roles: null,
+  fleet: null
 };
 
 const EMAIL_REGEX = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -61,6 +98,48 @@ const ensureAdminToken = async () => {
   }
   return adminState.user.getIdToken();
 };
+
+const buildFleetApiUrl = (path = '') => {
+  const suffix = path.startsWith('/') ? path : `/${path}`;
+  return `${FLEET_API_BASE}${suffix}`;
+};
+
+async function fleetRequestJson(path, { method = 'GET', body = null, auth = true } = {}) {
+  const url = buildFleetApiUrl(path);
+  const headers = {};
+  let requestBody = body;
+
+  if (auth) {
+    const token = await ensureAdminToken();
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  if (requestBody && typeof requestBody === 'object') {
+    headers['Content-Type'] = 'application/json';
+    requestBody = JSON.stringify(requestBody);
+  }
+
+  const response = await fetch(url, { method, headers, body: requestBody });
+  const contentType = response.headers.get('content-type') || '';
+  let payload = null;
+  if (contentType.includes('application/json')) {
+    try {
+      payload = await response.json();
+    } catch (error) {
+      payload = null;
+    }
+  }
+
+  if (!response.ok) {
+    const message = payload?.error || `Request failed with status ${response.status}`;
+    const error = new Error(message);
+    error.status = response.status;
+    error.payload = payload;
+    throw error;
+  }
+
+  return payload || {};
+}
 
 const formatDisplayName = (value) => (typeof value === 'string' ? value.trim() : '');
 
@@ -81,6 +160,35 @@ const fallbackHasOverride = (userOrUid) => {
   }
   return true;
 };
+
+function escapeHtml(value) {
+  if (value === null || value === undefined) {
+    return '';
+  }
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function formatFleetDateTime(value) {
+  if (!value) {
+    return '';
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return String(value);
+  }
+  return date.toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
 
 const resolveAdminStatus = (user, tokenResult) => {
   const helpers = window.RouteflowAdmin;
@@ -441,6 +549,562 @@ function createWithdrawnPanel() {
       }
     }
   };
+
+  refresh();
+
+  return {
+    element: panel,
+    refresh
+  };
+}
+
+function createFleetAdminPanel(options = {}) {
+  const { onStatsChange } = options || {};
+
+  const panel = document.createElement('section');
+  panel.className = 'admin-panel fleet-admin-panel';
+  panel.setAttribute('aria-labelledby', 'fleetPanelHeading');
+
+  let refreshButton;
+  let optionSubmitButton;
+
+  const state = {
+    options: {},
+    buses: {},
+    pending: [],
+    lastLoaded: null
+  };
+
+  let isLoading = false;
+  let hasLoaded = false;
+  let lastReportedStats = null;
+
+  const header = document.createElement('div');
+  header.className = 'admin-panel__header';
+
+  const heading = document.createElement('h2');
+  heading.id = 'fleetPanelHeading';
+  heading.textContent = 'Fleet moderation';
+
+  const description = document.createElement('p');
+  description.className = 'admin-panel__description';
+  description.textContent = 'Review fleet submissions and maintain dropdown values used on the fleet database form.';
+
+  header.append(heading, description);
+  panel.append(header);
+
+  const actions = document.createElement('div');
+  actions.className = 'fleet-admin-panel__actions';
+  panel.append(actions);
+
+  const feedback = createFeedbackElement();
+  panel.append(feedback);
+
+  const summary = document.createElement('dl');
+  summary.className = 'fleet-admin-panel__summary';
+  const summaryRefs = new Map();
+  [
+    ['total', 'Profiles'],
+    ['new', 'New buses'],
+    ['rare', 'Rare workings'],
+    ['pending', 'Pending reviews']
+  ].forEach(([key, label]) => {
+    const wrapper = document.createElement('div');
+    const dt = document.createElement('dt');
+    dt.textContent = label;
+    const dd = document.createElement('dd');
+    dd.textContent = '0';
+    wrapper.append(dt, dd);
+    summary.append(wrapper);
+    summaryRefs.set(key, dd);
+  });
+  panel.append(summary);
+
+  const lastUpdated = document.createElement('p');
+  lastUpdated.className = 'fleet-admin-panel__last-updated';
+  lastUpdated.hidden = true;
+  panel.append(lastUpdated);
+
+  const pendingSection = document.createElement('section');
+  pendingSection.className = 'fleet-admin-panel__pending';
+  const pendingHeading = document.createElement('h3');
+  pendingHeading.textContent = 'Pending submissions';
+  const pendingDescription = document.createElement('p');
+  pendingDescription.className = 'fleet-admin-panel__pending-description';
+  pendingDescription.textContent = 'Approve or reject updates submitted by RouteFlow members.';
+  const pendingList = document.createElement('div');
+  pendingList.className = 'fleet-admin-panel__pending-list';
+  pendingSection.append(pendingHeading, pendingDescription, pendingList);
+  panel.append(pendingSection);
+
+  const optionsSection = document.createElement('section');
+  optionsSection.className = 'fleet-admin-panel__options';
+  const optionsHeading = document.createElement('h3');
+  optionsHeading.textContent = 'Dropdown options';
+  const optionsDescription = document.createElement('p');
+  optionsDescription.className = 'fleet-admin-panel__options-description';
+  optionsDescription.textContent = 'Add extra dropdown choices for fleet submissions.';
+  const optionForm = document.createElement('form');
+  optionForm.className = 'admin-form';
+  optionForm.noValidate = true;
+  const optionGrid = document.createElement('div');
+  optionGrid.className = 'admin-form__grid admin-form__grid--compact';
+
+  const fieldGroup = document.createElement('div');
+  fieldGroup.className = 'admin-form__group';
+  const fieldLabel = document.createElement('label');
+  fieldLabel.setAttribute('for', 'fleetOptionField');
+  fieldLabel.textContent = 'Field';
+  const fieldSelect = document.createElement('select');
+  fieldSelect.id = 'fleetOptionField';
+  fieldSelect.name = 'field';
+  FLEET_OPTION_FIELDS.forEach((field) => {
+    const option = document.createElement('option');
+    option.value = field;
+    option.textContent = FLEET_FIELD_LABELS[field] || field;
+    fieldSelect.append(option);
+  });
+  fieldGroup.append(fieldLabel, fieldSelect);
+
+  const valueGroup = document.createElement('div');
+  valueGroup.className = 'admin-form__group';
+  const valueLabel = document.createElement('label');
+  valueLabel.setAttribute('for', 'fleetOptionValue');
+  valueLabel.textContent = 'New value';
+  const valueInput = document.createElement('input');
+  valueInput.type = 'text';
+  valueInput.id = 'fleetOptionValue';
+  valueInput.name = 'value';
+  valueInput.placeholder = 'e.g. BX (Bromley)';
+  valueInput.required = true;
+  valueGroup.append(valueLabel, valueInput);
+
+  optionGrid.append(fieldGroup, valueGroup);
+
+  const optionActions = document.createElement('div');
+  optionActions.className = 'admin-form__actions';
+  optionSubmitButton = document.createElement('button');
+  optionSubmitButton.type = 'submit';
+  optionSubmitButton.className = 'button admin-button';
+  optionSubmitButton.textContent = 'Add option';
+  optionActions.append(optionSubmitButton);
+
+  optionForm.append(optionGrid, optionActions);
+
+  const optionValues = document.createElement('div');
+  optionValues.className = 'fleet-admin-panel__option-values';
+
+  optionsSection.append(optionsHeading, optionsDescription, optionForm, optionValues);
+  panel.append(optionsSection);
+
+  function setLoading(isBusy) {
+    if (isBusy) {
+      panel.setAttribute('aria-busy', 'true');
+      if (refreshButton) {
+        refreshButton.disabled = true;
+      }
+    } else {
+      panel.removeAttribute('aria-busy');
+      if (refreshButton) {
+        refreshButton.disabled = false;
+      }
+    }
+  }
+
+  function normaliseRegKey(value) {
+    return (value || '')
+      .toString()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '');
+  }
+
+  function formatDate(value) {
+    if (!value) return '—';
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return value.toString();
+    }
+    return date.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  }
+
+  function formatDateTime(value) {
+    if (!value) return '';
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return value.toString();
+    }
+    return date.toLocaleString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  function formatFileSize(bytes) {
+    const size = Number(bytes);
+    if (!Number.isFinite(size) || size <= 0) {
+      return '0 KB';
+    }
+    if (size < 1024 * 1024) {
+      return `${Math.round(size / 1024)} KB`;
+    }
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  function valuesEqual(a, b) {
+    if (Array.isArray(a) || Array.isArray(b)) {
+      const arrA = Array.isArray(a) ? [...a].sort() : [];
+      const arrB = Array.isArray(b) ? [...b].sort() : [];
+      return arrA.join('|') === arrB.join('|');
+    }
+    return (a ?? '') === (b ?? '');
+  }
+
+  function formatFieldValue(value, field) {
+    if (Array.isArray(value)) {
+      return value.length ? value.join(', ') : '—';
+    }
+    if (typeof value === 'boolean') {
+      return value ? 'Yes' : 'No';
+    }
+    if (field === 'registrationDate' || field === 'lastUpdated' || field === 'createdAt') {
+      return formatDate(value);
+    }
+    return value ? value.toString() : '—';
+  }
+
+  function buildDiffRows(current, proposed) {
+    const fields = [
+      'fleetNumber',
+      'operator',
+      'status',
+      'wrap',
+      'vehicleType',
+      'doors',
+      'engineType',
+      'engine',
+      'chassis',
+      'bodyType',
+      'registrationDate',
+      'garage',
+      'extras',
+      'length',
+      'isNewBus',
+      'isRareWorking'
+    ];
+
+    const rows = [];
+    fields.forEach((field) => {
+      const proposedValue = proposed[field];
+      const currentValue = current ? current[field] : undefined;
+      if (valuesEqual(currentValue, proposedValue)) {
+        return;
+      }
+      rows.push(`
+        <li>
+          <span class="pending-card__label">${escapeHtml(FLEET_FIELD_LABELS[field] || field)}</span>
+          <span class="pending-card__value">
+            <span>
+              <strong>${escapeHtml(formatFieldValue(proposedValue, field))}</strong>
+              <span class="arrow" aria-hidden="true">&larr; from</span>
+              <span>${escapeHtml(formatFieldValue(currentValue, field))}</span>
+            </span>
+          </span>
+        </li>
+      `);
+    });
+
+    if (!rows.length) {
+      rows.push('<li><span class="pending-card__label">No changes detected</span></li>');
+    }
+
+    return rows;
+  }
+
+  function renderPendingImages(change) {
+    if (!change || !Array.isArray(change.images) || change.images.length === 0) {
+      return '';
+    }
+    const registration = change.registration || change.regKey || 'registration';
+    const items = change.images
+      .map((image, index) => {
+        const rawName = image?.name || `Image ${index + 1}`;
+        const size = image?.size ? formatFileSize(image.size) : '';
+        const caption = [rawName, size]
+          .filter(Boolean)
+          .map((part) => escapeHtml(part))
+          .join(' • ');
+        const dataUrl = escapeHtml(image?.dataUrl || '');
+        return `
+          <figure class="pending-card__image">
+            <img src="${dataUrl}" alt="Submitted image ${index + 1} for ${escapeHtml(registration)}" loading="lazy" />
+            <figcaption>${caption}</figcaption>
+          </figure>
+        `;
+      })
+      .join('');
+    return `<div class="pending-card__images" aria-label="Submitted images">${items}</div>`;
+  }
+
+  function pendingCard(change) {
+    const current = state.buses[change.regKey];
+    const diffRows = buildDiffRows(current, change.data || {});
+    const submitted = formatDateTime(change.submittedAt);
+    const imagesMarkup = renderPendingImages(change);
+
+    return `
+      <article class="pending-card">
+        <div class="pending-card__header">
+          <h4>${escapeHtml(change.registration || change.regKey || 'Pending update')}</h4>
+          <span class="pending-card__meta">Submitted ${escapeHtml(submitted || 'recently')}</span>
+        </div>
+        <ul class="pending-card__changes">
+          ${diffRows.join('')}
+        </ul>
+        ${imagesMarkup}
+        <div class="pending-card__actions">
+          <button class="button-primary" data-change-action="approve" data-change-id="${escapeHtml(change.id)}">Approve</button>
+          <button class="button-tertiary" data-change-action="reject" data-change-id="${escapeHtml(change.id)}">Reject</button>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderPendingList() {
+    const pending = state.pending
+      .slice()
+      .sort((a, b) => new Date(b.submittedAt || 0) - new Date(a.submittedAt || 0));
+
+    if (!pending.length) {
+      pendingList.innerHTML = '<p class="pending-empty">No pending submissions right now.</p>';
+      return;
+    }
+
+    pendingList.innerHTML = pending.map((change) => pendingCard(change)).join('');
+  }
+
+  function renderOptionList(field) {
+    optionValues.innerHTML = '';
+    const values = Array.isArray(state.options[field]) ? [...state.options[field]] : [];
+    if (!values.length) {
+      const empty = document.createElement('p');
+      empty.className = 'admin-empty';
+      empty.textContent = 'No custom values recorded yet.';
+      optionValues.append(empty);
+      return;
+    }
+    values.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    const list = document.createElement('ul');
+    values.forEach((value) => {
+      const item = document.createElement('li');
+      item.textContent = value;
+      list.append(item);
+    });
+    optionValues.append(list);
+  }
+
+  function updateSummaryDisplays() {
+    const buses = Object.values(state.buses);
+    const total = buses.length;
+    const newCount = buses.filter((bus) => bus.isNewBus).length;
+    const rareCount = buses.filter((bus) => bus.isRareWorking).length;
+    const pendingCount = state.pending.length;
+
+    const mappings = {
+      total,
+      new: newCount,
+      rare: rareCount,
+      pending: pendingCount
+    };
+
+    Object.entries(mappings).forEach(([key, value]) => {
+      const target = summaryRefs.get(key);
+      if (target) {
+        target.textContent = Number.isFinite(value) ? String(value) : '—';
+      }
+    });
+
+    if (state.lastLoaded) {
+      lastUpdated.hidden = false;
+      lastUpdated.textContent = `Last synchronised ${formatDateTime(state.lastLoaded)}`;
+    } else {
+      lastUpdated.hidden = true;
+    }
+
+    lastReportedStats = { ...mappings };
+    if (typeof onStatsChange === 'function') {
+      onStatsChange({ ...mappings });
+    }
+  }
+
+  function applyState(remoteState) {
+    state.options = remoteState?.options && typeof remoteState.options === 'object'
+      ? { ...remoteState.options }
+      : {};
+
+    state.buses = {};
+    if (remoteState?.buses && typeof remoteState.buses === 'object') {
+      Object.keys(remoteState.buses).forEach((key) => {
+        const bus = remoteState.buses[key];
+        if (!bus) return;
+        const regKey = normaliseRegKey(bus.regKey || key);
+        if (!regKey) return;
+        state.buses[regKey] = { ...bus, regKey };
+      });
+    }
+
+    state.pending = Array.isArray(remoteState?.pendingChanges)
+      ? remoteState.pendingChanges.map((change) => ({ ...change }))
+      : [];
+
+    state.lastLoaded = new Date();
+  }
+
+  async function refresh({ showMessage = false } = {}) {
+    if (isLoading) {
+      return;
+    }
+    const wasInitialLoad = !hasLoaded;
+    isLoading = true;
+    setLoading(true);
+    if (typeof onStatsChange === 'function') {
+      onStatsChange('loading');
+    }
+    if (wasInitialLoad) {
+      updateFeedback(feedback, 'Loading fleet data…', 'info');
+    } else if (showMessage) {
+      updateFeedback(feedback, 'Refreshing fleet data…', 'info');
+    }
+
+    try {
+      const remoteState = await fleetRequestJson('/fleet', { auth: false });
+      applyState(remoteState);
+      updateSummaryDisplays();
+      renderPendingList();
+      renderOptionList(fieldSelect.value || FLEET_OPTION_FIELDS[0]);
+      if (showMessage) {
+        updateFeedback(feedback, 'Fleet data refreshed.', 'success');
+      } else if (wasInitialLoad) {
+        updateFeedback(feedback, '', 'info');
+      }
+      hasLoaded = true;
+    } catch (error) {
+      console.error('Failed to load fleet data for admin panel.', error);
+      const message = error?.message || 'Unable to load fleet data. Please try again.';
+      updateFeedback(feedback, message, 'error');
+      if (typeof onStatsChange === 'function') {
+        onStatsChange(lastReportedStats ? { ...lastReportedStats } : null);
+      }
+    } finally {
+      isLoading = false;
+      setLoading(false);
+    }
+  }
+
+  refreshButton = createActionButton('Refresh fleet data', 'secondary', () => {
+    refresh({ showMessage: true });
+  });
+  const openFleetLink = document.createElement('a');
+  openFleetLink.href = 'fleet.html';
+  openFleetLink.className = 'button admin-button admin-button--secondary';
+  openFleetLink.target = '_blank';
+  openFleetLink.rel = 'noopener noreferrer';
+  openFleetLink.textContent = 'Open fleet page';
+  actions.append(refreshButton, openFleetLink);
+
+  pendingList.addEventListener('click', async (event) => {
+    const button = event.target.closest('button[data-change-action]');
+    if (!button) return;
+    const action = button.dataset.changeAction;
+    const changeId = button.dataset.changeId;
+    if (!action || !changeId) return;
+
+    const change = state.pending.find((item) => item.id === changeId);
+    const originalLabel = button.textContent;
+    button.disabled = true;
+    button.textContent = action === 'approve' ? 'Approving…' : 'Rejecting…';
+
+    try {
+      if (action === 'approve') {
+        const response = await fleetRequestJson(`/fleet/pending/${encodeURIComponent(changeId)}/approve`, {
+          method: 'POST'
+        });
+        const registration = response?.bus?.registration || change?.registration || change?.regKey || 'vehicle';
+        updateFeedback(feedback, `Approved update for ${registration}.`, 'success');
+      } else {
+        await fleetRequestJson(`/fleet/pending/${encodeURIComponent(changeId)}/reject`, {
+          method: 'POST'
+        });
+        const registration = change?.registration || change?.regKey || 'vehicle';
+        updateFeedback(feedback, `Rejected update for ${registration}.`, 'info');
+      }
+      await refresh();
+    } catch (error) {
+      console.error('Failed to process pending fleet change.', error);
+      const message = error?.message || 'Unable to process this update. Please try again.';
+      updateFeedback(feedback, message, 'error');
+    } finally {
+      button.disabled = false;
+      button.textContent = originalLabel;
+    }
+  });
+
+  fieldSelect.addEventListener('change', () => {
+    renderOptionList(fieldSelect.value);
+  });
+
+  optionForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const field = fieldSelect.value;
+    const value = valueInput.value.trim();
+    if (!field) {
+      updateFeedback(feedback, 'Select a field to update.', 'error');
+      fieldSelect.focus();
+      return;
+    }
+    if (!value) {
+      updateFeedback(feedback, 'Enter a value to add.', 'error');
+      valueInput.focus();
+      return;
+    }
+
+    const existingValues = Array.isArray(state.options[field]) ? state.options[field] : [];
+    if (existingValues.some((entry) => entry.toLowerCase() === value.toLowerCase())) {
+      updateFeedback(feedback, `“${value}” already exists for ${FLEET_FIELD_LABELS[field] || field}.`, 'info');
+      valueInput.focus();
+      return;
+    }
+
+    optionSubmitButton.disabled = true;
+    const originalText = optionSubmitButton.textContent;
+    optionSubmitButton.textContent = 'Adding…';
+
+    try {
+      const response = await fleetRequestJson('/fleet/options', {
+        method: 'POST',
+        body: { field, value }
+      });
+      const optionsForField = Array.isArray(response?.options) ? response.options : existingValues.concat([value]);
+      state.options[field] = optionsForField;
+      renderOptionList(field);
+      updateFeedback(feedback, `Added “${value}” to ${FLEET_FIELD_LABELS[field] || field}.`, 'success');
+      valueInput.value = '';
+      valueInput.focus();
+    } catch (error) {
+      console.error('Failed to add fleet option.', error);
+      const message = error?.message || 'Unable to add this option. Please try again.';
+      updateFeedback(feedback, message, 'error');
+    } finally {
+      optionSubmitButton.disabled = false;
+      optionSubmitButton.textContent = originalText;
+    }
+  });
 
   refresh();
 
@@ -1378,6 +2042,30 @@ async function renderAdminDashboard(user) {
       label: 'Administrators',
       value: '…',
       id: 'admins'
+    },
+    {
+      icon: 'fa-solid fa-bus',
+      label: 'Fleet profiles',
+      value: '…',
+      id: 'fleetTotal'
+    },
+    {
+      icon: 'fa-solid fa-bolt',
+      label: 'New buses',
+      value: '…',
+      id: 'fleetNew'
+    },
+    {
+      icon: 'fa-solid fa-star',
+      label: 'Rare workings',
+      value: '…',
+      id: 'fleetRare'
+    },
+    {
+      icon: 'fa-solid fa-hourglass-half',
+      label: 'Pending reviews',
+      value: '…',
+      id: 'fleetPending'
     }
   ];
 
@@ -1408,32 +2096,60 @@ async function renderAdminDashboard(user) {
     }
   });
 
+  const setStatValue = (id, text) => {
+    const target = statRefs.get(id);
+    if (target) {
+      target.textContent = text;
+    }
+  };
+
   section.append(statsWrapper);
 
   const panels = document.createElement('div');
   panels.className = 'admin-panels';
 
-  const blogManager = createBlogPanel();
-  const withdrawnManager = createWithdrawnPanel();
-  const tagManager = createTagOverridePanel();
   const updateAdminCount = (count) => {
-    const target = statRefs.get('admins');
-    if (!target) {
-      return;
-    }
     if (count === 'loading') {
-      target.textContent = '…';
+      setStatValue('admins', '…');
       return;
     }
     if (typeof count === 'number' && Number.isFinite(count)) {
-      target.textContent = String(count);
+      setStatValue('admins', String(count));
       return;
     }
-    target.textContent = '—';
+    setStatValue('admins', '—');
+  };
+
+  const fleetStatIds = ['fleetTotal', 'fleetNew', 'fleetRare', 'fleetPending'];
+
+  const updateFleetStats = (value) => {
+    if (value === 'loading') {
+      fleetStatIds.forEach((id) => setStatValue(id, '…'));
+      return;
+    }
+    if (!value || typeof value !== 'object') {
+      fleetStatIds.forEach((id) => setStatValue(id, '—'));
+      return;
+    }
+    const mapping = {
+      fleetTotal: value.total,
+      fleetNew: value['new'],
+      fleetRare: value.rare,
+      fleetPending: value.pending
+    };
+    fleetStatIds.forEach((id) => {
+      const numeric = mapping[id];
+      setStatValue(id, Number.isFinite(numeric) ? String(numeric) : '—');
+    });
   };
 
   updateAdminCount('loading');
+  updateFleetStats('loading');
 
+  const blogManager = createBlogPanel();
+  const withdrawnManager = createWithdrawnPanel();
+  const tagManager = createTagOverridePanel();
+  const fleetManager = createFleetAdminPanel({ onStatsChange: updateFleetStats });
   const roleManager = createRolePanel(user, {
     onAdminCountChange: (value) => {
       if (value === 'loading') {
@@ -1452,8 +2168,14 @@ async function renderAdminDashboard(user) {
   adminViews.withdrawn = withdrawnManager;
   adminViews.tags = tagManager;
   adminViews.roles = roleManager;
-
-  panels.append(roleManager.element, blogManager.element, withdrawnManager.element, tagManager.element);
+  adminViews.fleet = fleetManager;
+  panels.append(
+    roleManager.element,
+    fleetManager.element,
+    blogManager.element,
+    withdrawnManager.element,
+    tagManager.element
+  );
   section.append(panels);
 
   replaceContent(section);

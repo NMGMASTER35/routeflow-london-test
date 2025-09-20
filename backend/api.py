@@ -1,3 +1,5 @@
+import base64
+import binascii
 import json
 import os
 import re
@@ -65,6 +67,19 @@ FLEET_AUTO_SYNC_INTERVAL_SECONDS = max(
 )
 FLEET_VEHICLE_HISTORY_DAYS = max(
     _env_int("FLEET_VEHICLE_HISTORY_DAYS", _env_int("FLEET_HISTORY_DAYS", 30)),
+    1,
+)
+
+MAX_FLEET_IMAGE_BYTES = max(
+    _env_int("FLEET_IMAGE_MAX_BYTES", 2_097_152),
+    1,
+)
+MAX_FLEET_PENDING_IMAGES = max(
+    _env_int("FLEET_IMAGE_MAX_PENDING", 6),
+    0,
+)
+MAX_FLEET_GALLERY_IMAGES = max(
+    _env_int("FLEET_GALLERY_MAX", 24),
     1,
 )
 
@@ -418,6 +433,160 @@ DEFAULT_FLEET_BUSES: Dict[str, Dict[str, Any]] = {
         "isRareWorking": False,
         "createdAt": "2018-11-02T00:00:00.000Z",
         "lastUpdated": "2024-04-06T15:45:00.000Z",
+    },
+    "YX23LME": {
+        "regKey": "YX23LME",
+        "registration": "YX23 LME",
+        "fleetNumber": "EV27",
+        "operator": "Abellio London",
+        "status": "Active",
+        "wrap": "Special event",
+        "vehicleType": "Single Decker",
+        "doors": "2",
+        "engineType": "Electric",
+        "engine": "Alexander Dennis Enviro400EV",
+        "chassis": "Alexander Dennis",
+        "bodyType": "Caetano e.City Gold",
+        "registrationDate": "2023-07-15",
+        "garage": "WJ (Waterloo)",
+        "extras": ["New Bus", "Route Branding"],
+        "length": "12.4m",
+        "isNewBus": True,
+        "isRareWorking": False,
+        "createdAt": "2023-07-15T00:00:00.000Z",
+        "lastUpdated": "2024-04-27T13:12:00.000Z",
+    },
+    "BX71CUD": {
+        "regKey": "BX71CUD",
+        "registration": "BX71 CUD",
+        "fleetNumber": "HV411",
+        "operator": "Arriva London",
+        "status": "Active",
+        "wrap": "Standard",
+        "vehicleType": "Double Decker",
+        "doors": "2",
+        "engineType": "Hybrid",
+        "engine": "Volvo B5LH",
+        "chassis": "Volvo B5LH",
+        "bodyType": "Wright Gemini 3",
+        "registrationDate": "2021-09-05",
+        "garage": "NX (New Cross)",
+        "extras": ["Night Bus Allocation"],
+        "length": "11.2m",
+        "isNewBus": False,
+        "isRareWorking": True,
+        "createdAt": "2021-09-05T00:00:00.000Z",
+        "lastUpdated": "2024-05-08T08:42:00.000Z",
+    },
+    "SK21BGO": {
+        "regKey": "SK21BGO",
+        "registration": "SK21 BGO",
+        "fleetNumber": "15360",
+        "operator": "Stagecoach London",
+        "status": "Active",
+        "wrap": "Standard",
+        "vehicleType": "Single Decker",
+        "doors": "2",
+        "engineType": "Hydrogen",
+        "engine": "Wrightbus Hydrogen",
+        "chassis": "Wrightbus StreetDeck",
+        "bodyType": "Wright StreetDeck",
+        "registrationDate": "2021-05-18",
+        "garage": "LI (Leyton)",
+        "extras": ["Training Vehicle"],
+        "length": "10.2m",
+        "isNewBus": False,
+        "isRareWorking": False,
+        "createdAt": "2021-05-18T00:00:00.000Z",
+        "lastUpdated": "2024-02-19T11:05:00.000Z",
+    },
+    "YX68FFT": {
+        "regKey": "YX68FFT",
+        "registration": "YX68 FFT",
+        "fleetNumber": "TEH1235",
+        "operator": "Metroline",
+        "status": "Active",
+        "wrap": "Advertising wrap",
+        "vehicleType": "Double Decker",
+        "doors": "2",
+        "engineType": "Hybrid",
+        "engine": "Scania N250UD",
+        "chassis": "Scania N-series",
+        "bodyType": "Alexander Dennis Enviro400 MMC",
+        "registrationDate": "2019-01-04",
+        "garage": "HT (Holloway)",
+        "extras": ["Route Branding"],
+        "length": "11.2m",
+        "isNewBus": False,
+        "isRareWorking": False,
+        "createdAt": "2019-01-04T00:00:00.000Z",
+        "lastUpdated": "2024-03-02T17:28:00.000Z",
+    },
+    "LF67XYZ": {
+        "regKey": "LF67XYZ",
+        "registration": "LF67 XYZ",
+        "fleetNumber": "EH201",
+        "operator": "Go-Ahead London",
+        "status": "Stored",
+        "wrap": "Heritage",
+        "vehicleType": "Double Decker",
+        "doors": "2",
+        "engineType": "Electric",
+        "engine": "Alexander Dennis Enviro400EV",
+        "chassis": "Alexander Dennis",
+        "bodyType": "Alexander Dennis Enviro400 MMC",
+        "registrationDate": "2017-11-30",
+        "garage": "QB (Battersea)",
+        "extras": ["Heritage Fleet"],
+        "length": "10.6m",
+        "isNewBus": False,
+        "isRareWorking": False,
+        "createdAt": "2017-11-30T00:00:00.000Z",
+        "lastUpdated": "2024-01-14T12:01:00.000Z",
+    },
+    "BV70DFP": {
+        "regKey": "BV70DFP",
+        "registration": "BV70 DFP",
+        "fleetNumber": "4085",
+        "operator": "Abellio London",
+        "status": "Active",
+        "wrap": "Standard",
+        "vehicleType": "Double Decker",
+        "doors": "2",
+        "engineType": "Electric",
+        "engine": "Alexander Dennis Enviro400EV",
+        "chassis": "Alexander Dennis",
+        "bodyType": "Alexander Dennis Enviro400 MMC",
+        "registrationDate": "2020-10-22",
+        "garage": "QB (Battersea)",
+        "extras": ["Route Branding"],
+        "length": "11.2m",
+        "isNewBus": False,
+        "isRareWorking": False,
+        "createdAt": "2020-10-22T00:00:00.000Z",
+        "lastUpdated": "2024-04-11T06:58:00.000Z",
+    },
+    "YX70KCU": {
+        "regKey": "YX70KCU",
+        "registration": "YX70 KCU",
+        "fleetNumber": "VMH2645",
+        "operator": "Metroline",
+        "status": "Active",
+        "wrap": "Special event",
+        "vehicleType": "Double Decker",
+        "doors": "2",
+        "engineType": "Hybrid",
+        "engine": "Volvo B5LH",
+        "chassis": "Volvo B5LH",
+        "bodyType": "Wright Gemini 3",
+        "registrationDate": "2020-09-18",
+        "garage": "HT (Holloway)",
+        "extras": ["Rare Working"],
+        "length": "11.2m",
+        "isNewBus": False,
+        "isRareWorking": True,
+        "createdAt": "2020-09-18T00:00:00.000Z",
+        "lastUpdated": "2024-05-19T19:22:00.000Z",
     },
 }
 
@@ -885,6 +1054,165 @@ def sanitise_extras(value: Any) -> List[str]:
         if text and text not in cleaned:
             cleaned.append(text)
     return cleaned
+
+
+def sanitise_image_entry(
+    entry: Any,
+    *,
+    status: str = "pending",
+    submitted_by: Optional[str] = None,
+) -> Optional[Dict[str, Any]]:
+    if not isinstance(entry, dict):
+        return None
+
+    data_url = normalise_text(
+        entry.get("dataUrl")
+        or entry.get("dataURL")
+        or entry.get("url")
+        or entry.get("source")
+    )
+    if not data_url:
+        return None
+
+    if "," not in data_url:
+        raise ApiError("Image data must be a base64 data URL.", status_code=400)
+
+    header, encoded = data_url.split(",", 1)
+    header = header.strip()
+    encoded = encoded.strip()
+    if not header.startswith("data:"):
+        raise ApiError("Image data must be a base64 data URL.", status_code=400)
+
+    metadata = header[5:]
+    parts = [part.strip() for part in metadata.split(";") if part.strip()]
+    if "base64" not in {part.lower() for part in parts}:
+        raise ApiError("Image data must be base64 encoded.", status_code=400)
+
+    content_type = "application/octet-stream"
+    for part in parts:
+        if part.lower() != "base64":
+            content_type = part
+            break
+
+    try:
+        binary = base64.b64decode(encoded, validate=True)
+    except (binascii.Error, ValueError) as exc:
+        raise ApiError("Image data could not be decoded.", status_code=400) from exc
+
+    if len(binary) > MAX_FLEET_IMAGE_BYTES:
+        limit_kb = round(MAX_FLEET_IMAGE_BYTES / 1024)
+        raise ApiError(
+            f"Images must be smaller than {limit_kb} KB.",
+            status_code=400,
+        )
+
+    sanitized_data_url = (
+        f"data:{content_type};base64,{base64.b64encode(binary).decode('ascii')}"
+    )
+
+    image_id = normalise_text(entry.get("id")) or uuid.uuid4().hex
+    name = normalise_text(entry.get("name")) or f"image-{image_id}"
+    status_value = normalise_text(entry.get("status")) or status or "pending"
+
+    submitted_at = (
+        normalise_datetime(entry.get("submittedAt") or entry.get("createdAt"))
+        or iso_now()
+    )
+
+    submitted_by_value = submitted_by or normalise_text(
+        entry.get("submittedBy") or entry.get("submitted_by")
+    )
+
+    payload: Dict[str, Any] = {
+        "id": image_id,
+        "name": name,
+        "contentType": content_type,
+        "size": len(binary),
+        "dataUrl": sanitized_data_url,
+        "status": status_value.lower(),
+        "submittedAt": submitted_at,
+    }
+
+    if submitted_by_value:
+        payload["submittedBy"] = submitted_by_value
+
+    approved_at = normalise_datetime(entry.get("approvedAt") or entry.get("reviewedAt"))
+    if status_value.lower() == "approved":
+        payload["status"] = "approved"
+        payload["approvedAt"] = approved_at or iso_now()
+        approved_by = normalise_text(entry.get("approvedBy") or entry.get("reviewedBy"))
+        if approved_by:
+            payload["approvedBy"] = approved_by
+    elif approved_at:
+        payload["approvedAt"] = approved_at
+
+    return payload
+
+
+def sanitise_gallery(
+    entries: Any,
+    *,
+    status: str = "pending",
+    submitted_by: Optional[str] = None,
+    limit: Optional[int] = None,
+) -> List[Dict[str, Any]]:
+    if not entries:
+        return []
+
+    if not isinstance(entries, (list, tuple, set)):
+        entries = [entries]
+
+    cleaned: List[Dict[str, Any]] = []
+    for entry in entries:
+        entry_status = ""
+        if isinstance(entry, dict):
+            entry_status = normalise_text(entry.get("status"))
+        target_status = entry_status or status or "pending"
+        sanitized = sanitise_image_entry(
+            entry,
+            status=target_status,
+            submitted_by=submitted_by,
+        )
+        if not sanitized:
+            continue
+        cleaned.append(sanitized)
+        if limit and len(cleaned) >= limit:
+            break
+
+    return cleaned
+
+
+def merge_gallery_entries(
+    existing: Sequence[Dict[str, Any]],
+    additions: Sequence[Dict[str, Any]],
+    *,
+    limit: int = MAX_FLEET_GALLERY_IMAGES,
+) -> List[Dict[str, Any]]:
+    merged: List[Dict[str, Any]] = []
+    seen: Set[str] = set()
+
+    for source in existing or []:
+        if not isinstance(source, dict):
+            continue
+        identifier = normalise_text(source.get("id")) or uuid.uuid4().hex
+        if identifier in seen:
+            continue
+        seen.add(identifier)
+        merged.append(dict(source))
+
+    for addition in additions or []:
+        if not isinstance(addition, dict):
+            continue
+        identifier = normalise_text(addition.get("id")) or uuid.uuid4().hex
+        if identifier in seen:
+            continue
+        seen.add(identifier)
+        merged.append(dict(addition))
+
+    if limit and len(merged) > limit:
+        merged = merged[-limit:]
+
+    return merged
 
 
 def slugify(value: Any) -> str:
@@ -3383,6 +3711,11 @@ def sanitise_bus_payload(
         "isRareWorking": to_bool(payload.get("isRareWorking")),
         "createdAt": created_at,
         "lastUpdated": last_updated,
+        "gallery": sanitise_gallery(
+            payload.get("gallery"),
+            status="approved",
+            limit=MAX_FLEET_GALLERY_IMAGES,
+        ),
     }
 
 
@@ -3680,6 +4013,9 @@ def create_pending_change(
     reg_key: str,
     registration: str,
     payload: Dict[str, Any],
+    *,
+    images: Optional[Sequence[Dict[str, Any]]] = None,
+    submitted_by: Optional[str] = None,
 ) -> Dict[str, Any]:
     delete_pending_for_reg(connection, reg_key)
 
@@ -3689,6 +4025,20 @@ def create_pending_change(
     )
     sanitized.pop("createdAt", None)
     sanitized.pop("lastUpdated", None)
+    sanitized.pop("gallery", None)
+
+    pending_images = (
+        list(images)
+        if images is not None
+        else sanitise_gallery(
+            payload.get("images") or payload.get("pendingImages"),
+            status="pending",
+            submitted_by=submitted_by,
+            limit=MAX_FLEET_PENDING_IMAGES,
+        )
+    )
+    if pending_images and MAX_FLEET_PENDING_IMAGES:
+        pending_images = pending_images[:MAX_FLEET_PENDING_IMAGES]
 
     pending_data = {
         "id": change_id,
@@ -3698,6 +4048,12 @@ def create_pending_change(
         "status": "pending",
         "data": sanitized,
     }
+
+    if pending_images:
+        pending_data["images"] = pending_images
+
+    if submitted_by:
+        pending_data["submittedBy"] = submitted_by
 
     upsert_collection_item(
         connection,
@@ -4437,6 +4793,16 @@ def fleet_submit():
 
     registration = registration_text or reg_key
 
+    submitted_by = normalise_text(
+        payload.get("submittedBy") or payload.get("submitted_by")
+    )
+    pending_images = sanitise_gallery(
+        payload.get("images") or payload.get("pendingImages"),
+        status="pending",
+        submitted_by=submitted_by,
+        limit=MAX_FLEET_PENDING_IMAGES,
+    )
+
     with get_connection() as connection:
         existing = get_fleet_bus(connection, reg_key)
         if existing is None:
@@ -4448,19 +4814,35 @@ def fleet_submit():
                 "createdAt": bus_payload.get("createdAt") or now_iso,
                 "lastUpdated": now_iso,
             }
+            prepared.pop("gallery", None)
             bus = upsert_fleet_bus(
                 connection,
                 prepared,
                 fallback_created_at=prepared.get("createdAt"),
             )
+            pending_change = None
+            if pending_images:
+                pending_change = create_pending_change(
+                    connection,
+                    reg_key,
+                    registration,
+                    {"regKey": reg_key, "registration": registration},
+                    images=pending_images,
+                    submitted_by=submitted_by,
+                )
             connection.commit()
-            return jsonify({"status": "created", "bus": bus}), 201
+            response: Dict[str, Any] = {"status": "created", "bus": bus}
+            if pending_change:
+                response["pendingImages"] = len(pending_change.get("images") or [])
+            return jsonify(response), 201
 
         pending = create_pending_change(
             connection,
             reg_key,
             registration,
             {**bus_payload, "regKey": reg_key, "registration": registration},
+            images=pending_images,
+            submitted_by=submitted_by,
         )
         connection.commit()
         return jsonify({"status": "pending", "change": pending}), 202
@@ -4487,7 +4869,10 @@ def fleet_add_option():
 
 @app.route("/api/fleet/pending/<change_id>/approve", methods=["POST"])
 def fleet_approve(change_id: str):
-    require_fleet_admin()
+    admin_user = require_fleet_admin()
+    reviewer = normalise_text(admin_user.get("email")) or normalise_text(
+        admin_user.get("localId")
+    )
     change_key = normalise_text(change_id)
     if not change_key:
         raise ApiError("A pending change id is required.", status_code=400)
@@ -4512,6 +4897,32 @@ def fleet_approve(change_id: str):
         created_at = merged.get("createdAt") or existing.get("createdAt") or iso_now()
         merged["createdAt"] = created_at
         merged["lastUpdated"] = iso_now()
+
+        pending_images = pending.get("images") if isinstance(pending, dict) else None
+        approved_images: List[Dict[str, Any]] = []
+        if pending_images:
+            for entry in pending_images:
+                sanitized = sanitise_image_entry(
+                    entry,
+                    status="approved",
+                    submitted_by=normalise_text(
+                        entry.get("submittedBy") if isinstance(entry, dict) else ""
+                    ),
+                )
+                if not sanitized:
+                    continue
+                if reviewer and not normalise_text(sanitized.get("approvedBy")):
+                    sanitized["approvedBy"] = reviewer
+                if not normalise_text(sanitized.get("approvedAt")):
+                    sanitized["approvedAt"] = iso_now()
+                approved_images.append(sanitized)
+
+        if approved_images:
+            merged["gallery"] = merge_gallery_entries(
+                merged.get("gallery") or existing.get("gallery") or [],
+                approved_images,
+                limit=MAX_FLEET_GALLERY_IMAGES,
+            )
 
         bus = upsert_fleet_bus(
             connection,

@@ -208,6 +208,7 @@
         isRareWorking: false,
         createdAt: "2023-01-12T00:00:00.000Z",
         lastUpdated: "2024-05-12T10:32:00.000Z",
+        gallery: [],
       },
       LTZ1000: {
         regKey: "LTZ1000",
@@ -230,6 +231,7 @@
         isRareWorking: true,
         createdAt: "2015-02-28T00:00:00.000Z",
         lastUpdated: "2024-03-18T09:15:00.000Z",
+        gallery: [],
       },
       SN68AEO: {
         regKey: "SN68AEO",
@@ -252,6 +254,168 @@
         isRareWorking: false,
         createdAt: "2018-11-02T00:00:00.000Z",
         lastUpdated: "2024-04-06T15:45:00.000Z",
+        gallery: [],
+      },
+      YX23LME: {
+        regKey: "YX23LME",
+        registration: "YX23 LME",
+        fleetNumber: "EV27",
+        operator: "Abellio London",
+        status: "Active",
+        wrap: "Special event",
+        vehicleType: "Single Decker",
+        doors: "2",
+        engineType: "Electric",
+        engine: "Alexander Dennis Enviro400EV",
+        chassis: "Alexander Dennis",
+        bodyType: "Caetano e.City Gold",
+        registrationDate: "2023-07-15",
+        garage: "WJ (Waterloo)",
+        extras: ["New Bus", "Route Branding"],
+        length: "12.4m",
+        isNewBus: true,
+        isRareWorking: false,
+        createdAt: "2023-07-15T00:00:00.000Z",
+        lastUpdated: "2024-04-27T13:12:00.000Z",
+        gallery: [],
+      },
+      BX71CUD: {
+        regKey: "BX71CUD",
+        registration: "BX71 CUD",
+        fleetNumber: "HV411",
+        operator: "Arriva London",
+        status: "Active",
+        wrap: "Standard",
+        vehicleType: "Double Decker",
+        doors: "2",
+        engineType: "Hybrid",
+        engine: "Volvo B5LH",
+        chassis: "Volvo B5LH",
+        bodyType: "Wright Gemini 3",
+        registrationDate: "2021-09-05",
+        garage: "NX (New Cross)",
+        extras: ["Night Bus Allocation"],
+        length: "11.2m",
+        isNewBus: false,
+        isRareWorking: true,
+        createdAt: "2021-09-05T00:00:00.000Z",
+        lastUpdated: "2024-05-08T08:42:00.000Z",
+        gallery: [],
+      },
+      SK21BGO: {
+        regKey: "SK21BGO",
+        registration: "SK21 BGO",
+        fleetNumber: "15360",
+        operator: "Stagecoach London",
+        status: "Active",
+        wrap: "Standard",
+        vehicleType: "Single Decker",
+        doors: "2",
+        engineType: "Hydrogen",
+        engine: "Wrightbus Hydrogen",
+        chassis: "Wrightbus StreetDeck",
+        bodyType: "Wright StreetDeck",
+        registrationDate: "2021-05-18",
+        garage: "LI (Leyton)",
+        extras: ["Training Vehicle"],
+        length: "10.2m",
+        isNewBus: false,
+        isRareWorking: false,
+        createdAt: "2021-05-18T00:00:00.000Z",
+        lastUpdated: "2024-02-19T11:05:00.000Z",
+        gallery: [],
+      },
+      YX68FFT: {
+        regKey: "YX68FFT",
+        registration: "YX68 FFT",
+        fleetNumber: "TEH1235",
+        operator: "Metroline",
+        status: "Active",
+        wrap: "Advertising wrap",
+        vehicleType: "Double Decker",
+        doors: "2",
+        engineType: "Hybrid",
+        engine: "Scania N250UD",
+        chassis: "Scania N-series",
+        bodyType: "Alexander Dennis Enviro400 MMC",
+        registrationDate: "2019-01-04",
+        garage: "HT (Holloway)",
+        extras: ["Route Branding"],
+        length: "11.2m",
+        isNewBus: false,
+        isRareWorking: false,
+        createdAt: "2019-01-04T00:00:00.000Z",
+        lastUpdated: "2024-03-02T17:28:00.000Z",
+        gallery: [],
+      },
+      LF67XYZ: {
+        regKey: "LF67XYZ",
+        registration: "LF67 XYZ",
+        fleetNumber: "EH201",
+        operator: "Go-Ahead London",
+        status: "Stored",
+        wrap: "Heritage",
+        vehicleType: "Double Decker",
+        doors: "2",
+        engineType: "Electric",
+        engine: "Alexander Dennis Enviro400EV",
+        chassis: "Alexander Dennis",
+        bodyType: "Alexander Dennis Enviro400 MMC",
+        registrationDate: "2017-11-30",
+        garage: "QB (Battersea)",
+        extras: ["Heritage Fleet"],
+        length: "10.6m",
+        isNewBus: false,
+        isRareWorking: false,
+        createdAt: "2017-11-30T00:00:00.000Z",
+        lastUpdated: "2024-01-14T12:01:00.000Z",
+        gallery: [],
+      },
+      BV70DFP: {
+        regKey: "BV70DFP",
+        registration: "BV70 DFP",
+        fleetNumber: "4085",
+        operator: "Abellio London",
+        status: "Active",
+        wrap: "Standard",
+        vehicleType: "Double Decker",
+        doors: "2",
+        engineType: "Electric",
+        engine: "Alexander Dennis Enviro400EV",
+        chassis: "Alexander Dennis",
+        bodyType: "Alexander Dennis Enviro400 MMC",
+        registrationDate: "2020-10-22",
+        garage: "QB (Battersea)",
+        extras: ["Route Branding"],
+        length: "11.2m",
+        isNewBus: false,
+        isRareWorking: false,
+        createdAt: "2020-10-22T00:00:00.000Z",
+        lastUpdated: "2024-04-11T06:58:00.000Z",
+        gallery: [],
+      },
+      YX70KCU: {
+        regKey: "YX70KCU",
+        registration: "YX70 KCU",
+        fleetNumber: "VMH2645",
+        operator: "Metroline",
+        status: "Active",
+        wrap: "Special event",
+        vehicleType: "Double Decker",
+        doors: "2",
+        engineType: "Hybrid",
+        engine: "Volvo B5LH",
+        chassis: "Volvo B5LH",
+        bodyType: "Wright Gemini 3",
+        registrationDate: "2020-09-18",
+        garage: "HT (Holloway)",
+        extras: ["Rare Working"],
+        length: "11.2m",
+        isNewBus: false,
+        isRareWorking: true,
+        createdAt: "2020-09-18T00:00:00.000Z",
+        lastUpdated: "2024-05-19T19:22:00.000Z",
+        gallery: [],
       },
     },
     pendingChanges: [],
@@ -266,6 +430,9 @@
   let isInitialised = false;
 
   let authSubscriptionStarted = false;
+
+  const MAX_IMAGE_UPLOADS = 3;
+  const MAX_IMAGE_BYTES = 2_097_152;
 
   function applyAdminUi(elements) {
     if (!elements?.adminToggle) {
@@ -297,6 +464,7 @@
     }
 
     cachedElements = elements;
+    updateImagePreview(elements);
     applyAdminUi(elements);
 
     populateAllSelects(elements);
@@ -322,6 +490,8 @@
     const formFeedback = document.getElementById("formFeedback");
     const registrationInput = document.getElementById("busRegistration");
     const clearFormButton = document.getElementById("clearForm");
+    const imageInput = document.getElementById("busImages");
+    const imagePreview = document.getElementById("imagePreviewList");
     const optionForm = document.getElementById("optionForm");
     const optionCategory = document.getElementById("optionCategory");
     const optionList = document.getElementById("optionList");
@@ -346,6 +516,8 @@
       formFeedback,
       registrationInput,
       clearFormButton,
+      imageInput,
+      imagePreview,
       optionForm,
       optionCategory,
       optionList,
@@ -390,6 +562,7 @@
       adminToggle,
       adminPanel,
       pendingContainer,
+      imageInput,
     } = elements;
 
     if (searchInput) {
@@ -429,6 +602,10 @@
           setFormFeedback(formFeedback, "", "");
         }
       });
+    }
+
+    if (imageInput) {
+      imageInput.addEventListener("change", () => updateImagePreview(elements));
     }
 
     if (optionForm) {
@@ -910,6 +1087,103 @@
     }
   }
 
+  function formatFileSize(bytes) {
+    const size = Number(bytes);
+    if (!Number.isFinite(size) || size <= 0) {
+      return "0 KB";
+    }
+    if (size < 1024 * 1024) {
+      return `${Math.round(size / 1024)} KB`;
+    }
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  function renderImageSelection(elements, files, overflow = 0) {
+    const { imagePreview } = elements;
+    if (!imagePreview) return;
+
+    if (!Array.isArray(files) || files.length === 0) {
+      imagePreview.innerHTML =
+        '<li class="fleet-form__uploads-empty">No images selected.</li>';
+      return;
+    }
+
+    const items = files
+      .map(
+        (file) =>
+          `<li><span>${escapeHtml(file.name || "Untitled image")}</span><small>${formatFileSize(file.size)}</small></li>`,
+      )
+      .join("");
+
+    const warning =
+      overflow > 0
+        ? `<li class="fleet-form__uploads-warning">${overflow} additional file${
+            overflow === 1 ? "" : "s"
+          } ignored.</li>`
+        : "";
+
+    imagePreview.innerHTML = `${items}${warning}`;
+  }
+
+  function updateImagePreview(elements) {
+    const { imageInput } = elements;
+    if (!imageInput || !imageInput.files) {
+      renderImageSelection(elements, []);
+      return;
+    }
+
+    const files = Array.from(imageInput.files || []);
+    const limited = files.slice(0, MAX_IMAGE_UPLOADS);
+    const overflow = Math.max(files.length - limited.length, 0);
+    renderImageSelection(elements, limited, overflow);
+  }
+
+  function clearImageSelection(elements) {
+    if (elements.imageInput) {
+      elements.imageInput.value = "";
+    }
+    renderImageSelection(elements, []);
+  }
+
+  function readFileAsDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.addEventListener("load", () => resolve(reader.result));
+      reader.addEventListener("error", () => reject(reader.error));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function gatherImagePayloads(elements) {
+    const input = elements.imageInput;
+    if (!input || !input.files || input.files.length === 0) {
+      return [];
+    }
+
+    const files = Array.from(input.files).slice(0, MAX_IMAGE_UPLOADS);
+    const payloads = [];
+    for (const file of files) {
+      if (!file.type || !file.type.startsWith("image/")) {
+        throw new Error("Only image files can be uploaded.");
+      }
+      if (file.size > MAX_IMAGE_BYTES) {
+        const maxMb = (MAX_IMAGE_BYTES / (1024 * 1024)).toFixed(1);
+        throw new Error(`Each image must be ${maxMb} MB or smaller.`);
+      }
+      const dataUrl = await readFileAsDataUrl(file);
+      payloads.push({
+        id: `img-${Date.now().toString(36)}-${Math.random()
+          .toString(36)
+          .slice(2, 8)}`,
+        name: file.name,
+        contentType: file.type,
+        size: file.size,
+        dataUrl,
+      });
+    }
+    return payloads;
+  }
+
   async function submitForm(elements) {
     const { fleetForm, formFeedback, selects, registrationInput } = elements;
     if (!fleetForm) return;
@@ -930,6 +1204,15 @@
       return;
     }
 
+    let imagePayloads = [];
+    try {
+      imagePayloads = await gatherImagePayloads(elements);
+    } catch (error) {
+      const message = error?.message || "Selected images could not be processed.";
+      setFormFeedback(formFeedback, message, "error");
+      return;
+    }
+
     const existing = state.buses[regKey];
     const payload = buildPayload(
       formData,
@@ -938,6 +1221,9 @@
       existing,
       selects,
     );
+    if (imagePayloads.length) {
+      payload.images = imagePayloads;
+    }
 
     setFormFeedback(
       formFeedback,
@@ -953,28 +1239,37 @@
       const updated = state.buses[regKey];
 
       if (result?.status === "created") {
-        showToast(
-          elements.toast,
-          `Created new profile for ${registration}.`,
-          "success",
-        );
-        setFormFeedback(
-          formFeedback,
-          `Created new profile for ${registration}.`,
-          "success",
-        );
+        const pendingCount = Number(result?.pendingImages || 0);
+        const imageNote =
+          pendingCount > 0
+            ? ` ${pendingCount === 1 ? "One image" : `${pendingCount} images`} awaiting admin review.`
+            : imagePayloads.length > 0
+              ? " Images awaiting admin review."
+              : "";
+        const successMessage = `Created new profile for ${registration}.${imageNote}`;
+        showToast(elements.toast, successMessage, "success");
+        setFormFeedback(formFeedback, successMessage, "success");
         prefillForm(elements, updated || payload);
+        clearImageSelection(elements);
       } else {
+        const pendingImages = Array.isArray(result?.change?.images)
+          ? result.change.images.length
+          : imagePayloads.length;
+        const infoMessage =
+          pendingImages > 0
+            ? `Update for ${registration} submitted for approval with ${pendingImages === 1 ? "one image" : `${pendingImages} images`} awaiting review.`
+            : `Update for ${registration} submitted for approval.`;
         showToast(
           elements.toast,
-          `Update for ${registration} submitted for approval.`,
+          infoMessage,
           "info",
         );
         setFormFeedback(
           formFeedback,
-          `Update for ${registration} submitted for approval.`,
+          infoMessage,
           "pending",
         );
+        clearImageSelection(elements);
       }
     } catch (error) {
       console.error("Failed to submit fleet update:", error);
@@ -1061,6 +1356,7 @@
     const current = state.buses[change.regKey];
     const diffRows = buildDiffRows(current, change.data || {});
     const submitted = formatDateTime(change.submittedAt);
+    const imagesMarkup = renderPendingImages(change);
 
     return `
       <article class="pending-card">
@@ -1071,12 +1367,38 @@
         <ul class="pending-card__changes">
           ${diffRows.join("")}
         </ul>
+        ${imagesMarkup}
         <div class="pending-card__actions">
           <button class="button-primary" data-action="approve" data-id="${escapeHtml(change.id)}">Approve</button>
           <button class="button-tertiary" data-action="reject" data-id="${escapeHtml(change.id)}">Reject</button>
         </div>
       </article>
     `;
+  }
+
+  function renderPendingImages(change) {
+    if (!change || !Array.isArray(change.images) || change.images.length === 0) {
+      return "";
+    }
+    const registration = change.registration || change.regKey || "registration";
+    const items = change.images
+      .map((image, index) => {
+        const rawName = image?.name || `Image ${index + 1}`;
+        const size = image?.size ? formatFileSize(image.size) : "";
+        const caption = [rawName, size]
+          .filter(Boolean)
+          .map((part) => escapeHtml(part))
+          .join(" • ");
+        const dataUrl = escapeHtml(image?.dataUrl || "");
+        return `
+          <figure class="pending-card__image">
+            <img src="${dataUrl}" alt="Submitted image ${index + 1} for ${escapeHtml(registration)}" loading="lazy" />
+            <figcaption>${caption}</figcaption>
+          </figure>
+        `;
+      })
+      .join("");
+    return `<div class="pending-card__images" aria-label="Submitted images">${items}</div>`;
   }
 
   function buildDiffRows(current, proposed) {
@@ -1381,6 +1703,7 @@
     const { fleetForm } = elements;
     if (!fleetForm) return;
     fleetForm.reset();
+    clearImageSelection(elements);
   }
 
   function prefillForm(elements, bus) {
@@ -1427,6 +1750,7 @@
     if (registrationInput) {
       registrationInput.value = registration.toUpperCase();
     }
+    clearImageSelection(elements);
   }
 
   function setValue(input, value) {
