@@ -6,7 +6,7 @@ import time
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 from urllib.parse import parse_qsl, urljoin, urlparse
 
 import requests
@@ -119,6 +119,26 @@ TFL_REGISTRATION_ENDPOINTS: List[str] = _unique_sequence(_raw_registration_endpo
 NEW_BUS_DURATION = timedelta(days=FLEET_VEHICLE_HISTORY_DAYS)
 NEW_BUS_EXTRA_LABEL = "New Bus"
 
+DEFAULT_ADMIN_UIDS: Set[str] = {
+    "emKTnjbKIKfBjQzQEvpUOWOpFKc2",
+}
+
+DEFAULT_ADMIN_EMAILS: Set[str] = {
+    "nmorris210509@gmail.com",
+}
+
+ADMIN_UID_ALLOWLIST: Set[str] = set(
+    uid for uid in _split_config_list(os.getenv("ROUTEFLOW_ADMIN_UIDS")) if uid
+)
+ADMIN_UID_ALLOWLIST.update(DEFAULT_ADMIN_UIDS)
+
+ADMIN_EMAIL_ALLOWLIST: Set[str] = {
+    email.lower()
+    for email in _split_config_list(os.getenv("ROUTEFLOW_ADMIN_EMAILS"))
+    if email
+}
+ADMIN_EMAIL_ALLOWLIST.update(email.lower() for email in DEFAULT_ADMIN_EMAILS)
+
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL environment variable is required")
 
@@ -151,8 +171,6 @@ def get_connection():
 
 app = Flask(__name__)
 
-
-FLEET_ADMIN_CODE = os.getenv("FLEET_ADMIN_CODE", "fleet-admin")
 
 FLEET_COLLECTION_BUSES = "fleet_buses"
 FLEET_COLLECTION_PENDING = "fleet_pending"
@@ -400,12 +418,18 @@ FIREBASE_LOOKUP_URL = (
 )
 
 
-def verify_firebase_token(uid: str) -> Dict[str, Any]:
+def _extract_bearer_token() -> str:
     auth_header = request.headers.get("Authorization", "")
     if not auth_header.startswith("Bearer "):
         raise AuthError("Missing or invalid Authorization header", status_code=401)
 
     token = auth_header.split(" ", 1)[1].strip()
+    if not token:
+        raise AuthError("Missing authentication token", status_code=401)
+    return token
+
+
+def _lookup_firebase_user(token: str) -> Dict[str, Any]:
     if not token:
         raise AuthError("Missing authentication token", status_code=401)
 
@@ -427,13 +451,79 @@ def verify_firebase_token(uid: str) -> Dict[str, Any]:
         raise AuthError("Authentication token does not map to a user", status_code=401)
 
     user_info = users[0]
-    token_uid = user_info.get("localId")
-    if token_uid != uid:
-        raise AuthError("Authenticated user does not match requested profile", status_code=403)
-
     if user_info.get("disabled"):
         raise AuthError("Authenticated user account is disabled", status_code=403)
 
+    return user_info
+
+
+def authenticate_firebase_user(expected_uid: Optional[str] = None) -> Dict[str, Any]:
+    token = _extract_bearer_token()
+    user_info = _lookup_firebase_user(token)
+
+    if expected_uid is not None:
+        token_uid = user_info.get("localId")
+        if token_uid != expected_uid:
+            raise AuthError("Authenticated user does not match requested profile", status_code=403)
+
+    return user_info
+
+
+def verify_firebase_token(uid: str) -> Dict[str, Any]:
+    return authenticate_firebase_user(expected_uid=uid)
+
+
+def _parse_custom_attributes(user_info: Dict[str, Any]) -> Dict[str, Any]:
+    if not isinstance(user_info, dict):
+        return {}
+    raw_attributes = user_info.get("customAttributes")
+    if not raw_attributes:
+        return {}
+    if isinstance(raw_attributes, dict):
+        return raw_attributes
+    text = str(raw_attributes).strip()
+    if not text:
+        return {}
+    try:
+        parsed = json.loads(text)
+    except (TypeError, ValueError):
+        return {}
+    if isinstance(parsed, dict):
+        return parsed
+    return {}
+
+
+def is_admin_user(user_info: Dict[str, Any]) -> bool:
+    if not isinstance(user_info, dict):
+        return False
+
+    custom_attributes = _parse_custom_attributes(user_info)
+    if custom_attributes.get("admin") is True:
+        return True
+
+    custom_claims = user_info.get("customClaims")
+    if isinstance(custom_claims, dict) and custom_claims.get("admin"):
+        return True
+
+    email = normalise_text(user_info.get("email")).lower()
+    if email and email in ADMIN_EMAIL_ALLOWLIST:
+        return True
+
+    uid = normalise_text(user_info.get("localId"))
+    if uid and uid in ADMIN_UID_ALLOWLIST:
+        return True
+
+    return False
+
+
+def require_authenticated_user() -> Dict[str, Any]:
+    return authenticate_firebase_user()
+
+
+def require_admin_user() -> Dict[str, Any]:
+    user_info = authenticate_firebase_user()
+    if not is_admin_user(user_info):
+        raise AuthError("Administrator access is required.", status_code=403)
     return user_info
 
 
@@ -499,6 +589,18 @@ def init_database() -> None:
                     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                     PRIMARY KEY (uid, favourite_id)
+                );
+                """
+            )
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS profile_extras (
+                    uid TEXT PRIMARY KEY,
+                    display_name TEXT,
+                    photo_url TEXT,
+                    gender TEXT,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
                 );
                 """
             )
@@ -1243,6 +1345,419 @@ def fetch_collection_items(connection, collection: str) -> List[Dict[str, Any]]:
         return cursor.fetchall() or []
 
 
+def normalise_url(value: Any) -> str:
+    text = normalise_text(value)
+    if not text:
+        return ""
+    try:
+        parsed = urlparse(text)
+    except ValueError:
+        return text
+    if parsed.scheme:
+        return text
+    if text.startswith("//"):
+        return f"https:{text}"
+    return text
+
+
+def estimate_read_minutes(*parts: Any) -> int:
+    words = 0
+    for part in parts:
+        if not part:
+            continue
+        if not isinstance(part, str):
+            part = str(part)
+        words += len([token for token in part.split() if token])
+    if words <= 0:
+        return 3
+    return max(1, round(words / 180))
+
+
+def sanitise_tag_list(value: Any) -> List[str]:
+    if not value:
+        return []
+    if isinstance(value, (list, tuple, set)):
+        source = list(value)
+    else:
+        source = [value]
+    cleaned: List[str] = []
+    for entry in source:
+        text = normalise_text(entry)
+        if text and text not in cleaned:
+            cleaned.append(text)
+    return cleaned
+
+
+def sanitise_blog_post_entry(entry: Any) -> Optional[Dict[str, Any]]:
+    if not isinstance(entry, dict):
+        return None
+    title = normalise_text(entry.get("title"))
+    if not title:
+        return None
+    identifier = normalise_text(entry.get("id")) or uuid.uuid4().hex
+    summary = normalise_text(entry.get("summary"))
+    content = normalise_text(entry.get("content"))
+    author = normalise_text(entry.get("author")) or "RouteFlow London team"
+    hero_image = normalise_url(entry.get("heroImage") or entry.get("hero_image"))
+    published_at = normalise_datetime(entry.get("publishedAt") or entry.get("date"))
+    tags = sanitise_tag_list(entry.get("tags"))
+    featured = bool(entry.get("featured"))
+    read_time_value = entry.get("readTime")
+    if isinstance(read_time_value, (int, float)) and read_time_value > 0:
+        read_time = int(round(read_time_value))
+    else:
+        read_time = estimate_read_minutes(summary, content)
+
+    return {
+        "id": identifier,
+        "title": title,
+        "summary": summary,
+        "content": content,
+        "author": author,
+        "heroImage": hero_image,
+        "publishedAt": published_at or iso_now(),
+        "tags": tags,
+        "featured": featured,
+        "readTime": read_time,
+    }
+
+
+def sanitise_blog_collection(entries: Any) -> List[Dict[str, Any]]:
+    cleaned: List[Dict[str, Any]] = []
+    seen: Set[str] = set()
+    if not isinstance(entries, list):
+        return cleaned
+    for entry in entries:
+        sanitized = sanitise_blog_post_entry(entry)
+        if not sanitized:
+            continue
+        identifier = sanitized.get("id")
+        if not identifier or identifier in seen:
+            continue
+        cleaned.append(sanitized)
+        seen.add(identifier)
+    cleaned.sort(key=lambda item: item.get("publishedAt") or "", reverse=True)
+    return cleaned
+
+
+def sanitise_withdrawn_entry(entry: Any) -> Optional[Dict[str, Any]]:
+    if not isinstance(entry, dict):
+        return None
+    route = normalise_text(entry.get("route"))
+    if not route:
+        return None
+    identifier = normalise_text(entry.get("id")) or uuid.uuid4().hex
+    return {
+        "id": identifier,
+        "route": route,
+        "start": normalise_text(entry.get("start")),
+        "end": normalise_text(entry.get("end")),
+        "launched": normalise_text(entry.get("launched")),
+        "withdrawn": normalise_text(entry.get("withdrawn")),
+        "operator": normalise_text(entry.get("operator")),
+        "replacedBy": normalise_text(entry.get("replacedBy")),
+    }
+
+
+def sanitise_withdrawn_collection(entries: Any) -> List[Dict[str, Any]]:
+    cleaned: List[Dict[str, Any]] = []
+    seen: Set[str] = set()
+    if not isinstance(entries, list):
+        return cleaned
+    for entry in entries:
+        sanitized = sanitise_withdrawn_entry(entry)
+        if not sanitized:
+            continue
+        identifier = sanitized.get("id")
+        if not identifier or identifier in seen:
+            continue
+        cleaned.append(sanitized)
+        seen.add(identifier)
+    cleaned.sort(key=lambda item: item.get("route") or "")
+    return cleaned
+
+
+def sanitise_route_tag_override_entry(entry: Any) -> Optional[Dict[str, Any]]:
+    if not isinstance(entry, dict):
+        return None
+    route = normalise_text(entry.get("route"))
+    if not route:
+        return None
+    tags = sanitise_tag_list(entry.get("tags"))
+    if not tags:
+        return None
+    identifier = normalise_text(entry.get("id")) or uuid.uuid4().hex
+    return {"id": identifier, "route": route, "tags": tags}
+
+
+def sanitise_route_tag_collection(entries: Any) -> List[Dict[str, Any]]:
+    cleaned: List[Dict[str, Any]] = []
+    seen: Set[str] = set()
+    if not isinstance(entries, list):
+        return cleaned
+    for entry in entries:
+        sanitized = sanitise_route_tag_override_entry(entry)
+        if not sanitized:
+            continue
+        identifier = sanitized.get("id")
+        if not identifier or identifier in seen:
+            continue
+        cleaned.append(sanitized)
+        seen.add(identifier)
+    cleaned.sort(key=lambda item: item.get("route") or "")
+    return cleaned
+
+
+def _blog_sort_key(item: Dict[str, Any]) -> str:
+    return item.get("publishedAt") or ""
+
+
+def _route_sort_key(item: Dict[str, Any]) -> str:
+    return item.get("route") or ""
+
+
+DEFAULT_BLOG_POSTS_RAW: List[Dict[str, Any]] = [
+    {
+        "id": "blog-weekly-roundup-2025-05-23",
+        "title": "Weekly London Transport News – 23 May 2025",
+        "summary": "Northern line closures, express bus extras and Docklands works to note before the bank holiday.",
+        "content": (
+            "Track closures impact the Northern line between Golders Green and Edgware across the long weekend, "
+            "with a rail replacement loop published inside RouteFlow so you can quickly check frequencies. "
+            "Additional express journeys run on the X26 and X140 to support airport travel, while a slimmed timetable "
+            "affects Woolwich Ferry crossings late Sunday."
+        ),
+        "author": "Network desk",
+        "publishedAt": "2025-05-23T16:30:00.000Z",
+        "tags": ["Live News"],
+    },
+    {
+        "id": "blog-consultation-summer-2025",
+        "title": "Have your say on summer bus consultations",
+        "summary": "Transport for London is consulting on Central London night routes, Croydon tram resilience and a new Sutton Superloop link.",
+        "content": (
+            "Three consultations launched this week. Night buses N11 and N29 are proposed to swap termini to balance demand in "
+            "the West End, Croydon trams gain additional turnback capability at Sandilands to improve recovery, and a Sutton "
+            "to Kingston Superloop branch would join the orbital express family. We have highlighted the closing dates and "
+            "supporting documents for each."
+        ),
+        "author": "Policy and planning",
+        "publishedAt": "2025-05-21T09:00:00.000Z",
+        "tags": ["Guides"],
+    },
+    {
+        "id": "blog-bus-models-electric-era",
+        "title": "Meet London’s newest electric double-deckers",
+        "summary": "A closer look at the Wright StreetDeck Electroliner and BYD-Alexander Dennis B12 that are joining busy trunk corridors.",
+        "content": (
+            "Routes 43 and 133 headline the rollout of the StreetDeck Electroliner this quarter, bringing faster charging, "
+            "lighter shells and upgraded driver assistance. The BYD-Alexander Dennis B12 batches destined for Putney convert "
+            "long-standing diesel duties while keeping capacity identical for school peaks."
+        ),
+        "author": "Fleet editor",
+        "publishedAt": "2025-05-18T13:15:00.000Z",
+        "tags": ["Models"],
+    },
+    {
+        "id": "blog-weekly-roundup-2025-05-16",
+        "title": "Weekly London Transport News – 16 May 2025",
+        "summary": "Elizabeth line diversions, Jubilee line testing nights and South London roadworks to plan around.",
+        "content": (
+            "Sunday morning diversions on the Elizabeth line divert trains into Platform 5 at Paddington, while Jubilee line "
+            "extensions run late-night test services to trial the new timetable. Expect staged closures along Brixton Road "
+            "through May as gas main works restrict traffic to single lanes in each direction."
+        ),
+        "author": "Network desk",
+        "publishedAt": "2025-05-16T16:45:00.000Z",
+        "tags": ["Live News"],
+    },
+    {
+        "id": "blog-consultation-night-bus-refresh",
+        "title": "Night bus refresh for the West End",
+        "summary": "TfL proposes tweaks to the night grid between Tottenham Court Road, Victoria and Chelsea Embankment to better reflect late traffic.",
+        "content": (
+            "A proposed reroute of the N26 introduces a direct Marble Arch to Victoria link overnight, while the N5 would "
+            "short-turn at Chelsea to release resource for an every-12-minute N137. We break down the reasoning, affected "
+            "stops and how to respond to the consultation before it closes on 14 June."
+        ),
+        "author": "Policy and planning",
+        "publishedAt": "2025-05-14T08:20:00.000Z",
+        "tags": ["Guides"],
+    },
+    {
+        "id": "blog-bus-models-refurb",
+        "title": "Inside the mid-life refits keeping hybrids fresh",
+        "summary": "Stagecoach and Arriva are refreshing their hybrid fleets with brighter interiors, USB-C charging and accessibility upgrades.",
+        "content": (
+            "Take a tour through the revamped Volvo B5LH and Enviro400H batches that return from refurbishment. We highlight the "
+            "updated saloon lighting, seat trims and revised wheelchair bays, plus the garages scheduling early conversions so "
+            "you know where to spot them first."
+        ),
+        "author": "Fleet editor",
+        "publishedAt": "2025-05-10T11:00:00.000Z",
+        "tags": ["Models"],
+    },
+    {
+        "id": "blog-city-pulse",
+        "title": "Keeping pace with London’s network",
+        "summary": "See how RouteFlow London brings live arrivals, rare workings and smart planning into a single dashboard.",
+        "content": (
+            "London never stands still—and neither should your travel tools. RouteFlow London now stitches together live "
+            "arrivals, service alerts and enthusiast insights so you can pivot quickly when the network changes. From "
+            "highlighting rare allocations to surfacing accessibility information, the platform is designed to feel personal "
+            "from the moment you sign in."
+        ),
+        "author": "RouteFlow London team",
+        "publishedAt": "2025-04-18T09:30:00.000Z",
+        "tags": ["Operators"],
+    },
+    {
+        "id": "blog-arrivals-refresh",
+        "title": "Live tracking gets a smarter arrivals board",
+        "summary": "The tracking console now groups departures by mode, shows richer stop context and remembers your favourites.",
+        "content": (
+            "We have rebuilt the arrivals board with clarity in mind. Search suggestions surface faster, while new layout cues "
+            "make it easy to separate buses, trams, river services and more. Pin your go-to stops, add quick notes for special "
+            "workings and watch everything refresh automatically without losing your place."
+        ),
+        "author": "Product design",
+        "publishedAt": "2025-05-06T07:45:00.000Z",
+        "tags": ["Guides"],
+    },
+    {
+        "id": "blog-journey-studio",
+        "title": "Planning journeys with confidence",
+        "summary": "Multi-mode filters, accessibility options and clearer itineraries make the planner ready for every kind of trip.",
+        "content": (
+            "Tell RouteFlow where you are heading and we’ll present options that respect the way you travel. Choose the modes "
+            "you prefer, filter out stairs or escalators and compare legs at a glance. Each journey shows interchanges, line "
+            "colours and essential timings so you know exactly what to expect."
+        ),
+        "author": "Journey planning",
+        "publishedAt": "2025-05-12T11:15:00.000Z",
+        "tags": ["Guides"],
+    },
+]
+
+
+DEFAULT_BLOG_POSTS = sanitise_blog_collection(DEFAULT_BLOG_POSTS_RAW)
+
+
+ADMIN_COLLECTION_CONFIGS: Dict[str, Dict[str, Any]] = {
+    "blog-posts": {
+        "collection": "admin_blog_posts",
+        "sanitise": sanitise_blog_post_entry,
+        "sanitise_collection": sanitise_blog_collection,
+        "sort_key": _blog_sort_key,
+        "sort_reverse": True,
+        "default": DEFAULT_BLOG_POSTS,
+    },
+    "withdrawn-routes": {
+        "collection": "admin_withdrawn_routes",
+        "sanitise": sanitise_withdrawn_entry,
+        "sanitise_collection": sanitise_withdrawn_collection,
+        "sort_key": _route_sort_key,
+        "sort_reverse": False,
+        "default": [],
+    },
+    "route-tags": {
+        "collection": "admin_route_tags",
+        "sanitise": sanitise_route_tag_override_entry,
+        "sanitise_collection": sanitise_route_tag_collection,
+        "sort_key": _route_sort_key,
+        "sort_reverse": False,
+        "default": [],
+    },
+}
+
+
+def resolve_admin_collection(name: str) -> Dict[str, Any]:
+    key = normalise_text(name).lower().replace(" ", "-")
+    config = ADMIN_COLLECTION_CONFIGS.get(key)
+    if not config:
+        raise ApiError("Collection not found.", status_code=404)
+    return config
+
+
+def load_admin_collection(connection, config: Dict[str, Any]) -> List[Dict[str, Any]]:
+    rows = fetch_collection_items(connection, config["collection"])
+    items: List[Dict[str, Any]] = []
+    stale_ids: List[str] = []
+    seen: Set[str] = set()
+
+    for row in rows:
+        raw = dict(row.get("data") or {})
+        if "id" not in raw and row.get("item_id"):
+            raw["id"] = row.get("item_id")
+        sanitized = config["sanitise"](raw)
+        if not sanitized:
+            item_id = normalise_text(row.get("item_id"))
+            if item_id:
+                stale_ids.append(item_id)
+            continue
+        identifier = sanitized.get("id")
+        if not identifier or identifier in seen:
+            continue
+        items.append(sanitized)
+        seen.add(identifier)
+
+    if stale_ids:
+        for item_id in stale_ids:
+            delete_collection_item(connection, config["collection"], item_id)
+        connection.commit()
+
+    if not items:
+        default_items = config.get("default") or []
+        return list(default_items)
+
+    reverse = bool(config.get("sort_reverse"))
+    sort_key: Callable[[Dict[str, Any]], Any] = config.get("sort_key") or (lambda item: item.get("id") or "")
+    items.sort(key=sort_key, reverse=reverse)
+    return items
+
+
+def replace_admin_collection(connection, config: Dict[str, Any], entries: List[Dict[str, Any]]):
+    sanitized_list = config["sanitise_collection"](entries)
+    existing_rows = fetch_collection_items(connection, config["collection"])
+    existing_ids = {normalise_text(row.get("item_id")) for row in existing_rows if row.get("item_id")}
+    new_ids = {item.get("id") for item in sanitized_list if item.get("id")}
+
+    for item_id in existing_ids - new_ids:
+        delete_collection_item(connection, config["collection"], item_id)
+
+    for item in sanitized_list:
+        item_id = item.get("id")
+        if not item_id:
+            continue
+        upsert_collection_item(connection, config["collection"], item_id, item)
+
+    reverse = bool(config.get("sort_reverse"))
+    sort_key: Callable[[Dict[str, Any]], Any] = config.get("sort_key") or (lambda entry: entry.get("id") or "")
+    sanitized_list.sort(key=sort_key, reverse=reverse)
+    return sanitized_list
+
+
+@app.route("/api/content/<collection_name>", methods=["GET", "PUT"])
+def admin_content_collection(collection_name: str):
+    config = resolve_admin_collection(collection_name)
+
+    if request.method == "GET":
+        with get_connection() as connection:
+            items = load_admin_collection(connection, config)
+        return jsonify({"items": items})
+
+    require_admin_user()
+
+    payload = request.get_json(silent=True) or {}
+    entries = payload.get("items") if isinstance(payload, dict) else payload
+    if not isinstance(entries, list):
+        raise ApiError("A list of items is required.", status_code=400)
+
+    with get_connection() as connection:
+        items = replace_admin_collection(connection, config, entries)
+        connection.commit()
+
+    return jsonify({"items": items})
 def ensure_fleet_option(connection, field: str, value: Any) -> None:
     if field not in FLEET_OPTION_FIELDS:
         return
@@ -1689,12 +2204,8 @@ def fetch_fleet_state(connection) -> Dict[str, Any]:
     }
 
 
-def require_fleet_admin() -> None:
-    if not FLEET_ADMIN_CODE:
-        return
-    provided = normalise_text(request.headers.get("X-Fleet-Admin-Code"))
-    if provided != normalise_text(FLEET_ADMIN_CODE):
-        raise ApiError("Administrator access is required.", status_code=403)
+def require_fleet_admin() -> Dict[str, Any]:
+    return require_admin_user()
 
 
 def seed_default_fleet() -> None:
@@ -1761,6 +2272,109 @@ def serialise_favourite(row: Dict[str, Any]) -> Dict[str, Any]:
     if isinstance(data, dict):
         data.setdefault("id", row.get("favourite_id"))
     return data
+
+
+def _optional_text(value: Any) -> Optional[str]:
+    text = normalise_text(value)
+    return text or None
+
+
+def serialise_profile_extras(row: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    if not row:
+        return None
+    return {
+        "displayName": normalise_text(row.get("display_name")),
+        "photoURL": normalise_text(row.get("photo_url")),
+        "gender": normalise_text(row.get("gender")),
+        "updatedAt": to_iso(row.get("updated_at")),
+    }
+
+
+def sanitise_profile_extras_payload(payload: Dict[str, Any]) -> Dict[str, Optional[str]]:
+    if not isinstance(payload, dict):
+        return {}
+    display_name = payload.get("displayName") or payload.get("display_name")
+    gender = payload.get("gender")
+    photo_url = (
+        payload.get("photoURL")
+        or payload.get("photoUrl")
+        or payload.get("avatar")
+        or payload.get("image")
+    )
+    return {
+        "display_name": _optional_text(display_name),
+        "photo_url": _optional_text(photo_url),
+        "gender": _optional_text(gender),
+    }
+
+
+def fetch_profile_extras(connection, uid: str) -> Optional[Dict[str, Any]]:
+    with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+        cursor.execute(
+            """
+            SELECT display_name, photo_url, gender, created_at, updated_at
+            FROM profile_extras
+            WHERE uid = %s
+            """,
+            (uid,),
+        )
+        row = cursor.fetchone()
+        return row
+
+
+def upsert_profile_extras(connection, uid: str, payload: Dict[str, Optional[str]]):
+    with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+        cursor.execute(
+            """
+            INSERT INTO profile_extras (uid, display_name, photo_url, gender)
+            VALUES (%s, %s, %s, %s)
+            ON CONFLICT (uid)
+            DO UPDATE SET
+                display_name = EXCLUDED.display_name,
+                photo_url = EXCLUDED.photo_url,
+                gender = EXCLUDED.gender,
+                updated_at = NOW()
+            RETURNING display_name, photo_url, gender, created_at, updated_at
+            """,
+            (
+                uid,
+                payload.get("display_name"),
+                payload.get("photo_url"),
+                payload.get("gender"),
+            ),
+        )
+        return cursor.fetchone()
+
+
+@app.route("/api/profile", methods=["GET", "PATCH"])
+def profile_extras_endpoint():
+    user_info = require_authenticated_user()
+    uid = normalise_text(user_info.get("localId"))
+    if not uid:
+        raise AuthError("Authenticated user is missing an id", status_code=403)
+
+    if request.method == "GET":
+        with get_connection() as connection:
+            row = fetch_profile_extras(connection, uid)
+        extras = serialise_profile_extras(row)
+        if extras is None:
+            return jsonify({"error": "Profile extras not found."}), 404
+        return jsonify(extras)
+
+    payload = request.get_json(silent=True) or {}
+    sanitized = sanitise_profile_extras_payload(payload)
+
+    if not sanitized:
+        return ("", 204)
+
+    with get_connection() as connection:
+        row = upsert_profile_extras(connection, uid, sanitized)
+        connection.commit()
+
+    extras = serialise_profile_extras(row)
+    if extras is None:
+        return ("", 204)
+    return jsonify(extras)
 
 
 @app.route("/api/profile/<uid>/notes", methods=["GET", "POST"])
