@@ -1,9 +1,16 @@
-(function initialiseTrackingBoard() {
+(function initTrackingBoard() {
   'use strict';
 
-  const AUTO_REFRESH_INTERVAL = 30000;
+  const AUTO_REFRESH_MS = 25000;
   const MIN_QUERY_LENGTH = 2;
+  const MAX_SUGGESTIONS = 12;
+  const MAX_DETAIL_REQUESTS = 8;
   const SEARCH_DEBOUNCE_MS = 250;
+  const STOP_ID_PATTERN = /^\d{8,}[A-Z]?$/i;
+  const MODES = 'bus,tube,overground,dlr,tram,river-bus,national-rail,elizabeth-line';
+
+  const API_PROXY_BASE = '/api/tfl';
+  const TFL_API_BASE = 'https://api.tfl.gov.uk';
 
   const MODE_COLOR_MAP = {
     bus: 'var(--bus)',
@@ -16,9 +23,7 @@
     river: 'var(--river-bus)',
     'national-rail': 'var(--national-rail)'
   };
-
-  const API_PROXY_BASE = '/api/tfl';
-  const TFL_API_BASE = 'https://api.tfl.gov.uk';
+  const DEFAULT_BADGE_COLOR = 'var(--accent-blue)';
 
   const elements = {
     searchInput: document.getElementById('trackingSearch'),
@@ -27,11 +32,21 @@
     rows: document.getElementById('trackingRows'),
     timestamp: document.getElementById('trackingTimestamp'),
     refreshButton: document.querySelector('.tracking-board__actions .tracking-chip'),
-    searchField: document.querySelector('.tracking-search__field')
+    searchField: document.querySelector('.tracking-search__field'),
+    boardTitle: document.querySelector('.tracking-board__header h2'),
+    boardDescription: document.querySelector('.tracking-board__header p')
   };
 
-  if (!elements.searchInput || !elements.resultsList || !elements.rows) {
+  if (!elements.searchInput || !elements.rows) {
     return;
+  }
+
+  const defaultBoardTitle = elements.boardTitle?.textContent || 'Live departures';
+  const defaultBoardDescription = elements.boardDescription?.textContent || '';
+
+  if (elements.resultsList) {
+    elements.resultsList.setAttribute('role', 'listbox');
+    elements.resultsList.setAttribute('aria-live', 'polite');
   }
 
   const state = {
@@ -39,52 +54,58 @@
     suggestionById: new Map(),
     selectedStop: null,
     refreshTimer: null,
-    lastSearchToken: 0
+    searchToken: 0,
+    activeSuggestionIndex: -1
   };
 
-  let searchDebounceTimer = null;
-
-  elements.rows.setAttribute('aria-live', 'polite');
-  if (elements.refreshButton) {
-    elements.refreshButton.disabled = true;
-  }
-
-  const normaliseString = (value) => (typeof value === 'string' ? value.trim() : '');
-
-  const capitalise = (value) => {
-    const text = normaliseString(value);
-    if (!text) return '';
-    return text.toLowerCase().replace(/(^|\s|[-/])(\p{L})/gu, (match, prefix, letter) => `${prefix}${letter.toUpperCase()}`);
+  const debounce = (fn, delay) => {
+    let timer = null;
+    return (...args) => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => fn(...args), delay);
+    };
   };
 
-  const pickModeColour = (mode) => {
-    const key = normaliseString(mode).toLowerCase();
-    return MODE_COLOR_MAP[key] || 'var(--accent-blue)';
+  const normalise = (value) => (typeof value === 'string' ? value.trim().toLowerCase() : '');
+
+  const buildProxyUrl = (path) => {
+    const suffix = path.startsWith('/') ? path : `/${path}`;
+    return `${API_PROXY_BASE}${suffix}`;
   };
 
-  const stopRefreshTimer = () => {
-    if (state.refreshTimer) {
-      clearInterval(state.refreshTimer);
-      state.refreshTimer = null;
+  const buildTfLUrl = (path) => {
+    const suffix = path.startsWith('/') ? path : `/${path}`;
+    return `${TFL_API_BASE.replace(/\/$/, '')}${suffix}`;
+  };
+
+  const fetchJson = async (url, { fallbackUrl = null } = {}) => {
+    try {
+      const response = await fetch(url, { credentials: 'same-origin' });
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      if (!fallbackUrl) {
+        throw error;
+      }
+      const fallbackResponse = await fetch(fallbackUrl, { mode: 'cors', credentials: 'omit' });
+      if (!fallbackResponse.ok) {
+        throw new Error(`Fallback request failed with status ${fallbackResponse.status}`);
+      }
+      return fallbackResponse.json();
     }
   };
 
-  const startRefreshTimer = () => {
-    stopRefreshTimer();
-    if (!state.selectedStop) return;
-    state.refreshTimer = setInterval(() => {
-      if (state.selectedStop) {
-        loadDepartures(state.selectedStop, { silent: true });
-      }
-    }, AUTO_REFRESH_INTERVAL);
-  };
-
-  const updateTimestamp = (stop) => {
-    if (!elements.timestamp) return;
-    const now = new Date();
-    const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const stopLabel = stop ? `${stop.name}${stop.indicator ? ` (${stop.indicator})` : ''}` : '';
-    elements.timestamp.textContent = stopLabel ? `Updated ${time} · ${stopLabel}` : `Updated ${time}`;
+  const fetchStopDetail = async (stopId) => {
+    if (!stopId) return null;
+    const path = `/StopPoint/${encodeURIComponent(stopId)}`;
+    try {
+      return await fetchJson(buildProxyUrl(path), { fallbackUrl: buildTfLUrl(path) });
+    } catch (error) {
+      console.warn('Failed to load stop detail', error);
+      return null;
+    }
   };
 
   const setRefreshEnabled = (enabled) => {
@@ -93,11 +114,30 @@
     elements.refreshButton.setAttribute('aria-disabled', String(!enabled));
   };
 
+  const stopRefreshTimer = () => {
+    if (state.refreshTimer) {
+      window.clearTimeout(state.refreshTimer);
+      state.refreshTimer = null;
+    }
+  };
+
+  const startRefreshTimer = () => {
+    stopRefreshTimer();
+    if (!state.selectedStop) {
+      return;
+    }
+    state.refreshTimer = window.setTimeout(() => {
+      if (state.selectedStop) {
+        loadArrivals(state.selectedStop, { silent: true });
+      }
+    }, AUTO_REFRESH_MS);
+  };
+
   const setBoardMessage = (message) => {
     elements.rows.innerHTML = '';
     const placeholder = document.createElement('div');
     placeholder.className = 'empty';
-    placeholder.setAttribute('aria-live', 'polite');
+    placeholder.setAttribute('role', 'status');
     placeholder.textContent = message;
     elements.rows.appendChild(placeholder);
   };
@@ -108,9 +148,7 @@
   };
 
   const formatEta = (seconds) => {
-    if (typeof seconds !== 'number' || Number.isNaN(seconds)) {
-      return '—';
-    }
+    if (!Number.isFinite(seconds)) return '—';
     const minutes = Math.round(seconds / 60);
     if (minutes <= 0) return 'Due';
     return minutes === 1 ? '1 min' : `${minutes} mins`;
@@ -123,17 +161,394 @@
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  const pickModeColour = (mode) => {
+    const key = normalise(mode);
+    return MODE_COLOR_MAP[key] || DEFAULT_BADGE_COLOR;
+  };
+
+  const highlightText = (text, query) => {
+    const container = document.createElement('span');
+    if (!text) {
+      return container;
+    }
+    const trimmedQuery = normalise(query);
+    if (!trimmedQuery) {
+      container.textContent = text;
+      return container;
+    }
+    const lowerText = text.toLowerCase();
+    const lowerQuery = trimmedQuery;
+    let cursor = 0;
+    const rawLength = query.trim().length || trimmedQuery.length || 0;
+    while (cursor < text.length) {
+      const index = lowerText.indexOf(lowerQuery, cursor);
+      if (index === -1) {
+        container.appendChild(document.createTextNode(text.slice(cursor)));
+        break;
+      }
+      if (index > cursor) {
+        container.appendChild(document.createTextNode(text.slice(cursor, index)));
+      }
+      const match = document.createElement('span');
+      match.className = 'tracking-match';
+      match.textContent = text.slice(index, index + rawLength);
+      container.appendChild(match);
+      cursor = index + rawLength;
+    }
+    if (!container.childNodes.length) {
+      container.textContent = text;
+    }
+    return container;
+  };
+
+  const buildStopSubtitle = (stop) => {
+    const parts = [];
+    if (stop?.indicator) {
+      parts.push(`Stop ${stop.indicator}`);
+    }
+    if (stop?.locality) {
+      parts.push(stop.locality);
+    }
+    if (stop?.towards) {
+      parts.push(`Towards ${stop.towards}`);
+    }
+    return parts.join(' • ');
+  };
+
+  const updateBoardHeader = (stop) => {
+    if (!elements.boardTitle || !elements.boardDescription) return;
+    if (!stop) {
+      elements.boardTitle.textContent = defaultBoardTitle;
+      elements.boardDescription.textContent = defaultBoardDescription;
+      return;
+    }
+    elements.boardTitle.textContent = stop.name || defaultBoardTitle;
+    const subtitle = buildStopSubtitle(stop);
+    elements.boardDescription.textContent = subtitle || defaultBoardDescription;
+  };
+
+  const updateTimestamp = (stop) => {
+    if (!elements.timestamp) return;
+    const now = new Date();
+    const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (stop?.name) {
+      const indicator = stop.indicator ? ` (${stop.indicator})` : '';
+      elements.timestamp.textContent = `Updated ${time} · ${stop.name}${indicator}`;
+    } else {
+      elements.timestamp.textContent = `Updated ${time}`;
+    }
+  };
+
+  const levenshtein = (a, b) => {
+    if (a === b) return 0;
+    if (!a.length) return b.length;
+    if (!b.length) return a.length;
+    const previous = new Array(b.length + 1);
+    const current = new Array(b.length + 1);
+    for (let j = 0; j <= b.length; j += 1) {
+      previous[j] = j;
+    }
+    for (let i = 1; i <= a.length; i += 1) {
+      current[0] = i;
+      for (let j = 1; j <= b.length; j += 1) {
+        if (a.charCodeAt(i - 1) === b.charCodeAt(j - 1)) {
+          current[j] = previous[j - 1];
+        } else {
+          current[j] = Math.min(previous[j - 1], previous[j], current[j - 1]) + 1;
+        }
+      }
+      for (let j = 0; j <= b.length; j += 1) {
+        previous[j] = current[j];
+      }
+    }
+    return current[b.length];
+  };
+
+  const getAdditionalProperty = (stop, key) => {
+    if (!Array.isArray(stop?.additionalProperties)) return '';
+    const match = stop.additionalProperties.find((prop) => normalise(prop?.key) === normalise(key));
+    return match?.value || '';
+  };
+
+  const mapStopToSuggestion = (stop, parent = null) => {
+    if (!stop) return null;
+    const id = stop.id || stop.naptanId || stop.stationNaptan;
+    if (!id) return null;
+    const name = stop.commonName || stop.name || id;
+    const indicator = stop.stopLetter || stop.indicator || getAdditionalProperty(stop, 'StopLetter') || '';
+    const locality = stop.locality || getAdditionalProperty(stop, 'NearestStation') || parent?.locality || '';
+    const towards = stop.towards || getAdditionalProperty(stop, 'Towards') || '';
+    const modes = Array.isArray(stop.modes) && stop.modes.length
+      ? stop.modes
+      : Array.isArray(parent?.modes) ? parent.modes : [];
+
+    return {
+      id,
+      name,
+      indicator,
+      locality,
+      towards,
+      modes: modes.filter(Boolean),
+      score: 1,
+      exact: false,
+      highlightField: null,
+      highlightValue: null
+    };
+  };
+
+  const mapMatchToSuggestion = (match) => {
+    if (!match || !match.id) return null;
+    const fromAdditional = (key) => {
+      if (!Array.isArray(match.additionalProperties)) return '';
+      const property = match.additionalProperties.find((prop) => normalise(prop?.key) === normalise(key));
+      return property?.value || '';
+    };
+    return {
+      id: match.id,
+      name: match.name || match.matchedName || match.id,
+      indicator: match.indicator || match.stopLetter || fromAdditional('StopLetter') || '',
+      locality: match.locality || match.matchedName || fromAdditional('NearestStation') || '',
+      towards: match.towards || fromAdditional('Towards') || '',
+      modes: Array.isArray(match.modes) ? match.modes.filter(Boolean) : [],
+      score: 1,
+      exact: false,
+      highlightField: null,
+      highlightValue: null
+    };
+  };
+
+  const computeSuggestionScore = (query, suggestion) => {
+    const searchValue = normalise(query);
+    if (!searchValue) {
+      suggestion.score = 1;
+      suggestion.exact = false;
+      suggestion.highlightField = null;
+      suggestion.highlightValue = null;
+      return suggestion.score;
+    }
+    const fields = [
+      { key: 'name', value: suggestion.name },
+      { key: 'indicator', value: suggestion.indicator },
+      { key: 'locality', value: suggestion.locality },
+      { key: 'towards', value: suggestion.towards },
+      { key: 'id', value: suggestion.id }
+    ];
+
+    let bestScore = 1;
+    let highlightField = null;
+    let highlightValue = null;
+
+    for (const field of fields) {
+      const text = normalise(field.value);
+      if (!text) continue;
+      if (text === searchValue) {
+        bestScore = 0;
+        highlightField = field.key;
+        highlightValue = field.value;
+        break;
+      }
+      const substringIndex = text.indexOf(searchValue);
+      if (substringIndex !== -1) {
+        const weight = 0.05 + (substringIndex / Math.max(text.length, 1)) * 0.05;
+        if (weight < bestScore) {
+          bestScore = weight;
+          highlightField = field.key;
+          highlightValue = field.value;
+        }
+      }
+      const distance = levenshtein(searchValue, text);
+      const ratio = distance / Math.max(searchValue.length, text.length);
+      if (ratio < bestScore) {
+        bestScore = ratio;
+        highlightField = field.key;
+        highlightValue = field.value;
+      }
+    }
+
+    suggestion.score = Number.isFinite(bestScore) ? bestScore : 1;
+    suggestion.exact = suggestion.score === 0;
+    suggestion.highlightField = highlightField;
+    suggestion.highlightValue = highlightValue;
+    return suggestion.score;
+  };
+
+  const prepareSuggestions = (query, matches, detailMap) => {
+    const results = [];
+    const seen = new Set();
+
+    const addSuggestion = (candidate) => {
+      if (!candidate || !candidate.id || seen.has(candidate.id)) return;
+      computeSuggestionScore(query, candidate);
+      seen.add(candidate.id);
+      results.push(candidate);
+    };
+
+    matches.forEach((match) => {
+      const detail = match?.id ? detailMap.get(match.id) : null;
+      if (detail) {
+        const children = Array.isArray(detail.children) ? detail.children : [];
+        if (children.length) {
+          children.forEach((child) => {
+            const suggestion = mapStopToSuggestion(child, detail);
+            addSuggestion(suggestion);
+          });
+        } else {
+          addSuggestion(mapStopToSuggestion(detail, detail));
+        }
+      } else {
+        addSuggestion(mapMatchToSuggestion(match));
+      }
+    });
+
+    if (!results.length) {
+      matches.forEach((match) => addSuggestion(mapMatchToSuggestion(match)));
+    }
+
+    results.sort((a, b) => {
+      if (a.exact && !b.exact) return -1;
+      if (!a.exact && b.exact) return 1;
+      if (a.score !== b.score) return a.score - b.score;
+      return (a.name || '').localeCompare(b.name || '');
+    });
+
+    return results;
+  };
+
+  const showSuggestionsMessage = (message) => {
+    if (!elements.resultsList) return;
+    elements.resultsList.innerHTML = '';
+    const empty = document.createElement('div');
+    empty.className = 'tracking-search__empty';
+    empty.textContent = message;
+    elements.resultsList.appendChild(empty);
+    elements.resultsList.style.display = 'block';
+    state.activeSuggestionIndex = -1;
+  };
+
+  const hideSuggestions = () => {
+    if (!elements.resultsList) return;
+    elements.resultsList.innerHTML = '';
+    elements.resultsList.style.display = 'none';
+    state.activeSuggestionIndex = -1;
+    state.suggestions = [];
+    state.suggestionById.clear();
+  };
+
+  const renderSuggestions = (suggestions, query) => {
+    if (!elements.resultsList) return;
+    elements.resultsList.innerHTML = '';
+    state.activeSuggestionIndex = -1;
+    if (!Array.isArray(suggestions) || !suggestions.length) {
+      showSuggestionsMessage('No stops found. Try refining your search.');
+      return;
+    }
+
+    const fragment = document.createDocumentFragment();
+
+    suggestions.forEach((suggestion, index) => {
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'tracking-result';
+      item.dataset.stopId = suggestion.id;
+      item.dataset.index = String(index);
+      item.setAttribute('role', 'option');
+      item.tabIndex = -1;
+
+      const main = document.createElement('div');
+      main.className = 'tracking-result__main';
+
+      const title = document.createElement('div');
+      title.className = 'tracking-result__title';
+      title.appendChild(highlightText(suggestion.name, query));
+      main.appendChild(title);
+
+      const metaParts = [];
+      if (suggestion.indicator) metaParts.push(`Stop ${suggestion.indicator}`);
+      if (suggestion.locality) metaParts.push(suggestion.locality);
+      if (suggestion.towards) metaParts.push(`Towards ${suggestion.towards}`);
+      if (metaParts.length) {
+        const meta = document.createElement('div');
+        meta.className = 'tracking-result__meta';
+        meta.appendChild(highlightText(metaParts.join(' • '), query));
+        main.appendChild(meta);
+      }
+
+      item.appendChild(main);
+
+      if (suggestion.modes && suggestion.modes.length) {
+        const badge = document.createElement('span');
+        badge.className = 'tracking-result__badge';
+        badge.textContent = suggestion.modes[0].replace(/-/g, ' ');
+        item.appendChild(badge);
+      }
+
+      fragment.appendChild(item);
+    });
+
+    elements.resultsList.appendChild(fragment);
+    elements.resultsList.style.display = 'block';
+    elements.resultsList.scrollTop = 0;
+  };
+
+  const suggestionsVisible = () => elements.resultsList && elements.resultsList.style.display === 'block';
+
+  const setSearchButtonState = () => {
+    if (!elements.searchButton) return;
+    const rawValue = elements.searchInput.value.trim();
+    const enabled = STOP_ID_PATTERN.test(rawValue) || normalise(rawValue).length >= MIN_QUERY_LENGTH;
+    elements.searchButton.disabled = !enabled;
+    elements.searchButton.setAttribute('aria-disabled', String(!enabled));
+  };
+
+  const handleSuggestionNavigation = (direction) => {
+    if (!suggestionsVisible()) return;
+    const items = elements.resultsList.querySelectorAll('.tracking-result');
+    if (!items.length) return;
+    const maxIndex = items.length - 1;
+    let nextIndex = state.activeSuggestionIndex + direction;
+    if (nextIndex < 0) nextIndex = maxIndex;
+    if (nextIndex > maxIndex) nextIndex = 0;
+    state.activeSuggestionIndex = nextIndex;
+    items[nextIndex].focus();
+  };
+
+  const mapArrival = (item) => {
+    if (!item) return null;
+    const expectedArrival = item.expectedArrival ? new Date(item.expectedArrival) : null;
+    const timeToStation = typeof item.timeToStation === 'number' ? item.timeToStation : Number(item.timeToStation);
+    return {
+      id: item.id || item.vehicleId || '',
+      lineName: item.lineName || item.lineId || '',
+      destinationName: item.destinationName || item.towards || '',
+      towards: item.towards || '',
+      platformName: item.platformName || '',
+      vehicleId: item.vehicleId || '',
+      modeName: normalise(item.modeName),
+      expectedArrival,
+      expectedTimeText: formatAbsoluteTime(expectedArrival),
+      timeToStation: Number.isFinite(timeToStation) ? timeToStation : null
+    };
+  };
+
+  const sortDepartures = (departures) => {
+    return departures.slice().sort((a, b) => {
+      const aTime = Number.isFinite(a.timeToStation) ? a.timeToStation : Number.POSITIVE_INFINITY;
+      const bTime = Number.isFinite(b.timeToStation) ? b.timeToStation : Number.POSITIVE_INFINITY;
+      return aTime - bTime;
+    });
+  };
+
   const renderDepartures = (departures, stop) => {
     elements.rows.innerHTML = '';
     if (!Array.isArray(departures) || !departures.length) {
-      setBoardMessage('No live departures right now for this stop.');
+      setBoardMessage('No live departures right now.');
+      updateTimestamp(stop);
       return;
     }
 
     departures.forEach((departure) => {
       const row = document.createElement('div');
       row.className = 'row';
-      row.dataset.mode = departure.modeName || '';
 
       const badge = document.createElement('span');
       badge.className = 'badge';
@@ -144,7 +559,7 @@
       destination.className = 'dest';
 
       const primary = document.createElement('b');
-      primary.textContent = departure.destinationName || departure.towards || 'Destination TBC';
+      primary.textContent = departure.destinationName || 'Destination TBC';
       destination.appendChild(primary);
 
       const subParts = [];
@@ -158,14 +573,13 @@
       if (departure.vehicleId) {
         subParts.push(departure.vehicleId);
       }
-
       if (subParts.length) {
         const secondary = document.createElement('small');
         secondary.textContent = subParts.join(' • ');
         destination.appendChild(secondary);
       }
 
-      const eta = document.createElement('span');
+      const eta = document.createElement('div');
       eta.className = 'eta';
       eta.textContent = formatEta(departure.timeToStation);
 
@@ -177,81 +591,8 @@
     setRefreshEnabled(true);
   };
 
-  const mapDeparture = (item) => {
-    if (!item || typeof item !== 'object') return null;
-    const expectedArrival = item.expectedArrival ? new Date(item.expectedArrival) : null;
-    const modeName = normaliseString(item.modeName).toLowerCase();
-
-    return {
-      id: item.id || item.naptanId || item.vehicleId || '',
-      lineId: item.lineId || '',
-      lineName: item.lineName || item.lineId || '',
-      destinationName: normaliseString(item.destinationName),
-      towards: normaliseString(item.towards),
-      platformName: normaliseString(item.platformName),
-      vehicleId: normaliseString(item.vehicleId),
-      modeName,
-      expectedArrival,
-      expectedTimeText: formatAbsoluteTime(expectedArrival),
-      timeToStation: typeof item.timeToStation === 'number' ? item.timeToStation : Number(item.timeToStation)
-    };
-  };
-
-  const sortDepartures = (collection) => {
-    const getSortValue = (departure) => {
-      if (typeof departure.timeToStation === 'number' && !Number.isNaN(departure.timeToStation)) {
-        return departure.timeToStation;
-      }
-      if (departure.expectedArrival instanceof Date && !Number.isNaN(departure.expectedArrival.getTime())) {
-        return departure.expectedArrival.getTime();
-      }
-      return Number.MAX_SAFE_INTEGER;
-    };
-
-    return collection.slice().sort((a, b) => getSortValue(a) - getSortValue(b));
-  };
-
-  const runFetch = async (url, options = {}) => {
-    const response = await fetch(url, options);
-    if (!response.ok) {
-      const error = new Error(`Request failed with status ${response.status}`);
-      error.status = response.status;
-      throw error;
-    }
-    return response.json();
-  };
-
-  const shouldFallback = (error) => {
-    if (!error || typeof error.status !== 'number') {
-      return true;
-    }
-    if (error.status >= 500) {
-      return true;
-    }
-    return [401, 403, 404, 429].includes(error.status);
-  };
-
-  const buildProxyUrl = (path) => `${API_PROXY_BASE}${path}`;
-  const buildTfLUrl = (path) => `${TFL_API_BASE}${path}`;
-
-  const fetchJson = async (url, { fallbackUrl = null } = {}) => {
-    try {
-      return await runFetch(url, { credentials: 'same-origin' });
-    } catch (error) {
-      if (!fallbackUrl || !shouldFallback(error)) {
-        throw error;
-      }
-      try {
-        return await runFetch(fallbackUrl, { mode: 'cors', credentials: 'omit' });
-      } catch (fallbackError) {
-        throw fallbackError;
-      }
-    }
-  };
-
-  const loadDepartures = async (stop, { silent = false } = {}) => {
-    if (!stop) return;
-
+  const loadArrivals = async (stop, { silent = false } = {}) => {
+    if (!stop?.id) return;
     stopRefreshTimer();
     if (!silent) {
       setBoardLoading();
@@ -259,10 +600,28 @@
 
     try {
       const path = `/StopPoint/${encodeURIComponent(stop.id)}/Arrivals`;
-      const data = await fetchJson(buildProxyUrl(path), { fallbackUrl: buildTfLUrl(path) });
-      const departures = Array.isArray(data)
-        ? sortDepartures(data.map(mapDeparture).filter(Boolean))
-        : [];
+      let data = await fetchJson(buildProxyUrl(path), { fallbackUrl: buildTfLUrl(path) });
+
+      if (!Array.isArray(data) || !data.length) {
+        const detail = await fetchStopDetail(stop.id);
+        if (detail && Array.isArray(detail.children) && detail.children.length) {
+          const childRequests = detail.children.map((child) => {
+            const childPath = `/StopPoint/${encodeURIComponent(child.id || child.naptanId)}/Arrivals`;
+            return fetchJson(buildProxyUrl(childPath), { fallbackUrl: buildTfLUrl(childPath) }).catch(() => []);
+          });
+          const childData = await Promise.all(childRequests);
+          data = childData.flat();
+        }
+      }
+
+      const departures = Array.isArray(data) ? sortDepartures(data.map(mapArrival).filter(Boolean)) : [];
+      if (!departures.length) {
+        setBoardMessage('No live departures right now.');
+        updateTimestamp(stop);
+        setRefreshEnabled(true);
+        return;
+      }
+
       renderDepartures(departures, stop);
     } catch (error) {
       console.error('Failed to load live departures:', error);
@@ -278,185 +637,157 @@
     }
   };
 
-  const hideSuggestions = () => {
-    state.suggestions = [];
-    state.suggestionById.clear();
-    elements.resultsList.innerHTML = '';
-    elements.resultsList.style.display = 'none';
+  const selectStop = async (stop) => {
+    if (!stop || !stop.id) return;
+    hideSuggestions();
+    setBoardLoading();
+
+    let enrichedStop = { ...stop };
+    if (!enrichedStop.name || enrichedStop.name === enrichedStop.id) {
+      const detail = await fetchStopDetail(stop.id);
+      if (detail) {
+        const suggestion = mapStopToSuggestion(detail, detail);
+        if (suggestion) {
+          enrichedStop = { ...enrichedStop, ...suggestion };
+        }
+      }
+    }
+
+    state.selectedStop = enrichedStop;
+    updateBoardHeader(enrichedStop);
+    if (elements.searchInput) {
+      const displayName = enrichedStop.indicator
+        ? `${enrichedStop.name} (${enrichedStop.indicator})`
+        : enrichedStop.name || enrichedStop.id;
+      elements.searchInput.value = displayName;
+    }
+
+    await loadArrivals(enrichedStop);
   };
 
-  const buildSubtitle = (stop) => {
-    const parts = [];
-    if (stop.indicator) parts.push(stop.indicator);
-    if (stop.locality) parts.push(stop.locality);
-    if (stop.modes && stop.modes.length) {
-      const formatted = stop.modes
-        .map((mode) => capitalise(mode.replace(/-/g, ' ')))
-        .join(', ');
-      if (formatted) parts.push(formatted);
-    }
-    if (stop.lines && stop.lines.length) {
-      parts.push(`Routes ${stop.lines.join(', ')}`);
-    }
-    return parts.join(' • ');
+  const showSearchingState = () => {
+    showSuggestionsMessage('Searching for stops…');
   };
 
-  const renderSuggestions = (suggestions) => {
-    if (!Array.isArray(suggestions) || !suggestions.length) {
+  const searchStops = async (rawQuery) => {
+    const trimmed = rawQuery.trim();
+    state.searchToken += 1;
+    const token = state.searchToken;
+
+    if (STOP_ID_PATTERN.test(trimmed)) {
       hideSuggestions();
-      return;
+      selectStop({ id: trimmed, name: trimmed });
+      return [];
+    }
+
+    if (normalise(trimmed).length < MIN_QUERY_LENGTH) {
+      hideSuggestions();
+      return [];
+    }
+
+    showSearchingState();
+
+    const searchPath = `/StopPoint/Search/${encodeURIComponent(trimmed)}?modes=${encodeURIComponent(MODES)}&maxResults=20`;
+    let response;
+    try {
+      response = await fetchJson(buildProxyUrl(searchPath), { fallbackUrl: buildTfLUrl(searchPath) });
+    } catch (error) {
+      console.error('Failed to search for stops:', error);
+      if (token === state.searchToken) {
+        showSuggestionsMessage('Search failed. Please check your connection.');
+      }
+      return [];
+    }
+
+    if (token !== state.searchToken) {
+      return [];
+    }
+
+    const matches = Array.isArray(response?.matches) ? response.matches : [];
+    if (!matches.length) {
+      showSuggestionsMessage('No stops found. Try refining your search.');
+      return [];
+    }
+
+    const detailTargets = matches
+      .map((match) => match.id)
+      .filter(Boolean)
+      .slice(0, MAX_DETAIL_REQUESTS);
+
+    const detailResults = await Promise.allSettled(detailTargets.map((id) => fetchStopDetail(id)));
+    const detailMap = new Map();
+    detailResults.forEach((result, index) => {
+      if (result.status === 'fulfilled' && result.value) {
+        detailMap.set(detailTargets[index], result.value);
+      }
+    });
+
+    const suggestions = prepareSuggestions(trimmed, matches, detailMap).slice(0, MAX_SUGGESTIONS);
+
+    if (token !== state.searchToken) {
+      return suggestions;
     }
 
     state.suggestions = suggestions;
     state.suggestionById = new Map(suggestions.map((suggestion) => [suggestion.id, suggestion]));
+    renderSuggestions(suggestions, trimmed);
+    return suggestions;
+  };
 
-    elements.resultsList.innerHTML = '';
-
-    suggestions.forEach((suggestion) => {
-      const item = document.createElement('button');
-      item.type = 'button';
-      item.className = 'result';
-      item.dataset.stopId = suggestion.id;
-
-      const main = document.createElement('div');
-      main.className = 'r-main';
-
-      const title = document.createElement('div');
-      title.className = 'r-title';
-      title.textContent = suggestion.name;
-
-      const subtitleText = buildSubtitle(suggestion);
-      main.appendChild(title);
-      if (subtitleText) {
-        const subtitle = document.createElement('div');
-        subtitle.className = 'r-sub';
-        subtitle.textContent = subtitleText;
-        main.appendChild(subtitle);
+  const handleSubmit = () => {
+    const query = elements.searchInput.value.trim();
+    if (!query) return;
+    if (STOP_ID_PATTERN.test(query)) {
+      selectStop({ id: query, name: query });
+      return;
+    }
+    if (state.suggestions.length) {
+      selectStop(state.suggestions[0]);
+      return;
+    }
+    searchStops(query).then((results) => {
+      if (results.length) {
+        selectStop(results[0]);
       }
-
-      item.appendChild(main);
-      elements.resultsList.appendChild(item);
     });
-
-    elements.resultsList.style.display = 'block';
   };
 
-  const extractLocality = (match) => {
-    if (!match || typeof match !== 'object') return '';
-    const { additionalProperties } = match;
-    if (Array.isArray(additionalProperties)) {
-      const nearest = additionalProperties.find((prop) => normaliseString(prop?.key).toLowerCase() === 'neareststation');
-      if (nearest) {
-        const value = normaliseString(nearest.value);
-        if (value) return value;
-      }
-    }
-    return normaliseString(match.matchedName) || normaliseString(match.locality);
-  };
-
-  const mapStopMatch = (match) => {
-    if (!match || typeof match !== 'object') return null;
-    const id = match.id || match.naptanId || match.icsId;
-    if (!id) return null;
-
-    const lines = Array.isArray(match.lines)
-      ? match.lines.map((line) => normaliseString(line.name || line.id)).filter(Boolean)
-      : [];
-
-    return {
-      id,
-      name: normaliseString(match.name) || id,
-      indicator: normaliseString(match.indicator || match.stopLetter),
-      locality: extractLocality(match),
-      modes: Array.isArray(match.modes) ? match.modes.map((mode) => normaliseString(mode)).filter(Boolean) : [],
-      lines
-    };
-  };
-
-  const searchStops = async (query) => {
-    const trimmed = normaliseString(query);
-    if (trimmed.length < MIN_QUERY_LENGTH) {
-      hideSuggestions();
-      return [];
-    }
-
-    const searchToken = ++state.lastSearchToken;
-    try {
-      const params = new URLSearchParams({
-        modes: 'bus,tube,dlr,tram,overground,elizabeth-line,river-bus',
-        maxResults: '12',
-        query: trimmed
-      });
-      const path = `/StopPoint/Search?${params.toString()}`;
-      const response = await fetchJson(buildProxyUrl(path), { fallbackUrl: buildTfLUrl(path) });
-      if (searchToken !== state.lastSearchToken) {
-        return [];
-      }
-      const matches = Array.isArray(response?.matches) ? response.matches : [];
-      const mapped = matches
-        .map(mapStopMatch)
-        .filter(Boolean)
-        .slice(0, 12);
-      renderSuggestions(mapped);
-      return mapped;
-    } catch (error) {
-      if (searchToken === state.lastSearchToken) {
-        console.error('Failed to search StopPoints:', error);
-        hideSuggestions();
-        setBoardMessage('Unable to search for stops right now. Please try again later.');
-      }
-      return [];
-    }
-  };
-
-  const selectStop = (stop) => {
-    if (!stop) return;
-    state.selectedStop = stop;
-    elements.searchInput.value = stop.indicator ? `${stop.name} (${stop.indicator})` : stop.name;
-    hideSuggestions();
-    loadDepartures(stop);
-  };
-
-  const scheduleSearch = (query) => {
-    clearTimeout(searchDebounceTimer);
-    searchDebounceTimer = setTimeout(() => {
-      searchStops(query);
-    }, SEARCH_DEBOUNCE_MS);
-  };
-
-  const handleInput = (event) => {
-    const value = event.target.value;
-    state.lastSearchToken += 1; // invalidate pending results if user keeps typing
-    if (normaliseString(value).length >= MIN_QUERY_LENGTH) {
-      scheduleSearch(value);
+  const handleInput = () => {
+    setSearchButtonState();
+    const value = elements.searchInput.value;
+    if (normalise(value).length >= MIN_QUERY_LENGTH || STOP_ID_PATTERN.test(value.trim())) {
+      debouncedSearch(value);
     } else {
       hideSuggestions();
     }
   };
 
-  const handleSubmit = () => {
-    const currentQuery = normaliseString(elements.searchInput.value);
-    if (!currentQuery) return;
-
-    if (state.suggestions.length) {
-      selectStop(state.suggestions[0]);
-      return;
-    }
-
-    searchStops(currentQuery).then((results) => {
-      if (results.length) {
-        selectStop(results[0]);
-      } else {
-        setBoardMessage(`No stops found matching “${currentQuery}”.`);
-      }
-    });
-  };
+  const debouncedSearch = debounce(searchStops, SEARCH_DEBOUNCE_MS);
 
   elements.searchInput.addEventListener('input', handleInput);
+  elements.searchInput.addEventListener('focus', () => {
+    if (state.suggestions.length) {
+      elements.resultsList.style.display = 'block';
+    }
+  });
   elements.searchInput.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') {
+    if (event.key === 'ArrowDown') {
       event.preventDefault();
-      handleSubmit();
+      handleSuggestionNavigation(1);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      handleSuggestionNavigation(-1);
+    } else if (event.key === 'Enter') {
+      if (suggestionsVisible() && state.suggestions.length) {
+        event.preventDefault();
+        const index = state.activeSuggestionIndex >= 0 ? state.activeSuggestionIndex : 0;
+        const choice = state.suggestions[index];
+        if (choice) {
+          selectStop(choice);
+        }
+      } else {
+        handleSubmit();
+      }
     } else if (event.key === 'Escape') {
       hideSuggestions();
     }
@@ -469,14 +800,16 @@
     });
   }
 
-  elements.resultsList.addEventListener('click', (event) => {
-    const button = event.target.closest('button[data-stop-id]');
-    if (!button) return;
-    const stop = state.suggestionById.get(button.dataset.stopId);
-    if (stop) {
-      selectStop(stop);
-    }
-  });
+  if (elements.resultsList) {
+    elements.resultsList.addEventListener('click', (event) => {
+      const button = event.target.closest('.tracking-result');
+      if (!button) return;
+      const stop = state.suggestionById.get(button.dataset.stopId);
+      if (stop) {
+        selectStop(stop);
+      }
+    });
+  }
 
   document.addEventListener('click', (event) => {
     if (!elements.searchField) return;
@@ -485,18 +818,28 @@
     }
   });
 
-  if (elements.searchInput) {
-    elements.searchInput.addEventListener('focus', () => {
-      if (state.suggestions.length) {
-        elements.resultsList.style.display = 'block';
+  if (elements.refreshButton) {
+    elements.refreshButton.addEventListener('click', () => {
+      if (state.selectedStop) {
+        loadArrivals(state.selectedStop);
       }
     });
   }
 
-  if (elements.refreshButton) {
-    elements.refreshButton.addEventListener('click', () => {
-      if (!state.selectedStop) return;
-      loadDepartures(state.selectedStop);
-    });
-  }
+  const bootstrapFromUrl = async () => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const stopId = params.get('stopId');
+      if (stopId) {
+        const stopName = params.get('stopName');
+        await selectStop({ id: stopId, name: stopName || stopId });
+      }
+    } catch (error) {
+      console.warn('Unable to initialise stop from URL', error);
+    }
+  };
+
+  setSearchButtonState();
+  bootstrapFromUrl();
 })();
+

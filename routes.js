@@ -13,6 +13,8 @@ const withAppKey = (url) => {
 const ROUTE_ENDPOINT = () => withAppKey('https://api.tfl.gov.uk/Line/Mode/bus/Route');
 const ROUTE_STOPS_ENDPOINT = (routeId) =>
   withAppKey(`https://api.tfl.gov.uk/Line/${encodeURIComponent(routeId)}/StopPoints`);
+const ROUTE_SEQUENCE_ENDPOINT = (routeId) =>
+  withAppKey(`https://api.tfl.gov.uk/Line/${encodeURIComponent(routeId)}/Route/Sequence/all`);
 const ROUTE_VEHICLES_ENDPOINT = (routeId) =>
   withAppKey(`https://api.tfl.gov.uk/Line/${encodeURIComponent(routeId)}/Arrivals`);
 const LAST_ROUTE_KEY = 'routeflow.lastRoute';
@@ -64,8 +66,7 @@ const elements = {
     status: document.getElementById('routeOverlayStatus'),
     stops: document.getElementById('routeOverlayStops'),
     vehicles: document.getElementById('routeOverlayVehicles'),
-    close: document.getElementById('routeOverlayClose'),
-    tracker: document.getElementById('routeOverlayTracker')
+    close: document.getElementById('routeOverlayClose')
   }
 };
 
@@ -113,46 +114,50 @@ const setOverlayStatus = (message) => {
   }
 };
 
-const updateOverlayTrackerLink = (stop) => {
-  const link = elements.overlay.tracker;
-  if (!link) return;
-  if (stop?.id && typeof window !== 'undefined') {
-    try {
-      const url = new URL('tracking.html', window.location.href);
-      url.searchParams.set('stopId', stop.id);
-      if (stop.name) {
-        url.searchParams.set('stopName', stop.name);
-      }
-      link.href = url.toString();
-      link.textContent = `Open tracker for ${stop.name}`;
-      return;
-    } catch (error) {
-      // Fallback to default link
-    }
-  }
-  link.href = 'tracking.html';
-  link.textContent = 'Open tracker';
-};
-
 const getAdditionalProperty = (stop, key) => {
   if (!stop?.additionalProperties) return '';
   const match = stop.additionalProperties.find((prop) => prop.key === key);
   return match?.value || '';
 };
 
-const mapStops = (collection = []) => {
-  const seen = new Set();
-  return collection
-    .map((stop) => {
-      const id = stop?.id || stop?.naptanId || stop?.stationNaptan;
-      if (!id || seen.has(id)) return null;
-      seen.add(id);
-      const name = stop.commonName || stop.name || id;
-      const letter = stop.stopLetter || stop.indicator || getAdditionalProperty(stop, 'StopLetter') || '';
-      const towards = getAdditionalProperty(stop, 'Towards') || stop.towards || '';
-      return { id, name, letter, towards };
-    })
-    .filter(Boolean);
+const mapStops = (stopPoints = [], sequence = null) => {
+  const createRecord = (source, fallback = {}) => {
+    const id = source?.id || source?.naptanId || source?.stationNaptan || source?.stationId || source?.stopPointId;
+    if (!id) return null;
+    const name = source.commonName || source.name || fallback.name || id;
+    const letter = source.stopLetter || source.indicator || getAdditionalProperty(source, 'StopLetter') || fallback.letter || '';
+    const towards = getAdditionalProperty(source, 'Towards') || source.towards || fallback.towards || '';
+    return { id, name, letter, towards, order: 0 };
+  };
+
+  const detailMap = new Map();
+  stopPoints.forEach((stop, index) => {
+    const record = createRecord(stop);
+    if (!record || detailMap.has(record.id)) return;
+    record.order = index;
+    detailMap.set(record.id, record);
+  });
+
+  if (sequence && Array.isArray(sequence.stopPointSequences)) {
+    const ordered = [];
+    const seen = new Set();
+    sequence.stopPointSequences.forEach((seq) => {
+      if (!Array.isArray(seq.stopPoint)) return;
+      seq.stopPoint.forEach((stop) => {
+        const record = createRecord(stop, detailMap.get(stop?.id || stop?.naptanId || stop?.stationId) || {});
+        if (!record || seen.has(record.id)) return;
+        seen.add(record.id);
+        const detailed = detailMap.get(record.id);
+        const enriched = detailed ? { ...detailed, order: ordered.length } : { ...record, order: ordered.length };
+        ordered.push(enriched);
+      });
+    });
+    if (ordered.length) {
+      return ordered;
+    }
+  }
+
+  return Array.from(detailMap.values()).sort((a, b) => a.order - b.order);
 };
 
 const createStopElement = (stop) => {
@@ -190,11 +195,9 @@ const renderOverlayStops = (stops) => {
     empty.className = 'route-overlay__empty';
     empty.textContent = 'Stop list unavailable right now.';
     container.appendChild(empty);
-    updateOverlayTrackerLink(null);
     return;
   }
   stops.forEach((stop) => container.appendChild(createStopElement(stop)));
-  updateOverlayTrackerLink(stops[0]);
 };
 
 const formatEta = (seconds) => {
@@ -410,7 +413,6 @@ const openRouteOverlay = (route) => {
 
   renderOverlayStops([]);
   renderOverlayVehicles([]);
-  updateOverlayTrackerLink(null);
   setOverlayStatus('Loading stops and vehicles…');
 
   elements.overlay.container.removeAttribute('hidden');
@@ -445,10 +447,25 @@ const openRouteOverlay = (route) => {
       return [];
     });
 
-  Promise.allSettled([fetchStops, fetchVehicles])
-    .then(([stopsResult, vehiclesResult]) => {
+  const fetchSequence = fetch(ROUTE_SEQUENCE_ENDPOINT(routeId), { signal: controller.signal })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`Failed to load stop sequence (${response.status})`);
+      }
+      return response.json();
+    })
+    .catch((error) => {
+      if (error.name === 'AbortError') throw error;
+      console.warn(`Unable to fetch route sequence for ${routeId}:`, error);
+      return null;
+    });
+
+  Promise.allSettled([fetchStops, fetchVehicles, fetchSequence])
+    .then(([stopsResult, vehiclesResult, sequenceResult]) => {
       if (state.overlay.routeId !== routeId) return;
-      const stops = mapStops(stopsResult.status === 'fulfilled' ? stopsResult.value : []);
+      const stopsData = stopsResult.status === 'fulfilled' ? stopsResult.value : [];
+      const sequenceData = sequenceResult.status === 'fulfilled' ? sequenceResult.value : null;
+      const stops = mapStops(stopsData, sequenceData);
       const vehicles = mapVehicles(vehiclesResult.status === 'fulfilled' ? vehiclesResult.value : []);
       renderOverlayStops(stops);
       renderOverlayVehicles(vehicles);
@@ -560,18 +577,10 @@ const renderRoutes = () => {
     hint.textContent = 'Tap to view stops & vehicles';
 
     info.append(summary, hint);
-
-    const link = document.createElement('a');
-    link.className = 'network-card__link';
-    link.href = 'tracking.html';
-    link.textContent = 'Open in tracker';
-    link.addEventListener('click', (event) => event.stopPropagation());
-
-    footer.append(info, link);
+    footer.appendChild(info);
 
     const activateCard = () => openRouteOverlay(route);
-    card.addEventListener('click', (event) => {
-      if (event.target.closest('a')) return;
+    card.addEventListener('click', () => {
       activateCard();
     });
     card.addEventListener('keydown', (event) => {

@@ -169,7 +169,7 @@ const DEFAULT_BLOG_POSTS = sanitiseBlogCollection([
       'to support airport travel, while a slimmed timetable affects Woolwich Ferry crossings late Sunday.',
     author: 'Network desk',
     publishedAt: '2025-05-23T16:30:00.000Z',
-    tags: ['Weekly London Transport News']
+    tags: ['Live News']
   },
   {
     id: 'blog-consultation-summer-2025',
@@ -181,7 +181,7 @@ const DEFAULT_BLOG_POSTS = sanitiseBlogCollection([
       'branch would join the orbital express family. We have highlighted the closing dates and supporting documents for each.',
     author: 'Policy and planning',
     publishedAt: '2025-05-21T09:00:00.000Z',
-    tags: ['New London Consultations']
+    tags: ['Guides']
   },
   {
     id: 'blog-bus-models-electric-era',
@@ -193,7 +193,7 @@ const DEFAULT_BLOG_POSTS = sanitiseBlogCollection([
       'while keeping capacity identical for school peaks.',
     author: 'Fleet editor',
     publishedAt: '2025-05-18T13:15:00.000Z',
-    tags: ['Learn about bus models']
+    tags: ['Models']
   },
   {
     id: 'blog-weekly-roundup-2025-05-16',
@@ -205,7 +205,7 @@ const DEFAULT_BLOG_POSTS = sanitiseBlogCollection([
       'works restrict traffic to single lanes in each direction.',
     author: 'Network desk',
     publishedAt: '2025-05-16T16:45:00.000Z',
-    tags: ['Weekly London Transport News']
+    tags: ['Live News']
   },
   {
     id: 'blog-consultation-night-bus-refresh',
@@ -217,7 +217,7 @@ const DEFAULT_BLOG_POSTS = sanitiseBlogCollection([
       'the consultation before it closes on 14 June.',
     author: 'Policy and planning',
     publishedAt: '2025-05-14T08:20:00.000Z',
-    tags: ['New London Consultations']
+    tags: ['Guides']
   },
   {
     id: 'blog-bus-models-refurb',
@@ -229,7 +229,7 @@ const DEFAULT_BLOG_POSTS = sanitiseBlogCollection([
       'spot them first.',
     author: 'Fleet editor',
     publishedAt: '2025-05-10T11:00:00.000Z',
-    tags: ['Learn about bus models']
+    tags: ['Models']
   },
   {
     id: 'blog-city-pulse',
@@ -241,7 +241,7 @@ const DEFAULT_BLOG_POSTS = sanitiseBlogCollection([
       'surfacing accessibility information, the platform is designed to feel personal from the moment you sign in.',
     author: 'RouteFlow London team',
     publishedAt: '2025-04-18T09:30:00.000Z',
-    tags: ['Product updates']
+    tags: ['Operators']
   },
   {
     id: 'blog-arrivals-refresh',
@@ -253,7 +253,7 @@ const DEFAULT_BLOG_POSTS = sanitiseBlogCollection([
       'everything refresh automatically without losing your place.',
     author: 'Product design',
     publishedAt: '2025-05-06T07:45:00.000Z',
-    tags: ['Tracking', 'Design']
+    tags: ['Guides']
   },
   {
     id: 'blog-journey-studio',
@@ -265,7 +265,7 @@ const DEFAULT_BLOG_POSTS = sanitiseBlogCollection([
       'timings so you know exactly what to expect.',
     author: 'Journey planning',
     publishedAt: '2025-05-12T11:15:00.000Z',
-    tags: ['Planning']
+    tags: ['Guides']
   }
 ]);
 
