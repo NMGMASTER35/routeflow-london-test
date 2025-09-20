@@ -46,6 +46,37 @@ A unified platform for tracking, planning, and exploring London transport routes
    python api.py
    ```
 
+#### Fleet database & live tracking
+
+The Flask API now maintains the fleet database directly in Postgres. A Netlify
+scheduled function or any external job can stream TfL sightings into
+`/api/fleet/sightings` and the backend will:
+
+- Normalise registrations, ensure operators exist, and create/update a single
+  row per bus in the `buses` table.
+- Append every observation to `bus_sightings` and record lifecycle events in
+  `bus_history`.
+- Rebuild each vehicle's rolling 90-day `usual_routes` distribution and compute
+  live badge state (New Bus, Rare Working, Loan/Guest, Withdrawn) with the
+  diversion-aware rare-working rules.
+
+Key endpoints:
+
+- `GET /api/fleet/<reg>` – full bus profile, timeline and sparkline.
+- `GET /api/fleet/<reg>/sightings` & `/api/fleet/<reg>/history` – raw data
+  streams for charts or moderation.
+- `GET /api/fleet/search?q=` – deterministic cursor-friendly search.
+- `GET /api/fleet/rare` – current rare workings snapshot.
+- `POST /api/fleet/sightings` – idempotent ingestion hook used by the Netlify
+  scheduled job.
+- `GET /api/operators` and `GET /api/operators/<id>` – operator dashboards.
+- `GET/POST /api/edits` plus approve/reject endpoints – moderator overrides for
+  badge pinning with full audit history.
+
+Tables created during `init_database()` include `operators`, `buses`,
+`bus_sightings`, `bus_history`, `edit_requests` and `planned_diversions` so the
+database is ready for Neon/Render style deployments.
+
 ### TfL API proxy endpoints
 
 - The backend exposes a read-only proxy at `/api/tfl/<path>` that forwards
