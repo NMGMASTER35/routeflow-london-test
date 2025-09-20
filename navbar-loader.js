@@ -8,6 +8,8 @@
     'main.js'
   ];
 
+  const stylesheetPromises = new Map();
+
   const LAST_USER_SUMMARY_KEY = 'routeflow:auth:last-user';
 
   const scriptPromises = new Map();
@@ -32,6 +34,31 @@
       document.head.appendChild(script);
     });
     scriptPromises.set(absolute, promise);
+    return promise;
+  }
+
+  function ensureStylesheet(href) {
+    if (!href) {
+      return Promise.resolve();
+    }
+    const absolute = toAbsoluteUrl(href);
+    const existingLink = Array.from(document.querySelectorAll('link[rel~="stylesheet"]'))
+      .find(link => link.href === absolute);
+    if (existingLink) {
+      return Promise.resolve();
+    }
+    if (stylesheetPromises.has(absolute)) {
+      return stylesheetPromises.get(absolute);
+    }
+    const promise = new Promise((resolve, reject) => {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = href;
+      link.onload = () => resolve();
+      link.onerror = () => reject(new Error(`Failed to load stylesheet: ${href}`));
+      document.head.appendChild(link);
+    });
+    stylesheetPromises.set(absolute, promise);
     return promise;
   }
 
@@ -170,9 +197,32 @@
         }
         return response.text();
       })
-      .then(html => {
-        container.innerHTML = html;
-        initNavbar(container, dependenciesReady);
+      .then((html) => {
+        const template = document.createElement('template');
+        template.innerHTML = html;
+
+        const links = Array.from(template.content.querySelectorAll('link[rel~="stylesheet"]'));
+        const stylesheetLoads = links.map((link) => {
+          const href = link.getAttribute('href') || link.href;
+          link.remove();
+          return { href, promise: ensureStylesheet(href) };
+        });
+
+        return Promise.allSettled(stylesheetLoads.map(item => item.promise))
+          .then((results) => {
+            results.forEach((result, index) => {
+              if (result.status === 'rejected') {
+                console.error('Failed to load navbar stylesheet:', stylesheetLoads[index].href, result.reason);
+              }
+            });
+          })
+          .finally(() => {
+            const fragment = document.createDocumentFragment();
+            fragment.appendChild(template.content);
+            container.innerHTML = '';
+            container.appendChild(fragment);
+            initNavbar(container, dependenciesReady);
+          });
       })
       .catch(error => {
         console.error('Failed to load navbar:', error);
