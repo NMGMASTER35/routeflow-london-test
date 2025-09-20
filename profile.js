@@ -62,6 +62,52 @@ const state = {
   profileExtras: createDefaultProfileExtras()
 };
 
+const resolveEnsureFunction = () => {
+  const routeflowAuth = window.RouteflowAuth;
+  if (routeflowAuth?.ensure) {
+    return routeflowAuth.ensure.bind(routeflowAuth);
+  }
+  if (typeof window.ensureFirebaseAuth === 'function') {
+    return window.ensureFirebaseAuth;
+  }
+  return null;
+};
+
+let authPromise = null;
+const ensureAuth = () => {
+  const ensure = resolveEnsureFunction();
+  if (!ensure) {
+    return Promise.resolve(null);
+  }
+  if (!authPromise) {
+    authPromise = ensure().catch((error) => {
+      console.error('RouteFlow profile: failed to initialise authentication.', error);
+      return null;
+    });
+  }
+  return authPromise;
+};
+
+const getCurrentAuthUser = () => {
+  const routeflowAuth = window.RouteflowAuth;
+  if (routeflowAuth?.getCurrentUser) {
+    try {
+      return routeflowAuth.getCurrentUser();
+    } catch (error) {
+      console.error('RouteFlow profile: unable to read user from RouteflowAuth.', error);
+    }
+  }
+  try {
+    if (typeof firebase !== 'undefined' && typeof firebase.auth === 'function') {
+      const auth = firebase.auth();
+      return auth?.currentUser || null;
+    }
+  } catch (error) {
+    console.error('RouteFlow profile: unable to resolve Firebase auth user.', error);
+  }
+  return null;
+};
+
 const formatDateTime = (value) => {
   if (!value) return '—';
   const date = new Date(value);
@@ -216,7 +262,10 @@ const validateProfileEditor = (values) => {
 
 const uploadAvatar = async (user, file) => {
   if (!user || !file) return user?.photoURL || '';
-  const storage = firebase?.storage?.();
+  await ensureAuth();
+  const storage = (typeof firebase !== 'undefined' && typeof firebase.storage === 'function')
+    ? firebase.storage()
+    : null;
   if (!storage) {
     throw new Error('Firebase storage is not available.');
   }
@@ -319,6 +368,11 @@ const handleProfileEditorSubmit = async (event) => {
     return;
   }
 
+  if (typeof state.user.updateProfile !== 'function') {
+    showEditorError('Profile updates require a connected RouteFlow account.');
+    return;
+  }
+
   setEditorBusy(true);
 
   try {
@@ -336,8 +390,22 @@ const handleProfileEditorSubmit = async (event) => {
       await persistProfileExtras(state.user, { gender: values.gender });
     }
 
-    await state.user.reload();
-    const refreshedUser = firebase?.auth?.().currentUser;
+    if (typeof state.user.reload === 'function') {
+      try {
+        await state.user.reload();
+      } catch (reloadError) {
+        console.warn('RouteFlow profile: user reload failed after profile update.', reloadError);
+      }
+    }
+
+    let refreshedUser = null;
+    try {
+      const auth = await ensureAuth();
+      refreshedUser = auth?.currentUser || getCurrentAuthUser();
+    } catch (refreshError) {
+      console.error('RouteFlow profile: failed to refresh user after update.', refreshError);
+      refreshedUser = getCurrentAuthUser();
+    }
     if (refreshedUser) {
       state.user = refreshedUser;
     }
@@ -778,10 +846,17 @@ const detectAdminStatus = async (user) => {
 
 const attachEventHandlers = () => {
   if (heroElements.signOut) {
-    heroElements.signOut.addEventListener('click', () => {
-      const auth = firebase?.auth?.();
-      if (auth) {
-        auth.signOut().catch((error) => console.error('Failed to sign out:', error));
+    heroElements.signOut.addEventListener('click', async () => {
+      const auth = await ensureAuth();
+      if (!auth || typeof auth.signOut !== 'function') {
+        alert('Authentication is temporarily unavailable. Please try again later.');
+        return;
+      }
+      try {
+        await auth.signOut();
+      } catch (error) {
+        console.error('Failed to sign out:', error);
+        alert('Unable to sign out right now. Please try again.');
       }
     });
   }
@@ -883,25 +958,81 @@ const attachEventHandlers = () => {
   }
 };
 
-const initialise = () => {
-  attachEventHandlers();
+let authUpdateToken = 0;
 
-  firebase?.auth?.().onAuthStateChanged(async (user) => {
-    state.user = user || null;
-    state.isAdmin = user ? await detectAdminStatus(user) : false;
-    state.profileExtras = user ? await fetchProfileExtras(user) : createDefaultProfileExtras();
-    if (!user) {
-      closeProfileEditor();
-    } else {
-      prefillProfileEditor();
-    }
+const applyAuthUser = async (user) => {
+  const token = ++authUpdateToken;
+  state.user = user || null;
+  state.isAdmin = false;
+
+  if (!user) {
+    state.profileExtras = createDefaultProfileExtras();
+    closeProfileEditor();
     refreshHero();
     try {
       await renderAllSections();
     } catch (error) {
-      console.error('Failed to render profile sections after auth state change.', error);
+      console.error('Failed to render profile sections after sign-out.', error);
     }
-  });
+    return;
+  }
+
+  try {
+    state.isAdmin = await detectAdminStatus(user);
+  } catch (error) {
+    console.error('Failed to determine administrator status for profile view.', error);
+    state.isAdmin = false;
+  }
+
+  try {
+    state.profileExtras = await fetchProfileExtras(user);
+  } catch (error) {
+    console.error('Failed to refresh profile extras.', error);
+    state.profileExtras = createDefaultProfileExtras();
+  }
+
+  if (token !== authUpdateToken) {
+    return;
+  }
+
+  prefillProfileEditor();
+  refreshHero();
+  try {
+    await renderAllSections();
+  } catch (error) {
+    console.error('Failed to render profile sections after auth change.', error);
+  }
+};
+
+const initialise = () => {
+  attachEventHandlers();
+
+  applyAuthUser(getCurrentAuthUser());
+
+  ensureAuth().catch(() => null);
+
+  const routeflowAuth = window.RouteflowAuth;
+  if (routeflowAuth?.subscribe) {
+    routeflowAuth.subscribe((authUser) => {
+      applyAuthUser(authUser || null);
+    });
+    return;
+  }
+
+  ensureAuth()
+    .then((auth) => {
+      if (!auth || typeof auth.onAuthStateChanged !== 'function') {
+        applyAuthUser(getCurrentAuthUser());
+        return;
+      }
+      auth.onAuthStateChanged((authUser) => {
+        applyAuthUser(authUser || null);
+      });
+    })
+    .catch((error) => {
+      console.error('RouteFlow profile: failed to observe authentication state.', error);
+      applyAuthUser(getCurrentAuthUser());
+    });
 };
 
 if (document.readyState === 'loading') {

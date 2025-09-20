@@ -86,8 +86,6 @@ const resolveAdminStatus = (user, tokenResult) => {
   return fallbackHasOverride(user);
 };
 
-const FIREBASE_WAIT_TIMEOUT = 10000;
-const FIREBASE_POLL_INTERVAL = 100;
 const REDIRECT_DELAY = 4000;
 let redirectTimer = null;
 let storageListenerRegistered = false;
@@ -1065,6 +1063,52 @@ function renderAdminDashboard(user) {
     section.append(warning);
   }
 
+  const statsWrapper = document.createElement('div');
+  statsWrapper.className = 'admin-dashboard__stats';
+
+  const statMeta = [
+    {
+      icon: 'fa-solid fa-pen-nib',
+      label: 'Blog posts',
+      value: adminState.blogPosts.length
+    },
+    {
+      icon: 'fa-solid fa-route',
+      label: 'Withdrawn routes',
+      value: adminState.withdrawnRoutes.length
+    },
+    {
+      icon: 'fa-solid fa-tags',
+      label: 'Tag overrides',
+      value: adminState.routeTagOverrides.length
+    }
+  ];
+
+  statMeta.forEach((meta) => {
+    const card = document.createElement('article');
+    card.className = 'admin-stat';
+
+    const iconWrap = document.createElement('span');
+    iconWrap.className = 'admin-stat__icon';
+    const icon = document.createElement('i');
+    icon.className = meta.icon;
+    icon.setAttribute('aria-hidden', 'true');
+    iconWrap.append(icon);
+
+    const value = document.createElement('span');
+    value.className = 'admin-stat__value';
+    value.textContent = String(meta.value);
+
+    const label = document.createElement('span');
+    label.className = 'admin-stat__label';
+    label.textContent = meta.label;
+
+    card.append(iconWrap, value, label);
+    statsWrapper.append(card);
+  });
+
+  section.append(statsWrapper);
+
   const panels = document.createElement('div');
   panels.className = 'admin-panels';
 
@@ -1087,40 +1131,38 @@ function renderAdminDashboard(user) {
   }
 }
 
-function ensureFirebaseAuth() {
-  return new Promise((resolve, reject) => {
-    const start = Date.now();
-
-    const attempt = () => {
-      const fb = window.firebase;
-      if (fb && typeof fb.auth === 'function') {
-        try {
-          if (!fb.apps.length) {
-            const config = getFirebaseConfig();
-            if (!config) {
-              reject(new Error('Firebase configuration not available.'));
-              return;
-            }
-            fb.initializeApp(config);
-          }
-          const authInstance = fb.auth();
-          resolve(authInstance);
-        } catch (error) {
-          reject(error);
+function ensureAuthInstance() {
+  const routeflowAuth = window.RouteflowAuth;
+  if (routeflowAuth?.ensure) {
+    try {
+      return Promise.resolve(routeflowAuth.ensure());
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }
+  if (typeof window.ensureFirebaseAuth === 'function') {
+    try {
+      return Promise.resolve(window.ensureFirebaseAuth());
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }
+  const fb = window.firebase;
+  if (fb && typeof fb.auth === 'function') {
+    try {
+      if (!fb.apps.length) {
+        const config = getFirebaseConfig();
+        if (!config) {
+          return Promise.reject(new Error('Firebase configuration not available.'));
         }
-        return;
+        fb.initializeApp(config);
       }
-
-      if (Date.now() - start >= FIREBASE_WAIT_TIMEOUT) {
-        reject(new Error('Timed out waiting for Firebase Auth to load.'));
-        return;
-      }
-
-      window.setTimeout(attempt, FIREBASE_POLL_INTERVAL);
-    };
-
-    attempt();
-  });
+      return Promise.resolve(fb.auth());
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }
+  return Promise.resolve(null);
 }
 
 if (!adminContent) {
@@ -1129,31 +1171,43 @@ if (!adminContent) {
   showInfo('Checking your administrator access…');
 }
 
-ensureFirebaseAuth()
-  .then((auth) => {
-    auth.onAuthStateChanged(async (user) => {
-      if (!user) {
-        handleUnauthorized('You must be signed in as an administrator to view this page.');
+const handleAuthUser = async (user) => {
+  if (!user) {
+    handleUnauthorized('You must be signed in as an administrator to view this page.');
+    return;
+  }
+
+  showInfo('Verifying your administrator permissions…');
+
+  try {
+    const tokenResult = await user.getIdTokenResult();
+    if (resolveAdminStatus(user, tokenResult)) {
+      renderAdminDashboard(user);
+    } else {
+      handleUnauthorized('You are not authorized to access this page.');
+    }
+  } catch (error) {
+    console.error('Failed to retrieve administrator claims:', error);
+    showError('We could not verify your administrator permissions. Please try again later.');
+  }
+};
+
+const routeflowAuth = window.RouteflowAuth;
+
+if (routeflowAuth?.subscribe) {
+  routeflowAuth.subscribe(handleAuthUser);
+} else {
+  ensureAuthInstance()
+    .then((auth) => {
+      if (!auth || typeof auth.onAuthStateChanged !== 'function') {
+        showError('Authentication is currently unavailable. Please try again later.');
         return;
       }
-
-      showInfo('Verifying your administrator permissions…');
-
-      try {
-        const tokenResult = await user.getIdTokenResult();
-        if (resolveAdminStatus(user, tokenResult)) {
-          renderAdminDashboard(user);
-        } else {
-          handleUnauthorized('You are not authorized to access this page.');
-        }
-      } catch (error) {
-        console.error('Failed to retrieve administrator claims:', error);
-        showError('We could not verify your administrator permissions. Please try again later.');
-      }
+      auth.onAuthStateChanged(handleAuthUser);
+    })
+    .catch((error) => {
+      console.error('Failed to initialise authentication for the admin page:', error);
+      showError('Authentication is currently unavailable. Please try again later.');
     });
-  })
-  .catch((error) => {
-    console.error('Failed to initialise Firebase authentication for the admin page:', error);
-    showError('Authentication is currently unavailable. Please try again later.');
-  });
+}
 

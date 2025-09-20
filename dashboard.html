@@ -207,25 +207,7 @@
 
   <div class="dashboard-toast" id="dashboardToast" role="status" aria-live="polite" hidden></div>
 
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-  <script src="config.js"></script>
-  <script>
-    (function initialiseFirebase() {
-      const firebaseConfig = window.__ROUTEFLOW_CONFIG__?.firebase;
-      if (!firebaseConfig?.apiKey) {
-        console.error('Firebase configuration is missing. Dashboard authentication will be disabled.');
-        return;
-      }
-      if (typeof firebase === 'undefined') {
-        console.error('Firebase SDK not loaded. Dashboard authentication will be disabled.');
-        return;
-      }
-      if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-      }
-    })();
-  </script>
+  <script src="main.js" defer></script>
   <footer class="site-footer" aria-label="Footer">
     <div class="site-footer__inner">
       <div class="site-footer__brand">
@@ -259,8 +241,8 @@
     </div>
   </footer>
 
-  <script src="navbar-loader.js"></script>
-  <script src="auth-guard.js"></script>
+  <script src="navbar-loader.js" defer></script>
+  <script src="auth-guard.js" defer></script>
   <script type="module">
     import { getFavourites, removeFavourite } from './favourites.js';
     import { getRecents } from './recents.js';
@@ -1544,27 +1526,56 @@
       saveState();
     }
 
+    const handleAuthStateChange = (user) => {
+      if (user) {
+        if (guard) {
+          guard.unlock({ user });
+        } else {
+          handleUnlock(user);
+        }
+      } else {
+        if (guard) {
+          guard.lock({ reason: 'signed-out', force: true });
+        }
+        handleLock();
+      }
+    };
+
     function subscribeToAuth() {
-      if (typeof firebase === 'undefined' || !firebase?.auth) {
+      const routeflowAuth = window.RouteflowAuth;
+      if (routeflowAuth?.getCurrentUser) {
+        try {
+          handleAuthStateChange(routeflowAuth.getCurrentUser());
+        } catch (error) {
+          console.error('RouteFlow dashboard: failed to read initial auth state.', error);
+        }
+      }
+      if (routeflowAuth?.subscribe) {
+        routeflowAuth.subscribe(handleAuthStateChange);
+        return;
+      }
+
+      const ensure = routeflowAuth?.ensure || window.ensureFirebaseAuth;
+      if (typeof ensure !== 'function') {
         guard?.lock({ reason: 'auth-missing', force: true });
         handleLock();
         return;
       }
-      const auth = firebase.auth();
-      auth.onAuthStateChanged((user) => {
-        if (user) {
-          if (guard) {
-            guard.unlock({ user });
-          } else {
-            handleUnlock(user);
+
+      ensure()
+        .then((authInstance) => {
+          if (!authInstance || typeof authInstance.onAuthStateChanged !== 'function') {
+            guard?.lock({ reason: 'auth-missing', force: true });
+            handleLock();
+            return;
           }
-        } else {
-          if (guard) {
-            guard.lock({ reason: 'signed-out', force: true });
-          }
+          authInstance.onAuthStateChanged(handleAuthStateChange);
+        })
+        .catch((error) => {
+          console.error('RouteFlow dashboard: failed to observe authentication state.', error);
+          guard?.lock({ reason: 'auth-missing', force: true });
           handleLock();
-        }
-      });
+        });
     }
 
     document.addEventListener('click', (event) => {

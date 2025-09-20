@@ -556,8 +556,6 @@
     ></div>
 
     <script src="navbar-loader.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="main.js"></script>
     <script src="auth-guard.js"></script>
     <script>
@@ -585,7 +583,7 @@
           }
         });
 
-        const applyAuthState = (user) => {
+        const handleAuthStateChange = (user) => {
           if (user) {
             gate?.unlock({ user });
           } else {
@@ -593,13 +591,34 @@
           }
         };
 
-        if (typeof firebase === 'undefined' || !firebase?.auth) {
-          applyAuthState(null);
+        const routeflowAuth = window.RouteflowAuth;
+        const ensure = routeflowAuth?.ensure || window.ensureFirebaseAuth;
+
+        if (routeflowAuth?.getCurrentUser) {
+          try {
+            handleAuthStateChange(routeflowAuth.getCurrentUser());
+          } catch (error) {
+            console.error('RouteFlow fleet: failed to read initial auth state.', error);
+          }
+        }
+
+        if (routeflowAuth?.subscribe) {
+          routeflowAuth.subscribe(handleAuthStateChange);
+        } else if (typeof ensure === 'function') {
+          ensure()
+            .then((authInstance) => {
+              if (!authInstance || typeof authInstance.onAuthStateChanged !== 'function') {
+                handleAuthStateChange(null);
+                return;
+              }
+              authInstance.onAuthStateChanged(handleAuthStateChange);
+            })
+            .catch((error) => {
+              console.error('RouteFlow fleet: failed to observe authentication state.', error);
+              handleAuthStateChange(null);
+            });
         } else {
-          const auth = firebase.auth();
-          auth.onAuthStateChanged((user) => {
-            applyAuthState(user);
-          });
+          handleAuthStateChange(null);
         }
 
         const tabs = Array.from(document.querySelectorAll('[data-operator-tab]'));
