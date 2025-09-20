@@ -1,7 +1,11 @@
 (function () {
+  const systemThemeQuery = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+    ? window.matchMedia('(prefers-color-scheme: dark)')
+    : null;
+
   const STORAGE_KEY = 'routeflow:preferences';
   const DEFAULT_PREFERENCES = {
-    theme: 'light',
+    theme: systemThemeQuery?.matches ? 'dark' : 'light',
     accent: 'crimson',
     textScale: 1,
     highContrast: false,
@@ -82,6 +86,15 @@
     }
   };
 
+  const clearStorage = () => {
+    try {
+      if (typeof localStorage === 'undefined') return;
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (error) {
+      console.warn('Routeflow preferences: unable to clear preferences', error);
+    }
+  };
+
   const sanitise = (partial) => {
     const result = {};
 
@@ -130,9 +143,12 @@
 
   const loadPreferences = () => {
     const stored = safeParse(readStorage());
-    return mergePreferences(DEFAULT_PREFERENCES, sanitise(stored));
+    const sanitised = sanitise(stored);
+    themeLocked = Object.prototype.hasOwnProperty.call(sanitised, 'theme');
+    return mergePreferences(DEFAULT_PREFERENCES, sanitised);
   };
 
+  let themeLocked = false;
   let state = loadPreferences();
   const listeners = new Set();
 
@@ -212,6 +228,11 @@
     body.classList.toggle('dark-mode', state.theme === 'dark');
     document.documentElement.style.colorScheme = state.theme === 'dark' ? 'dark light' : 'light dark';
 
+    document.documentElement.dataset.theme = state.theme;
+    document.documentElement.dataset.accent = state.accent;
+    document.documentElement.dataset.highContrast = String(state.highContrast);
+    document.documentElement.dataset.reduceMotion = String(state.reduceMotion);
+
     applyHighContrast(root, body, state.highContrast);
     body.classList.toggle('readable-font', state.readableFont);
     applyReduceMotion(root, body, state.reduceMotion);
@@ -219,6 +240,15 @@
     const fontScale = clamp(Number(state.textScale) || DEFAULT_PREFERENCES.textScale, 0.9, 1.3);
     document.documentElement.style.fontSize = `${Math.round(fontScale * 100)}%`;
     root.style.setProperty('--font-scale', fontScale);
+    root.style.setProperty('--accent-key', state.accent);
+    document.documentElement.dataset.textScale = fontScale.toFixed(2);
+
+    body.dataset.theme = state.theme;
+    body.dataset.accent = state.accent;
+    body.dataset.highContrast = String(state.highContrast);
+    body.dataset.readableFont = String(state.readableFont);
+    body.dataset.reduceMotion = String(state.reduceMotion);
+    body.dataset.textScale = fontScale.toFixed(2);
   };
 
   const persist = () => {
@@ -227,6 +257,9 @@
 
   const setPreferences = (updates) => {
     const safeUpdates = sanitise(updates);
+    if (Object.prototype.hasOwnProperty.call(safeUpdates, 'theme')) {
+      themeLocked = true;
+    }
     state = mergePreferences(state, safeUpdates);
     persist();
     applyPreferences();
@@ -234,8 +267,13 @@
   };
 
   const resetPreferences = () => {
+    themeLocked = false;
     state = { ...DEFAULT_PREFERENCES };
-    persist();
+    if (systemThemeQuery) {
+      const preferred = systemThemeQuery.matches ? 'dark' : 'light';
+      state = mergePreferences(state, { theme: preferred });
+    }
+    clearStorage();
     applyPreferences();
     notify();
   };
@@ -270,6 +308,28 @@
       notify();
     }
   };
+
+  const applySystemTheme = (matches) => {
+    if (themeLocked) {
+      return;
+    }
+    const preferred = matches ? 'dark' : 'light';
+    if (state.theme === preferred) {
+      return;
+    }
+    state = mergePreferences(state, { theme: preferred });
+    applyPreferences();
+    notify();
+  };
+
+  if (systemThemeQuery) {
+    const handleSystemThemeChange = (event) => applySystemTheme(event.matches);
+    if (typeof systemThemeQuery.addEventListener === 'function') {
+      systemThemeQuery.addEventListener('change', handleSystemThemeChange);
+    } else if (typeof systemThemeQuery.addListener === 'function') {
+      systemThemeQuery.addListener(handleSystemThemeChange);
+    }
+  }
 
   window.addEventListener('storage', (event) => {
     if (event.key === STORAGE_KEY) {
