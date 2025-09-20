@@ -42,6 +42,18 @@
       <h2 class="auth-modal__title">Join RouteFlow London</h2>
       <p class="auth-modal__subtitle">Create an account to sync favourites and preferences everywhere.</p>
       <form id="signupForm" class="auth-modal__form" autocomplete="off">
+        <label class="auth-modal__field" for="signupDisplayName">
+          <span>Name</span>
+          <input
+            type="text"
+            id="signupDisplayName"
+            name="signupDisplayName"
+            required
+            autocomplete="name"
+            maxlength="80"
+            placeholder="How should RouteFlow address you?"
+          />
+        </label>
         <label class="auth-modal__field" for="signupEmail">
           <span>Email</span>
           <input

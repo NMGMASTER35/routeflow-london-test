@@ -35,6 +35,41 @@ const listElements = {
   preferences: document.getElementById('profilePreferences')
 };
 
+const normaliseProfileText = (value) => (typeof value === 'string' ? value.trim() : '');
+
+const getFirebaseProfileApi = () => window.RouteflowFirebase || null;
+
+const getCachedFirebaseProfile = (uid) => {
+  if (!uid) return null;
+  const api = getFirebaseProfileApi();
+  if (!api?.getCachedProfile) return null;
+  try {
+    const profile = api.getCachedProfile(uid);
+    return profile && typeof profile === 'object' ? { ...profile } : null;
+  } catch (error) {
+    console.warn('RouteFlow profile: unable to read cached Firebase profile.', error);
+    return null;
+  }
+};
+
+const ensureFirebaseProfile = async (user, overrides = {}) => {
+  if (!user) return null;
+  const api = getFirebaseProfileApi();
+  if (!api?.ensureProfile) {
+    return getCachedFirebaseProfile(user.uid);
+  }
+  try {
+    const profile = await api.ensureProfile(user, overrides);
+    if (profile && typeof profile === 'object') {
+      return { ...profile };
+    }
+    return getCachedFirebaseProfile(user.uid);
+  } catch (error) {
+    console.warn('RouteFlow profile: failed to synchronise Firebase profile document.', error);
+    return getCachedFirebaseProfile(user.uid);
+  }
+};
+
 const addNoteButton = document.getElementById('addNoteBtn');
 
 const editorElements = {
@@ -48,6 +83,16 @@ const editorElements = {
   cancelButton: document.getElementById('profileEditorCancel')
 };
 
+const noteModalElements = {
+  container: document.getElementById('profileNoteModal'),
+  form: document.getElementById('profileNoteForm'),
+  name: document.getElementById('profileNoteName'),
+  content: document.getElementById('profileNoteContent'),
+  error: document.getElementById('profileNoteError'),
+  saveButton: document.getElementById('profileNoteSave'),
+  cancelButton: document.getElementById('profileNoteCancel')
+};
+
 const PROFILE_ENDPOINT =
   (typeof window !== 'undefined' && window.RouteflowProfile?.endpoint) || '/api/profile';
 const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024;
@@ -59,7 +104,8 @@ const createDefaultProfileExtras = () => ({
 const state = {
   user: null,
   isAdmin: false,
-  profileExtras: createDefaultProfileExtras()
+  profileExtras: createDefaultProfileExtras(),
+  profileDocument: null
 };
 
 const resolveEnsureFunction = () => {
@@ -189,7 +235,9 @@ const setEditorBusy = (busy) => {
 };
 
 const prefillProfileEditor = () => {
-  const displayName = state.user?.displayName?.trim() || '';
+  const displayName = normaliseProfileText(state.profileDocument?.displayName)
+    || normaliseProfileText(state.user?.displayName)
+    || '';
   const gender = state.profileExtras?.gender || '';
   if (editorElements.displayName) {
     editorElements.displayName.value = displayName;
@@ -231,6 +279,117 @@ const closeProfileEditor = () => {
   document.body.classList.remove('modal-open');
   document.removeEventListener('keydown', handleEditorKeydown);
   prefillProfileEditor();
+};
+
+const isNoteModalBusy = () => noteModalElements.form?.getAttribute('aria-busy') === 'true';
+
+const clearNoteModalError = () => {
+  if (noteModalElements.error) {
+    noteModalElements.error.textContent = '';
+  }
+};
+
+const showNoteModalError = (message) => {
+  if (noteModalElements.error) {
+    noteModalElements.error.textContent = message || '';
+  }
+};
+
+const setNoteModalBusy = (busy) => {
+  if (noteModalElements.form) {
+    noteModalElements.form.setAttribute('aria-busy', busy ? 'true' : 'false');
+  }
+  [noteModalElements.saveButton, noteModalElements.cancelButton].forEach((button) => {
+    if (!button) return;
+    if (busy) {
+      button.setAttribute('disabled', '');
+    } else {
+      button.removeAttribute('disabled');
+    }
+  });
+};
+
+const resetNoteModal = () => {
+  noteModalElements.form?.reset();
+  clearNoteModalError();
+  setNoteModalBusy(false);
+};
+
+const handleNoteModalKeydown = (event) => {
+  if (event.key === 'Escape' && noteModalElements.container && !noteModalElements.container.hidden && !isNoteModalBusy()) {
+    event.preventDefault();
+    closeNoteModal();
+  }
+};
+
+const openNoteModal = () => {
+  if (!state.user) {
+    alert('Sign in to add notes to your profile.');
+    return;
+  }
+  if (!noteModalElements.container) return;
+  resetNoteModal();
+  noteModalElements.container.hidden = false;
+  noteModalElements.container.removeAttribute('aria-hidden');
+  document.body.classList.add('modal-open');
+  window.requestAnimationFrame(() => {
+    noteModalElements.name?.focus();
+  });
+  document.addEventListener('keydown', handleNoteModalKeydown);
+};
+
+const closeNoteModal = () => {
+  if (!noteModalElements.container) return;
+  noteModalElements.container.hidden = true;
+  noteModalElements.container.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('modal-open');
+  setNoteModalBusy(false);
+  document.removeEventListener('keydown', handleNoteModalKeydown);
+  resetNoteModal();
+};
+
+const handleNoteFormSubmit = async (event) => {
+  event.preventDefault();
+  clearNoteModalError();
+
+  if (!state.user) {
+    showNoteModalError('Sign in to save notes to your profile.');
+    return;
+  }
+
+  const name = normaliseProfileText(noteModalElements.name?.value);
+  const text = normaliseProfileText(noteModalElements.content?.value);
+
+  if (!name) {
+    showNoteModalError('Give your note a short title.');
+    noteModalElements.name?.focus();
+    return;
+  }
+
+  if (!text) {
+    showNoteModalError('Add some details to your note.');
+    noteModalElements.content?.focus();
+    return;
+  }
+
+  setNoteModalBusy(true);
+
+  try {
+    await addNote(state.user.uid, { name, text });
+  } catch (error) {
+    console.error('Failed to add note for profile view.', error);
+    showNoteModalError('We could not save this note. Please try again.');
+    setNoteModalBusy(false);
+    return;
+  }
+
+  closeNoteModal();
+
+  try {
+    await renderAllSections();
+  } catch (error) {
+    console.error('Failed to refresh profile after adding note.', error);
+  }
 };
 
 const getEditorValues = () => ({
@@ -386,6 +545,13 @@ const handleProfileEditorSubmit = async (event) => {
       photoURL: photoURL || null
     });
 
+    try {
+      await ensureFirebaseProfile(state.user, { displayName: values.displayName || null });
+      state.profileDocument = await ensureFirebaseProfile(state.user);
+    } catch (profileSyncError) {
+      console.warn('RouteFlow profile: unable to update Firebase profile metadata.', profileSyncError);
+    }
+
     if (values.gender !== (state.profileExtras?.gender || '')) {
       await persistProfileExtras(state.user, { gender: values.gender });
     }
@@ -408,6 +574,11 @@ const handleProfileEditorSubmit = async (event) => {
     }
     if (refreshedUser) {
       state.user = refreshedUser;
+      try {
+        state.profileDocument = await ensureFirebaseProfile(refreshedUser);
+      } catch (refreshProfileError) {
+        console.warn('RouteFlow profile: unable to refresh Firebase profile after reload.', refreshProfileError);
+      }
     }
 
     state.profileExtras = {
@@ -758,7 +929,11 @@ const refreshHero = () => {
   }
 
   const { user, isAdmin } = state;
-  const displayName = user.displayName?.trim() || '';
+  const profileData = state.profileDocument || (user?.uid ? getCachedFirebaseProfile(user.uid) : null);
+  const emailHandle = normaliseProfileText(user.email?.split('@')?.[0]);
+  const displayName = normaliseProfileText(profileData?.displayName)
+    || normaliseProfileText(user.displayName)
+    || emailHandle;
   const emailAddress = user.email || '';
   const username = deriveUsername(user);
 
@@ -772,7 +947,7 @@ const refreshHero = () => {
   }
 
   if (heroElements.name) {
-    heroElements.name.textContent = displayName || emailAddress || 'RouteFlow member';
+    heroElements.name.textContent = displayName ? `Welcome, ${displayName}` : 'Welcome aboard';
   }
 
   if (heroElements.username) {
@@ -820,6 +995,9 @@ const refreshHero = () => {
 
 const detectAdminStatus = async (user) => {
   if (!user) return false;
+  if (state.profileDocument?.roles?.admin) {
+    return true;
+  }
   try {
     const tokenResult = await user.getIdTokenResult();
     if (window.RouteflowAdmin?.isAdminUser) {
@@ -923,39 +1101,35 @@ const attachEventHandlers = () => {
   }
 
   if (addNoteButton) {
-    addNoteButton.addEventListener('click', async () => {
-      if (!state.user) {
-        alert('Sign in to add notes to your profile.');
-        return;
-      }
-      const titleInput = prompt('What would you like to call this note?', 'New note');
-      if (!titleInput) return;
-      const name = titleInput.trim();
-      if (!name) {
-        alert('Your note title cannot be empty.');
-        return;
-      }
-      const textInput = prompt('Add your note details:');
-      if (!textInput) return;
-      const noteText = textInput.trim();
-      if (!noteText) {
-        alert('Your note cannot be empty.');
-        return;
-      }
-      try {
-        await addNote(state.user.uid, { name, text: noteText });
-      } catch (error) {
-        console.error('Failed to add note for profile view.', error);
-        alert('We could not save this note. Please try again.');
-        return;
-      }
-      try {
-        await renderAllSections();
-      } catch (error) {
-        console.error('Failed to refresh profile after adding note.', error);
-      }
+    addNoteButton.addEventListener('click', (event) => {
+      event.preventDefault();
+      openNoteModal();
     });
   }
+
+  if (noteModalElements.form) {
+    noteModalElements.form.addEventListener('submit', handleNoteFormSubmit);
+  }
+
+  if (noteModalElements.container) {
+    noteModalElements.container.addEventListener('click', (event) => {
+      const dismissTarget = event.target.closest('[data-note-modal-dismiss]');
+      if (!dismissTarget || isNoteModalBusy()) {
+        return;
+      }
+      event.preventDefault();
+      closeNoteModal();
+    });
+  }
+
+  ['name', 'content'].forEach((key) => {
+    const field = noteModalElements[key];
+    field?.addEventListener('input', () => {
+      if (noteModalElements.error?.textContent) {
+        clearNoteModalError();
+      }
+    });
+  });
 };
 
 let authUpdateToken = 0;
@@ -964,6 +1138,7 @@ const applyAuthUser = async (user) => {
   const token = ++authUpdateToken;
   state.user = user || null;
   state.isAdmin = false;
+  state.profileDocument = null;
 
   if (!user) {
     state.profileExtras = createDefaultProfileExtras();
@@ -978,7 +1153,15 @@ const applyAuthUser = async (user) => {
   }
 
   try {
-    state.isAdmin = await detectAdminStatus(user);
+    state.profileDocument = await ensureFirebaseProfile(user);
+  } catch (error) {
+    console.error('Failed to synchronise Firebase profile for profile view.', error);
+    state.profileDocument = getCachedFirebaseProfile(user.uid);
+  }
+
+  try {
+    const adminFromProfile = Boolean(state.profileDocument?.roles?.admin);
+    state.isAdmin = adminFromProfile || await detectAdminStatus(user);
   } catch (error) {
     console.error('Failed to determine administrator status for profile view.', error);
     state.isAdmin = false;

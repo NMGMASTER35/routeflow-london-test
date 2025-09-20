@@ -43,8 +43,15 @@ const adminState = {
 const adminViews = {
   withdrawn: null,
   tags: null,
-  blog: null
+  blog: null,
+  roles: null
 };
+
+const EMAIL_REGEX = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+
+const getFirebaseRolesApi = () => window.RouteflowFirebase || null;
+
+const formatDisplayName = (value) => (typeof value === 'string' ? value.trim() : '');
 
 const normaliseEmail = (value) => (typeof value === 'string' ? value.trim().toLowerCase() : '');
 
@@ -414,6 +421,223 @@ function createWithdrawnPanel() {
   return {
     element: panel,
     refresh
+  };
+}
+
+function createRolePanel(currentUser, options = {}) {
+  const { onAdminCountChange } = options;
+  const panel = document.createElement('section');
+  panel.className = 'admin-panel';
+  panel.setAttribute('aria-labelledby', 'rolesPanelHeading');
+
+  const header = document.createElement('div');
+  header.className = 'admin-panel__header';
+
+  const heading = document.createElement('h2');
+  heading.id = 'rolesPanelHeading';
+  heading.textContent = 'Role management';
+
+  const description = document.createElement('p');
+  description.className = 'admin-panel__description';
+  description.textContent = 'Promote trusted members to administrators and track their Discord connections.';
+
+  header.append(heading, description);
+  panel.append(header);
+
+  const feedback = createFeedbackElement();
+  panel.append(feedback);
+
+  const rolesApi = getFirebaseRolesApi();
+  if (!rolesApi?.assignAdminRole || !rolesApi?.findProfileByEmail || !rolesApi?.listAdmins) {
+    const warning = document.createElement('p');
+    warning.className = 'admin-empty';
+    warning.textContent = 'Firebase role controls are unavailable. Connect RouteflowFirebase to manage administrators.';
+    panel.append(warning);
+    if (typeof onAdminCountChange === 'function') {
+      onAdminCountChange(null);
+    }
+    return { element: panel, refresh: () => {} };
+  }
+
+  const form = document.createElement('form');
+  form.className = 'admin-form';
+  form.noValidate = true;
+
+  const grid = document.createElement('div');
+  grid.className = 'admin-form__grid admin-form__grid--compact';
+
+  const emailGroup = document.createElement('div');
+  emailGroup.className = 'admin-form__group';
+  const emailLabel = document.createElement('label');
+  emailLabel.setAttribute('for', 'adminRoleEmail');
+  emailLabel.textContent = 'Member email';
+  const emailInput = document.createElement('input');
+  emailInput.type = 'email';
+  emailInput.id = 'adminRoleEmail';
+  emailInput.name = 'email';
+  emailInput.placeholder = 'name@example.com';
+  emailInput.required = true;
+  emailGroup.append(emailLabel, emailInput);
+
+  const noteGroup = document.createElement('div');
+  noteGroup.className = 'admin-form__group';
+  const noteLabel = document.createElement('label');
+  noteLabel.setAttribute('for', 'adminRoleNote');
+  noteLabel.textContent = 'Notes (optional)';
+  const noteInput = document.createElement('input');
+  noteInput.type = 'text';
+  noteInput.id = 'adminRoleNote';
+  noteInput.name = 'note';
+  noteInput.placeholder = 'Reason for access or context';
+  noteGroup.append(noteLabel, noteInput);
+
+  grid.append(emailGroup, noteGroup);
+  form.append(grid);
+
+  const actions = document.createElement('div');
+  actions.className = 'admin-form__actions';
+  const submit = document.createElement('button');
+  submit.type = 'submit';
+  submit.className = 'button admin-button';
+  submit.textContent = 'Grant admin access';
+  actions.append(submit);
+  form.append(actions);
+  panel.append(form);
+
+  const listWrapper = document.createElement('div');
+  listWrapper.className = 'admin-role-list';
+  panel.append(listWrapper);
+
+  const renderList = async () => {
+    const api = getFirebaseRolesApi();
+    listWrapper.innerHTML = '';
+    if (!api?.listAdmins) {
+      const info = document.createElement('p');
+      info.className = 'admin-empty';
+      info.textContent = 'Role data is unavailable at the moment.';
+      listWrapper.append(info);
+      if (typeof onAdminCountChange === 'function') {
+        onAdminCountChange(null);
+      }
+      return;
+    }
+    listWrapper.setAttribute('aria-busy', 'true');
+    if (typeof onAdminCountChange === 'function') {
+      onAdminCountChange('loading');
+    }
+    let admins = [];
+    try {
+      admins = await api.listAdmins();
+    } catch (error) {
+      console.error('Failed to load administrator list.', error);
+      const errorMessage = document.createElement('p');
+      errorMessage.className = 'admin-empty';
+      errorMessage.textContent = 'Unable to load administrators. Try again later.';
+      listWrapper.append(errorMessage);
+      listWrapper.removeAttribute('aria-busy');
+      if (typeof onAdminCountChange === 'function') {
+        onAdminCountChange(null);
+      }
+      return;
+    }
+    listWrapper.removeAttribute('aria-busy');
+    if (!admins.length) {
+      const empty = document.createElement('p');
+      empty.className = 'admin-empty';
+      empty.textContent = 'No administrators have been registered yet.';
+      listWrapper.append(empty);
+      if (typeof onAdminCountChange === 'function') {
+        onAdminCountChange(0);
+      }
+      return;
+    }
+    const list = document.createElement('ul');
+    list.className = 'admin-role-list__items';
+    admins.forEach((profile) => {
+      const item = document.createElement('li');
+      item.className = 'admin-role-list__item';
+      const title = document.createElement('strong');
+      const name = formatDisplayName(profile.displayName) || formatDisplayName(profile.email) || profile.uid;
+      title.textContent = name;
+      const meta = document.createElement('p');
+      meta.className = 'admin-role-list__meta';
+      const details = [];
+      if (profile.email) {
+        details.push(profile.email);
+      }
+      const discordName = formatDisplayName(profile.discord?.displayName || profile.discord?.username);
+      if (discordName) {
+        details.push(`Discord: ${discordName}`);
+      }
+      const assignment = profile.roleAssignments?.admin;
+      if (assignment?.assignedByName) {
+        const byEmail = assignment.assignedByEmail ? ` (${assignment.assignedByEmail})` : '';
+        details.push(`Assigned by ${assignment.assignedByName}${byEmail}`);
+      }
+      meta.textContent = details.join(' • ');
+      item.append(title, meta);
+      list.append(item);
+    });
+    listWrapper.append(list);
+    if (typeof onAdminCountChange === 'function') {
+      onAdminCountChange(admins.length);
+    }
+  };
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const api = getFirebaseRolesApi();
+    if (!api?.assignAdminRole || !api?.findProfileByEmail) {
+      updateFeedback(feedback, 'Role management is currently unavailable.', 'error');
+      return;
+    }
+    const emailValue = formatDisplayName(emailInput.value).toLowerCase();
+    const noteValue = formatDisplayName(noteInput.value);
+    if (!emailValue || !EMAIL_REGEX.test(emailValue)) {
+      updateFeedback(feedback, 'Enter a valid email address to promote.', 'error');
+      emailInput.focus();
+      return;
+    }
+    submit.setAttribute('disabled', '');
+    updateFeedback(feedback, 'Looking up member…', 'info');
+    let profile = null;
+    try {
+      profile = await api.findProfileByEmail(emailValue);
+    } catch (lookupError) {
+      console.error('Failed to lookup profile for admin promotion.', lookupError);
+      updateFeedback(feedback, 'Unable to look up that member right now. Try again later.', 'error');
+      submit.removeAttribute('disabled');
+      return;
+    }
+    if (!profile) {
+      updateFeedback(feedback, 'No profile was found for that email. Ask the member to sign in first.', 'error');
+      submit.removeAttribute('disabled');
+      return;
+    }
+    try {
+      await api.assignAdminRole(profile.uid, {
+        assignedBy: currentUser?.uid || null,
+        assignedByEmail: formatDisplayName(currentUser?.email) || null,
+        assignedByName: formatDisplayName(currentUser?.displayName) || formatDisplayName(currentUser?.email),
+        note: noteValue || null
+      });
+      const promotedName = formatDisplayName(profile.displayName) || profile.email || profile.uid;
+      updateFeedback(feedback, `${promotedName} now has administrator access.`, 'success');
+      form.reset();
+      renderList();
+    } catch (assignError) {
+      console.error('Failed to assign admin role.', assignError);
+      updateFeedback(feedback, assignError?.message || 'Unable to update roles right now.', 'error');
+    } finally {
+      submit.removeAttribute('disabled');
+    }
+  });
+
+  renderList();
+
+  return {
+    element: panel,
+    refresh: renderList
   };
 }
 
@@ -1081,9 +1305,16 @@ function renderAdminDashboard(user) {
       icon: 'fa-solid fa-tags',
       label: 'Tag overrides',
       value: adminState.routeTagOverrides.length
+    },
+    {
+      icon: 'fa-solid fa-user-shield',
+      label: 'Administrators',
+      value: '…',
+      id: 'admins'
     }
   ];
 
+  const statRefs = new Map();
   statMeta.forEach((meta) => {
     const card = document.createElement('article');
     card.className = 'admin-stat';
@@ -1105,6 +1336,9 @@ function renderAdminDashboard(user) {
 
     card.append(iconWrap, value, label);
     statsWrapper.append(card);
+    if (meta.id) {
+      statRefs.set(meta.id, value);
+    }
   });
 
   section.append(statsWrapper);
@@ -1115,12 +1349,44 @@ function renderAdminDashboard(user) {
   const blogManager = createBlogPanel();
   const withdrawnManager = createWithdrawnPanel();
   const tagManager = createTagOverridePanel();
+  const updateAdminCount = (count) => {
+    const target = statRefs.get('admins');
+    if (!target) {
+      return;
+    }
+    if (count === 'loading') {
+      target.textContent = '…';
+      return;
+    }
+    if (typeof count === 'number' && Number.isFinite(count)) {
+      target.textContent = String(count);
+      return;
+    }
+    target.textContent = '—';
+  };
+
+  updateAdminCount('loading');
+
+  const roleManager = createRolePanel(user, {
+    onAdminCountChange: (value) => {
+      if (value === 'loading') {
+        updateAdminCount('loading');
+        return;
+      }
+      if (typeof value === 'number') {
+        updateAdminCount(value);
+        return;
+      }
+      updateAdminCount(null);
+    }
+  });
 
   adminViews.blog = blogManager;
   adminViews.withdrawn = withdrawnManager;
   adminViews.tags = tagManager;
+  adminViews.roles = roleManager;
 
-  panels.append(blogManager.element, withdrawnManager.element, tagManager.element);
+  panels.append(roleManager.element, blogManager.element, withdrawnManager.element, tagManager.element);
   section.append(panels);
 
   replaceContent(section);
