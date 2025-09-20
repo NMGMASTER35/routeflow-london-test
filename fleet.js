@@ -525,7 +525,17 @@
   }
 
   async function fetchFleetStateFromApi() {
-    return requestJson("/fleet");
+    try {
+      return await requestJson("/fleet");
+    } catch (error) {
+      if (error?.status === 404) {
+        console.warn(
+          "Fleet API unavailable (404). Falling back to bundled dataset.",
+        );
+        return clone(DEFAULT_STATE);
+      }
+      throw error;
+    }
   }
 
   async function submitFleetUpdateToApi(bus) {
