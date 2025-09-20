@@ -18,36 +18,45 @@
   <main id="main-content" class="blog-shell" aria-labelledby="infoTitle">
     <section class="blog-hero card">
       <div class="blog-hero__content">
-        <p class="blog-hero__eyebrow">RouteFlow info</p>
-        <h1 id="infoTitle">Your briefing room for confident journeys across London transport.</h1>
-        <p>Browse explainers, enthusiast research and release notes in one organised hub. Use the quick links or search to jump straight to what matters.</p>
-        <div class="blog-hero__actions" role="group" aria-label="Jump to popular topics">
+        <p class="blog-hero__eyebrow">Info hub</p>
+        <h1 id="infoTitle">RouteFlow London's knowledge centre for live news and deep dives.</h1>
+        <p>Catch breaking network updates, learn about the operators behind the fleet, and explore enthusiast guides all from one organised space.</p>
+        <div class="blog-hero__actions" role="group" aria-label="Jump to featured topics">
           <a
             class="blog-hero__action"
             href="#infoCollections"
             data-blog-category-group="blogFilters"
-            data-blog-category-link="Learn about bus models"
-          >
-            <i class="fa-solid fa-bus" aria-hidden="true"></i>
-            <span>Bus models</span>
-          </a>
-          <a
-            class="blog-hero__action"
-            href="#infoCollections"
-            data-blog-category-group="blogFilters"
-            data-blog-category-link="New London Consultations"
-          >
-            <i class="fa-solid fa-scroll" aria-hidden="true"></i>
-            <span>Consultations</span>
-          </a>
-          <a
-            class="blog-hero__action"
-            href="#infoCollections"
-            data-blog-category-group="blogFilters"
-            data-blog-category-link="Weekly London Transport News"
+            data-blog-category-link="Live News"
           >
             <i class="fa-solid fa-newspaper" aria-hidden="true"></i>
-            <span>Weekly news</span>
+            <span>Live news</span>
+          </a>
+          <a
+            class="blog-hero__action"
+            href="#infoCollections"
+            data-blog-category-group="blogFilters"
+            data-blog-category-link="Operators"
+          >
+            <i class="fa-solid fa-people-group" aria-hidden="true"></i>
+            <span>Operators</span>
+          </a>
+          <a
+            class="blog-hero__action"
+            href="#infoCollections"
+            data-blog-category-group="blogFilters"
+            data-blog-category-link="Models"
+          >
+            <i class="fa-solid fa-bus" aria-hidden="true"></i>
+            <span>Models</span>
+          </a>
+          <a
+            class="blog-hero__action"
+            href="#infoCollections"
+            data-blog-category-group="blogFilters"
+            data-blog-category-link="Guides"
+          >
+            <i class="fa-solid fa-compass" aria-hidden="true"></i>
+            <span>Guides</span>
           </a>
         </div>
       </div>
@@ -80,9 +89,10 @@
           aria-label="Filter info briefs by category"
         >
           <button type="button" class="blog-filter" data-blog-filter="all" data-active="true" role="tab" aria-selected="true">All briefs</button>
-          <button type="button" class="blog-filter" data-blog-filter="Learn about bus models" role="tab" aria-selected="false">Learn about bus models</button>
-          <button type="button" class="blog-filter" data-blog-filter="New London Consultations" role="tab" aria-selected="false">New London Consultations</button>
-          <button type="button" class="blog-filter" data-blog-filter="Weekly London Transport News" role="tab" aria-selected="false">Weekly London Transport News</button>
+          <button type="button" class="blog-filter" data-blog-filter="Live News" role="tab" aria-selected="false">Live news</button>
+          <button type="button" class="blog-filter" data-blog-filter="Operators" role="tab" aria-selected="false">Operators</button>
+          <button type="button" class="blog-filter" data-blog-filter="Models" role="tab" aria-selected="false">Models</button>
+          <button type="button" class="blog-filter" data-blog-filter="Guides" role="tab" aria-selected="false">Guides</button>
         </div>
         <p class="blog-collections__hint">Tip: combine a category with search to get straight to the right brief.</p>
       </aside>
@@ -106,34 +116,49 @@
     <section class="blog-spotlights">
       <article class="blog-spotlight card">
         <div class="blog-spotlight__header">
-          <p class="blog-hero__eyebrow">Deep dives</p>
-          <h2>Bus model deep dives</h2>
-          <p>Get to know the newest zero-emission types, refurbishment programmes and enthusiast favourites on the road.</p>
+          <p class="blog-hero__eyebrow">Live updates</p>
+          <h2>Network headlines</h2>
+          <p>Stay ahead of service changes, disruptions and rare workings with our live news snapshots.</p>
         </div>
-        <div class="blog-spotlight__list" data-blog-list data-blog-variant="compact" data-blog-limit="3" data-blog-tags="Learn about bus models" data-blog-empty="Model spotlights are on their way."></div>
-        <a class="blog-spotlight__link" href="#blogFilters" data-blog-category-group="blogFilters" data-blog-category-link="Learn about bus models">Show all model briefs</a>
+        <div class="blog-spotlight__list" data-blog-list data-blog-variant="compact" data-blog-limit="3" data-blog-tags="Live News" data-blog-empty="Live updates will appear here soon."></div>
+        <a class="blog-spotlight__link" href="#blogFilters" data-blog-category-group="blogFilters" data-blog-category-link="Live News">See all live news</a>
       </article>
 
       <article class="blog-spotlight card">
         <div class="blog-spotlight__header">
-          <p class="blog-hero__eyebrow">Consultations</p>
-          <h2>New London consultations</h2>
-          <p>Track proposals and service changes so you can prepare for what the network might look like next.</p>
+          <p class="blog-hero__eyebrow">Operators</p>
+          <h2>Operator insights</h2>
+          <p>Understand who runs the capital's routes, depot moves and allocation tweaks shaping everyday journeys.</p>
         </div>
-        <div class="blog-spotlight__list" data-blog-list data-blog-variant="compact" data-blog-limit="3" data-blog-tags="New London Consultations" data-blog-empty="Consultation coverage will appear here soon."></div>
-        <a class="blog-spotlight__link" href="#blogFilters" data-blog-category-group="blogFilters" data-blog-category-link="New London Consultations">See consultation updates</a>
+        <div class="blog-spotlight__list" data-blog-list data-blog-variant="compact" data-blog-limit="3" data-blog-tags="Operators" data-blog-empty="Operator briefings are coming soon."></div>
+        <a class="blog-spotlight__link" href="#blogFilters" data-blog-category-group="blogFilters" data-blog-category-link="Operators">Browse operator stories</a>
       </article>
 
       <article class="blog-spotlight card">
         <div class="blog-spotlight__header">
-          <p class="blog-hero__eyebrow">Roundup</p>
-          <h2>Weekly London transport news</h2>
-          <p>Crisp roundups pull together service changes, rare workings and stories worth sharing each week.</p>
+          <p class="blog-hero__eyebrow">Fleet focus</p>
+          <h2>Model guides</h2>
+          <p>Explore the buses, trams and stock types on the network with visuals, allocations and enthusiast notes.</p>
         </div>
-        <div class="blog-spotlight__list" data-blog-list data-blog-variant="compact" data-blog-limit="3" data-blog-tags="Weekly London Transport News" data-blog-empty="Weekly roundups will appear once published."></div>
-        <a class="blog-spotlight__link" href="#blogFilters" data-blog-category-group="blogFilters" data-blog-category-link="Weekly London Transport News">View weekly news briefs</a>
+        <div class="blog-spotlight__list" data-blog-list data-blog-variant="compact" data-blog-limit="3" data-blog-tags="Models" data-blog-empty="Model spotlights are on their way."></div>
+        <a class="blog-spotlight__link" href="#blogFilters" data-blog-category-group="blogFilters" data-blog-category-link="Models">Show all model guides</a>
       </article>
     </section>
+  <div class="blog-modal" id="blogModal" hidden>
+    <div class="blog-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="blogModalTitle">
+      <button type="button" class="blog-modal__close" id="blogModalClose" aria-label="Close info brief">
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+      </button>
+      <figure class="blog-modal__media" id="blogModalMedia" hidden></figure>
+      <div class="blog-modal__body">
+        <h2 class="blog-modal__title" id="blogModalTitle"></h2>
+        <p class="blog-modal__meta" id="blogModalMeta"></p>
+        <div class="blog-modal__tags" id="blogModalTags"></div>
+        <div class="blog-modal__content" id="blogModalContent"></div>
+      </div>
+    </div>
+  </div>
+
   </main>
 
   <footer class="site-footer" aria-label="Footer">
