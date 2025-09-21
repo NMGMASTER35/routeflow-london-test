@@ -84,14 +84,19 @@
 
   function applySummaryToNavbar(navRoot, summary) {
     if (!navRoot) return;
-    const displayName = summary?.displayName || summary?.email || 'Account';
+    const email = typeof summary?.email === 'string' ? summary.email.trim() : '';
+    const preferredName = summary?.displayName?.trim();
+    const fallbackName = email ? email.split('@')[0] : '';
+    const rawName = preferredName || fallbackName;
+    const displayName = rawName || 'Explorer';
+    const greeting = `Welcome, ${displayName}`;
 
     navRoot.querySelectorAll('[data-profile-label]').forEach((label) => {
-      label.textContent = displayName;
+      label.textContent = greeting;
     });
 
     navRoot.querySelectorAll('[data-profile-name]').forEach((label) => {
-      label.textContent = displayName;
+      label.textContent = greeting;
     });
 
     navRoot.querySelectorAll('[data-profile-email]').forEach((emailEl) => {

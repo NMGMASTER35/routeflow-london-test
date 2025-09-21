@@ -5,8 +5,8 @@
 
   const STORAGE_KEY = 'routeflow:preferences';
   const DEFAULT_PREFERENCES = {
-    theme: systemThemeQuery?.matches ? 'dark' : 'light',
-    accent: 'crimson',
+    theme: 'light',
+    accent: 'routeflow',
     textScale: 1,
     highContrast: false,
     readableFont: false,
@@ -14,44 +14,28 @@
   };
 
   const DEFAULT_TOKENS = {
-    '--primary': '#d32f2f',
-    '--primary-dark': '#b71c1c',
-    '--accent-blue': '#2979ff',
-    '--accent-blue-dark': '#1565c0',
+    '--primary': '#003688',
+    '--primary-dark': '#002a5c',
+    '--accent-blue': '#003688',
+    '--accent-blue-dark': '#002a5c',
+    '--accent-red': '#d32f2f',
+    '--accent-red-dark': '#a61c1c',
     '--background-light': '#ffffff',
-    '--foreground-light': '#171717',
-    '--background-dark': '#121212',
-    '--foreground-dark': '#fafafa',
-    '--card-bg-light': '#f6f8fa',
-    '--card-bg-dark': '#232323',
-    '--transition': '0.2s cubic-bezier(.46,.03,.52,.96)'
+    '--foreground-light': '#0b1f4b',
+    '--background-dark': '#ffffff',
+    '--foreground-dark': '#0b1f4b',
+    '--card-bg-light': '#ffffff',
+    '--card-bg-dark': '#ffffff',
+    '--transition': '0.24s cubic-bezier(.4,0,.2,1)'
   };
 
   const ACCENTS = {
-    crimson: {
-      label: 'TfL Red',
-      accent: '#d32f2f',
-      accentDark: '#9a1b1b'
-    },
-    skyline: {
-      label: 'Skyline Blue',
-      accent: '#2979ff',
-      accentDark: '#0f4ed8'
-    },
-    emerald: {
-      label: 'Emerald Green',
-      accent: '#2e7d32',
-      accentDark: '#1b5e20'
-    },
-    amber: {
-      label: 'Amber Glow',
-      accent: '#ff8f00',
-      accentDark: '#c56000'
-    },
-    graphite: {
-      label: 'Graphite Grey',
-      accent: '#546e7a',
-      accentDark: '#37474f'
+    routeflow: {
+      label: 'RouteFlow Red & Blue',
+      accent: '#003688',
+      accentDark: '#002a5c',
+      red: '#d32f2f',
+      redDark: '#a61c1c'
     }
   };
 
@@ -100,7 +84,7 @@
 
     if (partial && typeof partial === 'object') {
       if (Object.prototype.hasOwnProperty.call(partial, 'theme')) {
-        result.theme = partial.theme === 'dark' ? 'dark' : 'light';
+        result.theme = 'light';
       }
 
       if (Object.prototype.hasOwnProperty.call(partial, 'accent')) {
@@ -176,6 +160,8 @@
     root.style.setProperty('--primary-dark', palette.accentDark);
     root.style.setProperty('--navbar-accent', palette.accent);
     root.style.setProperty('--navbar-accent-dark', palette.accentDark);
+    root.style.setProperty('--accent-red', palette.red ?? DEFAULT_TOKENS['--accent-red']);
+    root.style.setProperty('--accent-red-dark', palette.redDark ?? DEFAULT_TOKENS['--accent-red-dark']);
   };
 
   const resetVariable = (root, name) => {
@@ -221,14 +207,19 @@
 
     if (!root || !body) return;
 
-    const palette = ACCENTS[state.accent] ?? ACCENTS[DEFAULT_PREFERENCES.accent];
+    const accentKey = Object.prototype.hasOwnProperty.call(ACCENTS, state.accent)
+      ? state.accent
+      : DEFAULT_PREFERENCES.accent;
+    state.accent = accentKey;
+    const palette = ACCENTS[accentKey];
 
     applyThemeVariables(root, palette);
 
-    body.classList.toggle('dark-mode', state.theme === 'dark');
-    document.documentElement.style.colorScheme = state.theme === 'dark' ? 'dark light' : 'light dark';
+    state.theme = 'light';
+    body.classList.remove('dark-mode');
+    document.documentElement.style.colorScheme = 'light';
 
-    document.documentElement.dataset.theme = state.theme;
+    document.documentElement.dataset.theme = 'light';
     document.documentElement.dataset.accent = state.accent;
     document.documentElement.dataset.highContrast = String(state.highContrast);
     document.documentElement.dataset.reduceMotion = String(state.reduceMotion);
@@ -243,7 +234,7 @@
     root.style.setProperty('--accent-key', state.accent);
     document.documentElement.dataset.textScale = fontScale.toFixed(2);
 
-    body.dataset.theme = state.theme;
+    body.dataset.theme = 'light';
     body.dataset.accent = state.accent;
     body.dataset.highContrast = String(state.highContrast);
     body.dataset.readableFont = String(state.readableFont);
@@ -269,10 +260,6 @@
   const resetPreferences = () => {
     themeLocked = false;
     state = { ...DEFAULT_PREFERENCES };
-    if (systemThemeQuery) {
-      const preferred = systemThemeQuery.matches ? 'dark' : 'light';
-      state = mergePreferences(state, { theme: preferred });
-    }
     clearStorage();
     applyPreferences();
     notify();
@@ -309,21 +296,16 @@
     }
   };
 
-  const applySystemTheme = (matches) => {
-    if (themeLocked) {
-      return;
+  const applySystemTheme = () => {
+    if (state.theme !== 'light') {
+      state = mergePreferences(state, { theme: 'light' });
+      applyPreferences();
+      notify();
     }
-    const preferred = matches ? 'dark' : 'light';
-    if (state.theme === preferred) {
-      return;
-    }
-    state = mergePreferences(state, { theme: preferred });
-    applyPreferences();
-    notify();
   };
 
   if (systemThemeQuery) {
-    const handleSystemThemeChange = (event) => applySystemTheme(event.matches);
+    const handleSystemThemeChange = () => applySystemTheme();
     if (typeof systemThemeQuery.addEventListener === 'function') {
       systemThemeQuery.addEventListener('change', handleSystemThemeChange);
     } else if (typeof systemThemeQuery.addListener === 'function') {
