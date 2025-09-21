@@ -423,6 +423,14 @@
   };
 
   const state = clone(DEFAULT_STATE);
+  const STORAGE_NAMESPACE = "routeflow";
+  const FLEET_STORAGE_KEY = `${STORAGE_NAMESPACE}.fleetState.v1`;
+  const FLEET_STORAGE_VERSION = 1;
+
+  const fleetStorage = resolveFleetStorage();
+  let offlineMode = false;
+  let offlineNoticeShown = false;
+
   let isAdmin = false;
   let currentAdminUser = null;
   let adminAuthToken = null;
@@ -436,6 +444,149 @@
 
   const MAX_IMAGE_UPLOADS = 3;
   const MAX_IMAGE_BYTES = 2_097_152;
+
+  function resolveFleetStorage() {
+    if (typeof window === "undefined") {
+      return null;
+    }
+    try {
+      const storage = window.localStorage;
+      if (!storage) {
+        return null;
+      }
+      const testKey = `${FLEET_STORAGE_KEY}.test`;
+      storage.setItem(testKey, "1");
+      storage.removeItem(testKey);
+      return storage;
+    } catch (error) {
+      console.warn("Fleet storage unavailable:", error);
+      return null;
+    }
+  }
+
+  function cloneForStorage(value) {
+    try {
+      return JSON.parse(JSON.stringify(value));
+    } catch (error) {
+      return Array.isArray(value) ? [] : {};
+    }
+  }
+
+  function createFleetStateSnapshot(source) {
+    if (!source || typeof source !== "object") {
+      return null;
+    }
+
+    const optionsSource =
+      source.options && typeof source.options === "object"
+        ? source.options
+        : {};
+    const busesSource =
+      source.buses && typeof source.buses === "object" ? source.buses : {};
+    const pendingSource = Array.isArray(source.pendingChanges)
+      ? source.pendingChanges
+      : [];
+
+    const busesSnapshot = {};
+    Object.keys(busesSource).forEach((key) => {
+      const bus = busesSource[key];
+      if (!bus || typeof bus !== "object") {
+        return;
+      }
+      const { images, ...rest } = bus;
+      busesSnapshot[key] = cloneForStorage(rest);
+    });
+
+    const pendingSnapshot = pendingSource
+      .map((change) => {
+        if (!change || typeof change !== "object") {
+          return null;
+        }
+        const { images, ...rest } = change;
+        return cloneForStorage(rest);
+      })
+      .filter(Boolean);
+
+    return {
+      options: cloneForStorage(optionsSource),
+      buses: busesSnapshot,
+      pendingChanges: pendingSnapshot,
+    };
+  }
+
+  function persistFleetStateSnapshot(source = state) {
+    if (!fleetStorage) {
+      return;
+    }
+    const snapshot = createFleetStateSnapshot(source);
+    if (!snapshot) {
+      return;
+    }
+    try {
+      fleetStorage.setItem(
+        FLEET_STORAGE_KEY,
+        JSON.stringify({
+          version: FLEET_STORAGE_VERSION,
+          savedAt: new Date().toISOString(),
+          state: snapshot,
+        }),
+      );
+    } catch (error) {
+      console.warn("Fleet storage: failed to persist state", error);
+    }
+  }
+
+  function persistCurrentFleetState() {
+    persistFleetStateSnapshot(state);
+  }
+
+  function loadLocalFleetStateSnapshot() {
+    if (!fleetStorage) {
+      return null;
+    }
+    try {
+      const raw = fleetStorage.getItem(FLEET_STORAGE_KEY);
+      if (!raw) {
+        return null;
+      }
+      const parsed = JSON.parse(raw);
+      const data =
+        parsed && typeof parsed === "object" ? parsed.state || parsed : null;
+      if (!data) {
+        return null;
+      }
+      return createFleetStateSnapshot(data);
+    } catch (error) {
+      console.warn("Fleet storage: failed to read saved state", error);
+      return null;
+    }
+  }
+
+  function initialiseLocalFleetState() {
+    const snapshot = loadLocalFleetStateSnapshot();
+    if (!snapshot) {
+      return false;
+    }
+    applyFleetState(snapshot);
+    sortOptionLists();
+    return true;
+  }
+
+  function shouldUseOfflineFallback(error) {
+    if (!error) {
+      return false;
+    }
+    const status = Number(error.status);
+    if (Number.isFinite(status) && [0, 404, 500, 502, 503].includes(status)) {
+      return true;
+    }
+    if (error.name === "TypeError") {
+      return true;
+    }
+    const message = typeof error.message === "string" ? error.message : "";
+    return /NetworkError|Failed to fetch|offline/i.test(message);
+  }
+
 
   function applyAdminUi(elements) {
     if (!elements?.adminToggle) {
@@ -469,6 +620,8 @@
     cachedElements = elements;
     updateImagePreview(elements);
     applyAdminUi(elements);
+
+    initialiseLocalFleetState();
 
     populateAllSelects(elements);
     if (elements.optionCategory) {
@@ -710,11 +863,26 @@
 
   async function fetchFleetStateFromApi() {
     try {
-      return await requestJson("/fleet");
+      const payload = await requestJson("/fleet");
+      offlineMode = false;
+      offlineNoticeShown = false;
+      persistFleetStateSnapshot(payload);
+      return payload;
     } catch (error) {
-      if (error?.status === 404) {
+      if (shouldUseOfflineFallback(error)) {
+        offlineMode = true;
+        offlineNoticeShown = false;
+        const stored = loadLocalFleetStateSnapshot();
+        if (stored) {
+          console.warn(
+            "Fleet API unavailable. Loaded fleet data from local storage instead.",
+            error,
+          );
+          return stored;
+        }
         console.warn(
-          "Fleet API unavailable (404). Falling back to bundled dataset.",
+          "Fleet API unavailable. Falling back to bundled dataset.",
+          error,
         );
         return clone(DEFAULT_STATE);
       }
@@ -771,7 +939,16 @@
       updateStats(elements);
       updatePendingBadge(elements);
       renderPendingList(elements);
-      if (!silent && isInitialised) {
+      persistCurrentFleetState();
+
+      if (offlineMode) {
+        if (!offlineNoticeShown) {
+          const offlineMessage =
+            "Fleet tools are offline. Showing saved data from this device.";
+          showToast(elements.toast, offlineMessage, "info");
+          offlineNoticeShown = true;
+        }
+      } else if (!silent && isInitialised) {
         showToast(elements.toast, "Fleet database refreshed.", "success");
       }
     } catch (error) {
@@ -845,6 +1022,38 @@
         );
       }
     });
+  }
+
+  function ensureOptionsFromBus(bus) {
+    if (!bus || typeof bus !== "object") {
+      return;
+    }
+
+    DROPDOWN_FIELDS.forEach((field) => {
+      if (field === "extras") {
+        if (Array.isArray(bus.extras)) {
+          bus.extras.forEach((tag) => addOptionValue(field, tag));
+        }
+        return;
+      }
+      addOptionValue(field, bus[field]);
+    });
+  }
+
+  function addOptionValue(field, value) {
+    const text = normaliseTextValue(value);
+    if (!text) {
+      return;
+    }
+    if (!Array.isArray(state.options[field])) {
+      state.options[field] = [];
+    }
+    const exists = state.options[field].some(
+      (option) => option.toLowerCase() === text.toLowerCase(),
+    );
+    if (!exists) {
+      state.options[field].push(text);
+    }
   }
 
   function populateAllSelects(elements) {
@@ -1283,11 +1492,124 @@
         clearImageSelection(elements);
       }
     } catch (error) {
+      if (
+        handleOfflineSubmitFallback(
+          elements,
+          payload,
+          existing,
+          imagePayloads,
+          error,
+        )
+      ) {
+        return;
+      }
       console.error("Failed to submit fleet update:", error);
       const message = error?.message || "Unable to submit update.";
       showToast(elements.toast, message, "error");
       setFormFeedback(formFeedback, message, "error");
     }
+  }
+
+  function handleOfflineSubmitFallback(
+    elements,
+    payload,
+    existing,
+    imagePayloads,
+    error,
+  ) {
+    if (!shouldUseOfflineFallback(error)) {
+      return false;
+    }
+    console.warn(
+      "Fleet API unavailable. Saving fleet update locally instead.",
+      error,
+    );
+    offlineMode = true;
+    offlineNoticeShown = true;
+    const offlinePayload = { ...payload };
+    if (offlinePayload.images) {
+      delete offlinePayload.images;
+    }
+    if (!Array.isArray(offlinePayload.gallery)) {
+      offlinePayload.gallery = Array.isArray(existing?.gallery)
+        ? existing.gallery.slice()
+        : [];
+    }
+    const hadImages = Array.isArray(imagePayloads)
+      ? imagePayloads.length > 0
+      : false;
+    return applyOfflineBusUpdate(elements, offlinePayload, {
+      existing,
+      hadImages,
+    });
+  }
+
+  function applyOfflineBusUpdate(elements, payload, options = {}) {
+    if (!elements || !payload) {
+      return false;
+    }
+    const { existing, hadImages } = options;
+    const regKey = normaliseRegKey(payload.regKey || payload.registration);
+    if (!regKey) {
+      return false;
+    }
+
+    const registration = payload.registration || regKey;
+    const nowIso = new Date().toISOString();
+    const base = existing || state.buses[regKey] || {};
+    const merged = {
+      ...base,
+      ...payload,
+      regKey,
+      registration,
+    };
+
+    if (!merged.lastUpdated) {
+      merged.lastUpdated = nowIso;
+    }
+    if (!merged.createdAt) {
+      merged.createdAt = merged.lastUpdated;
+    }
+
+    delete merged.images;
+
+    state.buses[regKey] = merged;
+    ensureOptionsFromBus(merged);
+    sortOptionLists();
+    populateAllSelects(elements);
+    if (elements.optionCategory) {
+      renderOptionList(elements, elements.optionCategory.value);
+    } else {
+      renderOptionList(elements, null);
+    }
+    renderTable(elements);
+    renderHighlights(elements);
+    updateStats(elements);
+    updatePendingBadge(elements);
+    renderPendingList(elements);
+    persistCurrentFleetState();
+
+    const message = formatOfflineSaveMessage(
+      registration,
+      Boolean(hadImages),
+      Boolean(existing),
+    );
+    showToast(elements.toast, message, "info");
+    setFormFeedback(elements.formFeedback, message, "success");
+    prefillForm(elements, merged);
+    clearImageSelection(elements);
+    return true;
+  }
+
+  function formatOfflineSaveMessage(registration, hadImages, isUpdate) {
+    const safeRegistration = registration || "this vehicle";
+    const base = isUpdate
+      ? `Saved updates for ${safeRegistration} on this device.`
+      : `Created a local profile for ${safeRegistration}.`;
+    const suffix = hadImages
+      ? " Image uploads can't be stored offline, so please reattach them once the fleet tools can reach the server."
+      : " We'll keep these details on this device until the fleet API is available again.";
+    return `${base}${suffix}`;
   }
 
   function buildPayload(formData, registration, regKey, existing, selects) {
