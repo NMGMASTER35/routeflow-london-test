@@ -731,8 +731,9 @@
           badge.setAttribute('aria-label', fullLabel);
           badge.setAttribute('title', fullLabel);
         }
-        badge.style.background = pickModeColour(primaryMode);
-        badge.style.color = '#fff';
+        if (primaryMode) {
+          badge.dataset.mode = primaryMode;
+        }
         item.appendChild(badge);
       }
 
