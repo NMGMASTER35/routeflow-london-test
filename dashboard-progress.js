@@ -1,4 +1,17 @@
-const API_BASE_URL = (window.__ROUTEFLOW_API_BASE__ || '/api').replace(/\/$/, '');
+function resolveApiBase(defaultBase = '/api') {
+  const rawBase = typeof window !== 'undefined' ? window.__ROUTEFLOW_API_BASE__ : undefined;
+  if (typeof rawBase !== 'string') {
+    return defaultBase;
+  }
+  const trimmed = rawBase.trim();
+  if (!trimmed || trimmed === '/') {
+    return defaultBase;
+  }
+  const normalised = trimmed.replace(/\/+$/, '');
+  return normalised || defaultBase;
+}
+
+const API_BASE_URL = resolveApiBase('/api');
 
 const buildDashboardPath = (uid) => `${API_BASE_URL}/profile/${encodeURIComponent(uid)}/dashboard`;
 
