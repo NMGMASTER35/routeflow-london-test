@@ -26,6 +26,19 @@
   };
   const DEFAULT_BADGE_COLOR = 'var(--accent-blue)';
 
+  const MODE_ICON_MAP = {
+    bus: 'fa-bus',
+    tube: 'fa-train-subway',
+    dlr: 'fa-train',
+    tram: 'fa-train',
+    overground: 'fa-train',
+    'river-bus': 'fa-ship',
+    river: 'fa-ship',
+    'national-rail': 'fa-train',
+    'elizabeth-line': 'fa-train-subway'
+  };
+  const DEFAULT_MODE_ICON = 'fa-location-dot';
+
   const MODE_LABEL_MAP = {
     bus: 'Bus',
     tube: 'Tube',
@@ -62,6 +75,19 @@
     return;
   }
 
+  if (elements.resultsList) {
+    elements.resultsList.hidden = true;
+    elements.resultsList.setAttribute('aria-label', 'Search suggestions');
+  }
+
+  if (elements.searchInput && elements.resultsList) {
+    elements.searchInput.setAttribute('role', 'combobox');
+    elements.searchInput.setAttribute('aria-autocomplete', 'list');
+    elements.searchInput.setAttribute('aria-expanded', 'false');
+    elements.searchInput.setAttribute('aria-haspopup', 'listbox');
+    elements.searchInput.setAttribute('aria-controls', elements.resultsList.id);
+  }
+
   const defaultBoardTitle = elements.boardTitle?.textContent || 'Live departures';
   const defaultBoardDescription = elements.boardDescription?.textContent || '';
 
@@ -77,6 +103,16 @@
     refreshTimer: null,
     searchToken: 0,
     activeSuggestionIndex: -1
+  };
+
+  const setResultsVisibility = (visible) => {
+    if (!elements.resultsList) return;
+    const isVisible = Boolean(visible);
+    elements.resultsList.classList.toggle('is-visible', isVisible);
+    elements.resultsList.hidden = !isVisible;
+    if (elements.searchInput) {
+      elements.searchInput.setAttribute('aria-expanded', String(isVisible));
+    }
   };
 
   const debounce = (fn, delay) => {
@@ -273,6 +309,18 @@
   const pickModeColour = (mode) => {
     const key = normalise(mode);
     return MODE_COLOR_MAP[key] || DEFAULT_BADGE_COLOR;
+  };
+
+  const pickModeIcon = (modes) => {
+    if (Array.isArray(modes)) {
+      for (const mode of modes) {
+        const key = normalise(mode);
+        if (MODE_ICON_MAP[key]) {
+          return MODE_ICON_MAP[key];
+        }
+      }
+    }
+    return DEFAULT_MODE_ICON;
   };
 
   const highlightText = (text, query) => {
@@ -538,14 +586,15 @@
     empty.className = 'tracking-search__empty';
     empty.textContent = message;
     elements.resultsList.appendChild(empty);
-    elements.resultsList.style.display = 'block';
+    elements.resultsList.scrollTop = 0;
+    setResultsVisibility(true);
     state.activeSuggestionIndex = -1;
   };
 
   const hideSuggestions = () => {
     if (!elements.resultsList) return;
     elements.resultsList.innerHTML = '';
-    elements.resultsList.style.display = 'none';
+    setResultsVisibility(false);
     state.activeSuggestionIndex = -1;
     state.suggestions = [];
     state.suggestionById.clear();
@@ -571,6 +620,18 @@
       item.setAttribute('role', 'option');
       item.tabIndex = -1;
 
+      const modes = Array.isArray(suggestion.modes) ? suggestion.modes : [];
+      const [primaryMode, ...otherModes] = modes;
+      item.style.setProperty('--tracking-result-accent', pickModeColour(primaryMode));
+
+      const emblem = document.createElement('span');
+      emblem.className = 'tracking-result__emblem';
+      emblem.setAttribute('aria-hidden', 'true');
+      const emblemIcon = document.createElement('i');
+      emblemIcon.className = `fa-solid ${pickModeIcon(modes)}`;
+      emblem.appendChild(emblemIcon);
+      item.appendChild(emblem);
+
       const main = document.createElement('div');
       main.className = 'tracking-result__main';
 
@@ -579,14 +640,44 @@
       title.appendChild(highlightText(suggestion.name, query));
       main.appendChild(title);
 
-      const metaParts = [];
-      if (suggestion.indicator) metaParts.push(`Stop ${suggestion.indicator}`);
-      if (suggestion.locality) metaParts.push(suggestion.locality);
-      if (suggestion.towards) metaParts.push(`Towards ${suggestion.towards}`);
-      if (metaParts.length) {
-        const meta = document.createElement('div');
+      const metaSegments = [];
+      if (suggestion.indicator) {
+        metaSegments.push({
+          icon: 'fa-signs-post',
+          text: `Stop ${suggestion.indicator}`
+        });
+      }
+      if (suggestion.locality) {
+        metaSegments.push({
+          icon: 'fa-location-dot',
+          text: suggestion.locality
+        });
+      }
+      if (suggestion.towards) {
+        metaSegments.push({
+          icon: 'fa-compass',
+          text: `Towards ${suggestion.towards}`
+        });
+      }
+      if (metaSegments.length) {
+        const meta = document.createElement('ul');
         meta.className = 'tracking-result__meta';
-        meta.appendChild(highlightText(metaParts.join(' • '), query));
+        meta.setAttribute('role', 'list');
+        metaSegments.forEach((segment) => {
+          const metaItem = document.createElement('li');
+          metaItem.className = 'tracking-result__meta-item';
+          metaItem.setAttribute('role', 'listitem');
+          if (segment.icon) {
+            const icon = document.createElement('i');
+            icon.className = `fa-solid ${segment.icon}`;
+            icon.setAttribute('aria-hidden', 'true');
+            metaItem.appendChild(icon);
+          }
+          const text = document.createElement('span');
+          text.appendChild(highlightText(segment.text, query));
+          metaItem.appendChild(text);
+          meta.appendChild(metaItem);
+        });
         main.appendChild(meta);
       }
 
@@ -627,13 +718,12 @@
 
       item.appendChild(main);
 
-      if (suggestion.modes && suggestion.modes.length) {
+      if (modes.length) {
         const badge = document.createElement('span');
         badge.className = 'tracking-result__badge';
-        const [primaryMode, ...otherModes] = suggestion.modes;
         const label = formatModeLabel(primaryMode) || 'Mode';
         badge.textContent = otherModes.length ? `${label} +${otherModes.length}` : label;
-        const fullLabel = suggestion.modes
+        const fullLabel = modes
           .map((mode) => formatModeLabel(mode) || 'Mode')
           .filter(Boolean)
           .join(', ');
@@ -646,15 +736,23 @@
         item.appendChild(badge);
       }
 
+      const chevron = document.createElement('span');
+      chevron.className = 'tracking-result__chevron';
+      chevron.setAttribute('aria-hidden', 'true');
+      const chevronIcon = document.createElement('i');
+      chevronIcon.className = 'fa-solid fa-arrow-right';
+      chevron.appendChild(chevronIcon);
+      item.appendChild(chevron);
+
       fragment.appendChild(item);
     });
 
     elements.resultsList.appendChild(fragment);
-    elements.resultsList.style.display = 'block';
+    setResultsVisibility(true);
     elements.resultsList.scrollTop = 0;
   };
 
-  const suggestionsVisible = () => elements.resultsList && elements.resultsList.style.display === 'block';
+  const suggestionsVisible = () => elements.resultsList && elements.resultsList.classList.contains('is-visible');
 
   const setSearchButtonState = () => {
     if (!elements.searchButton) return;
@@ -930,8 +1028,8 @@
 
   elements.searchInput.addEventListener('input', handleInput);
   elements.searchInput.addEventListener('focus', () => {
-    if (state.suggestions.length) {
-      elements.resultsList.style.display = 'block';
+    if (state.suggestions.length && elements.resultsList && elements.resultsList.childElementCount) {
+      setResultsVisibility(true);
     }
   });
   elements.searchInput.addEventListener('keydown', (event) => {
