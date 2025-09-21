@@ -248,10 +248,12 @@
     import { getRecents } from './recents.js';
     import { inferFavouriteType, resolveFavouriteTitle, buildFavouriteMeta } from './favourite-utils.js';
     import { connectDiscord, disconnectDiscord, subscribeToDiscordStatus, getDiscordStatus, isDiscordConfigured } from './discord-auth.js';
+    import { getDashboardState, saveDashboardState } from './dashboard-progress.js';
 
     const STORAGE_PREFIX = 'routeflow:gamification';
     const TOAST_DURATION = 4000;
     const LEVEL_CONFIG = { base: 420, growth: 1.48, maxLevel: 40 };
+    const REMOTE_SAVE_DEBOUNCE_MS = 800;
 
     const DEFAULT_GAMIFICATION = () => ({
       xp: 1820,
@@ -501,6 +503,10 @@
     let currentUid = 'guest';
     let gamificationState = DEFAULT_GAMIFICATION();
     let toastTimeout;
+    let remoteSaveTimer = null;
+    let pendingRemoteState = null;
+    let pendingRemoteUid = null;
+    let remoteLoadPromise = null;
 
     const rootElement = document.querySelector('.dashboard');
     const overlayElement = document.getElementById('dashboardAuthGate');
@@ -670,23 +676,27 @@
       }
     }
 
+    function mergeWithDefaults(source = {}) {
+      const fallback = DEFAULT_GAMIFICATION();
+      return {
+        ...fallback,
+        ...source,
+        combo: { ...fallback.combo, ...((source && source.combo) || {}) },
+        tasks: ((source && source.tasks) || fallback.tasks).map((task) => ({ ...task })),
+        badges: ((source && source.badges) || fallback.badges).map((badge) => ({ ...badge })),
+        roles: ((source && source.roles) || fallback.roles).map((role) => ({ ...role })),
+        miniGames: ((source && source.miniGames) || fallback.miniGames).map((game) => ({ ...game })),
+        weeklyChallenges: ((source && source.weeklyChallenges) || fallback.weeklyChallenges).map((item) => ({ ...item })),
+        comboChallenges: ((source && source.comboChallenges) || fallback.comboChallenges).map((item) => ({ ...item })),
+        missions: ((source && source.missions) || fallback.missions).map((mission) => ({ ...mission }))
+      };
+    }
+
     function loadState(uid) {
       try {
         const stored = safeParse(localStorage.getItem(storageKey(uid)));
         if (stored && typeof stored === 'object') {
-          const fallback = DEFAULT_GAMIFICATION();
-          return {
-            ...fallback,
-            ...stored,
-            combo: { ...fallback.combo, ...(stored.combo || {}) },
-            tasks: (stored.tasks || fallback.tasks).map((task) => ({ ...task })),
-            badges: (stored.badges || fallback.badges).map((badge) => ({ ...badge })),
-            roles: (stored.roles || fallback.roles).map((role) => ({ ...role })),
-            miniGames: (stored.miniGames || fallback.miniGames).map((game) => ({ ...game })),
-            weeklyChallenges: (stored.weeklyChallenges || fallback.weeklyChallenges).map((item) => ({ ...item })),
-            comboChallenges: (stored.comboChallenges || fallback.comboChallenges).map((item) => ({ ...item })),
-            missions: (stored.missions || fallback.missions).map((mission) => ({ ...mission }))
-          };
+          return mergeWithDefaults(stored);
         }
       } catch (error) {
         console.warn('RouteFlow dashboard: unable to load gamification state', error);
@@ -694,11 +704,110 @@
       return DEFAULT_GAMIFICATION();
     }
 
-    function saveState() {
+    function saveState(options = {}) {
       try {
         localStorage.setItem(storageKey(currentUid), JSON.stringify(gamificationState));
       } catch (error) {
         console.warn('RouteFlow dashboard: unable to save gamification state', error);
+      }
+      if (!options.skipRemote) {
+        queueRemoteSave();
+      }
+    }
+
+    function cloneGamificationState(state) {
+      try {
+        return JSON.parse(JSON.stringify(state || {}));
+      } catch (error) {
+        console.warn('RouteFlow dashboard: unable to clone gamification state for sync', error);
+        if (state && typeof state === 'object') {
+          return { ...state };
+        }
+        return {};
+      }
+    }
+
+    async function persistRemoteState(uid, state) {
+      if (!uid || uid === 'guest') return;
+      try {
+        await saveDashboardState(uid, state);
+      } catch (error) {
+        console.warn('RouteFlow dashboard: unable to sync progress with the cloud', error);
+      }
+    }
+
+    function queueRemoteSave() {
+      if (!currentUid || currentUid === 'guest') {
+        return;
+      }
+      pendingRemoteState = cloneGamificationState(gamificationState);
+      pendingRemoteUid = currentUid;
+      if (remoteSaveTimer) {
+        clearTimeout(remoteSaveTimer);
+      }
+      remoteSaveTimer = setTimeout(() => {
+        const state = pendingRemoteState;
+        const uid = pendingRemoteUid;
+        pendingRemoteState = null;
+        pendingRemoteUid = null;
+        remoteSaveTimer = null;
+        if (uid && uid !== 'guest' && state) {
+          persistRemoteState(uid, state);
+        }
+      }, REMOTE_SAVE_DEBOUNCE_MS);
+    }
+
+    function flushRemoteSave() {
+      if (remoteSaveTimer) {
+        clearTimeout(remoteSaveTimer);
+        remoteSaveTimer = null;
+      }
+      const state = pendingRemoteState;
+      const uid = pendingRemoteUid;
+      pendingRemoteState = null;
+      pendingRemoteUid = null;
+      if (uid && uid !== 'guest' && state) {
+        persistRemoteState(uid, state);
+      }
+    }
+
+    async function fetchRemoteProgress(uid, options = {}) {
+      if (!uid || uid === 'guest') {
+        return;
+      }
+      if (remoteLoadPromise && !options.force) {
+        try {
+          await remoteLoadPromise;
+        } catch (error) {
+          // Ignore previous load errors.
+        }
+      }
+      const loadTask = (async () => {
+        try {
+          const state = await getDashboardState(uid);
+          if (uid !== currentUid) {
+            return;
+          }
+          if (state && typeof state === 'object') {
+            gamificationState = mergeWithDefaults(state);
+            ensureDailyState(gamificationState);
+            saveState({ skipRemote: true });
+            queueRemoteSave();
+            renderAll();
+          } else if (state === null) {
+            queueRemoteSave();
+          }
+        } catch (error) {
+          console.warn('RouteFlow dashboard: unable to load saved progress from the cloud', error);
+        }
+      })();
+      remoteLoadPromise = loadTask;
+      try {
+        await loadTask;
+      } finally {
+        if (remoteLoadPromise === loadTask) {
+          remoteLoadPromise = null;
+        }
       }
     }
 
@@ -1487,6 +1596,7 @@
     }
 
     function handleLock() {
+      flushRemoteSave();
       currentUid = 'guest';
       gamificationState = loadState(currentUid);
       ensureDailyState(gamificationState);
@@ -1505,6 +1615,7 @@
 
     async function handleUnlock(user) {
       if (!user) return;
+      flushRemoteSave();
       currentUid = user.uid;
       gamificationState = loadState(currentUid);
       const { dayDifference } = ensureDailyState(gamificationState);
@@ -1516,6 +1627,7 @@
         updateChallenges('streak');
       }
       renderAll();
+      fetchRemoteProgress(user.uid);
       try {
         await loadFavourites(user.uid);
       } catch (error) {
@@ -1523,7 +1635,7 @@
       }
       loadActivity(user.uid);
       loadRecents(user.uid);
-      saveState();
+      saveState({ skipRemote: true });
     }
 
     const handleAuthStateChange = (user) => {
@@ -1652,10 +1764,19 @@
       updateDiscordConnection(status, { save: true, log: shouldLog, renderAll: shouldLog });
     });
 
-    window.addEventListener('beforeunload', () => {
+    const handleBeforeUnload = () => {
+      flushRemoteSave();
       if (typeof unsubscribeDiscord === 'function') {
         unsubscribeDiscord();
         unsubscribeDiscord = null;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('pagehide', flushRemoteSave);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        flushRemoteSave();
       }
     });
 
