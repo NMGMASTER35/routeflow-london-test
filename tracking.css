@@ -944,7 +944,7 @@ body.dark-mode .tracking-search__results::-webkit-scrollbar-thumb {
   padding: 0.95rem 1.1rem;
   border-radius: 18px;
   border: 1px solid rgba(15, 23, 42, 0.08);
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.02), rgba(0, 54, 136, 0.06));
+  background: var(--card-bg-light);
   box-shadow: 0 20px 36px rgba(15, 23, 42, 0.12);
   text-align: left;
   cursor: pointer;
@@ -952,33 +952,39 @@ body.dark-mode .tracking-search__results::-webkit-scrollbar-thumb {
     transform var(--transition),
     box-shadow var(--transition),
     border-color var(--transition),
-    background var(--transition);
+    background var(--transition),
+    color var(--transition);
+  color: var(--foreground-light);
+  overflow: hidden;
 }
 
 body.dark-mode .tracking-result {
-  background: linear-gradient(135deg, rgba(54, 83, 184, 0.22), rgba(255, 132, 176, 0.12));
+  background: rgba(12, 18, 34, 0.92);
   border-color: rgba(129, 140, 248, 0.26);
   box-shadow: 0 24px 44px rgba(0, 0, 0, 0.55);
+  color: #f6f7ff;
 }
 
 .tracking-result:hover,
 .tracking-result:focus-visible {
   transform: translateY(-2px);
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.06), rgba(0, 54, 136, 0.12));
+  background: var(--tracking-result-accent, var(--accent-blue));
   border-color: var(--tracking-result-accent, rgba(0, 54, 136, 0.32));
   box-shadow: 0 26px 52px rgba(15, 23, 42, 0.2);
+  color: #fff;
   outline: none;
 }
 
 .tracking-result:focus-visible {
-  box-shadow: 0 26px 52px rgba(15, 23, 42, 0.2), 0 0 0 3px rgba(0, 54, 136, 0.18);
+  box-shadow: 0 26px 52px rgba(15, 23, 42, 0.2), 0 0 0 3px rgba(255, 255, 255, 0.35);
 }
 
 body.dark-mode .tracking-result:hover,
 body.dark-mode .tracking-result:focus-visible {
-  background: linear-gradient(135deg, rgba(129, 140, 248, 0.22), rgba(255, 132, 176, 0.18));
+  background: var(--tracking-result-accent, var(--accent-blue));
   border-color: var(--tracking-result-accent, rgba(148, 163, 255, 0.52));
   box-shadow: 0 28px 56px rgba(0, 0, 0, 0.65);
+  color: #fff;
 }
 
 .tracking-result__emblem {
@@ -1002,13 +1008,15 @@ body.dark-mode .tracking-result__emblem {
 
 .tracking-result:hover .tracking-result__emblem,
 .tracking-result:focus-visible .tracking-result__emblem {
-  background: rgba(0, 54, 136, 0.18);
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
   transform: scale(1.05);
 }
 
 body.dark-mode .tracking-result:hover .tracking-result__emblem,
 body.dark-mode .tracking-result:focus-visible .tracking-result__emblem {
-  background: rgba(129, 140, 248, 0.28);
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
 }
 
 .tracking-result__main {
@@ -1022,14 +1030,10 @@ body.dark-mode .tracking-result:focus-visible .tracking-result__emblem {
 .tracking-result__title {
   font-weight: 700;
   font-size: 1rem;
-  color: var(--foreground-light);
+  color: inherit;
   display: flex;
   align-items: center;
   gap: 0.4rem;
-}
-
-body.dark-mode .tracking-result__title {
-  color: #f6f7ff;
 }
 
 .tracking-result__meta {
@@ -1045,6 +1049,11 @@ body.dark-mode .tracking-result__title {
 
 body.dark-mode .tracking-result__meta {
   color: rgba(226, 232, 255, 0.72);
+}
+
+.tracking-result:hover .tracking-result__meta,
+.tracking-result:focus-visible .tracking-result__meta {
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .tracking-result__meta-item {
@@ -1063,6 +1072,12 @@ body.dark-mode .tracking-result__meta-item {
   border-color: rgba(129, 140, 248, 0.28);
 }
 
+.tracking-result:hover .tracking-result__meta-item,
+.tracking-result:focus-visible .tracking-result__meta-item {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.32);
+}
+
 .tracking-result__meta-item i {
   font-size: 0.85rem;
   color: var(--tracking-result-accent, var(--accent-blue));
@@ -1070,6 +1085,11 @@ body.dark-mode .tracking-result__meta-item {
 
 body.dark-mode .tracking-result__meta-item i {
   color: var(--tracking-result-accent, #c7d2fe);
+}
+
+.tracking-result:hover .tracking-result__meta-item i,
+.tracking-result:focus-visible .tracking-result__meta-item i {
+  color: #fff;
 }
 
 .tracking-result__lines {
@@ -1098,6 +1118,13 @@ body.dark-mode .tracking-result__line {
   background: rgba(88, 110, 255, 0.22);
 }
 
+.tracking-result:hover .tracking-result__line,
+.tracking-result:focus-visible .tracking-result__line {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+}
+
 .tracking-result__badge {
   display: inline-flex;
   align-items: center;
@@ -1121,6 +1148,13 @@ body.dark-mode .tracking-result__badge {
   color: #f8fafc;
   border-color: rgba(226, 232, 255, 0.35);
   background: rgba(99, 102, 241, 0.22);
+}
+
+.tracking-result:hover .tracking-result__badge,
+.tracking-result:focus-visible .tracking-result__badge {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.32);
+  color: #fff;
 }
 
 .tracking-result__chevron {
@@ -1156,14 +1190,14 @@ body.dark-mode .tracking-result__chevron {
 
 .tracking-result:hover .tracking-result__chevron,
 .tracking-result:focus-visible .tracking-result__chevron {
-  background: var(--tracking-result-accent, var(--accent-blue));
+  background: rgba(255, 255, 255, 0.22);
   color: #fff;
   transform: translateX(2px);
 }
 
 body.dark-mode .tracking-result:hover .tracking-result__chevron,
 body.dark-mode .tracking-result:focus-visible .tracking-result__chevron {
-  background: var(--tracking-result-accent, var(--accent-blue));
+  background: rgba(255, 255, 255, 0.2);
   color: #fff;
 }
 
@@ -1194,9 +1228,26 @@ body.dark-mode .tracking-result__reason i {
   color: var(--tracking-result-accent, #c7d2fe);
 }
 
+.tracking-result:hover .tracking-result__reason,
+.tracking-result:focus-visible .tracking-result__reason {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.28);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.tracking-result:hover .tracking-result__reason i,
+.tracking-result:focus-visible .tracking-result__reason i {
+  color: #fff;
+}
+
 .tracking-match {
   color: var(--accent-red);
   font-weight: 700;
+}
+
+.tracking-result:hover .tracking-match,
+.tracking-result:focus-visible .tracking-match {
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .tracking-search__empty {
