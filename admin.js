@@ -34,7 +34,20 @@ const FALLBACK_ADMIN_OVERRIDES = new Map([
 
 const TAG_OPTIONS = ['Regular', 'Night', 'School', 'Special', 'Express'];
 
-const FLEET_API_BASE = (window.__ROUTEFLOW_API_BASE__ || '/api').replace(/\/$/, '');
+function resolveApiBase(defaultBase = '/api') {
+  const rawBase = typeof window !== 'undefined' ? window.__ROUTEFLOW_API_BASE__ : undefined;
+  if (typeof rawBase !== 'string') {
+    return defaultBase;
+  }
+  const trimmed = rawBase.trim();
+  if (!trimmed || trimmed === '/') {
+    return defaultBase;
+  }
+  const normalised = trimmed.replace(/\/+$/, '');
+  return normalised || defaultBase;
+}
+
+const FLEET_API_BASE = resolveApiBase('/api');
 
 const FLEET_FIELD_LABELS = {
   fleetNumber: 'Fleet number',
