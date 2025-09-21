@@ -1102,22 +1102,25 @@ body.dark-mode .tracking-result__line {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 0.74rem;
-  letter-spacing: 0.08em;
+  font-weight: 600;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #fff;
-  padding: 0.45rem 0.85rem;
-  border-radius: 999px;
-  background: var(--tracking-result-accent, var(--accent-blue));
-  box-shadow: 0 16px 28px rgba(0, 54, 136, 0.28);
+  color: #000;
+  padding: 0.35rem 0.9rem;
+  border-radius: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.2);
+  background: rgba(148, 163, 184, 0.12);
   margin-left: auto;
   align-self: center;
   white-space: nowrap;
+  box-shadow: none;
 }
 
 body.dark-mode .tracking-result__badge {
-  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.55);
+  color: #f8fafc;
+  border-color: rgba(226, 232, 255, 0.35);
+  background: rgba(99, 102, 241, 0.22);
 }
 
 .tracking-result__chevron {
