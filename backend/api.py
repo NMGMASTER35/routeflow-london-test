@@ -235,11 +235,31 @@ def _ensure_sslmode(url: str) -> str:
     return f"{url}{separator}sslmode=require"
 
 
-connection_pool = SimpleConnectionPool(
-    1,
-    MAX_CONNECTIONS,
-    _ensure_sslmode(DATABASE_URL),
-)
+_connection_pool_lock = threading.Lock()
+connection_pool: Optional[SimpleConnectionPool] = None
+
+_database_init_lock = threading.Lock()
+_database_initialised = False
+
+
+def _initialise_connection_pool() -> SimpleConnectionPool:
+    global connection_pool
+
+    pool = connection_pool
+    if pool is not None:
+        return pool
+
+    with _connection_pool_lock:
+        pool = connection_pool
+        if pool is None:
+            pool = SimpleConnectionPool(
+                1,
+                MAX_CONNECTIONS,
+                _ensure_sslmode(DATABASE_URL),
+            )
+            connection_pool = pool
+
+    return pool
 
 
 def _return_connection(connection, *, had_error: bool = False) -> None:
@@ -271,8 +291,17 @@ def _return_connection(connection, *, had_error: bool = False) -> None:
                     finally:
                         close_connection = True
 
+    pool = connection_pool
+
+    if pool is None:
+        try:
+            connection.close()
+        except Exception:
+            pass
+        return
+
     try:
-        connection_pool.putconn(connection, close=close_connection)
+        pool.putconn(connection, close=close_connection)
     except Exception:
         if not close_connection:
             try:
@@ -282,19 +311,20 @@ def _return_connection(connection, *, had_error: bool = False) -> None:
             else:
                 close_connection = True
         try:
-            connection_pool.putconn(connection, close=True)
+            pool.putconn(connection, close=True)
         except Exception:
             pass
 
 
 @contextmanager
 def get_connection():
-    connection = connection_pool.getconn()
+    pool = _initialise_connection_pool()
+    connection = pool.getconn()
     had_error = False
 
     while connection.closed:
-        connection_pool.putconn(connection, close=True)
-        connection = connection_pool.getconn()
+        pool.putconn(connection, close=True)
+        connection = pool.getconn()
 
     connection.autocommit = False
 
@@ -313,6 +343,25 @@ def get_connection():
         raise
     finally:
         _return_connection(connection, had_error=had_error)
+
+
+def close_connection_pool() -> None:
+    global connection_pool, _database_initialised
+
+    with _connection_pool_lock:
+        pool = connection_pool
+        connection_pool = None
+
+    with _database_init_lock:
+        _database_initialised = False
+
+    if pool is None:
+        return
+
+    try:
+        pool.closeall()
+    except Exception:
+        pass
 
 
 app = Flask(__name__)
@@ -856,6 +905,21 @@ def apply_cors_headers(response: Response) -> Response:
     return response
 
 
+def init_database() -> None:
+    global _database_initialised
+    if _database_initialised:
+        return
+    with _database_init_lock:
+        if _database_initialised:
+            return
+        _perform_database_initialisation()
+        _database_initialised = True
+
+
+def ensure_database_initialised() -> None:
+    init_database()
+
+
 @app.before_request
 def handle_preflight():
     if request.method == "OPTIONS":
@@ -864,7 +928,12 @@ def handle_preflight():
     return None
 
 
-def init_database() -> None:
+@app.before_request
+def _ensure_database_ready():
+    ensure_database_initialised()
+
+
+def _perform_database_initialisation() -> None:
     with get_connection() as connection:
         with connection.cursor() as cursor:
             cursor.execute(
@@ -6111,9 +6180,6 @@ def fleet_reject(change_id: str):
 @app.route("/api/health", methods=["GET"])
 def healthcheck():
     return jsonify({"status": "ok"})
-
-
-init_database()
 
 
 if __name__ == "__main__":
