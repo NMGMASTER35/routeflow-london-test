@@ -13,6 +13,7 @@
   ]);
 
   const normaliseEmail = (value) => (typeof value === "string" ? value.trim().toLowerCase() : "");
+  const normaliseTextValue = (value) => (typeof value === "string" ? value.trim() : "");
 
   const fallbackHasOverride = (userOrUid) => {
     if (!userOrUid) return false;
@@ -428,6 +429,8 @@
   let cachedElements = null;
   let toastTimeout = null;
   let isInitialised = false;
+  const registrationLookupPromises = new Map();
+  let lastPrefillRequestId = 0;
 
   let authSubscriptionStarted = false;
 
@@ -1719,6 +1722,173 @@
     clearImageSelection(elements);
   }
 
+  function sanitiseExtrasList(primary, fallback = []) {
+    const values = Array.isArray(primary) && primary.length ? primary : fallback;
+    const seen = new Set();
+    const tags = [];
+    values.forEach((value) => {
+      const text = normaliseTextValue(value);
+      if (!text) {
+        return;
+      }
+      const key = text.toLowerCase();
+      if (seen.has(key)) {
+        return;
+      }
+      seen.add(key);
+      tags.push(text);
+    });
+    return tags;
+  }
+
+  function toIsoDateString(value) {
+    if (!value) return "";
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      if (typeof value === "string" && /\d{4}-\d{2}-\d{2}/.test(value)) {
+        return value.slice(0, 10);
+      }
+      return "";
+    }
+    try {
+      return date.toISOString().slice(0, 10);
+    } catch (error) {
+      return "";
+    }
+  }
+
+  function resolveOperatorName(operator) {
+    if (!operator) return "";
+    if (typeof operator === "string") {
+      return normaliseTextValue(operator);
+    }
+    if (typeof operator === "object") {
+      return (
+        normaliseTextValue(operator.name) ||
+        normaliseTextValue(operator.shortName) ||
+        normaliseTextValue(operator.slug)
+      );
+    }
+    return "";
+  }
+
+  function sanitiseApiBus(bus) {
+    if (!bus || typeof bus !== "object") {
+      return null;
+    }
+
+    const regKey = normaliseRegKey(
+      bus.regKey || bus.reg || normaliseTextValue(bus.registration),
+    );
+    if (!regKey) {
+      return null;
+    }
+
+    const registration =
+      normaliseTextValue(bus.registration) || normaliseTextValue(bus.reg) || regKey;
+
+    const extras = sanitiseExtrasList(bus.extras, bus.badges);
+    const extrasLower = new Set(extras.map((tag) => tag.toLowerCase()));
+
+    const registrationDate =
+      toIsoDateString(bus.registrationDate) ||
+      toIsoDateString(bus.firstSeen) ||
+      toIsoDateString(bus.createdAt);
+
+    const newUntil =
+      normaliseTextValue(bus.newUntil) ||
+      normaliseTextValue(bus.newState?.expiresAt);
+
+    const resolved = {
+      regKey,
+      registration,
+      fleetNumber: normaliseTextValue(bus.fleetNumber || bus.vehicleId),
+      operator: resolveOperatorName(bus.operator),
+      status: normaliseTextValue(bus.status),
+      wrap: normaliseTextValue(bus.wrap),
+      vehicleType: normaliseTextValue(bus.vehicleType),
+      doors: normaliseTextValue(bus.doors),
+      engineType: normaliseTextValue(bus.engineType),
+      engine: normaliseTextValue(bus.engine),
+      chassis: normaliseTextValue(bus.chassis),
+      bodyType: normaliseTextValue(bus.bodyType),
+      registrationDate,
+      garage: normaliseTextValue(bus.garage),
+      extras,
+      length: normaliseTextValue(bus.length),
+      isNewBus:
+        bus.isNewBus !== undefined
+          ? Boolean(bus.isNewBus)
+          : extrasLower.has("new bus") || Boolean(bus.newState?.isNew),
+      isRareWorking:
+        bus.isRareWorking !== undefined
+          ? Boolean(bus.isRareWorking)
+          : extrasLower.has("rare working") || Boolean(bus.rareState?.active),
+      lastUpdated:
+        normaliseTextValue(bus.lastUpdated) ||
+        normaliseTextValue(bus.updatedAt),
+      createdAt: normaliseTextValue(bus.createdAt),
+    };
+
+    if (newUntil) {
+      resolved.newUntil = newUntil;
+    }
+
+    if (!resolved.createdAt) {
+      resolved.createdAt = registrationDate;
+    }
+    if (!resolved.lastUpdated) {
+      resolved.lastUpdated = resolved.createdAt || registrationDate;
+    }
+
+    if (Array.isArray(bus.gallery) && bus.gallery.length) {
+      resolved.gallery = bus.gallery.slice();
+    }
+
+    return resolved;
+  }
+
+  async function fetchBusFromApi(regKey) {
+    const normalised = normaliseRegKey(regKey);
+    if (!normalised) {
+      return null;
+    }
+
+    if (state.buses[normalised]) {
+      return state.buses[normalised];
+    }
+
+    if (registrationLookupPromises.has(normalised)) {
+      return registrationLookupPromises.get(normalised);
+    }
+
+    const promise = (async () => {
+      try {
+        const payload = await requestJson(`/fleet/${encodeURIComponent(normalised)}`);
+        const bus = payload?.bus || payload;
+        const sanitised = sanitiseApiBus(bus);
+        if (!sanitised) {
+          return null;
+        }
+        state.buses[sanitised.regKey] = {
+          ...(state.buses[sanitised.regKey] || {}),
+          ...sanitised,
+        };
+        return state.buses[sanitised.regKey];
+      } catch (error) {
+        if (error?.status === 404) {
+          return null;
+        }
+        throw error;
+      } finally {
+        registrationLookupPromises.delete(normalised);
+      }
+    })();
+
+    registrationLookupPromises.set(normalised, promise);
+    return promise;
+  }
+
   function prefillForm(elements, bus) {
     const { registrationInput, selects } = elements;
     const registration = registrationInput?.value || bus?.registration;
@@ -1726,6 +1896,31 @@
     const record = bus || state.buses[regKey];
     if (!record) {
       clearFormKeepRegistration(elements);
+      if (!regKey) {
+        return;
+      }
+      const requestId = ++lastPrefillRequestId;
+      fetchBusFromApi(regKey)
+        .then((remoteBus) => {
+          if (!remoteBus) {
+            return;
+          }
+          if (requestId !== lastPrefillRequestId) {
+            return;
+          }
+          prefillForm(elements, remoteBus);
+          renderTable(elements);
+          renderHighlights(elements);
+          updateStats(elements);
+          updatePendingBadge(elements);
+          renderPendingList(elements);
+        })
+        .catch((error) => {
+          if (error?.status === 404) {
+            return;
+          }
+          console.error("Failed to fetch registration from API:", error);
+        });
       return;
     }
 

@@ -73,6 +73,28 @@ Key endpoints:
 - `GET/POST /api/edits` plus approve/reject endpoints – moderator overrides for
   badge pinning with full audit history.
 
+#### Automatic live arrivals poller
+
+Set `FLEET_LIVE_TRACKING_ENABLED=true` to start the background poller that keeps
+the fleet database in sync with TfL's live arrivals feed. The worker:
+
+- requests the `/Line/Mode/bus` list, then rate-limits concurrent
+  `/Line/{lineId}/Arrivals` calls (defaults: 6 threads, 150ms launch delay),
+- deduplicates vehicles by `vehicleId`, keeping the newest timestamp per bus,
+- upserts each sighting via `record_bus_sighting` so badges, histories and
+  `bus_sightings` stay current, and
+- exposes the current snapshot at `GET /api/fleet/live`.
+
+Tuning knobs:
+
+- `FLEET_LIVE_TRACKING_INTERVAL_SECONDS` (default `20`)
+- `FLEET_LIVE_TRACKING_CONCURRENCY` (default `6`)
+- `FLEET_LIVE_TRACKING_LAUNCH_DELAY_MS` (default `150`)
+- `FLEET_LIVE_TRACKING_STALE_SECONDS` (default `90`)
+
+Ensure the backend has `TFL_APP_KEY` configured so these requests use your TfL
+API credentials rather than hitting anonymous rate limits.
+
 Tables created during `init_database()` include `operators`, `buses`,
 `bus_sightings`, `bus_history`, `edit_requests` and `planned_diversions` so the
 database is ready for Neon/Render style deployments.
