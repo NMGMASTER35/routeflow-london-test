@@ -94,6 +94,34 @@ jobs:
 #          compare_branch: preview/pr-${{ github.event.number }}-${{ needs.setup.outputs.branch }}
 #          api_key: ${{ secrets.NEON_API_KEY }}
 
+  backend_smoke_tests:
+    name: Backend Smoke Tests (Neon)
+    needs:
+      - setup
+      - create_neon_branch
+    if: |
+      github.event_name == 'pull_request' && (
+      github.event.action == 'synchronize'
+      || github.event.action == 'opened'
+      || github.event.action == 'reopened')
+      && needs.create_neon_branch.result == 'success'
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ needs.create_neon_branch.outputs.db_url_with_pooler }}
+      FIREBASE_API_KEY: dummy-ci-key
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run Neon preview smoke test
+        run: python -m backend.neon_ci_check
+
   delete_neon_branch:
     name: Delete Neon Branch
     needs: setup
