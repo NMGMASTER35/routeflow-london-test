@@ -4364,6 +4364,167 @@ def fetch_collection_items(connection, collection: str) -> List[Dict[str, Any]]:
         return cursor.fetchall() or []
 
 
+def _fetch_canonical_fleet_rows(connection) -> List[Dict[str, Any]]:
+    with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+        cursor.execute(
+            """
+            SELECT
+                b.*,
+                o.name AS operator_name,
+                o.short_name AS operator_short_name
+            FROM buses b
+            LEFT JOIN operators o ON o.operator_id = b.operator_id
+            ORDER BY b.reg ASC
+            """
+        )
+        return cursor.fetchall() or []
+
+
+def _serialise_canonical_fleet_bus(row: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    reg_key = normalise_reg_key(row.get("reg") or row.get("registration"))
+    if not reg_key:
+        return None
+
+    registration = normalise_text(row.get("registration")) or reg_key
+    fleet_number = normalise_text(row.get("fleet_number")) or None
+    status = normalise_text(row.get("status")) or None
+    vehicle_type = normalise_vehicle_type(row.get("vehicle_type")) if row.get("vehicle_type") else None
+    wrap = normalise_wrap(row.get("wrap")) if row.get("wrap") is not None else None
+
+    operator_id = row.get("operator_id")
+    operator_name = normalise_text(row.get("operator_name")) or None
+    operator_short = normalise_text(row.get("operator_short_name")) or None
+    operator_value: Optional[Dict[str, Any]] = None
+    if operator_id or operator_name or operator_short:
+        operator_value = {}
+        if operator_id:
+            operator_value["id"] = operator_id
+        if operator_name:
+            operator_value["name"] = operator_name
+        if operator_short:
+            operator_value["shortName"] = operator_short
+
+    badges_raw = row.get("badges")
+    if isinstance(badges_raw, list):
+        badges = [value for value in badges_raw if normalise_text(value)]
+    elif isinstance(badges_raw, str):
+        text = normalise_text(badges_raw)
+        badges = [text] if text else []
+    else:
+        badges = []
+
+    badge_keys = {normalise_text(badge).lower() for badge in badges if normalise_text(badge)}
+    is_new = BADGE_NEW_BUS in badge_keys
+    is_rare = BADGE_RARE_WORKING in badge_keys
+
+    rare_score = row.get("rare_score") if isinstance(row.get("rare_score"), dict) else {}
+    rare_state = dict(rare_score)
+    if "active" in rare_state:
+        rare_state["active"] = bool(rare_state.get("active"))
+    if is_rare:
+        rare_state["active"] = True
+    last_trigger = rare_state.get("lastTrigger") or row.get("rare_badge_last_seen_at")
+    if last_trigger:
+        rare_state["lastTrigger"] = normalise_datetime(last_trigger)
+
+    created_at = normalise_datetime(row.get("created_at") or row.get("first_seen"))
+    last_seen = normalise_datetime(row.get("updated_at") or row.get("last_seen"))
+    registration_date = normalise_date(row.get("first_seen"))
+    new_until = normalise_datetime(row.get("new_badge_extended_until"))
+    reactivated_at = normalise_datetime(row.get("new_badge_reactivated_at"))
+
+    record: Dict[str, Any] = {
+        "regKey": reg_key,
+        "registration": registration,
+        "fleetNumber": fleet_number,
+        "operator": operator_value or operator_name or operator_short,
+        "status": status,
+        "vehicleType": vehicle_type,
+        "wrap": wrap,
+        "registrationDate": registration_date,
+        "createdAt": created_at,
+        "lastUpdated": last_seen or created_at,
+        "badges": badges,
+        "isNewBus": is_new,
+        "isRareWorking": is_rare,
+        "rareState": rare_state,
+        "newState": {
+            "isNew": is_new,
+            "expiresAt": new_until,
+            "reactivatedAt": reactivated_at,
+        },
+        "newUntil": new_until,
+        "extras": [],
+    }
+
+    vehicle_id = normalise_text(row.get("vehicle_id")) or None
+    if vehicle_id:
+        record["vehicleId"] = vehicle_id
+
+    current_route = normalise_text(row.get("current_route")) or None
+    if current_route:
+        record["currentRoute"] = current_route
+
+    return record
+
+
+def _merge_bus_details(base: Dict[str, Any], overrides: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    if not overrides:
+        return dict(base)
+
+    merged = dict(base)
+    for key, value in overrides.items():
+        if value is None:
+            continue
+        if isinstance(value, str):
+            if not value.strip():
+                continue
+            merged[key] = value
+            continue
+        if isinstance(value, (list, dict)):
+            if not value:
+                continue
+            merged[key] = value
+            continue
+        merged[key] = value
+    return merged
+
+
+def _build_fleet_bus_map(
+    connection,
+    curated: Dict[str, Dict[str, Any]],
+) -> Dict[str, Dict[str, Any]]:
+    fleet: Dict[str, Dict[str, Any]] = {}
+    remaining = set(curated.keys())
+
+    for row in _fetch_canonical_fleet_rows(connection):
+        canonical = _serialise_canonical_fleet_bus(row)
+        if not canonical:
+            continue
+        reg_key = canonical["regKey"]
+        override = curated.get(reg_key)
+        if override:
+            remaining.discard(reg_key)
+        fleet[reg_key] = _merge_bus_details(canonical, override)
+
+    for reg_key in remaining:
+        override = curated.get(reg_key) or {}
+        fallback = dict(override)
+        fallback["regKey"] = reg_key
+        fallback.setdefault("registration", fallback.get("regKey"))
+        fallback.setdefault("extras", fallback.get("extras") or [])
+        fallback.setdefault("badges", fallback.get("badges") or [])
+        if "lastUpdated" in fallback:
+            fallback["lastUpdated"] = normalise_datetime(fallback.get("lastUpdated"))
+        if "createdAt" in fallback:
+            fallback["createdAt"] = normalise_datetime(fallback.get("createdAt"))
+        if not normalise_text(fallback.get("lastUpdated")):
+            fallback["lastUpdated"] = fallback.get("createdAt") or fallback.get("registrationDate")
+        fleet[reg_key] = fallback
+
+    return fleet
+
+
 def normalise_url(value: Any) -> str:
     text = normalise_text(value)
     if not text:
@@ -5202,7 +5363,7 @@ def create_pending_change(
 def fetch_fleet_state(connection) -> Dict[str, Any]:
     options = fetch_fleet_options(connection)
 
-    buses: Dict[str, Dict[str, Any]] = {}
+    curated: Dict[str, Dict[str, Any]] = {}
     pending_updates: List[Dict[str, Any]] = []
     for row in fetch_collection_items(connection, FLEET_COLLECTION_BUSES):
         data = row.get("data") or {}
@@ -5213,7 +5374,7 @@ def fetch_fleet_state(connection) -> Dict[str, Any]:
         data.setdefault("registration", data.get("registration") or reg_key)
         if update_new_bus_state(data):
             pending_updates.append(data)
-        buses[reg_key] = data
+        curated[reg_key] = data
 
     if pending_updates:
         for bus in pending_updates:
@@ -5224,15 +5385,17 @@ def fetch_fleet_state(connection) -> Dict[str, Any]:
             )
         connection.commit()
 
-    existing_keys = set(buses.keys())
+    existing_keys = set(curated.keys())
     synced_buses, replaced = maybe_sync_live_buses(connection, existing_keys)
     if replaced:
-        buses = {}
+        curated = {}
     for bus in synced_buses:
         reg_key = normalise_reg_key(bus.get("regKey"))
         if not reg_key:
             continue
-        buses[reg_key] = bus
+        curated[reg_key] = bus
+
+    buses = _build_fleet_bus_map(connection, curated)
 
     pending: List[Dict[str, Any]] = []
     for row in fetch_collection_items(connection, FLEET_COLLECTION_PENDING):
