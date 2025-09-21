@@ -5,6 +5,7 @@
   const MIN_QUERY_LENGTH = 2;
   const MAX_SUGGESTIONS = 12;
   const MAX_DETAIL_REQUESTS = 8;
+  const MAX_LINE_BADGES = 6;
   const SEARCH_DEBOUNCE_MS = 250;
   const STOP_ID_PATTERN = /^\d{8,}[A-Z]?$/i;
   const MODES = 'bus,tube,overground,dlr,tram,river-bus,national-rail,elizabeth-line';
@@ -24,6 +25,26 @@
     'national-rail': 'var(--national-rail)'
   };
   const DEFAULT_BADGE_COLOR = 'var(--accent-blue)';
+
+  const MODE_LABEL_MAP = {
+    bus: 'Bus',
+    tube: 'Tube',
+    dlr: 'DLR',
+    tram: 'Tram',
+    overground: 'Overground',
+    'river-bus': 'River Bus',
+    river: 'River',
+    'national-rail': 'National Rail',
+    'elizabeth-line': 'Elizabeth line'
+  };
+
+  const HIGHLIGHT_LABELS = {
+    indicator: 'Stop letter',
+    locality: 'Locality',
+    towards: 'Destination',
+    id: 'Stop ID',
+    line: 'Line'
+  };
 
   const elements = {
     searchInput: document.getElementById('trackingSearch'),
@@ -67,6 +88,94 @@
   };
 
   const normalise = (value) => (typeof value === 'string' ? value.trim().toLowerCase() : '');
+
+  const uniqueModes = (modes) => {
+    if (!Array.isArray(modes)) return [];
+    const seen = new Map();
+    modes.forEach((mode) => {
+      const key = normalise(mode);
+      if (!key) return;
+      if (!seen.has(key)) {
+        seen.set(key, mode);
+      }
+    });
+    return Array.from(seen.values());
+  };
+
+  const toTitleCase = (value) =>
+    value.replace(/(^|\s|-)([a-z])/g, (_, prefix, char) => `${prefix}${char.toUpperCase()}`);
+
+  const formatModeLabel = (mode) => {
+    const key = normalise(mode);
+    if (!key) return '';
+    if (MODE_LABEL_MAP[key]) {
+      return MODE_LABEL_MAP[key];
+    }
+    return toTitleCase(key.replace(/-/g, ' '));
+  };
+
+  const collectLineCandidates = (entity) => {
+    if (!entity || typeof entity !== 'object') return [];
+    const candidates = [];
+
+    const pushLine = (line) => {
+      if (!line) return;
+      if (typeof line === 'string') {
+        candidates.push(line);
+      } else if (typeof line === 'object') {
+        if (line.name) candidates.push(line.name);
+        if (line.id) candidates.push(line.id);
+      }
+    };
+
+    if (Array.isArray(entity.lines)) {
+      entity.lines.forEach(pushLine);
+    }
+
+    if (Array.isArray(entity.lineGroup)) {
+      entity.lineGroup.forEach((group) => {
+        if (Array.isArray(group?.lineIdentifier)) {
+          group.lineIdentifier.forEach(pushLine);
+        }
+      });
+    }
+
+    if (Array.isArray(entity.lineModeGroups)) {
+      entity.lineModeGroups.forEach((group) => {
+        if (Array.isArray(group?.lineIds)) {
+          group.lineIds.forEach(pushLine);
+        }
+      });
+    }
+
+    if (Array.isArray(entity.routeSections)) {
+      entity.routeSections.forEach((section) => {
+        pushLine(section?.lineName);
+        pushLine(section?.lineId);
+      });
+    }
+
+    pushLine(entity.lineName);
+    pushLine(entity.lineId);
+
+    return candidates;
+  };
+
+  const buildLineList = (...sources) => {
+    const seen = new Map();
+    sources.forEach((source) => {
+      collectLineCandidates(source).forEach((candidate) => {
+        const value = typeof candidate === 'string' ? candidate.trim() : '';
+        if (!value) return;
+        const key = value.toLowerCase();
+        if (!seen.has(key)) {
+          seen.set(key, value);
+        }
+      });
+    });
+    const lines = Array.from(seen.values());
+    return lines.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true }));
+  };
 
   const buildProxyUrl = (path) => {
     const suffix = path.startsWith('/') ? path : `/${path}`;
@@ -288,7 +397,8 @@
       indicator,
       locality,
       towards,
-      modes: modes.filter(Boolean),
+      modes: uniqueModes(modes),
+      lines: buildLineList(stop, parent).slice(0, MAX_LINE_BADGES),
       score: 1,
       exact: false,
       highlightField: null,
@@ -309,7 +419,8 @@
       indicator: match.indicator || match.stopLetter || fromAdditional('StopLetter') || '',
       locality: match.locality || match.matchedName || fromAdditional('NearestStation') || '',
       towards: match.towards || fromAdditional('Towards') || '',
-      modes: Array.isArray(match.modes) ? match.modes.filter(Boolean) : [],
+      modes: uniqueModes(match.modes),
+      lines: buildLineList(match).slice(0, MAX_LINE_BADGES),
       score: 1,
       exact: false,
       highlightField: null,
@@ -333,6 +444,12 @@
       { key: 'towards', value: suggestion.towards },
       { key: 'id', value: suggestion.id }
     ];
+
+    if (Array.isArray(suggestion.lines)) {
+      suggestion.lines.forEach((line) => {
+        fields.push({ key: 'line', value: line });
+      });
+    }
 
     let bestScore = 1;
     let highlightField = null;
@@ -473,12 +590,59 @@
         main.appendChild(meta);
       }
 
+      const lines = Array.isArray(suggestion.lines) ? suggestion.lines.slice(0, MAX_LINE_BADGES) : [];
+      if (lines.length) {
+        const linesContainer = document.createElement('div');
+        linesContainer.className = 'tracking-result__lines';
+        linesContainer.setAttribute('aria-label', `Lines served: ${lines.join(', ')}`);
+        linesContainer.setAttribute('role', 'list');
+        lines.forEach((line) => {
+          const chip = document.createElement('span');
+          chip.className = 'tracking-result__line';
+          chip.setAttribute('role', 'listitem');
+          chip.appendChild(highlightText(line, query));
+          linesContainer.appendChild(chip);
+        });
+        main.appendChild(linesContainer);
+      }
+
+      const highlightLabel = HIGHLIGHT_LABELS[suggestion.highlightField];
+      if (highlightLabel && suggestion.highlightValue) {
+        const reason = document.createElement('div');
+        reason.className = 'tracking-result__reason';
+
+        const icon = document.createElement('i');
+        icon.className = 'fa-solid fa-magnifying-glass';
+        icon.setAttribute('aria-hidden', 'true');
+        reason.appendChild(icon);
+
+        const description = document.createElement('span');
+        description.append(`Matches ${highlightLabel}: `);
+        const highlighted = highlightText(String(suggestion.highlightValue), query);
+        description.appendChild(highlighted);
+        reason.appendChild(description);
+
+        main.appendChild(reason);
+      }
+
       item.appendChild(main);
 
       if (suggestion.modes && suggestion.modes.length) {
         const badge = document.createElement('span');
         badge.className = 'tracking-result__badge';
-        badge.textContent = suggestion.modes[0].replace(/-/g, ' ');
+        const [primaryMode, ...otherModes] = suggestion.modes;
+        const label = formatModeLabel(primaryMode) || 'Mode';
+        badge.textContent = otherModes.length ? `${label} +${otherModes.length}` : label;
+        const fullLabel = suggestion.modes
+          .map((mode) => formatModeLabel(mode) || 'Mode')
+          .filter(Boolean)
+          .join(', ');
+        if (fullLabel) {
+          badge.setAttribute('aria-label', fullLabel);
+          badge.setAttribute('title', fullLabel);
+        }
+        badge.style.background = pickModeColour(primaryMode);
+        badge.style.color = '#fff';
         item.appendChild(badge);
       }
 
