@@ -2,17 +2,19 @@ import base64
 import binascii
 import json
 import os
+import random
 import re
 import statistics
 import threading
 import time
 import uuid
-from collections import Counter, defaultdict
+from collections import Counter, defaultdict, deque
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from math import atan2, cos, radians, sin, sqrt
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple
-from urllib.parse import parse_qsl, urljoin, urlparse
+from urllib.parse import parse_qsl, quote, urljoin, urlparse
 
 import requests
 from dotenv import load_dotenv
@@ -81,6 +83,30 @@ MAX_FLEET_PENDING_IMAGES = max(
 MAX_FLEET_GALLERY_IMAGES = max(
     _env_int("FLEET_GALLERY_MAX", 24),
     1,
+)
+
+LIVE_TRACKING_ENABLED = _as_bool(os.getenv("FLEET_LIVE_TRACKING_ENABLED"), default=False)
+LIVE_TRACKING_INTERVAL_SECONDS = max(
+    _env_int("FLEET_LIVE_TRACKING_INTERVAL_SECONDS", 20),
+    5,
+)
+LIVE_TRACKING_CONCURRENCY = max(_env_int("FLEET_LIVE_TRACKING_CONCURRENCY", 6), 1)
+LIVE_TRACKING_LAUNCH_DELAY_MS = max(
+    _env_int("FLEET_LIVE_TRACKING_LAUNCH_DELAY_MS", 150),
+    0,
+)
+LIVE_TRACKING_MAX_RETRIES = max(_env_int("FLEET_LIVE_TRACKING_MAX_RETRIES", 3), 1)
+LIVE_TRACKING_BACKOFF_MS = max(
+    _env_int("FLEET_LIVE_TRACKING_BACKOFF_MS", 500),
+    0,
+)
+LIVE_TRACKING_STALE_SECONDS = max(
+    _env_int("FLEET_LIVE_TRACKING_STALE_SECONDS", 90),
+    10,
+)
+LIVE_TRACKING_LOG_LIMIT = max(
+    _env_int("FLEET_LIVE_TRACKING_LOG_LIMIT", 2000),
+    100,
 )
 
 DEFAULT_TFL_REGISTRATION_ENDPOINTS: Tuple[str, ...] = (
@@ -3186,6 +3212,584 @@ def fetch_all_bus_registrations() -> Tuple[Dict[str, str], bool]:
     return aggregated, any_success
 
 
+_RETRYABLE_STATUS_CODES: Set[int] = {429, 500, 502, 503, 504}
+
+
+def fetch_active_bus_lines() -> List[str]:
+    url = _build_tfl_api_url("Line/Mode/bus")
+    kwargs = build_tfl_request_kwargs()
+    params = dict(kwargs.get("params") or {})
+    params.setdefault("serviceTypes", "Regular,School")
+    headers = dict(kwargs.get("headers") or {})
+
+    try:
+        response = requests.get(
+            url,
+            params=params or None,
+            headers=headers or None,
+            timeout=TFL_API_TIMEOUT_SECONDS,
+        )
+        response.raise_for_status()
+    except requests.RequestException as exc:
+        print(f"[live-tracker] Failed to fetch active bus lines: {exc}", flush=True)
+        return []
+
+    try:
+        payload = response.json()
+    except ValueError as exc:
+        print(f"[live-tracker] Invalid JSON payload from line list: {exc}", flush=True)
+        return []
+
+    entries: Iterable[Any]
+    if isinstance(payload, list):
+        entries = payload
+    elif isinstance(payload, dict):
+        extracted: Iterable[Any] = []
+        for key in ("lines", "value", "results", "data"):
+            value = payload.get(key)
+            if isinstance(value, list):
+                extracted = value
+                break
+        else:
+            extracted = [payload]
+        entries = extracted
+    else:
+        return []
+
+    lines: List[str] = []
+    seen: Set[str] = set()
+    for entry in entries:
+        if isinstance(entry, str):
+            candidate = normalise_text(entry)
+        elif isinstance(entry, dict):
+            candidate = normalise_text(entry.get("id") or entry.get("lineId") or entry.get("name"))
+        else:
+            candidate = normalise_text(entry)
+        if not candidate:
+            continue
+        key = candidate.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        lines.append(candidate)
+
+    lines.sort()
+    return lines
+
+
+def _fetch_arrivals_for_line(
+    line_id: str,
+    base_params: Dict[str, Any],
+    headers: Dict[str, str],
+    stop_event: Optional[threading.Event] = None,
+) -> Tuple[List[Dict[str, Any]], int, Optional[str]]:
+    attempts = 0
+    last_error: Optional[str] = None
+    url = _build_tfl_api_url(f"Line/{quote(str(line_id) or '')}/Arrivals")
+    backoff_seconds = LIVE_TRACKING_BACKOFF_MS / 1000.0
+
+    while attempts < LIVE_TRACKING_MAX_RETRIES:
+        attempts += 1
+        params = dict(base_params)
+
+        try:
+            response = requests.get(
+                url,
+                params=params or None,
+                headers=headers or None,
+                timeout=TFL_API_TIMEOUT_SECONDS,
+            )
+        except requests.RequestException as exc:
+            last_error = str(exc)
+            if attempts >= LIVE_TRACKING_MAX_RETRIES:
+                return [], attempts, last_error
+            delay = backoff_seconds * max(1, 2 ** (attempts - 1))
+            jitter = random.uniform(0.0, backoff_seconds) if backoff_seconds else 0.0
+            sleep_interval = delay + jitter
+            if stop_event:
+                if stop_event.wait(sleep_interval):
+                    return [], attempts, "cancelled"
+            else:
+                time.sleep(sleep_interval)
+            continue
+
+        status = response.status_code
+        if status in _RETRYABLE_STATUS_CODES and attempts < LIVE_TRACKING_MAX_RETRIES:
+            last_error = f"HTTP {status}"
+            delay = backoff_seconds * max(1, 2 ** (attempts - 1))
+            jitter = random.uniform(0.0, backoff_seconds) if backoff_seconds else 0.0
+            sleep_interval = delay + jitter
+            if stop_event:
+                if stop_event.wait(sleep_interval):
+                    return [], attempts, "cancelled"
+            else:
+                time.sleep(sleep_interval)
+            continue
+
+        try:
+            response.raise_for_status()
+        except requests.RequestException as exc:
+            last_error = str(exc)
+            return [], attempts, last_error
+
+        try:
+            payload = response.json()
+        except ValueError as exc:
+            return [], attempts, f"invalid JSON: {exc}"
+
+        if isinstance(payload, list):
+            return payload, attempts, None
+        if isinstance(payload, dict):
+            for key in ("arrivals", "value", "results", "data"):
+                value = payload.get(key)
+                if isinstance(value, list):
+                    return value, attempts, None
+            return [payload], attempts, None
+        return [], attempts, None
+
+    return [], attempts, last_error
+
+
+def normalise_live_arrival(
+    line_id: str,
+    entry: Any,
+    *,
+    now: Optional[datetime] = None,
+) -> Optional[Dict[str, Any]]:
+    if not isinstance(entry, dict):
+        return None
+
+    vehicle_candidate = (
+        entry.get("vehicleRegistrationNumber")
+        or entry.get("registrationNumber")
+        or entry.get("vehicleId")
+        or entry.get("vehicleRef")
+        or entry.get("vehicle")
+    )
+    vehicle_text = normalise_text(vehicle_candidate)
+    vehicle_key = normalise_reg_key(vehicle_text)
+    if not vehicle_key:
+        return None
+
+    reference_now = now or datetime.now(timezone.utc)
+
+    seen_at = (
+        parse_iso_datetime(entry.get("timestamp"))
+        or parse_iso_datetime(entry.get("recordedAt"))
+        or parse_iso_datetime(entry.get("timeToLive"))
+        or parse_iso_datetime(entry.get("expectedArrival"))
+        or reference_now
+    )
+    if seen_at > reference_now + timedelta(minutes=5):
+        seen_at = reference_now
+
+    expected_at = parse_iso_datetime(entry.get("expectedArrival"))
+
+    def _int_or_none(value: Any) -> Optional[int]:
+        if value in (None, ""):
+            return None
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return None
+
+    record: Dict[str, Any] = {
+        "vehicleKey": vehicle_key,
+        "vehicleId": vehicle_text or vehicle_key,
+        "registration": normalise_text(entry.get("vehicleRegistrationNumber") or entry.get("registrationNumber"))
+        or vehicle_text
+        or vehicle_key,
+        "lineId": normalise_text(entry.get("lineId")) or normalise_text(line_id),
+        "lineName": normalise_text(entry.get("lineName")) or normalise_text(line_id),
+        "route": normalise_text(entry.get("lineName") or entry.get("routeId") or entry.get("lineId") or line_id),
+        "destination": normalise_text(entry.get("destinationName") or entry.get("towards")),
+        "naptanId": normalise_text(entry.get("naptanId") or entry.get("stopPointId") or entry.get("id")),
+        "expectedArrival": expected_at.isoformat() if expected_at else "",
+        "timeToStation": _int_or_none(entry.get("timeToStation")),
+        "timestamp": seen_at.isoformat(),
+        "stationName": normalise_text(entry.get("stationName") or entry.get("stopPointName") or entry.get("stopName")),
+        "direction": normalise_text(entry.get("direction")),
+        "bearing": normalise_text(entry.get("bearing")),
+        "platformName": normalise_text(entry.get("platformName")),
+        "towards": normalise_text(entry.get("towards")),
+        "currentLocation": normalise_text(entry.get("currentLocation")),
+        "modeName": normalise_text(entry.get("modeName")) or "bus",
+        "serviceType": normalise_text(entry.get("serviceType")),
+        "vehicleType": normalise_text(entry.get("vehicleType")),
+        "operator": normalise_text(entry.get("operatorName") or entry.get("operator")),
+    }
+
+    lat = coerce_float(entry.get("latitude") or entry.get("lat"))
+    lon = coerce_float(entry.get("longitude") or entry.get("lon"))
+    if lat is not None:
+        record["latitude"] = lat
+    if lon is not None:
+        record["longitude"] = lon
+
+    arrival_id = normalise_text(entry.get("id"))
+    if arrival_id:
+        record["arrivalId"] = arrival_id
+
+    record["_seen_at"] = seen_at
+    return record
+
+
+def collect_live_bus_snapshot(
+    *,
+    stop_event: Optional[threading.Event] = None,
+) -> Tuple[Dict[str, Dict[str, Any]], List[Dict[str, Any]], Dict[str, Any]]:
+    started_at = datetime.now(timezone.utc)
+    meta: Dict[str, Any] = {
+        "batchId": uuid.uuid4().hex,
+        "startedAt": started_at.isoformat(),
+        "finishedAt": None,
+        "linesRequested": 0,
+        "linesSucceeded": 0,
+        "requestsMade": 0,
+        "errors": [],
+    }
+
+    fleet: Dict[str, Dict[str, Any]] = {}
+    log_entries: List[Dict[str, Any]] = []
+
+    lines = fetch_active_bus_lines()
+    if not lines:
+        meta["finishedAt"] = datetime.now(timezone.utc).isoformat()
+        meta["fleetSize"] = 0
+        return fleet, log_entries, meta
+
+    meta["linesRequested"] = len(lines)
+
+    request_kwargs = build_tfl_request_kwargs()
+    base_params = dict(request_kwargs.get("params") or {})
+    headers = dict(request_kwargs.get("headers") or {})
+
+    launch_delay = LIVE_TRACKING_LAUNCH_DELAY_MS / 1000.0
+
+    with ThreadPoolExecutor(max_workers=LIVE_TRACKING_CONCURRENCY) as executor:
+        futures: Dict[Any, str] = {}
+        for index, line_id in enumerate(lines):
+            if stop_event and stop_event.is_set():
+                break
+            future = executor.submit(
+                _fetch_arrivals_for_line,
+                line_id,
+                base_params,
+                headers,
+                stop_event,
+            )
+            futures[future] = line_id
+            if launch_delay > 0 and index < len(lines) - 1:
+                if stop_event and stop_event.wait(launch_delay):
+                    break
+                if not stop_event:
+                    time.sleep(launch_delay)
+
+        for future in as_completed(futures):
+            line_id = futures[future]
+            if stop_event and stop_event.is_set():
+                break
+            try:
+                arrivals, attempts, error_message = future.result()
+            except Exception as exc:
+                attempts = getattr(exc, "attempts", 1)
+                meta["requestsMade"] += attempts
+                meta["errors"].append({"lineId": line_id, "error": str(exc)})
+                continue
+
+            meta["requestsMade"] += attempts
+
+            if error_message:
+                meta["errors"].append({"lineId": line_id, "error": error_message})
+                continue
+
+            meta["linesSucceeded"] += 1
+
+            for raw in arrivals or []:
+                record = normalise_live_arrival(line_id, raw, now=started_at)
+                if not record:
+                    continue
+                log_entries.append(dict(record))
+                vehicle_key = record.get("vehicleKey")
+                if not vehicle_key:
+                    continue
+                existing = fleet.get(vehicle_key)
+                seen_at = record.get("_seen_at")
+                if existing and existing.get("_seen_at") and seen_at:
+                    if existing["_seen_at"] >= seen_at:
+                        continue
+                fleet[vehicle_key] = dict(record)
+
+    log_sorted: List[Dict[str, Any]] = []
+    for entry in sorted(log_entries, key=lambda item: item.get("_seen_at") or started_at):
+        prepared = dict(entry)
+        seen_at = prepared.get("_seen_at")
+        if isinstance(seen_at, datetime):
+            prepared["seenAt"] = prepared.get("timestamp") or seen_at.isoformat()
+        else:
+            prepared["seenAt"] = prepared.get("timestamp") or started_at.isoformat()
+        log_sorted.append(prepared)
+
+    meta["fleetSize"] = len(fleet)
+    meta["finishedAt"] = datetime.now(timezone.utc).isoformat()
+
+    return fleet, log_sorted, meta
+
+
+class LiveArrivalsPoller:
+    def __init__(self, enabled: bool, *, interval: int = LIVE_TRACKING_INTERVAL_SECONDS) -> None:
+        self._enabled = bool(enabled)
+        self._interval = max(int(interval), 5)
+        self._stale_after = timedelta(seconds=LIVE_TRACKING_STALE_SECONDS)
+        self._lock = threading.Lock()
+        self._stop_event = threading.Event()
+        self._thread: Optional[threading.Thread] = None
+        self._fleet: Dict[str, Dict[str, Any]] = {}
+        self._sightings: deque = deque(maxlen=LIVE_TRACKING_LOG_LIMIT)
+        self._last_meta: Dict[str, Any] = {}
+        self._last_cycle_started_at: Optional[str] = None
+        self._last_cycle_finished_at: Optional[str] = None
+        self._last_error: Optional[str] = None
+
+    @property
+    def enabled(self) -> bool:
+        return self._enabled
+
+    @property
+    def is_running(self) -> bool:
+        return bool(self._thread and self._thread.is_alive())
+
+    def start(self) -> bool:
+        if not self._enabled:
+            return False
+        if self.is_running:
+            return True
+        self._stop_event.clear()
+        self._thread = threading.Thread(target=self._run, name="live-arrivals", daemon=True)
+        self._thread.start()
+        return True
+
+    def stop(self, timeout: float = 5.0) -> None:
+        self._stop_event.set()
+        thread = self._thread
+        if thread and thread.is_alive():
+            thread.join(timeout=timeout)
+
+    def snapshot(self) -> Dict[str, Any]:
+        with self._lock:
+            fleet = [dict(entry) for entry in self._fleet.values()]
+            sightings = [dict(entry) for entry in self._sightings]
+            meta = dict(self._last_meta or {})
+        meta.update(
+            {
+                "enabled": self._enabled,
+                "running": self.is_running,
+                "intervalSeconds": self._interval,
+                "staleAfterSeconds": int(self._stale_after.total_seconds()),
+                "lastCycleStartedAt": self._last_cycle_started_at,
+                "lastCycleFinishedAt": self._last_cycle_finished_at,
+                "lastError": self._last_error,
+            }
+        )
+        return {"fleet": fleet, "sightings": sightings, "meta": meta}
+
+    def _run(self) -> None:
+        while not self._stop_event.is_set():
+            cycle_start = datetime.now(timezone.utc)
+            self._last_cycle_started_at = cycle_start.isoformat()
+            snapshot: Dict[str, Dict[str, Any]] = {}
+            log_entries: List[Dict[str, Any]] = []
+            meta: Dict[str, Any] = {}
+
+            try:
+                snapshot, log_entries, meta = collect_live_bus_snapshot(stop_event=self._stop_event)
+            except Exception as exc:
+                meta = {
+                    "batchId": uuid.uuid4().hex,
+                    "startedAt": cycle_start.isoformat(),
+                    "finishedAt": datetime.now(timezone.utc).isoformat(),
+                    "linesRequested": 0,
+                    "linesSucceeded": 0,
+                    "requestsMade": 0,
+                    "errors": [{"error": str(exc)}],
+                }
+                snapshot = {}
+                log_entries = []
+                self._last_error = str(exc)
+                print(f"[live-tracker] Unexpected error collecting arrivals: {exc}", flush=True)
+            else:
+                errors = meta.get("errors") or []
+                if errors:
+                    self._last_error = errors[-1].get("error")
+                    for error in errors:
+                        line_id = error.get("lineId")
+                        message = error.get("error") or "unknown error"
+                        if line_id:
+                            print(
+                                f"[live-tracker] Line {line_id}: {message}",
+                                flush=True,
+                            )
+                        else:
+                            print(f"[live-tracker] {message}", flush=True)
+                else:
+                    self._last_error = None
+
+            try:
+                if snapshot:
+                    self._persist_snapshot(snapshot)
+            except Exception as exc:
+                self._last_error = str(exc)
+                print(f"[live-tracker] Failed to persist live snapshot: {exc}", flush=True)
+            finally:
+                self._update_state(snapshot, log_entries, meta)
+                cycle_end = datetime.now(timezone.utc)
+                self._last_cycle_finished_at = cycle_end.isoformat()
+                sleep_for = max(self._interval - (cycle_end - cycle_start).total_seconds(), 1.0)
+                self._stop_event.wait(sleep_for)
+
+    def _persist_snapshot(self, snapshot: Dict[str, Dict[str, Any]]) -> None:
+        now = datetime.now(timezone.utc)
+        with get_connection() as connection:
+            for vehicle_key, record in snapshot.items():
+                seen_at_value = record.get("_seen_at")
+                if isinstance(seen_at_value, datetime):
+                    seen_at = seen_at_value
+                else:
+                    seen_at = parse_iso_datetime(seen_at_value) or now
+                payload = self._build_payload(vehicle_key, record, seen_at)
+                try:
+                    record_bus_sighting(connection, payload, now=now)
+                    connection.commit()
+                except ApiError as exc:
+                    connection.rollback()
+                    print(f"[live-tracker] Skipped sighting for {vehicle_key}: {exc}", flush=True)
+                except Exception as exc:
+                    connection.rollback()
+                    print(f"[live-tracker] Error recording sighting for {vehicle_key}: {exc}", flush=True)
+
+    def _build_payload(
+        self,
+        vehicle_key: str,
+        record: Dict[str, Any],
+        seen_at: datetime,
+    ) -> Dict[str, Any]:
+        payload: Dict[str, Any] = {
+            "vehicleId": record.get("vehicleId") or vehicle_key,
+            "vehicleRegistrationNumber": record.get("registration")
+            or record.get("vehicleId")
+            or vehicle_key,
+            "registration": record.get("registration")
+            or record.get("vehicleId")
+            or vehicle_key,
+            "lineId": record.get("lineId"),
+            "lineName": record.get("lineName") or record.get("route"),
+            "route": record.get("route"),
+            "destination": record.get("destination"),
+            "destinationName": record.get("destination"),
+            "towards": record.get("towards") or record.get("destination"),
+            "naptanId": record.get("naptanId"),
+            "stopCode": record.get("naptanId"),
+            "stationName": record.get("stationName"),
+            "platformName": record.get("platformName"),
+            "timestamp": record.get("timestamp") or seen_at.isoformat(),
+            "expectedArrival": record.get("expectedArrival")
+            or record.get("timestamp")
+            or seen_at.isoformat(),
+            "timeToStation": record.get("timeToStation"),
+            "modeName": record.get("modeName") or "bus",
+            "direction": record.get("direction"),
+            "bearing": record.get("bearing"),
+            "currentLocation": record.get("currentLocation"),
+            "serviceType": record.get("serviceType"),
+            "vehicleType": record.get("vehicleType"),
+            "operator": record.get("operator"),
+        }
+        if record.get("latitude") is not None:
+            payload["latitude"] = record["latitude"]
+            payload["lat"] = record["latitude"]
+        if record.get("longitude") is not None:
+            payload["longitude"] = record["longitude"]
+            payload["lon"] = record["longitude"]
+        arrival_id = record.get("arrivalId")
+        if arrival_id:
+            payload["id"] = arrival_id
+        return payload
+
+    def _update_state(
+        self,
+        snapshot: Dict[str, Dict[str, Any]],
+        log_entries: List[Dict[str, Any]],
+        meta: Dict[str, Any],
+    ) -> None:
+        now = datetime.now(timezone.utc)
+        cutoff = now - self._stale_after
+
+        with self._lock:
+            if snapshot:
+                for vehicle_key, record in snapshot.items():
+                    entry = dict(record)
+                    seen_dt = entry.pop("_seen_at", None)
+                    if not isinstance(seen_dt, datetime):
+                        seen_dt = parse_iso_datetime(seen_dt)
+                    seen_iso = entry.get("timestamp") or (seen_dt.isoformat() if seen_dt else now.isoformat())
+                    entry["vehicleKey"] = vehicle_key
+                    entry.setdefault("vehicleId", entry.get("vehicleKey"))
+                    entry.setdefault("registration", entry.get("registration") or entry.get("vehicleId"))
+                    entry.setdefault("seenAt", seen_iso)
+                    if entry.get("latitude") is None:
+                        entry.pop("latitude", None)
+                    if entry.get("longitude") is None:
+                        entry.pop("longitude", None)
+                    self._fleet[vehicle_key] = entry
+
+            for vehicle_key, entry in list(self._fleet.items()):
+                seen_text = entry.get("seenAt") or entry.get("timestamp")
+                seen_dt = parse_iso_datetime(seen_text)
+                if seen_dt and seen_dt < cutoff:
+                    del self._fleet[vehicle_key]
+
+            if log_entries:
+                for raw_entry in log_entries:
+                    vehicle_key = raw_entry.get("vehicleKey") or raw_entry.get("vehicleId")
+                    if not vehicle_key:
+                        continue
+                    entry = dict(raw_entry)
+                    seen_dt = entry.pop("_seen_at", None)
+                    if isinstance(seen_dt, datetime):
+                        seen_iso = entry.get("seenAt") or entry.get("timestamp") or seen_dt.isoformat()
+                    else:
+                        seen_iso = entry.get("seenAt") or entry.get("timestamp") or now.isoformat()
+                    entry["vehicleKey"] = vehicle_key
+                    entry.setdefault("vehicleId", entry.get("vehicleKey"))
+                    entry.setdefault("registration", entry.get("registration") or entry.get("vehicleId"))
+                    entry["seenAt"] = seen_iso
+                    if entry.get("latitude") is None:
+                        entry.pop("latitude", None)
+                    if entry.get("longitude") is None:
+                        entry.pop("longitude", None)
+                    self._sightings.append(entry)
+
+            self._last_meta = {
+                "lastUpdated": now.isoformat(),
+                "fleetSize": len(self._fleet),
+                "linesRequested": meta.get("linesRequested"),
+                "linesSucceeded": meta.get("linesSucceeded"),
+                "requestsMade": meta.get("requestsMade"),
+                "batchId": meta.get("batchId"),
+                "errors": meta.get("errors"),
+                "startedAt": meta.get("startedAt"),
+                "finishedAt": meta.get("finishedAt"),
+            }
+
+
+live_tracker = LiveArrivalsPoller(enabled=LIVE_TRACKING_ENABLED)
+if LIVE_TRACKING_ENABLED:
+    try:
+        live_tracker.start()
+    except Exception as exc:
+        print(f"[live-tracker] Failed to start tracker thread: {exc}", flush=True)
+
+
 def upsert_collection_item(
     connection,
     collection: str,
@@ -4468,6 +5072,19 @@ def favourites_item(uid: str, favourite_id: str):
         raise ApiError("Favourite not found.", status_code=404)
 
     return jsonify({"status": "deleted"}), 200
+
+
+@app.route("/api/fleet/live", methods=["GET"])
+def fleet_live_snapshot():
+    snapshot = live_tracker.snapshot()
+    if not live_tracker.enabled:
+        meta = snapshot.setdefault("meta", {})
+        meta.setdefault("enabled", False)
+        meta["message"] = (
+            "Live fleet tracking is disabled. Set FLEET_LIVE_TRACKING_ENABLED=true to enable the poller."
+        )
+        return jsonify(snapshot), 503
+    return jsonify(snapshot)
 
 
 @app.route("/api/fleet/<reg_key>", methods=["GET"])
