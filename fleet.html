@@ -45,7 +45,7 @@
       </div>
     </section>
 
-    <main id="fleetMain" class="fleet-page" data-auth-locked="true">
+    <main id="fleetMain" class="fleet-page">
       <section class="fleet-card fleet-hero" data-locked-section data-lock-label="Sign in">
         <div class="fleet-hero__heading">
           <p class="fleet-hero__eyebrow">Fleet database</p>
@@ -514,11 +514,19 @@
           }
         });
 
+        gate?.unlock({ reason: 'public', force: true });
+        if (heroLead) {
+          heroLead.textContent = 'Explore the full RouteFlow fleet catalogue. Sign in to contribute updates and manage submissions.';
+        }
+
         const handleAuthStateChange = (user) => {
           if (user) {
             gate?.unlock({ user });
           } else {
-            gate?.lock({ reason: 'signed-out', force: true });
+            gate?.unlock({ reason: 'public', force: true });
+            if (heroLead) {
+              heroLead.textContent = 'Explore the full RouteFlow fleet catalogue. Sign in to contribute updates and manage submissions.';
+            }
           }
         };
 
