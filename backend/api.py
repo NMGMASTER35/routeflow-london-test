@@ -113,6 +113,23 @@ LIVE_TRACKING_LOG_LIMIT = max(
     100,
 )
 
+LINE_CACHE_REFRESH_SECONDS = max(
+    _env_int("FLEET_LINE_CACHE_REFRESH_SECONDS", 3600),
+    60,
+)
+ROUTE_CACHE_TTL_SECONDS = max(
+    _env_int("FLEET_ROUTE_CACHE_TTL_SECONDS", 3600),
+    300,
+)
+ROUTE_CACHE_CONCURRENCY = max(
+    _env_int("FLEET_ROUTE_CACHE_CONCURRENCY", 4),
+    1,
+)
+DISRUPTION_CACHE_TTL_SECONDS = max(
+    _env_int("FLEET_DISRUPTION_CACHE_TTL_SECONDS", 300),
+    60,
+)
+
 DEFAULT_TFL_REGISTRATION_ENDPOINTS: Tuple[str, ...] = (
     "Vehicle/Occupancy/Buses",
     "Line/Mode/bus/Arrivals",
@@ -1990,6 +2007,10 @@ def evaluate_rare_working_state(
         triggered = False
         reason = None
 
+    if triggered and route_key and bus_disruption_cache.is_route_disrupted(route_key):
+        triggered = False
+        reason = None
+
     last_trigger = parse_iso_datetime(bus_row.get("rare_badge_last_seen_at"))
     decay_at = parse_iso_datetime(bus_row.get("rare_badge_decay_at"))
 
@@ -3317,7 +3338,7 @@ def fetch_all_bus_registrations() -> Tuple[Dict[str, str], bool]:
 _RETRYABLE_STATUS_CODES: Set[int] = {429, 500, 502, 503, 504}
 
 
-def fetch_active_bus_lines() -> List[str]:
+def _fetch_active_bus_lines_from_api() -> List[str]:
     url = _build_tfl_api_url("Line/Mode/bus")
     kwargs = build_tfl_request_kwargs()
     params = dict(kwargs.get("params") or {})
@@ -3377,6 +3398,341 @@ def fetch_active_bus_lines() -> List[str]:
 
     lines.sort()
     return lines
+
+
+class BusLineRouteCache:
+    def __init__(
+        self,
+        *,
+        refresh_seconds: int = LINE_CACHE_REFRESH_SECONDS,
+        route_ttl_seconds: int = ROUTE_CACHE_TTL_SECONDS,
+        concurrency: int = ROUTE_CACHE_CONCURRENCY,
+    ) -> None:
+        self._refresh_seconds = max(refresh_seconds, 60)
+        self._route_ttl_seconds = max(route_ttl_seconds, 60)
+        self._concurrency = max(concurrency, 1)
+        self._lock = threading.Lock()
+        self._lines: List[str] = []
+        self._last_refresh: float = 0.0
+        self._routes: Dict[str, Dict[str, Any]] = {}
+
+    def _normalise_line(self, value: Any) -> str:
+        return normalise_text(value)
+
+    def _route_key(self, value: Any) -> str:
+        text = self._normalise_line(value)
+        return text.lower()
+
+    def get_lines(self) -> List[str]:
+        now = time.monotonic()
+        refresh_needed = False
+        with self._lock:
+            if not self._lines or now - self._last_refresh >= self._refresh_seconds:
+                refresh_needed = True
+            else:
+                lines_snapshot = list(self._lines)
+
+        if refresh_needed:
+            lines_snapshot = self._refresh_lines()
+
+        if not lines_snapshot:
+            return []
+
+        self.ensure_routes(lines_snapshot)
+        return list(lines_snapshot)
+
+    def _refresh_lines(self) -> List[str]:
+        lines = _fetch_active_bus_lines_from_api()
+        if not lines:
+            with self._lock:
+                return list(self._lines)
+
+        with self._lock:
+            self._lines = list(lines)
+            self._last_refresh = time.monotonic()
+
+        print(
+            f"[line-cache] Refreshed active bus line list with {len(lines)} entries",
+            flush=True,
+        )
+        return list(lines)
+
+    def ensure_routes(self, lines: Sequence[str]) -> None:
+        if not lines:
+            return
+
+        now = time.monotonic()
+        expiry_cutoff = now - self._route_ttl_seconds
+        pending: List[str] = []
+        seen: Set[str] = set()
+
+        with self._lock:
+            for line in lines:
+                key = self._route_key(line)
+                if not key or key in seen:
+                    continue
+                seen.add(key)
+                entry = self._routes.get(key)
+                fetched_at = entry.get("_fetched_at") if entry else None
+                if fetched_at is None or fetched_at <= expiry_cutoff:
+                    pending.append(line)
+
+        if not pending:
+            return
+
+        self._populate_routes(pending)
+
+    def _populate_routes(self, lines: Sequence[str]) -> None:
+        if not lines:
+            return
+
+        def _store(line_id: str, bundle: Optional[Dict[str, Any]]) -> None:
+            if not bundle:
+                return
+            key = self._route_key(line_id)
+            if not key:
+                return
+            record = dict(bundle)
+            record["lineId"] = bundle.get("lineId") or self._normalise_line(line_id)
+            record["_fetched_at"] = time.monotonic()
+            record["fetchedAt"] = datetime.now(timezone.utc).isoformat()
+            with self._lock:
+                self._routes[key] = record
+
+        if self._concurrency <= 1 or len(lines) == 1:
+            for line in lines:
+                bundle = self._fetch_route_bundle(line)
+                _store(line, bundle)
+            return
+
+        with ThreadPoolExecutor(max_workers=self._concurrency) as executor:
+            futures = {executor.submit(self._fetch_route_bundle, line): line for line in lines}
+            for future in as_completed(futures):
+                line = futures[future]
+                try:
+                    bundle = future.result()
+                except Exception as exc:
+                    print(
+                        f"[line-cache] Failed to fetch route data for line {line}: {exc}",
+                        flush=True,
+                    )
+                    continue
+                _store(line, bundle)
+
+    def _fetch_route_bundle(self, line_id: str) -> Optional[Dict[str, Any]]:
+        line = self._normalise_line(line_id)
+        if not line:
+            return None
+
+        route_payload = self._request_json(f"Line/{quote(line)}/Route")
+        if route_payload is None:
+            return None
+
+        directions = self._extract_directions(route_payload)
+        sequences: Dict[str, Any] = {}
+
+        for direction in sorted(directions):
+            payload = self._request_json(
+                f"Line/{quote(line)}/Route/Sequence/{quote(direction.lower())}"
+            )
+            if payload is not None:
+                sequences[direction.lower()] = payload
+
+        if "all" not in sequences:
+            all_payload = self._request_json(f"Line/{quote(line)}/Route/Sequence/all")
+            if all_payload is not None:
+                sequences["all"] = all_payload
+
+        return {
+            "lineId": line,
+            "route": route_payload,
+            "sequences": sequences,
+        }
+
+    def _extract_directions(self, payload: Any) -> Set[str]:
+        directions: Set[str] = set()
+        if isinstance(payload, list):
+            entries = payload
+        else:
+            entries = [payload]
+
+        for entry in entries:
+            if not isinstance(entry, dict):
+                continue
+            direction = self._normalise_line(entry.get("direction") or entry.get("directionName"))
+            if direction:
+                directions.add(direction.lower())
+            sections = entry.get("routeSections") or entry.get("routeSectionNaptanIds")
+            if isinstance(sections, list):
+                for section in sections:
+                    if not isinstance(section, dict):
+                        continue
+                    sec_dir = self._normalise_line(section.get("direction") or section.get("directionName"))
+                    if sec_dir:
+                        directions.add(sec_dir.lower())
+
+        if not directions:
+            directions.update({"inbound", "outbound"})
+
+        return directions
+
+    def _request_json(self, path: str) -> Optional[Any]:
+        url = _build_tfl_api_url(path)
+        kwargs = build_tfl_request_kwargs()
+        params = dict(kwargs.get("params") or {})
+        headers = dict(kwargs.get("headers") or {})
+
+        try:
+            response = requests.get(
+                url,
+                params=params or None,
+                headers=headers or None,
+                timeout=TFL_API_TIMEOUT_SECONDS,
+            )
+            response.raise_for_status()
+        except requests.RequestException as exc:
+            print(f"[line-cache] Failed to load {path}: {exc}", flush=True)
+            return None
+
+        try:
+            return response.json()
+        except ValueError as exc:
+            print(f"[line-cache] Invalid JSON from {path}: {exc}", flush=True)
+            return None
+
+    def get_route_graph(self, line_id: str) -> Optional[Dict[str, Any]]:
+        key = self._route_key(line_id)
+        if not key:
+            return None
+        self.ensure_routes([line_id])
+        with self._lock:
+            entry = self._routes.get(key)
+            if not entry:
+                return None
+            result = dict(entry)
+            result.pop("_fetched_at", None)
+            return result
+
+    def cached_route_count(self) -> int:
+        with self._lock:
+            return len(self._routes)
+
+
+class BusDisruptionCache:
+    def __init__(self, *, ttl_seconds: int = DISRUPTION_CACHE_TTL_SECONDS) -> None:
+        self._ttl_seconds = max(ttl_seconds, 60)
+        self._lock = threading.Lock()
+        self._expires_at: float = 0.0
+        self._routes: Set[str] = set()
+
+    def _make_key(self, value: Any) -> str:
+        text = normalise_text(value)
+        if not text:
+            return ""
+        return re.sub(r"\s+", "", text.lower())
+
+    def _collect_codes(self, value: Any, results: Set[str], assume_relevant: bool = False) -> None:
+        if isinstance(value, str):
+            if assume_relevant:
+                results.add(value)
+            return
+        if isinstance(value, list):
+            for item in value:
+                self._collect_codes(item, results, assume_relevant)
+            return
+        if isinstance(value, dict):
+            for key, nested in value.items():
+                key_text = normalise_text(key).lower()
+                explicit = "line" in key_text or "route" in key_text
+                propagate = explicit or (assume_relevant and key_text in {"id", "code"})
+                self._collect_codes(nested, results, propagate)
+
+    def _extract_routes(self, payload: Any) -> Set[str]:
+        collected: Set[str] = set()
+        if isinstance(payload, list):
+            entries = payload
+        else:
+            entries = [payload]
+
+        for entry in entries:
+            if not isinstance(entry, dict):
+                continue
+            codes: Set[str] = set()
+            self._collect_codes(entry, codes)
+            for code in codes:
+                key = self._make_key(code)
+                if key:
+                    collected.add(key)
+
+        return collected
+
+    def _refresh(self) -> None:
+        url = _build_tfl_api_url("Line/Mode/bus/Disruption")
+        kwargs = build_tfl_request_kwargs()
+        params = dict(kwargs.get("params") or {})
+        headers = dict(kwargs.get("headers") or {})
+
+        try:
+            response = requests.get(
+                url,
+                params=params or None,
+                headers=headers or None,
+                timeout=TFL_API_TIMEOUT_SECONDS,
+            )
+            response.raise_for_status()
+        except requests.RequestException as exc:
+            print(f"[disruption-cache] Failed to load disruptions: {exc}", flush=True)
+            return
+
+        try:
+            payload = response.json()
+        except ValueError as exc:
+            print(f"[disruption-cache] Invalid JSON from disruption feed: {exc}", flush=True)
+            return
+
+        routes = self._extract_routes(payload)
+        expires_at = time.monotonic() + self._ttl_seconds
+
+        with self._lock:
+            self._routes = routes
+            self._expires_at = expires_at
+
+    def get_routes(self) -> Set[str]:
+        now = time.monotonic()
+        with self._lock:
+            if self._routes and now < self._expires_at:
+                return set(self._routes)
+
+        self._refresh()
+
+        with self._lock:
+            return set(self._routes)
+
+    def is_route_disrupted(self, route: Optional[str]) -> bool:
+        if not route:
+            return False
+        key = self._make_key(route)
+        if not key:
+            return False
+        routes = self.get_routes()
+        return key in routes
+
+    def cached_route_count(self) -> int:
+        with self._lock:
+            return len(self._routes)
+
+
+line_route_cache = BusLineRouteCache(
+    refresh_seconds=LINE_CACHE_REFRESH_SECONDS,
+    route_ttl_seconds=ROUTE_CACHE_TTL_SECONDS,
+    concurrency=ROUTE_CACHE_CONCURRENCY,
+)
+
+bus_disruption_cache = BusDisruptionCache(ttl_seconds=DISRUPTION_CACHE_TTL_SECONDS)
+
+
+def fetch_active_bus_lines() -> List[str]:
+    return line_route_cache.get_lines()
 
 
 def _fetch_arrivals_for_line(
@@ -3554,6 +3910,9 @@ def collect_live_bus_snapshot(
     fleet: Dict[str, Dict[str, Any]] = {}
     log_entries: List[Dict[str, Any]] = []
 
+    disruption_routes = bus_disruption_cache.get_routes()
+    meta["disruptionsTracked"] = len(disruption_routes)
+
     lines = fetch_active_bus_lines()
     if not lines:
         meta["finishedAt"] = datetime.now(timezone.utc).isoformat()
@@ -3561,6 +3920,7 @@ def collect_live_bus_snapshot(
         return fleet, log_entries, meta
 
     meta["linesRequested"] = len(lines)
+    meta["routesCached"] = line_route_cache.cached_route_count()
 
     request_kwargs = build_tfl_request_kwargs()
     base_params = dict(request_kwargs.get("params") or {})
