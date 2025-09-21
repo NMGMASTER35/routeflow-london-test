@@ -97,7 +97,7 @@ def main() -> None:
         )
     finally:
         try:
-            api.connection_pool.closeall()
+            api.close_connection_pool()
         except Exception:  # pragma: no cover - ensure CI never hides the root error
             pass
 
