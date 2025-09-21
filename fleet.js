@@ -468,7 +468,11 @@
     applyAdminUi(elements);
 
     populateAllSelects(elements);
-    renderOptionList(elements, elements.optionCategory.value);
+    if (elements.optionCategory) {
+      renderOptionList(elements, elements.optionCategory.value);
+    } else {
+      renderOptionList(elements, null);
+    }
     renderTable(elements);
     renderHighlights(elements);
     updateStats(elements);
@@ -754,7 +758,11 @@
       applyFleetState(remoteState);
       sortOptionLists();
       populateAllSelects(elements);
-      renderOptionList(elements, elements.optionCategory.value);
+      if (elements.optionCategory) {
+        renderOptionList(elements, elements.optionCategory.value);
+      } else {
+        renderOptionList(elements, null);
+      }
       renderTable(elements);
       renderHighlights(elements);
       updateStats(elements);
@@ -1642,6 +1650,11 @@
   function renderOptionList(elements, field) {
     const { optionList } = elements;
     if (!optionList) return;
+    if (!field) {
+      optionList.innerHTML =
+        '<li class="option-empty">Select a field to view options.</li>';
+      return;
+    }
     const options = state.options[field] || [];
     if (!options.length) {
       optionList.innerHTML =
