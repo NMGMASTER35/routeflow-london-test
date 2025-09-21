@@ -889,6 +889,16 @@ def init_database() -> None:
             )
             cursor.execute(
                 """
+                CREATE TABLE IF NOT EXISTS dashboard_progress (
+                    uid TEXT PRIMARY KEY,
+                    data JSONB NOT NULL DEFAULT '{}'::jsonb,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                );
+                """
+            )
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS app_collections (
                     collection TEXT NOT NULL,
                     item_id TEXT NOT NULL,
@@ -4930,6 +4940,61 @@ def upsert_profile_extras(connection, uid: str, payload: Dict[str, Optional[str]
         return cursor.fetchone()
 
 
+def serialise_dashboard_progress(row: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    if not row:
+        return {"state": None, "createdAt": None, "updatedAt": None}
+    data = row.get("data")
+    state = data if isinstance(data, dict) else {}
+    return {
+        "state": state,
+        "createdAt": to_iso(row.get("created_at")),
+        "updatedAt": to_iso(row.get("updated_at")),
+    }
+
+
+def sanitise_dashboard_state(payload: Dict[str, Any]) -> Dict[str, Any]:
+    if not isinstance(payload, dict):
+        raise ApiError("A dashboard state payload is required.", status_code=400)
+    state = payload.get("state")
+    if state is None:
+        state = payload.get("data")
+    if state is None:
+        state = {}
+    if not isinstance(state, dict):
+        raise ApiError("Dashboard state must be an object.", status_code=400)
+    return state
+
+
+def fetch_dashboard_progress(connection, uid: str) -> Optional[Dict[str, Any]]:
+    with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+        cursor.execute(
+            """
+            SELECT data, created_at, updated_at
+            FROM dashboard_progress
+            WHERE uid = %s
+            """,
+            (uid,),
+        )
+        return cursor.fetchone()
+
+
+def upsert_dashboard_progress(connection, uid: str, state: Dict[str, Any]):
+    with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+        cursor.execute(
+            """
+            INSERT INTO dashboard_progress (uid, data)
+            VALUES (%s, %s)
+            ON CONFLICT (uid)
+            DO UPDATE SET
+                data = EXCLUDED.data,
+                updated_at = NOW()
+            RETURNING data, created_at, updated_at
+            """,
+            (uid, Json(state)),
+        )
+        return cursor.fetchone()
+
+
 @app.route("/api/profile", methods=["GET", "PATCH"])
 def profile_extras_endpoint():
     user_info = require_authenticated_user()
@@ -4959,6 +5024,27 @@ def profile_extras_endpoint():
     if extras is None:
         return ("", 204)
     return jsonify(extras)
+
+
+@app.route("/api/profile/<uid>/dashboard", methods=["GET", "PUT", "PATCH"])
+def dashboard_progress_endpoint(uid: str):
+    verify_firebase_token(uid)
+
+    if request.method == "GET":
+        with get_connection() as connection:
+            row = fetch_dashboard_progress(connection, uid)
+        payload = serialise_dashboard_progress(row)
+        return jsonify(payload)
+
+    payload = request.get_json(silent=True) or {}
+    state = sanitise_dashboard_state(payload)
+
+    with get_connection() as connection:
+        row = upsert_dashboard_progress(connection, uid, state)
+        connection.commit()
+
+    response_payload = serialise_dashboard_progress(row)
+    return jsonify(response_payload)
 
 
 @app.route("/api/profile/<uid>/notes", methods=["GET", "POST"])
