@@ -116,7 +116,7 @@ body.dark-mode .navbar {
   border-radius: 999px;
   font-size: 0.98rem;
   font-weight: 600;
-  color: var(--navbar-muted);
+  color: var(--navbar-text);
   text-decoration: none;
   transition: color 0.16s ease, background-color 0.16s ease, box-shadow 0.16s ease;
 }
