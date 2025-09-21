@@ -21,6 +21,10 @@ from dotenv import load_dotenv
 from flask import Flask, Response, jsonify, make_response, request
 from psycopg2.extras import Json, RealDictCursor
 from psycopg2.pool import SimpleConnectionPool
+from psycopg2.extensions import (
+    TRANSACTION_STATUS_IDLE,
+    TRANSACTION_STATUS_UNKNOWN,
+)
 
 def _as_bool(value, default: bool = False) -> bool:
     if value is None:
@@ -221,13 +225,77 @@ connection_pool = SimpleConnectionPool(
 )
 
 
+def _return_connection(connection, *, had_error: bool = False) -> None:
+    if connection is None:
+        return
+
+    close_connection = False
+
+    if connection.closed:
+        close_connection = True
+    else:
+        try:
+            status = connection.get_transaction_status()
+        except Exception:
+            try:
+                connection.close()
+            finally:
+                close_connection = True
+        else:
+            if had_error or status not in (
+                TRANSACTION_STATUS_IDLE,
+                TRANSACTION_STATUS_UNKNOWN,
+            ):
+                try:
+                    connection.rollback()
+                except Exception:
+                    try:
+                        connection.close()
+                    finally:
+                        close_connection = True
+
+    try:
+        connection_pool.putconn(connection, close=close_connection)
+    except Exception:
+        if not close_connection:
+            try:
+                connection.close()
+            except Exception:
+                pass
+            else:
+                close_connection = True
+        try:
+            connection_pool.putconn(connection, close=True)
+        except Exception:
+            pass
+
+
 @contextmanager
 def get_connection():
     connection = connection_pool.getconn()
+    had_error = False
+
+    while connection.closed:
+        connection_pool.putconn(connection, close=True)
+        connection = connection_pool.getconn()
+
+    connection.autocommit = False
+
     try:
         yield connection
+    except Exception:
+        had_error = True
+        if connection is not None and not connection.closed:
+            try:
+                connection.rollback()
+            except Exception:
+                try:
+                    connection.close()
+                finally:
+                    pass
+        raise
     finally:
-        connection_pool.putconn(connection)
+        _return_connection(connection, had_error=had_error)
 
 
 app = Flask(__name__)
