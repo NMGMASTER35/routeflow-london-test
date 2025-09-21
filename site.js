@@ -21,12 +21,6 @@
       matches: ['planning.html']
     },
     {
-      href: 'routes.html',
-      label: 'Explore',
-      icon: 'fa-solid fa-layer-group',
-      matches: ['routes.html', 'info.html', 'withdrawn.html', 'withdrawn table.html', 'fleet.html']
-    },
-    {
       href: 'dashboard.html',
       label: 'Account',
       icon: 'fa-solid fa-circle-user',
@@ -36,6 +30,8 @@
 
   let appDockInitialised = false;
 
+  const MOBILE_DOCK_QUERY = window.matchMedia('(max-width: 900px)');
+
   const ensureMobileStylesheet = () => {
     if (document.getElementById(MOBILE_STYLESHEET_ID)) {
       return;
@@ -44,7 +40,7 @@
     link.id = MOBILE_STYLESHEET_ID;
     link.rel = 'stylesheet';
     link.href = 'mobile-app.css';
-    link.media = 'all';
+    link.media = 'screen and (max-width: 900px)';
     document.head.appendChild(link);
   };
 
@@ -162,6 +158,17 @@
       return;
     }
 
+    const prefersMobileDock = MOBILE_DOCK_QUERY.matches;
+
+    if (!prefersMobileDock) {
+      const existing = document.getElementById(APP_DOCK_ID);
+      if (existing) {
+        existing.remove();
+      }
+      delete document.body.dataset.hasAppDock;
+      return;
+    }
+
     if (document.body.dataset.disableAppDock === 'true') {
       const existing = document.getElementById(APP_DOCK_ID);
       if (existing) {
@@ -223,6 +230,16 @@
   window.addEventListener('hashchange', handleLocationChange);
   window.addEventListener('popstate', handleLocationChange);
   document.addEventListener('routeflow:page-changed', handleLocationChange);
+
+  const handleViewportChange = () => {
+    ensureAppDock();
+  };
+
+  if (typeof MOBILE_DOCK_QUERY.addEventListener === 'function') {
+    MOBILE_DOCK_QUERY.addEventListener('change', handleViewportChange);
+  } else if (typeof MOBILE_DOCK_QUERY.addListener === 'function') {
+    MOBILE_DOCK_QUERY.addListener(handleViewportChange);
+  }
 
   document.addEventListener('click', (event) => {
     const link = event.target.closest('[data-app-dock-link]');

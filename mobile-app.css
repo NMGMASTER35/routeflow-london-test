@@ -37,8 +37,8 @@
   --radius-md: 20px;
   --radius-lg: 26px;
   --radius-xl: 34px;
-  --content-max: min(420px, 100%);
-  --app-shell-max: min(420px, 100%);
+  --content-max: min(1200px, 100vw - clamp(1.5rem, 4vw, 3rem));
+  --app-shell-max: min(1200px, 100vw - clamp(1.5rem, 4vw, 3rem));
   --app-shell-spacing: clamp(1.1rem, 3.6vw, 1.6rem);
   --app-shell-padding: clamp(1.6rem, 6vw, 2.6rem);
   --app-shell-shadow: 0 30px 60px rgba(15, 23, 42, 0.22);
@@ -103,7 +103,11 @@ body[data-disable-app-dock='true'] {
   padding-bottom: calc(var(--app-shell-padding) + env(safe-area-inset-bottom, 0px));
 }
 
-#navbar-container,
+#navbar-container {
+  width: 100%;
+  max-width: none;
+}
+
 main,
 .site-footer,
 .auth-gate {
@@ -111,7 +115,6 @@ main,
   max-width: var(--app-shell-max);
 }
 
-#navbar-container,
 main,
 .site-footer {
   margin-inline: auto;
@@ -162,11 +165,11 @@ h4 {
 
 p {
   margin: 0;
-  color: var(--text-muted-light);
+  color: var(--foreground-light);
 }
 
 body.dark-mode p {
-  color: var(--text-muted-dark);
+  color: var(--foreground-dark);
 }
 
 a {
