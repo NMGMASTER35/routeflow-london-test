@@ -19,7 +19,7 @@
   letter-spacing: var(--eyebrow-letter);
   text-transform: uppercase;
   font-weight: 700;
-  color: var(--accent-blue);
+  color: var(--accent-red);
 }
 
 .planning-hero__content h1 {
@@ -46,7 +46,7 @@
   background: var(--surface-muted-light);
   border-radius: var(--radius-md);
   padding: 1rem 1.2rem;
-  border: 1px solid rgba(21, 38, 75, 0.08);
+  border: 1px solid rgba(211, 18, 51, 0.16);
 }
 
 .planning-layout {
@@ -115,16 +115,16 @@
   border: none;
   border-radius: 999px;
   padding: 0.8rem 1.8rem;
-  background: var(--accent-blue);
+  background: var(--accent-red);
   color: #fff;
   font-weight: 600;
-  box-shadow: 0 16px 40px rgba(21, 94, 239, 0.24);
+  box-shadow: 0 16px 40px rgba(211, 18, 51, 0.28);
 }
 
 .planning-submit:hover,
 .planning-submit:focus-visible {
   transform: translateY(-2px);
-  box-shadow: 0 22px 56px rgba(21, 94, 239, 0.28);
+  box-shadow: 0 22px 56px rgba(211, 18, 51, 0.34);
 }
 
 .planning-side {
