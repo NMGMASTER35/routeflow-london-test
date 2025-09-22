@@ -5,44 +5,44 @@
 */
 
 :root {
-  --primary: #325fff;
-  --primary-dark: #1f3ed9;
-  --accent-blue: #325fff;
-  --accent-blue-dark: #1f3ed9;
-  --accent-red: #ff6b81;
-  --accent-red-dark: #e4566a;
-  --background-light: #f4f6ff;
-  --foreground-light: #08142f;
-  --background-dark: #040717;
-  --foreground-dark: #f6f8ff;
-  --card-bg-light: rgba(255, 255, 255, 0.92);
-  --card-bg-dark: rgba(16, 23, 43, 0.92);
-  --surface-muted-light: rgba(255, 255, 255, 0.74);
-  --surface-muted-dark: rgba(25, 31, 55, 0.78);
-  --surface-elevated-light: rgba(255, 255, 255, 0.95);
-  --surface-elevated-dark: rgba(18, 24, 46, 0.92);
-  --glass-border: rgba(30, 38, 84, 0.14);
-  --glass-border-dark: rgba(120, 135, 208, 0.35);
-  --border-strong-light: rgba(30, 38, 84, 0.22);
-  --border-strong-dark: rgba(120, 135, 208, 0.4);
-  --text-muted-light: rgba(8, 20, 47, 0.72);
-  --text-subtle-light: rgba(8, 20, 47, 0.56);
-  --text-muted-dark: rgba(230, 234, 255, 0.82);
-  --text-subtle-dark: rgba(230, 234, 255, 0.68);
-  --shadow-soft: 0 28px 60px rgba(15, 23, 42, 0.2);
-  --shadow-soft-dark: 0 36px 80px rgba(0, 0, 0, 0.65);
-  --shadow-medium: 0 22px 48px rgba(15, 23, 42, 0.18);
+  --primary: #d31233;
+  --primary-dark: #ab0f27;
+  --accent-blue: #123a7a;
+  --accent-blue-dark: #0b2958;
+  --accent-red: #d31233;
+  --accent-red-dark: #ab0f27;
+  --background-light: #fdf6f6;
+  --foreground-light: #0f172a;
+  --background-dark: #070a16;
+  --foreground-dark: #f8f9ff;
+  --card-bg-light: rgba(255, 255, 255, 0.95);
+  --card-bg-dark: rgba(15, 23, 42, 0.92);
+  --surface-muted-light: rgba(18, 58, 122, 0.08);
+  --surface-muted-dark: rgba(64, 116, 212, 0.28);
+  --surface-elevated-light: rgba(255, 255, 255, 0.96);
+  --surface-elevated-dark: rgba(14, 20, 40, 0.9);
+  --glass-border: rgba(18, 58, 122, 0.18);
+  --glass-border-dark: rgba(126, 154, 255, 0.36);
+  --border-strong-light: rgba(15, 32, 72, 0.18);
+  --border-strong-dark: rgba(205, 220, 255, 0.3);
+  --text-muted-light: rgba(15, 23, 42, 0.72);
+  --text-subtle-light: rgba(15, 23, 42, 0.58);
+  --text-muted-dark: rgba(232, 239, 255, 0.85);
+  --text-subtle-dark: rgba(232, 239, 255, 0.7);
+  --shadow-soft: 0 28px 60px rgba(16, 30, 64, 0.18);
+  --shadow-soft-dark: 0 36px 80px rgba(0, 0, 0, 0.6);
+  --shadow-medium: 0 22px 48px rgba(16, 30, 64, 0.2);
   --shadow-medium-dark: 0 30px 56px rgba(0, 0, 0, 0.58);
   --radius-sm: 14px;
   --radius-md: 20px;
-  --radius-lg: 26px;
-  --radius-xl: 34px;
+  --radius-lg: 28px;
+  --radius-xl: 36px;
   --content-max: min(1200px, 100vw - clamp(1.5rem, 4vw, 3rem));
   --app-shell-max: min(1200px, 100vw - clamp(1.5rem, 4vw, 3rem));
   --app-shell-spacing: clamp(1.1rem, 3.6vw, 1.6rem);
   --app-shell-padding: clamp(1.6rem, 6vw, 2.6rem);
-  --app-shell-shadow: 0 30px 60px rgba(15, 23, 42, 0.22);
-  --app-shell-shadow-dark: 0 36px 78px rgba(0, 0, 0, 0.65);
+  --app-shell-shadow: 0 30px 60px rgba(16, 30, 64, 0.22);
+  --app-shell-shadow-dark: 0 36px 78px rgba(0, 0, 0, 0.68);
   --app-dock-height: clamp(4.8rem, 12vw, 5.6rem);
   --app-dock-radius: 28px;
   --app-dock-padding: clamp(0.45rem, 2vw, 0.7rem);
@@ -73,8 +73,8 @@ body {
   gap: clamp(1.2rem, 4vw, 2rem);
   font-family: var(--font-sans, 'Inter', 'Segoe UI', system-ui, sans-serif);
   background:
-    radial-gradient(130% 100% at -5% 0%, rgba(88, 128, 255, 0.35) 0%, rgba(88, 128, 255, 0) 60%),
-    radial-gradient(130% 120% at 105% -15%, rgba(255, 145, 163, 0.32) 0%, rgba(255, 145, 163, 0) 60%),
+    linear-gradient(150deg, rgba(211, 18, 51, 0.16) 0%, rgba(211, 18, 51, 0) 55%),
+    linear-gradient(210deg, rgba(18, 58, 122, 0.18) 0%, rgba(18, 58, 122, 0) 60%),
     var(--background-light);
   color: var(--foreground-light);
   -webkit-font-smoothing: antialiased;
@@ -83,8 +83,8 @@ body {
 
 body.dark-mode {
   background:
-    radial-gradient(120% 100% at -10% -10%, rgba(82, 102, 255, 0.4) 0%, rgba(82, 102, 255, 0) 55%),
-    radial-gradient(120% 120% at 110% 0%, rgba(255, 113, 158, 0.35) 0%, rgba(255, 113, 158, 0) 55%),
+    linear-gradient(150deg, rgba(18, 58, 122, 0.28) 0%, rgba(18, 58, 122, 0) 55%),
+    linear-gradient(210deg, rgba(211, 18, 51, 0.32) 12%, rgba(211, 18, 51, 0) 60%),
     var(--background-dark);
   color: var(--foreground-dark);
 }
@@ -194,18 +194,36 @@ textarea {
 
 .card,
 section.card {
-  background: var(--card-bg-light);
+  position: relative;
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.86));
   border-radius: var(--radius-lg);
-  border: 1px solid var(--glass-border);
+  border: 1px solid rgba(18, 58, 122, 0.12);
   box-shadow: var(--app-shell-shadow);
-  backdrop-filter: blur(18px);
-  padding: clamp(1.2rem, 4vw, 1.8rem);
+  backdrop-filter: blur(14px);
+  padding: clamp(1.3rem, 4vw, 1.9rem);
+  overflow: hidden;
+}
+
+.card::before,
+section.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(140deg, rgba(211, 18, 51, 0.06), rgba(18, 58, 122, 0.05));
+  opacity: 0.75;
+}
+
+.card > *,
+section.card > * {
+  position: relative;
+  z-index: 1;
 }
 
 body.dark-mode .card,
 body.dark-mode section.card {
-  background: var(--card-bg-dark);
-  border-color: var(--glass-border);
+  background: linear-gradient(160deg, rgba(14, 20, 40, 0.9), rgba(18, 26, 54, 0.86));
+  border-color: rgba(18, 58, 122, 0.26);
   box-shadow: var(--app-shell-shadow-dark);
 }
 
