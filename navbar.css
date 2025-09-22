@@ -1,14 +1,14 @@
 :root {
-  --navbar-bg: rgba(255, 255, 255, 0.95);
-  --navbar-text: #0b1f4b;
-  --navbar-muted: rgba(11, 31, 75, 0.64);
-  --navbar-accent: #003688;
-  --navbar-accent-dark: #002a5c;
-  --navbar-border: rgba(0, 54, 136, 0.16);
-  --navbar-shadow: 0 18px 48px rgba(0, 54, 136, 0.18);
+  --navbar-bg: rgba(255, 255, 255, 0.94);
+  --navbar-text: #101c3d;
+  --navbar-muted: rgba(16, 27, 61, 0.58);
+  --navbar-accent: var(--accent-blue, #4067e5);
+  --navbar-accent-dark: var(--accent-blue-dark, #2846b4);
+  --navbar-border: rgba(var(--accent-blue-rgb, 64, 103, 229), 0.18);
+  --navbar-shadow: 0 18px 48px rgba(16, 27, 61, 0.12);
   --navbar-radius: 18px;
-  --navbar-drawer-bg: rgba(255, 255, 255, 0.98);
-  --navbar-drawer-border: rgba(0, 54, 136, 0.16);
+  --navbar-drawer-bg: rgba(255, 255, 255, 0.97);
+  --navbar-drawer-border: rgba(var(--accent-blue-rgb, 64, 103, 229), 0.14);
 }
 
 [hidden] {
@@ -117,7 +117,7 @@
 .navbar__link:hover,
 .navbar__drawer-link:hover {
   color: var(--navbar-accent);
-  background: rgba(0, 54, 136, 0.12);
+  background: rgba(var(--accent-blue-rgb, 64, 103, 229), 0.12);
 }
 
 .navbar__link.is-active,
@@ -125,8 +125,8 @@
 .navbar__drawer-link.is-active,
 .navbar__drawer-link[aria-current="page"] {
   color: var(--navbar-text);
-  background: rgba(211, 47, 47, 0.15);
-  box-shadow: 0 14px 28px rgba(211, 47, 47, 0.24);
+  background: rgba(var(--accent-red-rgb, 240, 97, 94), 0.18);
+  box-shadow: 0 14px 28px rgba(var(--accent-red-rgb, 240, 97, 94), 0.26);
 }
 
 .navbar__actions {
@@ -153,25 +153,25 @@
 }
 
 .navbar__btn--ghost {
-  background: rgba(0, 54, 136, 0.08);
-  border-color: rgba(0, 54, 136, 0.12);
+  background: rgba(var(--accent-blue-rgb, 64, 103, 229), 0.08);
+  border-color: rgba(var(--accent-blue-rgb, 64, 103, 229), 0.14);
   color: var(--navbar-text);
 }
 
 .navbar__btn--ghost:hover,
 .navbar__btn--ghost:focus-visible {
-  background: rgba(0, 54, 136, 0.16);
+  background: rgba(var(--accent-blue-rgb, 64, 103, 229), 0.16);
 }
 
 .navbar__btn--primary {
-  background: var(--accent-red, #d32f2f);
+  background: var(--accent-red, #f0615e);
   color: #fff;
-  box-shadow: 0 16px 28px rgba(211, 47, 47, 0.28);
+  box-shadow: 0 16px 28px rgba(var(--accent-red-rgb, 240, 97, 94), 0.28);
 }
 
 .navbar__btn--primary:hover,
 .navbar__btn--primary:focus-visible {
-  background: var(--accent-red-dark, #a61c1c);
+  background: var(--accent-red-dark, #cc4c48);
 }
 
 .navbar__profile {
@@ -182,9 +182,9 @@
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
-  border: 1px solid rgba(0, 54, 136, 0.14);
+  border: 1px solid rgba(var(--accent-blue-rgb, 64, 103, 229), 0.14);
   border-radius: 999px;
-  background: rgba(0, 54, 136, 0.08);
+  background: rgba(var(--accent-blue-rgb, 64, 103, 229), 0.08);
   padding: 0.5rem 0.9rem 0.5rem 0.6rem;
   font-weight: 600;
   color: var(--navbar-text);
@@ -194,8 +194,8 @@
 
 .navbar__profile-toggle:hover,
 .navbar__profile-toggle:focus-visible {
-  border-color: rgba(0, 54, 136, 0.35);
-  background: rgba(0, 54, 136, 0.16);
+  border-color: rgba(var(--accent-blue-rgb, 64, 103, 229), 0.32);
+  background: rgba(var(--accent-blue-rgb, 64, 103, 229), 0.16);
 }
 
 .navbar__profile-menu {
@@ -206,7 +206,7 @@
   background: var(--card-bg-light);
   border-radius: var(--navbar-radius);
   border: 1px solid var(--glass-border);
-  box-shadow: 0 20px 60px rgba(0, 54, 136, 0.18);
+  box-shadow: 0 20px 60px rgba(var(--accent-blue-rgb, 64, 103, 229), 0.18);
   padding: 1rem;
   display: grid;
   gap: 0.75rem;
@@ -292,8 +292,8 @@ body.dark-mode .navbar__profile-email {
 
 .navbar__profile-item:hover,
 .navbar__profile-item:focus-visible {
-  background: rgba(0, 54, 136, 0.12);
-  border-color: rgba(0, 54, 136, 0.2);
+  background: rgba(var(--accent-blue-rgb, 64, 103, 229), 0.12);
+  border-color: rgba(var(--accent-blue-rgb, 64, 103, 229), 0.2);
   color: var(--navbar-text);
 }
 
@@ -306,13 +306,13 @@ body.dark-mode .navbar__profile-email {
 .navbar__profile-item--destructive,
 .navbar__drawer-action--destructive,
 .navbar__drawer-button--destructive {
-  color: var(--accent-red, #d32f2f);
+  color: var(--accent-red, #f0615e);
 }
 
 .navbar__profile-item--destructive:hover,
 .navbar__profile-item--destructive:focus-visible {
-  background: rgba(211, 47, 47, 0.12);
-  border-color: rgba(211, 47, 47, 0.24);
+  background: rgba(var(--accent-red-rgb, 240, 97, 94), 0.12);
+  border-color: rgba(var(--accent-red-rgb, 240, 97, 94), 0.24);
 }
 
 .navbar__profile-item--destructive i {
@@ -338,7 +338,7 @@ body.dark-mode .navbar__drawer-button--destructive:focus-visible {
 .navbar__toggle {
   display: none;
   border: none;
-  background: rgba(0, 54, 136, 0.12);
+  background: rgba(var(--accent-blue-rgb, 64, 103, 229), 0.12);
   color: inherit;
   width: 44px;
   height: 44px;
@@ -367,7 +367,7 @@ body.dark-mode .navbar__drawer-button--destructive:focus-visible {
   background: var(--navbar-drawer-bg);
   border-left: 1px solid var(--navbar-drawer-border);
   border-radius: 24px 0 0 24px;
-  box-shadow: -24px 0 60px rgba(0, 54, 136, 0.18);
+  box-shadow: -24px 0 60px rgba(var(--accent-blue-rgb, 64, 103, 229), 0.18);
   backdrop-filter: blur(28px);
   transform: translateX(100%);
   transition: transform 0.28s cubic-bezier(0.25, 0.8, 0.25, 1);
@@ -428,7 +428,7 @@ body.dark-mode .navbar__drawer::before {
 
 .navbar__drawer-close {
   border: none;
-  background: rgba(0, 54, 136, 0.12);
+  background: rgba(var(--accent-blue-rgb, 64, 103, 229), 0.12);
   color: inherit;
   font-size: 1.35rem;
   width: 44px;
@@ -441,7 +441,7 @@ body.dark-mode .navbar__drawer::before {
 
 .navbar__drawer-close:hover,
 .navbar__drawer-close:focus-visible {
-  background: rgba(0, 54, 136, 0.22);
+  background: rgba(var(--accent-blue-rgb, 64, 103, 229), 0.22);
   color: var(--navbar-text);
 }
 
@@ -460,13 +460,13 @@ body.dark-mode .navbar__drawer::before {
 }
 
 .navbar__drawer-scroll::-webkit-scrollbar-thumb {
-  background: rgba(0, 54, 136, 0.25);
+  background: rgba(var(--accent-blue-rgb, 64, 103, 229), 0.25);
   border-radius: 999px;
 }
 
 .navbar__drawer-scroll {
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 54, 136, 0.25) transparent;
+  scrollbar-color: rgba(var(--accent-blue-rgb, 64, 103, 229), 0.25) transparent;
 }
 
 .navbar__drawer-profile {
@@ -474,9 +474,9 @@ body.dark-mode .navbar__drawer::before {
   gap: 1rem;
   padding: clamp(1.1rem, 4vw, 1.4rem);
   border-radius: clamp(18px, 4vw, 22px);
-  background: rgba(0, 54, 136, 0.12);
-  border: 1px solid rgba(0, 54, 136, 0.22);
-  box-shadow: 0 24px 54px rgba(0, 54, 136, 0.22);
+  background: rgba(var(--accent-blue-rgb, 64, 103, 229), 0.12);
+  border: 1px solid rgba(var(--accent-blue-rgb, 64, 103, 229), 0.22);
+  box-shadow: 0 24px 54px rgba(var(--accent-blue-rgb, 64, 103, 229), 0.22);
 }
 
 .navbar__drawer-profile-header {
@@ -489,7 +489,7 @@ body.dark-mode .navbar__drawer::before {
   width: clamp(52px, 12vw, 62px);
   height: clamp(52px, 12vw, 62px);
   border-radius: 18px;
-  background: rgba(0, 54, 136, 0.16);
+  background: rgba(var(--accent-blue-rgb, 64, 103, 229), 0.16);
   color: var(--navbar-accent);
   display: grid;
   place-items: center;
@@ -524,14 +524,14 @@ body.dark-mode .navbar__drawer::before {
   color: var(--navbar-accent);
   font-weight: 600;
   padding: 0.55rem 1.2rem;
-  box-shadow: 0 16px 34px rgba(0, 54, 136, 0.22);
+  box-shadow: 0 16px 34px rgba(var(--accent-blue-rgb, 64, 103, 229), 0.22);
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
 .navbar__drawer-profile-manage:hover,
 .navbar__drawer-profile-manage:focus-visible {
-  background: rgba(0, 54, 136, 0.18);
+  background: rgba(var(--accent-blue-rgb, 64, 103, 229), 0.18);
   color: var(--navbar-text);
   transform: translateY(-1px);
 }
@@ -566,7 +566,7 @@ body.dark-mode .navbar__drawer::before {
   padding: 0.95rem 1.1rem;
   border-radius: clamp(16px, 4vw, 18px);
   background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 18px 46px rgba(0, 54, 136, 0.16);
+  box-shadow: 0 18px 46px rgba(var(--accent-blue-rgb, 64, 103, 229), 0.16);
   color: var(--navbar-text);
   font-weight: 600;
   text-decoration: none;
@@ -584,7 +584,7 @@ body.dark-mode .navbar__drawer::before {
 
 .navbar__drawer-link:hover,
 .navbar__drawer-link:focus-visible {
-  background: rgba(0, 54, 136, 0.18);
+  background: rgba(var(--accent-blue-rgb, 64, 103, 229), 0.18);
   color: var(--navbar-text);
   transform: translateX(6px);
 }
@@ -645,16 +645,16 @@ body.dark-mode .navbar__drawer::before {
 }
 
 .navbar__drawer-action:focus-visible {
-  outline: 2px solid rgba(0, 54, 136, 0.55);
+  outline: 2px solid rgba(var(--accent-blue-rgb, 64, 103, 229), 0.55);
   outline-offset: 3px;
 }
 
 .navbar__drawer-button {
   padding: 0.72rem 1.25rem;
   border-radius: inherit;
-  border: 1px solid rgba(0, 54, 136, 0.12);
+  border: 1px solid rgba(var(--accent-blue-rgb, 64, 103, 229), 0.12);
   background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 18px 42px rgba(0, 54, 136, 0.14);
+  box-shadow: 0 18px 42px rgba(var(--accent-blue-rgb, 64, 103, 229), 0.14);
   font-weight: 600;
   font-size: 0.96rem;
   transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
@@ -662,44 +662,44 @@ body.dark-mode .navbar__drawer::before {
 
 .navbar__drawer-button:hover,
 .navbar__drawer-button:focus-visible {
-  background: rgba(0, 54, 136, 0.18);
+  background: rgba(var(--accent-blue-rgb, 64, 103, 229), 0.18);
   color: var(--navbar-text);
   transform: translateY(-1px);
 }
 
 .navbar__drawer-button--primary {
-  background: var(--accent-red, #d32f2f);
-  border-color: var(--accent-red, #d32f2f);
+  background: var(--accent-red, #f0615e);
+  border-color: var(--accent-red, #f0615e);
   color: #fff;
-  box-shadow: 0 20px 44px rgba(211, 47, 47, 0.3);
+  box-shadow: 0 20px 44px rgba(var(--accent-red-rgb, 240, 97, 94), 0.3);
 }
 
 .navbar__drawer-button--primary:hover,
 .navbar__drawer-button--primary:focus-visible {
-  background: var(--accent-red-dark, #a61c1c);
+  background: var(--accent-red-dark, #cc4c48);
 }
 
 .navbar__drawer-button--ghost {
-  background: rgba(0, 54, 136, 0.08);
-  border-color: rgba(0, 54, 136, 0.12);
+  background: rgba(var(--accent-blue-rgb, 64, 103, 229), 0.08);
+  border-color: rgba(var(--accent-blue-rgb, 64, 103, 229), 0.12);
 }
 
 .navbar__drawer-button--ghost:hover,
 .navbar__drawer-button--ghost:focus-visible {
-  background: rgba(0, 54, 136, 0.16);
+  background: rgba(var(--accent-blue-rgb, 64, 103, 229), 0.16);
 }
 
 .navbar__drawer-button--destructive {
-  background: rgba(211, 47, 47, 0.12);
-  border-color: rgba(211, 47, 47, 0.28);
-  color: var(--accent-red, #d32f2f);
-  box-shadow: 0 18px 44px rgba(211, 47, 47, 0.24);
+  background: rgba(var(--accent-red-rgb, 240, 97, 94), 0.12);
+  border-color: rgba(var(--accent-red-rgb, 240, 97, 94), 0.28);
+  color: var(--accent-red, #f0615e);
+  box-shadow: 0 18px 44px rgba(var(--accent-red-rgb, 240, 97, 94), 0.24);
 }
 
 .navbar__drawer-button--destructive:hover,
 .navbar__drawer-button--destructive:focus-visible {
-  background: rgba(211, 47, 47, 0.2);
-  color: var(--accent-red-dark, #a61c1c);
+  background: rgba(var(--accent-red-rgb, 240, 97, 94), 0.2);
+  color: var(--accent-red-dark, #cc4c48);
 }
 
 body.dark-mode .navbar__drawer-close {
@@ -913,9 +913,9 @@ body.dark-mode .navbar__drawer-button--destructive:focus-visible {
 
   .navbar__toggle {
     border-radius: 16px;
-    border: 1px solid rgba(0, 54, 136, 0.22);
+    border: 1px solid rgba(var(--accent-blue-rgb, 64, 103, 229), 0.22);
     padding: 0.55rem;
-    background: rgba(0, 54, 136, 0.14);
+    background: rgba(var(--accent-blue-rgb, 64, 103, 229), 0.14);
     color: inherit;
   }
 
