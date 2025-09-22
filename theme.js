@@ -14,29 +14,51 @@
   };
 
   const DEFAULT_TOKENS = {
-    '--primary': '#003688',
-    '--primary-dark': '#002a5c',
-    '--accent-blue': '#003688',
-    '--accent-blue-dark': '#002a5c',
-    '--accent-red': '#d32f2f',
-    '--accent-red-dark': '#a61c1c',
-    '--background-light': '#ffffff',
-    '--foreground-light': '#0b1f4b',
-    '--background-dark': '#ffffff',
-    '--foreground-dark': '#0b1f4b',
+    '--primary': '#4067e5',
+    '--primary-dark': '#2846b4',
+    '--accent-blue': '#4067e5',
+    '--accent-blue-dark': '#2846b4',
+    '--accent-blue-rgb': '64, 103, 229',
+    '--accent-blue-dark-rgb': '40, 70, 180',
+    '--accent-blue-tint-rgb': '122, 152, 255',
+    '--accent-red': '#f0615e',
+    '--accent-red-dark': '#cc4c48',
+    '--accent-red-rgb': '240, 97, 94',
+    '--background-light': '#f4f7fb',
+    '--foreground-light': '#101c3d',
+    '--background-dark': '#050b1d',
+    '--foreground-dark': '#eef2ff',
     '--card-bg-light': '#ffffff',
-    '--card-bg-dark': '#ffffff',
+    '--card-bg-dark': '#111b2e',
+    '--ink-rgb': '16, 27, 61',
+    '--ink-soft-rgb': '27, 44, 94',
     '--transition': '0.24s cubic-bezier(.4,0,.2,1)'
   };
 
   const ACCENTS = {
     routeflow: {
-      label: 'RouteFlow Red & Blue',
-      accent: '#003688',
-      accentDark: '#002a5c',
-      red: '#d32f2f',
-      redDark: '#a61c1c'
+      label: 'RouteFlow Indigo & Coral',
+      accent: '#4067e5',
+      accentDark: '#2846b4',
+      accentTint: '#7a98ff',
+      red: '#f0615e',
+      redDark: '#cc4c48'
     }
+  };
+
+  const hexToRgb = (hex) => {
+    if (typeof hex !== 'string') return null;
+    const value = hex.trim().replace('#', '');
+    if (![3, 6].includes(value.length)) return null;
+    const expanded = value.length === 3
+      ? value.split('').map((char) => char + char).join('')
+      : value;
+    const numeric = Number.parseInt(expanded, 16);
+    if (Number.isNaN(numeric)) return null;
+    const r = (numeric >> 16) & 255;
+    const g = (numeric >> 8) & 255;
+    const b = numeric & 255;
+    return `${r}, ${g}, ${b}`;
   };
 
   const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
@@ -160,8 +182,20 @@
     root.style.setProperty('--primary-dark', palette.accentDark);
     root.style.setProperty('--navbar-accent', palette.accent);
     root.style.setProperty('--navbar-accent-dark', palette.accentDark);
-    root.style.setProperty('--accent-red', palette.red ?? DEFAULT_TOKENS['--accent-red']);
-    root.style.setProperty('--accent-red-dark', palette.redDark ?? DEFAULT_TOKENS['--accent-red-dark']);
+
+    const accentRgb = hexToRgb(palette.accent) ?? DEFAULT_TOKENS['--accent-blue-rgb'];
+    const accentDarkRgb = hexToRgb(palette.accentDark) ?? DEFAULT_TOKENS['--accent-blue-dark-rgb'];
+    const accentTintRgb = hexToRgb(palette.accentTint) ?? hexToRgb(palette.accent) ?? DEFAULT_TOKENS['--accent-blue-tint-rgb'];
+    const accentRed = palette.red ?? DEFAULT_TOKENS['--accent-red'];
+    const accentRedDark = palette.redDark ?? DEFAULT_TOKENS['--accent-red-dark'];
+    const accentRedRgb = hexToRgb(accentRed) ?? DEFAULT_TOKENS['--accent-red-rgb'];
+
+    root.style.setProperty('--accent-blue-rgb', accentRgb);
+    root.style.setProperty('--accent-blue-dark-rgb', accentDarkRgb);
+    root.style.setProperty('--accent-blue-tint-rgb', accentTintRgb);
+    root.style.setProperty('--accent-red', accentRed);
+    root.style.setProperty('--accent-red-dark', accentRedDark);
+    root.style.setProperty('--accent-red-rgb', accentRedRgb);
   };
 
   const resetVariable = (root, name) => {
