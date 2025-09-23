@@ -10,17 +10,32 @@
     </a>
 
     <div class="navbar__desktop" data-navbar-desktop>
-      <ul class="navbar__list" role="list">
-        <li><a class="navbar__link" data-nav-link href="index.html">Home</a></li>
-        <li><a class="navbar__link" data-nav-link href="dashboard.html">Dashboard</a></li>
-        <li><a class="navbar__link" data-nav-link href="tracking.html">Tracking</a></li>
-        <li><a class="navbar__link" data-nav-link href="planning.html">Planning</a></li>
-        <li><a class="navbar__link" data-nav-link href="info.html">Info Hub</a></li>
-        <li><a class="navbar__link" data-nav-link href="routes.html">Routes</a></li>
-        <li><a class="navbar__link" data-nav-link href="withdrawn.html">Withdrawn</a></li>
-        <li><a class="navbar__link" data-nav-link href="disruptions.html">Disruptions</a></li>
-        <li><a class="navbar__link" data-nav-link href="fleet.html">Fleet</a></li>
-      </ul>
+      <div class="navbar__segments" role="navigation" aria-label="Primary navigation">
+        <div class="navbar__segment" role="group" aria-label="Plan and play">
+          <span class="navbar__segment-label">Plan &amp; play</span>
+          <ul class="navbar__list navbar__segment-list" role="list">
+            <li><a class="navbar__link" data-nav-link href="index.html">Home</a></li>
+            <li><a class="navbar__link" data-nav-link href="dashboard.html">Dashboard</a></li>
+            <li><a class="navbar__link" data-nav-link href="planning.html">Planning</a></li>
+          </ul>
+        </div>
+        <div class="navbar__segment" role="group" aria-label="Live status">
+          <span class="navbar__segment-label">Live status</span>
+          <ul class="navbar__list navbar__segment-list" role="list">
+            <li><a class="navbar__link" data-nav-link href="tracking.html">Tracking</a></li>
+            <li><a class="navbar__link" data-nav-link href="routes.html">Routes</a></li>
+            <li><a class="navbar__link" data-nav-link href="disruptions.html">Disruptions</a></li>
+          </ul>
+        </div>
+        <div class="navbar__segment" role="group" aria-label="Community data">
+          <span class="navbar__segment-label">Community data</span>
+          <ul class="navbar__list navbar__segment-list" role="list">
+            <li><a class="navbar__link" data-nav-link href="info.html">Info Hub</a></li>
+            <li><a class="navbar__link" data-nav-link href="fleet.html">Fleet</a></li>
+            <li><a class="navbar__link" data-nav-link href="withdrawn.html">Withdrawn</a></li>
+          </ul>
+        </div>
+      </div>
     </div>
 
     <div class="navbar__actions">
@@ -107,18 +122,30 @@
       </section>
 
       <nav class="navbar__drawer-nav" aria-label="Mobile navigation">
-        <h2 class="navbar__drawer-section-title">Browse</h2>
-        <ul class="navbar__drawer-list" role="list">
-          <li><a class="navbar__drawer-link" data-nav-link href="index.html">Home</a></li>
-          <li><a class="navbar__drawer-link" data-nav-link href="dashboard.html">Dashboard</a></li>
-          <li><a class="navbar__drawer-link" data-nav-link href="tracking.html">Tracking</a></li>
-          <li><a class="navbar__drawer-link" data-nav-link href="planning.html">Planning</a></li>
-          <li><a class="navbar__drawer-link" data-nav-link href="info.html">Info Hub</a></li>
-          <li><a class="navbar__drawer-link" data-nav-link href="routes.html">Routes</a></li>
-          <li><a class="navbar__drawer-link" data-nav-link href="withdrawn.html">Withdrawn</a></li>
-          <li><a class="navbar__drawer-link" data-nav-link href="disruptions.html">Disruptions</a></li>
-          <li><a class="navbar__drawer-link" data-nav-link href="fleet.html">Fleet</a></li>
-        </ul>
+        <div class="navbar__drawer-group" role="group" aria-label="Plan and play">
+          <h2 class="navbar__drawer-section-title">Plan &amp; play</h2>
+          <ul class="navbar__drawer-list" role="list">
+            <li><a class="navbar__drawer-link" data-nav-link href="index.html">Home</a></li>
+            <li><a class="navbar__drawer-link" data-nav-link href="dashboard.html">Dashboard</a></li>
+            <li><a class="navbar__drawer-link" data-nav-link href="planning.html">Planning</a></li>
+          </ul>
+        </div>
+        <div class="navbar__drawer-group" role="group" aria-label="Live status">
+          <h2 class="navbar__drawer-section-title">Live status</h2>
+          <ul class="navbar__drawer-list" role="list">
+            <li><a class="navbar__drawer-link" data-nav-link href="tracking.html">Tracking</a></li>
+            <li><a class="navbar__drawer-link" data-nav-link href="routes.html">Routes</a></li>
+            <li><a class="navbar__drawer-link" data-nav-link href="disruptions.html">Disruptions</a></li>
+          </ul>
+        </div>
+        <div class="navbar__drawer-group" role="group" aria-label="Community data">
+          <h2 class="navbar__drawer-section-title">Community data</h2>
+          <ul class="navbar__drawer-list" role="list">
+            <li><a class="navbar__drawer-link" data-nav-link href="info.html">Info Hub</a></li>
+            <li><a class="navbar__drawer-link" data-nav-link href="fleet.html">Fleet</a></li>
+            <li><a class="navbar__drawer-link" data-nav-link href="withdrawn.html">Withdrawn</a></li>
+          </ul>
+        </div>
       </nav>
 
       <div class="navbar__drawer-divider" role="separator" aria-hidden="true"></div>
