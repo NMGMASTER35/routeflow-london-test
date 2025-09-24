@@ -14,35 +14,35 @@
   };
 
   const DEFAULT_TOKENS = {
-    '--primary': '#d31233',
-    '--primary-dark': '#ab0f27',
-    '--accent-blue': '#123a7a',
-    '--accent-blue-dark': '#0b2958',
-    '--accent-blue-rgb': '18, 58, 122',
-    '--accent-blue-dark-rgb': '11, 41, 88',
-    '--accent-blue-tint-rgb': '64, 116, 212',
-    '--accent-red': '#d31233',
-    '--accent-red-dark': '#ab0f27',
-    '--accent-red-rgb': '211, 18, 51',
-    '--background-light': '#fdf6f6',
-    '--foreground-light': '#0f172a',
-    '--background-dark': '#070a16',
-    '--foreground-dark': '#f8f9ff',
+    '--primary': '#ff7ad9',
+    '--primary-dark': '#ff4fb6',
+    '--accent-blue': '#857cff',
+    '--accent-blue-dark': '#6b63ff',
+    '--accent-blue-rgb': '133, 124, 255',
+    '--accent-blue-dark-rgb': '107, 99, 255',
+    '--accent-blue-tint-rgb': '176, 166, 255',
+    '--accent-red': '#ff7ad9',
+    '--accent-red-dark': '#ff4fb6',
+    '--accent-red-rgb': '255, 122, 217',
+    '--background-light': '#fef7ff',
+    '--foreground-light': '#1a214f',
+    '--background-dark': '#070a20',
+    '--foreground-dark': '#f8f8ff',
     '--card-bg-light': 'rgba(255, 255, 255, 0.98)',
-    '--card-bg-dark': 'rgba(15, 23, 42, 0.92)',
-    '--ink-rgb': '15, 23, 42',
-    '--ink-soft-rgb': '31, 42, 63',
-    '--transition': '0.24s cubic-bezier(.4,0,.2,1)'
+    '--card-bg-dark': 'rgba(13, 18, 42, 0.95)',
+    '--ink-rgb': '26, 33, 79',
+    '--ink-soft-rgb': '45, 57, 112',
+    '--transition': '0.26s cubic-bezier(.25,.8,.25,1)'
   };
 
   const ACCENTS = {
     routeflow: {
-      label: 'RouteFlow Crimson & Royal',
-      accent: '#d31233',
-      accentDark: '#ab0f27',
-      accentTint: '#f05b6c',
-      red: '#d31233',
-      redDark: '#ab0f27'
+      label: 'RouteFlow Bubblegum & Midnight',
+      accent: '#ff7ad9',
+      accentDark: '#ff4fb6',
+      accentTint: '#ffc5f3',
+      red: '#ff7ad9',
+      redDark: '#ff4fb6'
     }
   };
 
