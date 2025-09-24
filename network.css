@@ -11,7 +11,7 @@
   display: flex;
   flex-direction: column;
   gap: 1.6rem;
-  background: linear-gradient(140deg, rgba(211, 18, 51, 0.22), rgba(18, 58, 122, 0.16));
+  background: linear-gradient(140deg, rgba(var(--accent-red-rgb), 0.22), rgba(var(--accent-blue-rgb), 0.16));
   border-radius: var(--radius-lg);
   padding: clamp(2rem, 5vw, 3rem);
   color: var(--foreground-light);
@@ -45,7 +45,7 @@ body.dark-mode .network-hero p {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  border: 1px solid rgba(211, 18, 51, 0.16);
+  border: 1px solid rgba(var(--accent-red-rgb), 0.16);
 }
 
 body.dark-mode .network-stat {
@@ -100,8 +100,8 @@ body.dark-mode .network-stat {
 
 .network-chip {
   border-radius: 999px;
-  border: 1px solid rgba(211, 18, 51, 0.32);
-  background: rgba(211, 18, 51, 0.12);
+  border: 1px solid rgba(var(--accent-red-rgb), 0.32);
+  background: rgba(var(--accent-red-rgb), 0.12);
   color: var(--accent-red);
   padding: 0.5rem 1.2rem;
   font-size: 0.88rem;
@@ -174,7 +174,7 @@ body.dark-mode .network-stat {
   align-items: center;
   gap: 0.4rem;
   border-radius: 999px;
-  border: 1px solid rgba(211, 18, 51, 0.3);
+  border: 1px solid rgba(var(--accent-red-rgb), 0.3);
   padding: 0.55rem 1.3rem;
   font-weight: 600;
   color: var(--accent-red);

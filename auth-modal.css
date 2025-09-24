@@ -61,7 +61,7 @@
 
 .auth-modal__close:hover,
 .auth-modal__close:focus-visible {
-  background: rgba(211, 18, 51, 0.18);
+  background: rgba(var(--accent-red-rgb), 0.18);
   transform: scale(1.05);
   outline: none;
 }
@@ -109,7 +109,7 @@
 
 .auth-modal__field input:focus-visible {
   border-color: var(--accent-red);
-  box-shadow: 0 0 0 3px rgba(211, 18, 51, 0.24);
+  box-shadow: 0 0 0 3px rgba(var(--accent-red-rgb), 0.24);
   outline: none;
   background: #fff;
 }
@@ -129,7 +129,7 @@
 .auth-modal__primary {
   background: var(--accent-red);
   color: #fff;
-  box-shadow: 0 18px 38px rgba(211, 18, 51, 0.28);
+  box-shadow: 0 18px 38px rgba(var(--accent-red-rgb), 0.28);
 }
 
 .auth-modal__primary:hover,
@@ -151,8 +151,8 @@
 
 .auth-modal__provider:hover,
 .auth-modal__provider:focus-visible {
-  background: rgba(211, 18, 51, 0.16);
-  border-color: rgba(211, 18, 51, 0.32);
+  background: rgba(var(--accent-red-rgb), 0.16);
+  border-color: rgba(var(--accent-red-rgb), 0.32);
   transform: translateY(-1px);
   outline: none;
 }
