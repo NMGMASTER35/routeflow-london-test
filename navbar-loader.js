@@ -5,6 +5,7 @@
     'config.js',
     'https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js',
     'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js',
+    'stack-auth.js',
     'main.js'
   ];
 
