@@ -35,6 +35,184 @@ const listElements = {
   preferences: document.getElementById('profilePreferences')
 };
 
+const connectionElements = {
+  card: document.getElementById('profileConnectionsCard'),
+  list: document.getElementById('profileConnectionsList'),
+  status: document.getElementById('profileConnectionsStatus')
+};
+
+const STACK_AUTH_PROVIDERS = [
+  {
+    id: 'google.com',
+    label: 'Google',
+    hint: 'Single sign-on with your Google account.'
+  },
+  {
+    id: 'github.com',
+    label: 'GitHub',
+    hint: 'Link GitHub to sync developer perks and badges.'
+  },
+  {
+    id: 'discord.com',
+    label: 'Discord',
+    hint: 'Connect Discord to unlock community missions.'
+  }
+];
+
+const normaliseStackProviderId = (value) => {
+  const stack = window.RouteflowStackAuth;
+  if (stack?.normaliseProviderId) {
+    return stack.normaliseProviderId(value);
+  }
+  return typeof value === 'string' ? value.trim().toLowerCase() : '';
+};
+
+const getStackProviderMeta = (providerId) => {
+  const normalised = normaliseStackProviderId(providerId);
+  return STACK_AUTH_PROVIDERS.find((provider) => provider.id === normalised) || null;
+};
+
+const getLinkedProviders = (user) => {
+  const linked = new Set();
+  if (!user) {
+    return linked;
+  }
+  const register = (providerId) => {
+    const normalised = normaliseStackProviderId(providerId);
+    if (normalised) {
+      linked.add(normalised);
+    }
+  };
+  register(user.providerId);
+  if (Array.isArray(user.providerData)) {
+    user.providerData.forEach((entry) => register(entry?.providerId));
+  }
+  return linked;
+};
+
+const showConnectionStatus = (message, options = {}) => {
+  const statusEl = connectionElements.status;
+  if (!statusEl) return;
+  if (!message) {
+    statusEl.textContent = '';
+    statusEl.setAttribute('hidden', '');
+    statusEl.removeAttribute('data-variant');
+    return;
+  }
+  statusEl.textContent = message;
+  statusEl.removeAttribute('hidden');
+  if (options.variant) {
+    statusEl.dataset.variant = options.variant;
+  } else {
+    statusEl.removeAttribute('data-variant');
+  }
+};
+
+const renderConnections = (user) => {
+  const list = connectionElements.list;
+  if (!list) return;
+  list.innerHTML = '';
+
+  const linkedProviders = getLinkedProviders(user);
+
+  STACK_AUTH_PROVIDERS.forEach((provider) => {
+    const item = document.createElement('li');
+    item.className = 'profile-connection';
+
+    const meta = document.createElement('div');
+    meta.className = 'profile-connection__meta';
+    const label = document.createElement('span');
+    label.className = 'profile-connection__label';
+    label.textContent = provider.label;
+    const hint = document.createElement('p');
+    hint.className = 'profile-connection__hint';
+    hint.textContent = provider.hint;
+    meta.append(label, hint);
+
+    const controls = document.createElement('div');
+    controls.className = 'profile-connection__actions';
+    const status = document.createElement('span');
+    status.className = 'profile-connection__status';
+    const isLinked = linkedProviders.has(provider.id);
+    status.textContent = isLinked ? 'Linked' : 'Not linked';
+    const actionButton = document.createElement('button');
+    actionButton.type = 'button';
+    actionButton.className = 'profile-connection__action';
+    actionButton.dataset.stackProvider = provider.id;
+    actionButton.dataset.stackAction = isLinked ? 'unlink' : 'link';
+    actionButton.textContent = isLinked ? 'Unlink' : 'Link';
+    actionButton.disabled = !user;
+
+    controls.append(status, actionButton);
+    item.append(meta, controls);
+    list.appendChild(item);
+  });
+
+  if (!user) {
+    showConnectionStatus('Sign in to manage your Stack Auth connections.');
+  } else if (!linkedProviders.size) {
+    showConnectionStatus('Link a provider to sign in faster next time.');
+  } else {
+    showConnectionStatus('');
+  }
+};
+
+const manageStackConnection = async (providerId, action, button) => {
+  const meta = getStackProviderMeta(providerId) || { label: providerId };
+  if (!state.user) {
+    showConnectionStatus('Sign in to manage linked providers.', { variant: 'error' });
+    return;
+  }
+
+  const ensure = resolveEnsureFunction();
+  if (!ensure) {
+    showConnectionStatus('Authentication is unavailable right now. Please try again later.', { variant: 'error' });
+    return;
+  }
+
+  try {
+    button?.setAttribute('aria-busy', 'true');
+    button?.setAttribute('disabled', '');
+    showConnectionStatus('Updating your Stack Auth connections…');
+    const auth = await ensure();
+    if (!auth) {
+      throw new Error('Authentication is temporarily unavailable. Please try again later.');
+    }
+
+    if (action === 'link') {
+      if (typeof auth.linkWithPopup === 'function') {
+        await auth.linkWithPopup({ providerId });
+      } else if (typeof window.handleStackProviderAuth === 'function') {
+        await window.handleStackProviderAuth(providerId, { mode: 'link', skipRender: true });
+      } else {
+        throw new Error('Linking is not supported for this provider.');
+      }
+      showConnectionStatus(`${meta.label} account linked.`);
+    } else {
+      if (typeof auth.unlinkProvider === 'function') {
+        await auth.unlinkProvider({ providerId });
+      } else if (typeof auth.unlink === 'function') {
+        await auth.unlink(providerId);
+      } else {
+        throw new Error('Unlinking is not supported for this provider.');
+      }
+      showConnectionStatus(`${meta.label} account unlinked.`);
+    }
+
+    const refreshed = auth.currentUser || window.RouteflowAuth?.getCurrentUser?.() || getCurrentAuthUser();
+    if (refreshed) {
+      state.user = refreshed;
+    }
+    renderConnections(state.user);
+  } catch (error) {
+    console.error('Stack Auth connection update failed', error);
+    showConnectionStatus(error?.message || 'Unable to update this provider connection.', { variant: 'error' });
+  } finally {
+    button?.removeAttribute('aria-busy');
+    button?.removeAttribute('disabled');
+  }
+};
+
 const normaliseProfileText = (value) => (typeof value === 'string' ? value.trim() : '');
 
 const getFirebaseProfileApi = () => window.RouteflowFirebase || null;
@@ -972,6 +1150,7 @@ const refreshHero = () => {
     setActionEnabled(heroElements.openSettings, false);
     setActionEnabled(heroElements.signOut, false);
     setActionEnabled(heroElements.edit, false);
+    renderConnections(null);
     return;
   }
 
@@ -1041,6 +1220,7 @@ const refreshHero = () => {
   setActionEnabled(heroElements.openSettings, true);
   setActionEnabled(heroElements.signOut, true);
   setActionEnabled(heroElements.edit, true);
+  renderConnections(user);
 };
 
 const detectAdminStatus = async (user) => {
@@ -1113,6 +1293,19 @@ const attachEventHandlers = () => {
       } catch (error) {
         console.error('Failed to refresh profile sections after manual refresh.', error);
       }
+    });
+  }
+
+  if (connectionElements.list) {
+    connectionElements.list.addEventListener('click', (event) => {
+      const actionButton = event.target.closest('[data-stack-provider][data-stack-action]');
+      if (!actionButton) {
+        return;
+      }
+      event.preventDefault();
+      const providerId = actionButton.dataset.stackProvider;
+      const action = actionButton.dataset.stackAction;
+      manageStackConnection(providerId, action, actionButton);
     });
   }
 

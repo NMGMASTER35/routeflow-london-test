@@ -2534,6 +2534,76 @@ body.dark-mode .site-footer {
   font-weight: 600;
 }
 
+.profile-connections {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.profile-connection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(var(--accent-blue-rgb), 0.18);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.profile-connection__meta {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.profile-connection__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.profile-connection__label {
+  font-weight: 700;
+}
+
+.profile-connection__hint {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-subtle-light);
+}
+
+.profile-connection__status {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.profile-connection__action {
+  border-radius: 999px;
+  padding: 0.55rem 1.1rem;
+  font-weight: 700;
+  border: 1px solid rgba(var(--accent-blue-rgb), 0.25);
+  background: rgba(var(--accent-blue-rgb), 0.12);
+  color: var(--primary);
+}
+
+.profile-connection__action[data-stack-action='unlink'] {
+  border-color: rgba(var(--accent-red-rgb), 0.3);
+  background: rgba(var(--accent-red-rgb), 0.1);
+  color: var(--accent-red-dark);
+}
+
+.profile-card__status {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-subtle-light);
+}
+
+.profile-card__status[data-variant='error'] {
+  color: var(--accent-red-dark);
+}
+
 .profile-list {
   list-style: none;
   margin: 0;
@@ -2810,6 +2880,63 @@ body.dark-mode .site-footer {
   padding: 0.75rem 1.3rem;
   font-weight: 700;
   color: var(--primary);
+}
+
+.auth-modal__providers {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.stack-auth-btn {
+  --stack-auth-bg: rgba(var(--accent-blue-rgb), 0.08);
+  --stack-auth-border: rgba(var(--accent-blue-rgb), 0.2);
+  --stack-auth-text: var(--primary);
+  --stack-auth-badge: rgba(var(--accent-blue-rgb), 0.6);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--stack-auth-border);
+  background: var(--stack-auth-bg);
+  color: var(--stack-auth-text);
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.stack-auth-btn::before {
+  content: '';
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 999px;
+  background: var(--stack-auth-badge);
+  opacity: 0.9;
+}
+
+.stack-auth-btn:hover,
+.stack-auth-btn:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-soft);
+}
+
+.stack-auth-btn--google {
+  --stack-auth-bg: rgba(66, 133, 244, 0.16);
+  --stack-auth-border: rgba(66, 133, 244, 0.32);
+  --stack-auth-text: #1a73e8;
+  --stack-auth-badge: #4285f4;
+}
+
+.stack-auth-btn--github {
+  --stack-auth-bg: rgba(22, 27, 34, 0.92);
+  --stack-auth-border: rgba(22, 27, 34, 0.6);
+  --stack-auth-text: #f6f8fa;
+  --stack-auth-badge: #f6f8fa;
+}
+
+.stack-auth-btn--discord {
+  --stack-auth-bg: rgba(88, 101, 242, 0.18);
+  --stack-auth-border: rgba(88, 101, 242, 0.3);
+  --stack-auth-text: #404eed;
+  --stack-auth-badge: #5865f2;
 }
 
 .auth-modal__error,

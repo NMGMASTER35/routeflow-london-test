@@ -12,7 +12,6 @@ const LOCAL_AUTH_SESSION_KEY = 'routeflow:local-auth:session';
 const AUTH_MODAL_SOURCE = 'components/auth-modal.html';
 const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const LAST_USER_SUMMARY_KEY = 'routeflow:auth:last-user';
-const GOOGLE_ACCOUNT_INFO_KEY = 'routeflow:local-auth:google-account';
 
 const profileCache = new Map();
 const normaliseTextValue = (value) => (typeof value === 'string' ? value.trim() : '');
@@ -214,110 +213,49 @@ function createLocalAuth() {
     }
   };
 
-  const loadUsers = () => {
-    if (typeof localStorage === 'undefined') return {};
-    const stored = safeParse(localStorage.getItem(LOCAL_AUTH_STORAGE_KEY), {});
-    if (!stored || typeof stored !== 'object') {
-      return {};
+  const stackAuth = () => window.RouteflowStackAuth || null;
+
+  const normaliseProviderIdValue = (value) => {
+    const stack = stackAuth();
+    if (stack?.normaliseProviderId) {
+      return stack.normaliseProviderId(value);
     }
-    Object.values(stored).forEach((record) => {
-      if (record && typeof record === 'object') {
-        if (!record.provider) {
-          record.provider = record.passwordHash ? 'password' : 'local';
-        }
-      }
-    });
-    return stored;
-  };
-
-  const saveUsers = (users) => {
-    if (typeof localStorage === 'undefined') return;
-    try {
-      localStorage.setItem(LOCAL_AUTH_STORAGE_KEY, JSON.stringify(users));
-    } catch (error) {
-      console.warn('Routeflow local auth: unable to persist users', error);
+    if (!value) return null;
+    const trimmed = String(value).trim().toLowerCase();
+    if (!trimmed) return null;
+    if (trimmed === 'google') return 'google.com';
+    if (trimmed === 'github') return 'github.com';
+    if (trimmed === 'discord') return 'discord.com';
+    if (trimmed.includes('.')) {
+      return trimmed;
     }
+    return `${trimmed}.com`;
   };
 
-  const state = {
-    users: loadUsers(),
-    currentUser: null
+  const getProviderMeta = (providerId) => {
+    const stack = stackAuth();
+    const normalised = normaliseProviderIdValue(providerId);
+    return stack?.providers?.[normalised] || null;
   };
 
-  const readGoogleAccountInfo = () => {
-    if (typeof localStorage === 'undefined') return null;
-    try {
-      const raw = localStorage.getItem(GOOGLE_ACCOUNT_INFO_KEY);
-      if (!raw) return null;
-      const parsed = JSON.parse(raw);
-      return parsed && typeof parsed === 'object' ? parsed : null;
-    } catch (error) {
-      console.warn('Routeflow local auth: failed to parse Google account cache', error);
-      return null;
+  const deriveProviderEmail = (providerId) => {
+    const meta = getProviderMeta(providerId);
+    if (meta?.defaultEmailSuffix) {
+      return `${meta.key || 'stack'}.user.${Date.now()}${meta.defaultEmailSuffix}`;
     }
+    return `stack.user.${Date.now()}@routeflow`;
   };
 
-  const writeGoogleAccountInfo = (info) => {
-    if (typeof localStorage === 'undefined') return;
-    try {
-      if (!info) {
-        localStorage.removeItem(GOOGLE_ACCOUNT_INFO_KEY);
-      } else {
-        localStorage.setItem(GOOGLE_ACCOUNT_INFO_KEY, JSON.stringify(info));
-      }
-    } catch (error) {
-      console.warn('Routeflow local auth: unable to persist Google account cache', error);
-    }
+  const deriveProviderDisplayName = (providerId) => {
+    const meta = getProviderMeta(providerId);
+    return meta?.defaultDisplayName || 'Stack Auth Explorer';
   };
 
-  const ensureGoogleAccountRecord = () => {
-    const stored = readGoogleAccountInfo();
-    const baseEmail = stored?.email && isValidEmail(stored.email)
-      ? stored.email
-      : `google.user.${Date.now()}@local.routeflow`;
-    const normalised = normaliseEmailValue(baseEmail);
-    let record = state.users[normalised];
-    if (!record) {
-      record = {
-        uid: stored?.uid || generateUid(),
-        email: baseEmail,
-        displayName: stored?.displayName || 'Google Explorer',
-        passwordHash: null,
-        provider: 'google.com'
-      };
-      state.users[normalised] = record;
-      saveUsers(state.users);
-    } else {
-      let changed = false;
-      if (record.provider !== 'google.com') {
-        record.provider = 'google.com';
-        changed = true;
-      }
-      if (record.passwordHash) {
-        record.passwordHash = null;
-        changed = true;
-      }
-      if (!record.displayName) {
-        record.displayName = stored?.displayName || 'Google Explorer';
-        changed = true;
-      }
-      if (changed) {
-        saveUsers(state.users);
-      }
-    }
-    writeGoogleAccountInfo({
-      uid: record.uid,
-      email: record.email,
-      displayName: record.displayName
-    });
-    return record;
-  };
-
-  const normaliseEmailValue = (value) => (typeof value === 'string' ? value.trim().toLowerCase() : '');
-  const getRawEmail = (value) => (typeof value === 'string' ? value.trim() : '');
+  const normaliseEmail = (value) => (typeof value === 'string' ? value.trim().toLowerCase() : '');
+  const rawEmail = (value) => (typeof value === 'string' ? value.trim() : '');
 
   const isValidEmail = (value) => {
-    const email = getRawEmail(value);
+    const email = rawEmail(value);
     if (!email) return false;
     if (email.includes(',') || email.includes(';')) {
       return false;
@@ -331,8 +269,222 @@ function createLocalAuth() {
     return EMAIL_PATTERN.test(email);
   };
 
+  const generateUid = () => {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    return `local-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
+  };
+
+  const convertStoredRecord = (record, key) => {
+    if (!record || typeof record !== 'object') {
+      return null;
+    }
+    const uid = record.uid || (key && !key.includes('@') ? key : generateUid());
+    const emailValue = normaliseTextValue(record.email)
+      || (typeof key === 'string' && key.includes('@') ? key : '')
+      || null;
+    const displayNameValue = normaliseTextValue(record.displayName)
+      || (emailValue ? emailValue.split('@')?.[0] : '')
+      || 'Explorer';
+    const passwordHash = typeof record.passwordHash === 'string' && record.passwordHash
+      ? record.passwordHash
+      : null;
+
+    const providers = {};
+    if (record.providers && typeof record.providers === 'object') {
+      Object.values(record.providers).forEach((entry) => {
+        if (!entry || typeof entry !== 'object') return;
+        const providerId = entry.providerId || entry.id || null;
+        if (!providerId) return;
+        providers[providerId] = {
+          providerId,
+          email: normaliseTextValue(entry.email) || emailValue,
+          displayName: normaliseTextValue(entry.displayName) || displayNameValue,
+          linkedAt: entry.linkedAt || Date.now(),
+          lastLoginAt: entry.lastLoginAt || entry.linkedAt || Date.now()
+        };
+      });
+    }
+    if (passwordHash) {
+      providers.password = providers.password || {
+        providerId: 'password',
+        email: emailValue,
+        displayName: displayNameValue,
+        linkedAt: record.createdAt || Date.now(),
+        lastLoginAt: record.updatedAt || Date.now()
+      };
+    }
+
+    const providerId = record.provider
+      || (passwordHash ? 'password' : Object.keys(providers)[0] || 'local');
+
+    return {
+      uid,
+      email: emailValue,
+      displayName: displayNameValue,
+      passwordHash,
+      provider: providerId,
+      providers,
+      photoURL: record.photoURL || null,
+      createdAt: record.createdAt || Date.now(),
+      updatedAt: record.updatedAt || Date.now()
+    };
+  };
+
+  const loadUsers = () => {
+    if (typeof localStorage === 'undefined') return {};
+    const stored = safeParse(localStorage.getItem(LOCAL_AUTH_STORAGE_KEY), {});
+    if (!stored || typeof stored !== 'object') {
+      return {};
+    }
+    const result = {};
+    Object.entries(stored).forEach(([key, value]) => {
+      const converted = convertStoredRecord(value, key);
+      if (converted) {
+        result[converted.uid] = converted;
+      }
+    });
+    return result;
+  };
+
+  const state = {
+    users: loadUsers(),
+    currentRecord: null,
+    currentUser: null,
+    providerIndex: {},
+    emailIndex: {}
+  };
+
+  const rebuildIndexes = () => {
+    state.providerIndex = {};
+    state.emailIndex = {};
+    Object.values(state.users).forEach((record) => {
+      const primaryEmailKey = normaliseEmail(record.email);
+      if (primaryEmailKey) {
+        state.emailIndex[primaryEmailKey] = record.uid;
+      }
+      if (record.providers && typeof record.providers === 'object') {
+        Object.values(record.providers).forEach((entry) => {
+          if (!entry || typeof entry !== 'object') return;
+          const providerId = entry.providerId || entry.id;
+          if (!providerId) return;
+          const providerEmailKey = normaliseEmail(entry.email || record.email);
+          if (providerEmailKey) {
+            state.providerIndex[`${providerId}:${providerEmailKey}`] = record.uid;
+            state.emailIndex[providerEmailKey] = record.uid;
+          }
+        });
+      }
+    });
+  };
+
+  rebuildIndexes();
+
+  const saveUsers = (users) => {
+    if (typeof localStorage !== 'undefined') {
+      try {
+        localStorage.setItem(LOCAL_AUTH_STORAGE_KEY, JSON.stringify(users));
+      } catch (error) {
+        console.warn('Routeflow local auth: unable to persist users', error);
+      }
+    }
+    rebuildIndexes();
+  };
+
+  const findRecordByUid = (uid) => {
+    if (!uid) return null;
+    return state.users[uid] || null;
+  };
+
+  const findRecordByEmail = (email) => {
+    const key = normaliseEmail(email);
+    if (!key) return null;
+    const uid = state.emailIndex[key];
+    if (uid && state.users[uid]) {
+      return state.users[uid];
+    }
+    return null;
+  };
+
+  const findRecordByProvider = (providerId, email) => {
+    const normalisedProvider = normaliseProviderIdValue(providerId);
+    if (!normalisedProvider) return null;
+    const emailKey = normaliseEmail(email);
+    if (!emailKey) return null;
+    const uid = state.providerIndex[`${normalisedProvider}:${emailKey}`];
+    if (uid && state.users[uid]) {
+      return state.users[uid];
+    }
+    return null;
+  };
+
+  const ensurePassword = (password) => encodePassword(password ?? '');
+
+  const toProviderData = (record) => {
+    const entries = [];
+    if (record.providers && typeof record.providers === 'object') {
+      Object.values(record.providers).forEach((entry) => {
+        if (!entry || typeof entry !== 'object') return;
+        const providerId = entry.providerId || entry.id;
+        if (!providerId) return;
+        entries.push({
+          providerId,
+          email: entry.email || record.email || null,
+          displayName: entry.displayName || record.displayName || null
+        });
+      });
+    }
+    if (!entries.length) {
+      entries.push({
+        providerId: record.provider || (record.passwordHash ? 'password' : 'local'),
+        email: record.email || null,
+        displayName: record.displayName || null
+      });
+    }
+    return entries;
+  };
+
+  const toUserObject = (record) => {
+    if (!record) return null;
+    const providerData = toProviderData(record);
+    const providerId = record.provider || providerData[0]?.providerId || 'local';
+    return {
+      uid: record.uid,
+      email: record.email || null,
+      displayName: record.displayName || (record.email ? record.email.split('@')?.[0] : 'Explorer'),
+      providerId,
+      providerData,
+      local: true,
+      isAnonymous: false,
+      photoURL: record.photoURL || null,
+      getIdTokenResult: async () => ({ claims: { local: true } }),
+      updateProfile: async (updates = {}) => {
+        const nextName = normaliseTextValue(updates.displayName);
+        const nextPhoto = normaliseTextValue(updates.photoURL);
+        if (nextName) {
+          record.displayName = nextName;
+        }
+        if (nextPhoto) {
+          record.photoURL = nextPhoto;
+        }
+        record.updatedAt = Date.now();
+        saveUsers(state.users);
+        setCurrentRecord(record);
+      },
+      reload: async () => {}
+    };
+  };
+
   const notify = () => {
-    const snapshot = state.currentUser ? { ...state.currentUser } : null;
+    const snapshot = state.currentUser
+      ? {
+          ...state.currentUser,
+          providerData: Array.isArray(state.currentUser.providerData)
+            ? state.currentUser.providerData.map((entry) => ({ ...entry }))
+            : []
+        }
+      : null;
     listeners.forEach((listener) => {
       try {
         listener(snapshot);
@@ -342,14 +494,14 @@ function createLocalAuth() {
     });
   };
 
-  const persistSession = (user) => {
+  const persistSession = (record) => {
     if (typeof localStorage === 'undefined') return;
     try {
-      if (user) {
+      if (record) {
         localStorage.setItem(LOCAL_AUTH_SESSION_KEY, JSON.stringify({
-          uid: user.uid,
-          email: user.email,
-          providerId: getUserProviderId(user)
+          uid: record.uid,
+          email: record.email || null,
+          providerId: record.provider || 'local'
         }));
       } else {
         localStorage.removeItem(LOCAL_AUTH_SESSION_KEY);
@@ -359,79 +511,167 @@ function createLocalAuth() {
     }
   };
 
+  const setCurrentRecord = (record) => {
+    state.currentRecord = record || null;
+    state.currentUser = record ? toUserObject(record) : null;
+    persistSession(record || null);
+    syncUserSummary(state.currentUser);
+    notify();
+  };
+
+  const runStackProviderFlow = async (providerId, options = {}) => {
+    const stack = stackAuth();
+    if (stack?.startProviderFlow) {
+      return stack.startProviderFlow(providerId, options);
+    }
+    const meta = getProviderMeta(providerId);
+    const label = meta?.label || providerId || 'Stack Auth provider';
+    const emailPrompt = window.prompt(`Stack Auth — enter your ${label} email`, options.email || deriveProviderEmail(providerId));
+    if (!emailPrompt) {
+      throw new Error(`${label} sign-in cancelled.`);
+    }
+    const namePrompt = window.prompt(`Stack Auth — how should we address you?`, options.displayName || deriveProviderDisplayName(providerId))
+      || options.displayName
+      || emailPrompt.split('@')?.[0]
+      || 'Explorer';
+    return {
+      providerId: normaliseProviderIdValue(providerId),
+      email: emailPrompt.trim(),
+      displayName: namePrompt.trim()
+    };
+  };
+
+  const rememberIdentity = (providerId, identity) => {
+    const stack = stackAuth();
+    if (stack?.rememberIdentity) {
+      stack.rememberIdentity(providerId, identity);
+    }
+  };
+
+  const attachProviderToRecord = (record, providerId, identity = {}, options = {}) => {
+    if (!record) {
+      return record;
+    }
+    const normalisedProvider = normaliseProviderIdValue(providerId);
+    if (!normalisedProvider) {
+      return record;
+    }
+    const emailValue = normaliseTextValue(identity.email) || record.email || deriveProviderEmail(normalisedProvider);
+    const displayNameValue = normaliseTextValue(identity.displayName)
+      || normaliseTextValue(record.displayName)
+      || deriveProviderDisplayName(normalisedProvider);
+
+    if (!record.displayName && displayNameValue) {
+      record.displayName = displayNameValue;
+    }
+    if (!record.email && emailValue) {
+      record.email = emailValue;
+    }
+
+    const previous = record.providers?.[normalisedProvider];
+    const entry = {
+      providerId: normalisedProvider,
+      email: emailValue || record.email || null,
+      displayName: displayNameValue || null,
+      linkedAt: previous?.linkedAt || Date.now(),
+      lastLoginAt: Date.now()
+    };
+
+    record.providers = record.providers || {};
+    record.providers[normalisedProvider] = entry;
+
+    if (options.makePrimary && entry.email) {
+      record.email = entry.email;
+    }
+
+    record.provider = normalisedProvider;
+    record.updatedAt = Date.now();
+    rememberIdentity(normalisedProvider, identity);
+    return record;
+  };
+
+  const ensureRecordForProvider = (providerId, identity = {}, options = {}) => {
+    const normalisedProvider = normaliseProviderIdValue(providerId);
+    if (!normalisedProvider) {
+      throw new Error('Stack Auth provider is not available.');
+    }
+    const preferredUid = options.preferUid || identity.uid || null;
+    let record = preferredUid ? findRecordByUid(preferredUid) : null;
+
+    const emailValue = normaliseTextValue(identity.email);
+    if (!record && emailValue) {
+      record = findRecordByProvider(normalisedProvider, emailValue) || findRecordByEmail(emailValue);
+    }
+
+    if (!record) {
+      const uid = preferredUid || generateUid();
+      record = {
+        uid,
+        email: emailValue || deriveProviderEmail(normalisedProvider),
+        displayName: normaliseTextValue(identity.displayName) || deriveProviderDisplayName(normalisedProvider),
+        passwordHash: null,
+        provider: normalisedProvider,
+        providers: {},
+        photoURL: null,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      };
+      state.users[uid] = record;
+    }
+
+    attachProviderToRecord(record, normalisedProvider, identity, { makePrimary: options.makePrimary || !record.passwordHash });
+    saveUsers(state.users);
+    return record;
+  };
+
   const syncUsersFromStorage = () => {
     state.users = loadUsers();
+    rebuildIndexes();
+    if (state.currentRecord) {
+      const refreshed = findRecordByUid(state.currentRecord.uid);
+      if (refreshed) {
+        setCurrentRecord(refreshed);
+      } else {
+        setCurrentRecord(null);
+      }
+    }
   };
 
   const handleSessionChange = (sessionValue) => {
     if (!sessionValue) {
-      setCurrentUser(null);
+      setCurrentRecord(null);
       return;
     }
     const session = safeParse(sessionValue);
-    const emailKey = normaliseEmailValue(session?.email);
-    if (!emailKey) {
-      setCurrentUser(null);
+    if (session?.uid && state.users[session.uid]) {
+      setCurrentRecord(state.users[session.uid]);
       return;
     }
-    if (!state.users[emailKey]) {
-      syncUsersFromStorage();
+    if (session?.email) {
+      const record = findRecordByEmail(session.email);
+      if (record) {
+        setCurrentRecord(record);
+        return;
+      }
     }
-    const record = state.users[emailKey];
-    if (record) {
-      setCurrentUser(record);
-    } else {
-      setCurrentUser(null);
-    }
-  };
-
-  const toUserObject = (record) => {
-    if (!record) return null;
-    const baseName = record.displayName || record.email?.split('@')?.[0] || 'Explorer';
-    const providerId = record.provider || (record.passwordHash ? 'password' : 'local');
-    return {
-      uid: record.uid,
-      email: record.email,
-      displayName: baseName,
-      providerId,
-      providerData: [{ providerId, email: record.email || null }],
-      local: true,
-      isAnonymous: false,
-      photoURL: null,
-      getIdTokenResult: async () => ({ claims: { local: true } })
-    };
-  };
-
-  const setCurrentUser = (record) => {
-    state.currentUser = record ? toUserObject(record) : null;
-    persistSession(state.currentUser);
-    syncUserSummary(state.currentUser);
-    notify();
+    setCurrentRecord(null);
   };
 
   const loadSession = () => {
     if (typeof localStorage === 'undefined') return;
     const session = safeParse(localStorage.getItem(LOCAL_AUTH_SESSION_KEY));
-    if (!session?.email) {
-      setCurrentUser(null);
+    if (session?.uid && state.users[session.uid]) {
+      setCurrentRecord(state.users[session.uid]);
       return;
     }
-    const emailKey = session.email.toLowerCase();
-    const record = state.users[emailKey];
-    if (record) {
-      setCurrentUser(record);
-    } else {
-      setCurrentUser(null);
+    if (session?.email) {
+      const record = findRecordByEmail(session.email);
+      if (record) {
+        setCurrentRecord(record);
+        return;
+      }
     }
-  };
-
-  const ensurePassword = (password) => encodePassword(password ?? '');
-
-  const generateUid = () => {
-    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-      return crypto.randomUUID();
-    }
-    return `local-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
+    setCurrentRecord(null);
   };
 
   loadSession();
@@ -442,12 +682,6 @@ function createLocalAuth() {
     }
     if (event.key === LOCAL_AUTH_STORAGE_KEY) {
       syncUsersFromStorage();
-      if (state.currentUser?.email) {
-        const key = normaliseEmailValue(state.currentUser.email);
-        if (!state.users[key]) {
-          setCurrentUser(null);
-        }
-      }
       return;
     }
     if (event.key === LOCAL_AUTH_SESSION_KEY) {
@@ -468,85 +702,129 @@ function createLocalAuth() {
       return state.currentUser;
     },
     async signInWithEmailAndPassword(email, password) {
-      const rawEmail = getRawEmail(email);
-      const normalisedEmail = rawEmail.toLowerCase();
-      if (!rawEmail || !password) {
+      const emailValue = rawEmail(email);
+      if (!emailValue || !password) {
         throw new Error('Please provide both email and password.');
       }
-      if (!isValidEmail(rawEmail)) {
+      if (!isValidEmail(emailValue)) {
         throw new Error('Enter a valid email address.');
       }
-      const record = state.users[normalisedEmail];
-      if (!record) {
-        throw new Error('No account found with that email.');
+      const record = findRecordByEmail(emailValue);
+      if (!record || !record.passwordHash) {
+        throw new Error('No password account found with that email.');
       }
-      const providerId = record.provider || (record.passwordHash ? 'password' : 'local');
-      if (providerId !== 'password') {
-        throw new Error('Use the Google sign-in button for this account.');
-      }
-      const storedHash = record.passwordHash || '';
-      if (!storedHash) {
-        throw new Error('Use the Google sign-in button for this account.');
-      }
-      if (storedHash !== ensurePassword(password)) {
+      if (record.passwordHash !== ensurePassword(password)) {
         throw new Error('Incorrect password.');
       }
-      setCurrentUser(record);
+      attachProviderToRecord(record, 'password', { email: record.email, displayName: record.displayName }, { makePrimary: true });
+      saveUsers(state.users);
+      setCurrentRecord(record);
       return { user: state.currentUser };
     },
     async createUserWithEmailAndPassword(email, password) {
-      const rawEmail = getRawEmail(email);
-      const normalisedEmail = rawEmail.toLowerCase();
-      if (!normalisedEmail || !password) {
+      const emailValue = rawEmail(email);
+      if (!emailValue || !password) {
         throw new Error('Email and password are required.');
       }
-      if (!isValidEmail(rawEmail)) {
+      if (!isValidEmail(emailValue)) {
         throw new Error('Enter a single valid email address.');
       }
-      if (state.users[normalisedEmail]) {
+      if (findRecordByEmail(emailValue)) {
         throw new Error('An account already exists with that email.');
       }
-      const duplicate = Object.values(state.users).some((entry) => normaliseEmailValue(entry?.email) === normalisedEmail);
-      if (duplicate) {
-        throw new Error('An account already exists with that email.');
-      }
+      const uid = generateUid();
       const record = {
-        uid: generateUid(),
-        email: rawEmail,
-        displayName: rawEmail.split('@')?.[0] || 'Explorer',
+        uid,
+        email: emailValue,
+        displayName: emailValue.split('@')?.[0] || 'Explorer',
         passwordHash: ensurePassword(password),
-        provider: 'password'
+        provider: 'password',
+        providers: {
+          password: {
+            providerId: 'password',
+            email: emailValue,
+            displayName: emailValue.split('@')?.[0] || 'Explorer',
+            linkedAt: Date.now(),
+            lastLoginAt: Date.now()
+          }
+        },
+        photoURL: null,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
       };
-      state.users[normalisedEmail] = record;
+      state.users[uid] = record;
       saveUsers(state.users);
-      setCurrentUser(record);
+      setCurrentRecord(record);
       return { user: state.currentUser };
     },
     async sendPasswordResetEmail(email) {
-      const rawEmail = getRawEmail(email);
-      const normalisedEmail = rawEmail.toLowerCase();
-      if (!normalisedEmail) {
+      const emailValue = rawEmail(email);
+      if (!emailValue) {
         throw new Error('Please provide an email address.');
       }
-      if (!isValidEmail(rawEmail)) {
+      if (!isValidEmail(emailValue)) {
         throw new Error('Enter a valid email address.');
       }
-      if (!state.users[normalisedEmail]) {
+      if (!findRecordByEmail(emailValue)) {
         throw new Error('No account found with that email.');
       }
       return { simulated: true };
     },
     async signInWithPopup(provider) {
-      const providerId = provider?.providerId || 'google.com';
-      if (!providerId || !providerId.includes('google')) {
-        throw new Error('This sign-in provider is not available offline.');
+      const providerId = normaliseProviderIdValue(provider?.providerId || provider);
+      if (!providerId) {
+        throw new Error('Choose a Stack Auth provider to continue.');
       }
-      const record = ensureGoogleAccountRecord();
-      setCurrentUser(record);
+      const identity = await runStackProviderFlow(providerId, { mode: 'signin' });
+      const record = ensureRecordForProvider(providerId, identity, { makePrimary: true });
+      setCurrentRecord(record);
+      return { user: state.currentUser };
+    },
+    async linkWithPopup(provider) {
+      if (!state.currentRecord) {
+        throw new Error('Sign in to link additional providers.');
+      }
+      const providerId = normaliseProviderIdValue(provider?.providerId || provider);
+      if (!providerId) {
+        throw new Error('Choose a Stack Auth provider to link.');
+      }
+      const identity = await runStackProviderFlow(providerId, {
+        mode: 'link',
+        email: state.currentRecord.email,
+        displayName: state.currentRecord.displayName
+      });
+      attachProviderToRecord(state.currentRecord, providerId, identity, { makePrimary: false });
+      saveUsers(state.users);
+      setCurrentRecord(state.currentRecord);
+      return { user: state.currentUser };
+    },
+    async unlinkProvider(provider) {
+      if (!state.currentRecord) {
+        throw new Error('Sign in to manage linked providers.');
+      }
+      const providerId = normaliseProviderIdValue(provider?.providerId || provider);
+      if (!providerId) {
+        throw new Error('Choose a provider to unlink.');
+      }
+      if (providerId === 'password') {
+        throw new Error('Password sign-in cannot be unlinked.');
+      }
+      if (!state.currentRecord.providers?.[providerId]) {
+        throw new Error('That provider is not linked to your account.');
+      }
+      delete state.currentRecord.providers[providerId];
+      if (state.currentRecord.provider === providerId) {
+        state.currentRecord.provider = state.currentRecord.passwordHash
+          ? 'password'
+          : Object.keys(state.currentRecord.providers)[0] || 'local';
+      }
+      state.currentRecord.updatedAt = Date.now();
+      saveUsers(state.users);
+      setCurrentRecord(state.currentRecord);
       return { user: state.currentUser };
     },
     async signOut() {
-      setCurrentUser(null);
+      setCurrentRecord(null);
       return true;
     },
     onAuthStateChanged(callback) {
@@ -1803,46 +2081,65 @@ async function handleResetSubmit(form) {
   }
 }
 
-document.addEventListener('click', async (event) => {
-  const googleBtn = event.target.closest('.google-login, .google-btn');
-  if (!googleBtn) {
-    return;
+async function handleStackProviderAuth(providerId, options = {}) {
+  const stack = window.RouteflowStackAuth;
+  const normalisedProvider = stack?.normaliseProviderId ? stack.normaliseProviderId(providerId) : providerId;
+  if (!normalisedProvider) {
+    throw new Error('Select a Stack Auth provider to continue.');
   }
-  event.preventDefault();
+
   const instance = await ensureFirebaseAuth();
   if (!instance) {
-    alert('Authentication is temporarily unavailable. Please try again shortly.');
+    throw new Error('Authentication is temporarily unavailable. Please try again shortly.');
+  }
+
+  const isLinking = options.mode === 'link' && typeof instance.linkWithPopup === 'function';
+  const handlerName = isLinking ? 'linkWithPopup' : 'signInWithPopup';
+  const handler = instance[handlerName];
+
+  if (typeof handler !== 'function') {
+    throw new Error('Stack Auth providers are not available in this environment.');
+  }
+
+  const result = await handler.call(instance, { providerId: normalisedProvider, mode: options.mode || 'login' });
+  const user = result?.user || instance.currentUser || null;
+
+  if (!isLinking && !options.skipRender && user) {
+    renderDropdown(user);
+  }
+
+  return user;
+}
+
+window.handleStackProviderAuth = handleStackProviderAuth;
+
+document.addEventListener('click', async (event) => {
+  const providerButton = event.target.closest('[data-stack-provider]');
+  if (!providerButton) {
     return;
   }
-  let provider = null;
-  if (typeof firebase !== 'undefined' && firebase.auth?.GoogleAuthProvider) {
-    provider = new firebase.auth.GoogleAuthProvider();
-  } else if (typeof instance.signInWithPopup === 'function') {
-    provider = { providerId: 'google.com' };
-  } else {
-    alert('Authentication is temporarily unavailable. Please try again shortly.');
-    return;
-  }
+
+  event.preventDefault();
+
+  const providerId = providerButton.dataset.stackProvider || providerButton.getAttribute('data-provider');
+  const mode = providerButton.dataset.stackMode || (providerButton.closest('#signupFormContainer') ? 'signup' : 'login');
+
   try {
-    const result = await instance.signInWithPopup(provider);
-    const user = result?.user || instance.currentUser;
-    renderDropdown(user ?? null);
-    if (user) {
-      try {
-        await updateAdminVisibility(user, { ensureProfile: false });
-      } catch (error) {
-        console.error('Failed to refresh admin state after Google sign-in:', error);
+    await handleStackProviderAuth(providerId, { mode });
+    if (mode !== 'link') {
+      closeModal();
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname || '' : '';
+      if (!currentPath.endsWith('dashboard.html')) {
+        window.location.href = 'dashboard.html';
       }
     }
-    closeModal();
-    window.location.href = 'dashboard.html';
   } catch (error) {
     const loginContainer = document.getElementById('loginFormContainer');
-    const targetId = loginContainer && !loginContainer.hasAttribute('hidden') ? 'loginError' : 'signupError';
-    if (targetId) {
-      showMessage(targetId, error?.message || 'Google sign-in failed. Please try again.');
+    const activeId = mode === 'signup' || (loginContainer && loginContainer.hasAttribute('hidden')) ? 'signupError' : 'loginError';
+    if (activeId) {
+      showMessage(activeId, error?.message || 'Stack Auth sign-in failed. Please try again.');
     } else {
-      alert('Google sign-in error: ' + (error?.message || error));
+      alert(error?.message || 'Stack Auth sign-in failed.');
     }
   }
 });

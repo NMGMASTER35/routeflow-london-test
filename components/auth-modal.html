@@ -25,7 +25,32 @@
           <input type="password" id="loginPassword" name="loginPassword" required autocomplete="current-password" />
         </label>
         <button type="submit" class="auth-modal__primary">Log in</button>
-        <button type="button" class="auth-modal__provider google-btn google-login">Continue with Google</button>
+        <div class="auth-modal__providers" role="group" aria-label="Continue with Stack Auth providers">
+          <button
+            type="button"
+            class="auth-modal__provider stack-auth-btn stack-auth-btn--google"
+            data-stack-provider="google.com"
+            data-stack-mode="login"
+          >
+            Continue with Google
+          </button>
+          <button
+            type="button"
+            class="auth-modal__provider stack-auth-btn stack-auth-btn--github"
+            data-stack-provider="github.com"
+            data-stack-mode="login"
+          >
+            Continue with GitHub
+          </button>
+          <button
+            type="button"
+            class="auth-modal__provider stack-auth-btn stack-auth-btn--discord"
+            data-stack-provider="discord.com"
+            data-stack-mode="login"
+          >
+            Continue with Discord
+          </button>
+        </div>
         <div class="auth-modal__error" id="loginError" role="alert" hidden></div>
       </form>
       <p class="auth-modal__links">
@@ -70,7 +95,32 @@
           <input type="password" id="signupPassword" name="signupPassword" required autocomplete="new-password" />
         </label>
         <button type="submit" class="auth-modal__primary">Sign up</button>
-        <button type="button" class="auth-modal__provider google-btn google-login">Sign up with Google</button>
+        <div class="auth-modal__providers" role="group" aria-label="Sign up with Stack Auth providers">
+          <button
+            type="button"
+            class="auth-modal__provider stack-auth-btn stack-auth-btn--google"
+            data-stack-provider="google.com"
+            data-stack-mode="signup"
+          >
+            Sign up with Google
+          </button>
+          <button
+            type="button"
+            class="auth-modal__provider stack-auth-btn stack-auth-btn--github"
+            data-stack-provider="github.com"
+            data-stack-mode="signup"
+          >
+            Sign up with GitHub
+          </button>
+          <button
+            type="button"
+            class="auth-modal__provider stack-auth-btn stack-auth-btn--discord"
+            data-stack-provider="discord.com"
+            data-stack-mode="signup"
+          >
+            Sign up with Discord
+          </button>
+        </div>
         <div class="auth-modal__error" id="signupError" role="alert" hidden></div>
       </form>
       <p class="auth-modal__switch">
