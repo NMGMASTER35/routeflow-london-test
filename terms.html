@@ -1,170 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png">
-  <title>Terms of Use | RouteFlow London</title>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="style.css">
-  <script src="theme.js" defer></script>
-  <script src="site.js" defer></script>
-</head>
-<body>
-  <div id="navbar-container"></div>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Terms of use · RouteFlow London</title>
+    <meta name="description" content="Review the RouteFlow London terms of service." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="is-signed-out">
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="site-brand" href="index.html">
+          <img class="site-brand__mark" src="images/routeflow-logo.svg" alt="RouteFlow London logo" />
+          <span class="site-brand__text">RouteFlow London</span>
+        </a>
+        <button class="site-nav__toggle" type="button" aria-expanded="false" aria-controls="primaryNav">
+          Menu
+        </button>
+        <nav class="site-nav" id="primaryNav">
+          <a class="site-nav__link" href="privacy.html">Privacy</a>
+          <a class="site-nav__link" href="contact.html">Contact</a>
+          <a class="site-nav__link" href="index.html#auth">Sign in</a>
+          <a class="site-nav__cta" href="admin.html">Admin dashboard</a>
+          <button class="site-nav__signout" data-action="signout" type="button" hidden>Sign out</button>
+        </nav>
+      </div>
+    </header>
 
-  <main id="main-content" class="page-shell legal-shell" aria-labelledby="termsTitle">
-    <section class="page-hero">
-      <div class="page-hero__content">
+    <main class="page legal" id="terms">
+      <section class="page-hero">
         <p class="page-hero__eyebrow">Terms of use</p>
-        <h1 id="termsTitle">Using RouteFlow London responsibly.</h1>
-        <p class="page-hero__lead">
-          These terms explain what you can expect from RouteFlow London and what we ask from you in return. By creating an account or using any part of the platform you agree to these rules.
+        <h1 class="page-hero__title">The rules that keep our community thriving.</h1>
+        <p class="page-hero__subtitle">
+          RouteFlow London is a collaborative project. These terms outline how you can participate and how we protect everyone
+          involved.
         </p>
-        <p class="legal-updated">Last updated: 17 September 2025</p>
+      </section>
+
+      <section class="page-section">
+        <h2 class="page-section__title">Using RouteFlow London</h2>
+        <p>
+          You agree to use the platform responsibly, provide accurate information and respect other contributors. Admin access is
+          granted via Stack Auth teams and may be revoked if policies are breached.
+        </p>
+      </section>
+
+      <section class="page-section">
+        <h2 class="page-section__title">Content ownership</h2>
+        <p>
+          Contributors retain ownership of their submissions. By publishing on RouteFlow London you grant us a licence to host and
+          showcase the material with proper credit.
+        </p>
+      </section>
+
+      <section class="page-section">
+        <h2 class="page-section__title">Liability</h2>
+        <p>
+          We provide tools “as is” without warranty. Always verify operational decisions with official TfL control. RouteFlow
+          London is not liable for indirect or consequential loss.
+        </p>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <p>© RouteFlow London. A community-led exploration of the city&#39;s transport network.</p>
+        <nav>
+          <a href="privacy.html">Privacy</a>
+          <a href="terms.html">Terms</a>
+          <a href="contact.html">Contact</a>
+        </nav>
       </div>
-      <dl class="page-hero__meta">
-        <div>
-          <dt>Availability</dt>
-          <dd>99% uptime goal</dd>
-        </div>
-        <div>
-          <dt>Support</dt>
-          <dd>Email &amp; Discord</dd>
-        </div>
-        <div>
-          <dt>Jurisdiction</dt>
-          <dd>United Kingdom</dd>
-        </div>
-      </dl>
-    </section>
+    </footer>
 
-    <div class="legal-layout">
-      <nav class="legal-nav" aria-label="Terms quick links">
-        <h2 class="legal-nav__title">Jump to</h2>
-        <ul class="legal-nav__list">
-          <li><a href="#terms-acceptance">Acceptance</a></li>
-          <li><a href="#terms-use">Fair use</a></li>
-          <li><a href="#terms-accounts">Accounts &amp; security</a></li>
-          <li><a href="#terms-intellectual">Intellectual property</a></li>
-          <li><a href="#terms-liability">Liability</a></li>
-          <li><a href="#terms-changes">Changes</a></li>
-          <li><a href="#terms-contact">Need help?</a></li>
-        </ul>
-      </nav>
-
-      <div class="legal-content">
-        <section class="page-card legal-section" id="terms-acceptance">
-          <h2>1. Acceptance of the terms</h2>
-          <p>RouteFlow London is operated from the United Kingdom. By accessing or using the service you confirm that:</p>
-          <ul>
-            <li>You are at least 16 years old or have permission from a parent or guardian.</li>
-            <li>You will follow applicable laws and regulations when using our data.</li>
-            <li>You have read and agree to these terms and our <a href="privacy.html">privacy policy</a>.</li>
-          </ul>
-        </section>
-
-        <section class="page-card legal-section" id="terms-use">
-          <h2>2. Fair use of the platform</h2>
-          <p>We want RouteFlow London to stay reliable for everyone. Please don’t:</p>
-          <ul>
-            <li>Scrape or attempt to resell data without prior agreement.</li>
-            <li>Interfere with system security, attempt unauthorised access, or overload our APIs.</li>
-            <li>Use the service to harass others, post unlawful content, or impersonate the RouteFlow London team.</li>
-          </ul>
-          <p>We reserve the right to suspend accounts that breach these guidelines.</p>
-        </section>
-
-        <section class="page-card legal-section" id="terms-accounts">
-          <h2>3. Accounts &amp; security</h2>
-          <ul>
-            <li>You are responsible for keeping your login details confidential.</li>
-            <li>Notify us immediately at <a href="mailto:support@routeflow.london">support@routeflow.london</a> if you suspect unauthorised access.</li>
-            <li>We may suspend or delete accounts that remain inactive for 18 months to protect stored data.</li>
-          </ul>
-        </section>
-
-        <section class="page-card legal-section" id="terms-intellectual">
-          <h2>4. Intellectual property</h2>
-          <ul>
-            <li>RouteFlow London, its branding, and original content belong to the RouteFlow London team.</li>
-            <li>Transport for London data remains the property of TfL and its respective licensors.</li>
-            <li>You retain rights to the personal notes and content you create, but grant us permission to store and display it within the service.</li>
-          </ul>
-        </section>
-
-        <section class="page-card legal-section" id="terms-liability">
-          <h2>5. Limitation of liability</h2>
-          <p>We strive for accuracy, but live transport data can change quickly. RouteFlow London is provided “as is” without warranties. To the extent allowed by law we are not liable for:</p>
-          <ul>
-            <li>Indirect or consequential losses.</li>
-            <li>Disruption caused by third-party data providers.</li>
-            <li>Travel decisions made solely using information from RouteFlow London.</li>
-          </ul>
-          <p>Nothing in these terms limits liability where it cannot be excluded by law.</p>
-        </section>
-
-        <section class="page-card legal-section" id="terms-changes">
-          <h2>6. Changes to the terms</h2>
-          <p>We may update these terms to reflect new features or legal requirements. When that happens we will:</p>
-          <ul>
-            <li>Post the updated terms here with a new effective date.</li>
-            <li>Notify signed-in users via in-app message or email for significant changes.</li>
-            <li>Give you the option to close your account if you do not agree with the updates.</li>
-          </ul>
-        </section>
-
-        <section class="page-card legal-section" id="terms-contact">
-          <h2>7. Need help?</h2>
-          <p>Questions about these terms can be sent to:</p>
-          <ul>
-            <li>Email: <a href="mailto:legal@routeflow.london">legal@routeflow.london</a></li>
-            <li>Discord: <a href="https://discord.gg/qVf3nN4Mgq">RouteFlow London HQ</a></li>
-            <li>Contact form: <a href="contact.html">routeflow.london/contact</a></li>
-          </ul>
-          <p>We aim to respond within two working days.</p>
-        </section>
-      </div>
-    </div>
-  </main>
-
-  <footer class="site-footer" aria-label="Footer">
-    <div class="site-footer__inner">
-      <div class="site-footer__brand">
-        <span class="site-footer__name">RouteFlow London</span>
-        <p class="site-footer__description">Playful transport guidance for explorers of every age.</p>
-      </div>
-      <nav class="site-footer__nav" aria-label="Explore">
-        <a href="index.html">Home</a>
-        <a href="dashboard.html">Dashboard</a>
-        <a href="tracking.html">Tracking</a>
-        <a href="planning.html">Planning</a>
-        <a href="routes.html">Routes</a>
-        <a href="info.html">Info hub</a>
-      </nav>
-      <nav class="site-footer__nav" aria-label="Support">
-        <a href="about.html">About</a>
-        <a href="contact.html">Contact</a>
-        <a href="privacy.html">Privacy</a>
-        <a href="terms.html">Terms</a>
-        <a href="settings.html">Settings</a>
-      </nav>
-      <div class="site-footer__social" aria-label="Social channels">
-        <a href="https://discord.gg/qVf3nN4Mgq" aria-label="RouteFlow London on Discord"><i class="fa-brands fa-discord"></i></a>
-        <a href="https://www.tiktok.com/@the_bus_father" aria-label="RouteFlow London on TikTok"><i class="fab fa-tiktok"></i></a>
-        <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo" aria-label="RouteFlow London on Instagram"><i class="fab fa-instagram"></i></a>
-      </div>
-    </div>
-    <div class="site-footer__meta">
-      <span>&copy; <span data-current-year></span> RouteFlow London. All rights reserved.</span>
-      <span>Made for London. Accessible for everyone.</span>
-    </div>
-  </footer>
-
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-  <script src="main.js"></script>
-  <script src="navbar-loader.js"></script>
-</body>
+    <script src="stack-auth.js"></script>
+    <script src="app.js" defer></script>
+  </body>
 </html>

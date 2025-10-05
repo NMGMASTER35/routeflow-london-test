@@ -1,164 +1,86 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png">
-  <title>Privacy | RouteFlow London</title>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="style.css">
-  <script src="theme.js" defer></script>
-  <script src="site.js" defer></script>
-</head>
-<body>
-  <div id="navbar-container"></div>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Privacy notice · RouteFlow London</title>
+    <meta name="description" content="Understand how RouteFlow London handles your data." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="is-signed-out">
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="site-brand" href="index.html">
+          <img class="site-brand__mark" src="images/routeflow-logo.svg" alt="RouteFlow London logo" />
+          <span class="site-brand__text">RouteFlow London</span>
+        </a>
+        <button class="site-nav__toggle" type="button" aria-expanded="false" aria-controls="primaryNav">
+          Menu
+        </button>
+        <nav class="site-nav" id="primaryNav">
+          <a class="site-nav__link" href="terms.html">Terms</a>
+          <a class="site-nav__link" href="contact.html">Contact</a>
+          <a class="site-nav__link" href="index.html#auth">Sign in</a>
+          <a class="site-nav__cta" href="admin.html">Admin dashboard</a>
+          <button class="site-nav__signout" data-action="signout" type="button" hidden>Sign out</button>
+        </nav>
+      </div>
+    </header>
 
-  <main id="main-content" class="page-shell legal-shell" aria-labelledby="privacyTitle">
-    <section class="page-hero">
-      <div class="page-hero__content">
-        <p class="page-hero__eyebrow">Privacy</p>
-        <h1 id="privacyTitle">Your data stays in your control.</h1>
-        <p class="page-hero__lead">
-          RouteFlow London only collects the information needed to run your account, personalise your experience, and keep the platform secure. We never sell your data and we minimise the information we store wherever possible.
+    <main class="page legal" id="privacy">
+      <section class="page-hero">
+        <p class="page-hero__eyebrow">Privacy notice</p>
+        <h1 class="page-hero__title">We respect your data and your trust.</h1>
+        <p class="page-hero__subtitle">
+          This notice explains what information we collect, how we use it and the choices you have. RouteFlow London follows UK
+          GDPR and keeps sensitive data within Stack Auth.
         </p>
-        <p class="legal-updated">Last updated: 17 September 2025</p>
-      </div>
-      <dl class="page-hero__meta">
-        <div>
-          <dt>Account data</dt>
-          <dd>Email &amp; preferences</dd>
-        </div>
-        <div>
-          <dt>Analytics</dt>
-          <dd>Aggregated &amp; anonymised</dd>
-        </div>
-        <div>
-          <dt>Exports</dt>
-          <dd>Available on request</dd>
-        </div>
-      </dl>
-    </section>
+      </section>
 
-    <div class="legal-layout">
-      <nav class="legal-nav" aria-label="Privacy quick links">
-        <h2 class="legal-nav__title">Jump to</h2>
-        <ul class="legal-nav__list">
-          <li><a href="#privacy-data">Data we collect</a></li>
-          <li><a href="#privacy-use">How we use data</a></li>
-          <li><a href="#privacy-share">When we share data</a></li>
-          <li><a href="#privacy-rights">Your rights &amp; controls</a></li>
-          <li><a href="#privacy-retention">How long we keep data</a></li>
-          <li><a href="#privacy-contact">Talk to us</a></li>
+      <section class="page-section">
+        <h2 class="page-section__title">Information we collect</h2>
+        <p>
+          When you create a RouteFlow account, Stack Auth stores your email, display name and authentication tokens. We gather
+          optional analytics to understand feature usage, but we never sell your data or share it without permission.
+        </p>
+      </section>
+
+      <section class="page-section">
+        <h2 class="page-section__title">How we use your data</h2>
+        <ul class="legal-list">
+          <li>Provide access to admin dashboards, planning tools and heritage archives.</li>
+          <li>Send notifications about disruptions, mission invites and account updates.</li>
+          <li>Improve reliability through aggregated, anonymised analytics.</li>
         </ul>
-      </nav>
+      </section>
 
-      <div class="legal-content">
-        <section class="page-card legal-section" id="privacy-data">
-          <h2>1. Data we collect</h2>
-          <p>We collect the minimum information necessary to provide RouteFlow London. This includes:</p>
-          <ul>
-            <li><strong>Account details:</strong> Your email address, display name, and encrypted authentication tokens when you create an account.</li>
-            <li><strong>Preferences:</strong> Saved stops, favourite routes, display settings, and notification choices so we can tailor the interface.</li>
-            <li><strong>Usage signals:</strong> Aggregated analytics about feature usage that help us improve performance. These signals do not include the precise searches you run or locations you view.</li>
-            <li><strong>Support messages:</strong> Any information you choose to provide when you contact us for assistance.</li>
-          </ul>
-          <p>We do <strong>not</strong> collect live location data, payment information, or content from your private notes unless you explicitly share it with the support team.</p>
-        </section>
+      <section class="page-section">
+        <h2 class="page-section__title">Your rights</h2>
+        <p>
+          You can request a copy of your data, ask for corrections or delete your account any time. Contact
+          <a class="link" href="mailto:privacy@routeflow.london">privacy@routeflow.london</a> and we&#39;ll respond within 30 days.
+        </p>
+      </section>
+    </main>
 
-        <section class="page-card legal-section" id="privacy-use">
-          <h2>2. How we use your data</h2>
-          <ul>
-            <li>Authenticate you securely and keep your saved stops, notes, and favourites in sync across devices.</li>
-            <li>Deliver personalised views—such as defaulting to your preferred theme or favourite routes—so the interface stays calm and familiar.</li>
-            <li>Monitor the health of our APIs to ensure live data remains accurate and fast.</li>
-            <li>Communicate important updates, such as changes to the network or planned maintenance, when you opt in.</li>
-          </ul>
-        </section>
-
-        <section class="page-card legal-section" id="privacy-share">
-          <h2>3. When we share data</h2>
-          <p>We only share your information in limited circumstances:</p>
-          <ul>
-            <li><strong>Service providers:</strong> Trusted partners that supply authentication, hosting, and analytics infrastructure. They process data strictly on our instructions.</li>
-            <li><strong>Legal requirements:</strong> If we receive a lawful request, we may disclose data to comply with regulations or protect RouteFlow London, our users, or the public.</li>
-            <li><strong>With your permission:</strong> We may share information externally if you explicitly ask us to, such as when collaborating on community projects.</li>
-          </ul>
-          <p>We never sell your personal information or monetise it through advertising brokers.</p>
-        </section>
-
-        <section class="page-card legal-section" id="privacy-rights">
-          <h2>4. Your rights &amp; controls</h2>
-          <p>You can exercise the following rights at any time by contacting us:</p>
-          <ul>
-            <li>Request a copy of the data linked to your account.</li>
-            <li>Ask us to update or correct inaccurate information.</li>
-            <li>Delete your account and associated stored data.</li>
-            <li>Opt out of non-essential communications and analytics.</li>
-          </ul>
-          <p>We respond to verified requests within 30 days and keep you updated on progress if additional time is required.</p>
-        </section>
-
-        <section class="page-card legal-section" id="privacy-retention">
-          <h2>5. How long we keep data</h2>
-          <ul>
-            <li>Account details and favourites are retained while your account remains active.</li>
-            <li>Support conversations are stored for up to 12 months to help us track recurring issues.</li>
-            <li>Aggregated analytics are kept indefinitely but cannot be traced back to an individual.</li>
-          </ul>
-          <p>When you delete your account we remove associated personal data within 30 days, unless we are legally required to keep it longer.</p>
-        </section>
-
-        <section class="page-card legal-section" id="privacy-contact">
-          <h2>6. Talk to us</h2>
-          <p>If you have questions about this policy or how we handle your information, please reach out:</p>
-          <ul>
-            <li>Email: <a href="mailto:privacy@routeflow.london">privacy@routeflow.london</a></li>
-            <li>Contact form: <a href="contact.html">routeflow.london/contact</a></li>
-            <li>Discord: <a href="https://discord.gg/qVf3nN4Mgq">RouteFlow London HQ</a></li>
-          </ul>
-          <p>We review the privacy policy regularly and will let you know about significant updates through the app and newsletter.</p>
-        </section>
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <p>© RouteFlow London. A community-led exploration of the city&#39;s transport network.</p>
+        <nav>
+          <a href="privacy.html">Privacy</a>
+          <a href="terms.html">Terms</a>
+          <a href="contact.html">Contact</a>
+        </nav>
       </div>
-    </div>
-  </main>
+    </footer>
 
-  <footer class="site-footer" aria-label="Footer">
-    <div class="site-footer__inner">
-      <div class="site-footer__brand">
-        <span class="site-footer__name">RouteFlow London</span>
-        <p class="site-footer__description">Playful transport guidance for explorers of every age.</p>
-      </div>
-      <nav class="site-footer__nav" aria-label="Explore">
-        <a href="index.html">Home</a>
-        <a href="dashboard.html">Dashboard</a>
-        <a href="tracking.html">Tracking</a>
-        <a href="planning.html">Planning</a>
-        <a href="routes.html">Routes</a>
-        <a href="info.html">Info hub</a>
-      </nav>
-      <nav class="site-footer__nav" aria-label="Support">
-        <a href="about.html">About</a>
-        <a href="contact.html">Contact</a>
-        <a href="privacy.html">Privacy</a>
-        <a href="terms.html">Terms</a>
-        <a href="settings.html">Settings</a>
-      </nav>
-      <div class="site-footer__social" aria-label="Social channels">
-        <a href="https://discord.gg/qVf3nN4Mgq" aria-label="RouteFlow London on Discord"><i class="fa-brands fa-discord"></i></a>
-        <a href="https://www.tiktok.com/@the_bus_father" aria-label="RouteFlow London on TikTok"><i class="fab fa-tiktok"></i></a>
-        <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo" aria-label="RouteFlow London on Instagram"><i class="fab fa-instagram"></i></a>
-      </div>
-    </div>
-    <div class="site-footer__meta">
-      <span>&copy; <span data-current-year></span> RouteFlow London. All rights reserved.</span>
-      <span>Made for London. Accessible for everyone.</span>
-    </div>
-  </footer>
-
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-  <script src="main.js"></script>
-  <script src="navbar-loader.js"></script>
-</body>
+    <script src="stack-auth.js"></script>
+    <script src="app.js" defer></script>
+  </body>
 </html>

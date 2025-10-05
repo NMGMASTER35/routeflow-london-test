@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 32" role="img" aria-labelledby="title">
+  <title id="title">RouteFlow London logo</title>
+  <rect width="120" height="32" rx="8" fill="#111827" />
+  <g fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 8c-6 0-10 4-10 8s4 8 10 8c4.4 0 8-2.7 9.5-6.6" stroke="#38bdf8" />
+    <path d="M20 8v16" stroke="#f97316" />
+    <path d="M8 11h8" stroke="#a855f7" />
+    <path d="M24 21h8" stroke="#22c55e" />
+  </g>
+  <text x="42" y="22" font-family="'Inter', 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#f9fafb">RouteFlow</text>
+</svg>

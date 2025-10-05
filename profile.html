@@ -1,271 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Profile | RouteFlow London</title>
-  <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png" />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
-  <script src="theme.js" defer></script>
-  <script src="site.js" defer></script>
-</head>
-<body>
-  <div id="navbar-container"></div>
-  <main id="profileMain" class="profile-shell" aria-live="polite">
-    <section class="profile-hero card" id="profileHero">
-      <div class="profile-hero__avatar">
-        <img src="user-icon.png" alt="Profile avatar" id="profileAvatar" />
-        <button type="button" class="profile-hero__chip" id="refreshProfile" title="Refresh profile data">Refresh</button>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Profile · RouteFlow London</title>
+    <meta name="description" content="Manage your RouteFlow London profile and Stack Auth connections." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="is-signed-out">
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="site-brand" href="index.html">
+          <img class="site-brand__mark" src="images/routeflow-logo.svg" alt="RouteFlow London logo" />
+          <span class="site-brand__text">RouteFlow London</span>
+        </a>
+        <button class="site-nav__toggle" type="button" aria-expanded="false" aria-controls="primaryNav">
+          Menu
+        </button>
+        <nav class="site-nav" id="primaryNav">
+          <a class="site-nav__link" href="settings.html">Settings</a>
+          <a class="site-nav__link" href="index.html#auth">Sign in</a>
+          <a class="site-nav__link" href="admin.html">Admin</a>
+          <a class="site-nav__cta" href="routes.html">Explore routes</a>
+          <button class="site-nav__signout" data-action="signout" type="button" hidden>Sign out</button>
+        </nav>
       </div>
-      <div class="profile-hero__content">
-        <p class="profile-hero__eyebrow" id="profileRole">Guest</p>
-        <h1 class="profile-hero__title" id="profileName">Your profile</h1>
-        <p class="profile-hero__handle" id="profileUsername" hidden></p>
-        <p class="profile-hero__subtitle" id="profileEmail">Sign in to personalise your RouteFlow London experience.</p>
-        <dl class="profile-hero__meta">
+    </header>
+
+    <main class="page" id="profile" data-session-guard>
+      <section class="page-hero">
+        <p class="page-hero__eyebrow">Your account</p>
+        <h1 class="page-hero__title">Welcome back to RouteFlow London.</h1>
+        <p class="page-hero__subtitle">
+          Manage your profile information, connected providers and admin team membership. Stack Auth keeps everything synced
+          across devices.
+        </p>
+      </section>
+
+      <section class="page-section">
+        <div class="profile-summary">
+          <div class="profile-summary__avatar" aria-hidden="true">RF</div>
           <div>
-            <dt>Display name</dt>
-            <dd id="profileDisplayName">—</dd>
+            <h2 class="profile-summary__name" id="profileName">RouteFlow Explorer</h2>
+            <p class="profile-summary__email" id="profileEmail">you@example.com</p>
+            <p class="profile-summary__team" id="profileTeam">No admin team assigned</p>
           </div>
-          <div>
-            <dt>Username</dt>
-            <dd id="profileHandle">—</dd>
-          </div>
-          <div>
-            <dt>Member since</dt>
-            <dd id="profileMemberSince">—</dd>
-          </div>
-          <div>
-            <dt>Last active</dt>
-            <dd id="profileLastActive">—</dd>
-          </div>
-          <div>
-            <dt>User ID</dt>
-            <dd id="profileUid">—</dd>
-          </div>
-          <div>
-            <dt>Primary email</dt>
-            <dd id="profilePrimaryEmail">—</dd>
-          </div>
-        </dl>
-        <div class="profile-hero__actions">
-          <button type="button" class="profile-hero__button" id="editProfileBtn" data-disabled>Edit profile</button>
-          <a href="settings.html" class="profile-hero__button" id="openSettings" data-disabled>Open settings</a>
-          <button type="button" class="profile-hero__button profile-hero__button--ghost" id="signOutBtn" data-disabled>Sign out</button>
+          <button class="button button--ghost" data-action="signout" type="button">Sign out</button>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <div
-      class="profile-editor"
-      id="profileEditor"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="profileEditorTitle"
-      hidden
-    >
-      <div class="profile-editor__backdrop" data-profile-editor-dismiss></div>
-      <form class="profile-editor__dialog" id="profileEditorForm" novalidate>
-        <header class="profile-editor__header">
-          <h2 id="profileEditorTitle">Edit your profile</h2>
-          <p>Update how you appear across RouteFlow London.</p>
-        </header>
-        <div class="profile-editor__body">
-          <div class="profile-editor__field">
-            <label for="profileEditorDisplayName">Display name</label>
-            <input
-              type="text"
-              id="profileEditorDisplayName"
-              name="displayName"
-              autocomplete="name"
-              maxlength="80"
-              placeholder="Your name"
-            />
-            <p class="profile-editor__help">Leave blank to use your email address instead.</p>
-          </div>
-          <div class="profile-editor__field">
-            <label for="profileEditorGender">Gender</label>
-            <input
-              type="text"
-              id="profileEditorGender"
-              name="gender"
-              maxlength="60"
-              placeholder="E.g. Woman, Man, Non-binary"
-            />
-            <p class="profile-editor__help">Optional. Saved securely via our Neon-backed profile service.</p>
-          </div>
-          <div class="profile-editor__field">
-            <label for="profileEditorAvatar">Avatar</label>
-            <input type="file" id="profileEditorAvatar" name="avatar" accept="image/*" />
-            <p class="profile-editor__help">Images up to 5&nbsp;MB. We'll resize them to fit the profile hero.</p>
-          </div>
-          <p class="profile-editor__error" id="profileEditorError" role="status" aria-live="polite"></p>
+      <section class="page-section page-section--split">
+        <div class="page-section__content">
+          <h2 class="page-section__title">Connected providers</h2>
+          <ul class="provider-list">
+            <li>
+              <span>Google</span>
+              <button class="button button--ghost" type="button">Disconnect</button>
+            </li>
+            <li>
+              <span>GitHub</span>
+              <button class="button button--ghost" type="button">Disconnect</button>
+            </li>
+            <li>
+              <span>Discord</span>
+              <button class="button button--ghost" type="button">Disconnect</button>
+            </li>
+          </ul>
         </div>
-        <footer class="profile-editor__actions">
-          <button type="submit" class="profile-hero__button" id="profileEditorSave">Save changes</button>
-          <button
-            type="button"
-            class="profile-hero__button profile-hero__button--ghost"
-            id="profileEditorCancel"
-            data-profile-editor-dismiss
-          >
-            Cancel
-          </button>
-        </footer>
-      </form>
-    </div>
-
-    <div
-      class="profile-note-modal"
-      id="profileNoteModal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="profileNoteTitle"
-      hidden
-    >
-      <div class="profile-note-modal__backdrop" data-note-modal-dismiss></div>
-      <form class="profile-note-modal__dialog" id="profileNoteForm" novalidate>
-        <header class="profile-note-modal__header">
-          <h2 id="profileNoteTitle">Create a personal note</h2>
-          <p>Pin reminders about disruptions, journeys, or fleet sightings only you can see.</p>
-        </header>
-        <div class="profile-note-modal__body">
-          <label class="profile-note-modal__field" for="profileNoteName">
-            <span>Title</span>
-            <input
-              type="text"
-              id="profileNoteName"
-              name="noteName"
-              required
-              maxlength="120"
-              placeholder="Service change or journey"
-            />
-          </label>
-          <label class="profile-note-modal__field" for="profileNoteContent">
-            <span>Details</span>
-            <textarea
-              id="profileNoteContent"
-              name="noteContent"
-              required
-              rows="5"
-              maxlength="1000"
-              placeholder="Write a quick reminder for yourself"
-            ></textarea>
-          </label>
-          <p class="profile-note-modal__error" id="profileNoteError" role="alert" aria-live="assertive"></p>
-        </div>
-        <footer class="profile-note-modal__actions">
-          <button type="submit" class="profile-chip profile-chip--primary" id="profileNoteSave">Save note</button>
-          <button type="button" class="profile-chip profile-chip--ghost" id="profileNoteCancel" data-note-modal-dismiss>Cancel</button>
-        </footer>
-      </form>
-    </div>
-
-    <section class="profile-grid">
-      <article class="profile-card profile-card--stats" id="profileStatsCard">
-        <header class="profile-card__header">
-          <h2>Account snapshot</h2>
-          <p class="profile-card__subtitle" id="profileStatusMessage">Keep an eye on your saved stops and personalised notes.</p>
-        </header>
-        <ul class="profile-stats" id="profileStats">
-          <li>
-            <span>Favourites</span>
-            <strong id="statFavourites">0</strong>
-          </li>
-          <li>
-            <span>Saved notes</span>
-            <strong id="statNotes">0</strong>
-          </li>
-          <li>
-            <span>Recent lookups</span>
-            <strong id="statRecents">0</strong>
-          </li>
-        </ul>
-      </article>
-
-      <article class="profile-card" id="profileConnectionsCard">
-        <header class="profile-card__header">
-          <h2>Connected accounts</h2>
-          <p class="profile-card__subtitle">Manage Stack Auth sign-in providers and link your favourite services.</p>
-        </header>
-        <ul class="profile-connections" id="profileConnectionsList" aria-live="polite"></ul>
-        <p class="profile-card__status" id="profileConnectionsStatus" hidden></p>
-      </article>
-
-      <article class="profile-card" id="profileFavouritesCard">
-        <header class="profile-card__header">
-          <h2>Saved favourites</h2>
-          <p class="profile-card__subtitle">Quick access to the stops and routes you rely on the most.</p>
-        </header>
-        <ul class="profile-list" id="profileFavouritesList" aria-live="polite"></ul>
-      </article>
-
-      <article class="profile-card" id="profileRecentsCard">
-        <header class="profile-card__header">
-          <h2>Recent lookups</h2>
-          <p class="profile-card__subtitle">Jump back to journeys and stops you've viewed recently.</p>
-        </header>
-        <ul class="profile-list" id="profileRecentsList" aria-live="polite"></ul>
-      </article>
-
-      <article class="profile-card" id="profileNotesCard">
-        <header class="profile-card__header">
-          <h2>Personal notes</h2>
-          <div class="profile-card__actions">
-            <button type="button" class="profile-chip" id="addNoteBtn">Add note</button>
+        <div class="page-section__media">
+          <div class="glow-card">
+            <h3>Team membership</h3>
+            <p>Invite colleagues to RouteFlow London Ops to unlock admin features, or request access below.</p>
+            <button class="button button--primary" type="button">Request admin access</button>
           </div>
-          <p class="profile-card__subtitle">Keep track of service changes, planned trips, or anything else you need to remember.</p>
-        </header>
-        <ul class="profile-list profile-list--notes" id="profileNotesList" aria-live="polite"></ul>
-      </article>
+        </div>
+      </section>
+    </main>
 
-      <article class="profile-card" id="profilePreferencesCard">
-        <header class="profile-card__header">
-          <h2>Accessibility &amp; theme</h2>
-          <p class="profile-card__subtitle">Your current appearance and accessibility preferences.</p>
-        </header>
-        <dl class="profile-preferences" id="profilePreferences"></dl>
-      </article>
-    </section>
-  </main>
-
-  <footer class="site-footer" aria-label="Footer">
-    <div class="site-footer__inner">
-      <div class="site-footer__brand">
-        <span class="site-footer__name">RouteFlow London</span>
-        <p class="site-footer__description">Playful transport guidance for explorers of every age.</p>
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <p>© RouteFlow London. A community-led exploration of the city&#39;s transport network.</p>
+        <nav>
+          <a href="privacy.html">Privacy</a>
+          <a href="terms.html">Terms</a>
+          <a href="contact.html">Contact</a>
+        </nav>
       </div>
-      <nav class="site-footer__nav" aria-label="Explore">
-        <a href="index.html">Home</a>
-        <a href="dashboard.html">Dashboard</a>
-        <a href="tracking.html">Tracking</a>
-        <a href="planning.html">Planning</a>
-        <a href="routes.html">Routes</a>
-        <a href="info.html">Info hub</a>
-      </nav>
-      <nav class="site-footer__nav" aria-label="Support">
-        <a href="about.html">About</a>
-        <a href="contact.html">Contact</a>
-        <a href="privacy.html">Privacy</a>
-        <a href="terms.html">Terms</a>
-        <a href="settings.html">Settings</a>
-      </nav>
-      <div class="site-footer__social" aria-label="Social channels">
-        <a href="https://discord.gg/qVf3nN4Mgq" aria-label="RouteFlow London on Discord"><i class="fa-brands fa-discord"></i></a>
-        <a href="https://www.tiktok.com/@the_bus_father" aria-label="RouteFlow London on TikTok"><i class="fab fa-tiktok"></i></a>
-        <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo" aria-label="RouteFlow London on Instagram"><i class="fab fa-instagram"></i></a>
-      </div>
-    </div>
-    <div class="site-footer__meta">
-      <span>&copy; <span data-current-year></span> RouteFlow London. All rights reserved.</span>
-      <span>Made for London. Accessible for everyone.</span>
-    </div>
-  </footer>
+    </footer>
 
-  <script src="main.js" defer></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js" defer></script>
-  <script src="navbar-loader.js" defer></script>
-  <script type="module" src="profile.js"></script>
-</body>
+    <script src="stack-auth.js"></script>
+    <script src="app.js" defer></script>
+  </body>
 </html>

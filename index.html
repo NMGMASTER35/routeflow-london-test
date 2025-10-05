@@ -1,293 +1,221 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png">
-  <title>RouteFlow London</title>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="style.css">
-  <script src="theme.js" defer></script>
-  <script src="site.js" defer></script>
-</head>
-<body>
-  <div id="navbar-container"></div>
-
-  <main id="main-content" class="landing" aria-labelledby="landing-title">
-    <section class="landing-hero card">
-      <div class="landing-hero__content">
-        <p class="landing-hero__eyebrow">London network command deck</p>
-        <h1 id="landing-title">RouteFlow Control keeps every journey aligned.</h1>
-        <p class="landing-hero__lead">
-          Bring TfL feeds, household plans and classroom challenges into a single command deck. RouteFlow London blends
-          operational clarity with playful storytelling so mobile and desktop dashboards feel like a live control room.
-        </p>
-        <div class="landing-hero__actions" role="group">
-          <a class="landing-hero__button landing-hero__button--primary" href="dashboard.html">
-            <i class="fa-solid fa-wave-square"></i>
-            Launch control room
-          </a>
-          <a class="landing-hero__button" href="tracking.html">
-            <i class="fa-solid fa-satellite-dish"></i>
-            Track live arrivals
-          </a>
-        </div>
-        <dl class="landing-hero__metrics" aria-label="RouteFlow stats">
-          <div>
-            <dt>Live feeds captured</dt>
-            <dd>18 TfL datasets</dd>
-          </div>
-          <div>
-            <dt>Journeys in sync</dt>
-            <dd>52,400 shared plans</dd>
-          </div>
-          <div>
-            <dt>Community notes</dt>
-            <dd>Updated every hour</dd>
-          </div>
-        </dl>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RouteFlow London · Unified mobility control centre</title>
+    <meta
+      name="description"
+      content="RouteFlow London coordinates TfL data, service bulletins and team workflows with secure Stack Auth access."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body
+    class="is-signed-out"
+    data-stack-project="routeflow-london"
+    data-stack-client="web"
+    data-stack-team="routeflow-admins"
+    data-stack-team-name="RouteFlow London Ops"
+    data-stack-team-description="Trusted operators that coordinate London transport."
+  >
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="site-brand" href="index.html">
+          <img class="site-brand__mark" src="images/routeflow-logo.svg" alt="RouteFlow London logo" />
+          <span class="site-brand__text">RouteFlow London</span>
+        </a>
+        <button class="site-nav__toggle" type="button" aria-expanded="false" aria-controls="primaryNav">
+          Menu
+        </button>
+        <nav class="site-nav" id="primaryNav">
+          <a class="site-nav__link" href="#solutions">Solutions</a>
+          <a class="site-nav__link" href="#platform">Platform</a>
+          <a class="site-nav__link" href="#auth">Access</a>
+          <a class="site-nav__cta" href="admin.html">Admin dashboard</a>
+          <button class="site-nav__signout" data-action="signout" type="button" hidden>Sign out</button>
+        </nav>
       </div>
-      <div class="landing-hero__preview" aria-hidden="true">
-        <div class="landing-preview">
-          <header class="landing-preview__header">
-            <span class="landing-preview__label">Evening briefing</span>
-            <span class="landing-preview__level">Network amber</span>
-          </header>
-          <div class="landing-preview__status">
-            <span class="landing-preview__badge">4 alerts tracking</span>
-            <span class="landing-preview__meta">Next sweep in 6 mins</span>
+    </header>
+
+    <main class="site-main">
+      <section class="hero" id="hero">
+        <div class="hero__content">
+          <p class="hero__eyebrow">Mobility command · powered by Stack Auth</p>
+          <h1 class="hero__title">A single pane of glass for London&#39;s network.</h1>
+          <p class="hero__subtitle">
+            RouteFlow London stitches together live arrivals, disruption alerts, classroom simulations and fleet diaries. Stack
+            Auth keeps access seamless so the right people reach the right tools instantly.
+          </p>
+          <div class="hero__actions">
+            <button class="button button--primary" data-auth-tab="signup">Create account</button>
+            <button class="button button--ghost" data-auth-tab="signin">I already have an account</button>
           </div>
-          <ol class="landing-preview__timeline">
-            <li>
-              <span class="landing-preview__time">16:05</span>
+          <div class="hero__logos">
+            <img src="images/routeflow-logo.svg" alt="RouteFlow" />
+            <img src="images/stack-auth-badge.svg" alt="Stack Auth" />
+          </div>
+        </div>
+        <div class="hero__preview">
+          <div class="preview-card">
+            <h2>Live control centre</h2>
+            <p>Overlay real-time arrivals with route plans, rare workings and vehicle allocations.</p>
+            <ul>
+              <li>Interactive route tracking</li>
+              <li>Automated service bulletins</li>
+              <li>Context-rich driver notes</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="solutions">
+        <h2 class="section__title">Designed for every operations team</h2>
+        <div class="feature-grid">
+          <article class="feature-card">
+            <h3>Dispatch &amp; Control</h3>
+            <p>Manage diversions and service swaps with a responsive timeline and annotated map.</p>
+            <span class="feature-card__tag">Real-time</span>
+          </article>
+          <article class="feature-card">
+            <h3>Education &amp; Outreach</h3>
+            <p>Craft classroom missions with authentic TfL data and gamified scoreboards.</p>
+            <span class="feature-card__tag">Immersive</span>
+          </article>
+          <article class="feature-card">
+            <h3>Community Moderation</h3>
+            <p>Moderate submissions, dispatch newsletters and celebrate rare sightings together.</p>
+            <span class="feature-card__tag">Collaborative</span>
+          </article>
+        </div>
+      </section>
+
+      <section class="section section--split" id="platform">
+        <div class="section__content">
+          <h2 class="section__title">The RouteFlow platform</h2>
+          <p>
+            Every workspace ships with dashboards tuned for London transport. Build route bundles, monitor depots and link the
+            admin console to your Stack Auth team without extra configuration.
+          </p>
+          <ul class="section__list">
+            <li>Role-based access that mirrors Stack teams</li>
+            <li>Lightweight activity feeds for on-shift context</li>
+            <li>Extensible widgets for routes, vehicles and incidents</li>
+          </ul>
+        </div>
+        <div class="section__media">
+          <div class="glow-card">
+            <h3>Ops snapshot</h3>
+            <dl>
               <div>
-                <strong>Route 29 extras</strong>
-                <p>Duplicate allocation covers Camden Town crowding window.</p>
+                <dt>Active routes</dt>
+                <dd>38</dd>
               </div>
-            </li>
-            <li>
-              <span class="landing-preview__time">16:11</span>
               <div>
-                <strong>Victoria line</strong>
-                <p>Minor dwell increases at Oxford Circus &mdash; reroute suggestion active.</p>
+                <dt>Incidents tracked</dt>
+                <dd>12</dd>
               </div>
-            </li>
-            <li>
-              <span class="landing-preview__time">16:18</span>
               <div>
-                <strong>Learning badge</strong>
-                <p>Year 8 travel club logged two accessibility spot checks.</p>
+                <dt>Team members on shift</dt>
+                <dd>9</dd>
               </div>
-            </li>
-          </ol>
-          <footer class="landing-preview__footer">
-            <a class="landing-preview__cta" href="dashboard.html">Review operations board</a>
-          </footer>
-        </div>
-      </div>
-    </section>
-
-    <section class="landing-panels" aria-label="RouteFlow pillars">
-      <article class="landing-panel">
-        <div class="landing-panel__icon" aria-hidden="true">
-          <i class="fa-solid fa-compass-drafting"></i>
-        </div>
-        <div class="landing-panel__content">
-          <h2>Responsive mission views</h2>
-          <p>Switch between map, timeline and status boards that flex perfectly between widescreen desktops and handheld devices.</p>
-        </div>
-      </article>
-      <article class="landing-panel">
-        <div class="landing-panel__icon" aria-hidden="true">
-          <i class="fa-solid fa-people-group"></i>
-        </div>
-        <div class="landing-panel__content">
-          <h2>Shared planning rituals</h2>
-          <p>Invite families, classrooms and teams to co-create itineraries, leaving comments that sync back to your RouteFlow database.</p>
-        </div>
-      </article>
-      <article class="landing-panel">
-        <div class="landing-panel__icon" aria-hidden="true">
-          <i class="fa-solid fa-lightbulb"></i>
-        </div>
-        <div class="landing-panel__content">
-          <h2>Insightful storytelling</h2>
-          <p>Surface TfL performance trends with narrative cards tailored for assemblies, newsletters or on-the-go travel briefings.</p>
-        </div>
-      </article>
-    </section>
-
-    <section class="landing-gamify card" aria-label="Operations modes">
-      <header class="landing-gamify__header">
-        <p class="landing-gamify__eyebrow">From control room to classroom</p>
-        <h2>Translate live transport data into confident action.</h2>
-        <p>Use RouteFlow London to orchestrate departures, test emergency plans and celebrate learning milestones &mdash; all backed by the same database.</p>
-      </header>
-      <div class="landing-gamify__grid">
-        <article class="landing-gamify__item">
-          <span class="landing-gamify__icon" aria-hidden="true"><i class="fa-solid fa-signal"></i></span>
-          <h3>Operations pulse</h3>
-          <p>Overlay live arrivals with service health and vehicle allocations so you know when to hold, dispatch or reroute.</p>
-        </article>
-        <article class="landing-gamify__item">
-          <span class="landing-gamify__icon" aria-hidden="true"><i class="fa-solid fa-shield-heart"></i></span>
-          <h3>Care journeys</h3>
-          <p>Custom access notes, assistance reminders and safeguarding prompts follow every saved route.</p>
-        </article>
-        <article class="landing-gamify__item">
-          <span class="landing-gamify__icon" aria-hidden="true"><i class="fa-solid fa-chalkboard-user"></i></span>
-          <h3>Learning missions</h3>
-          <p>Gamified modules reward research, travel etiquette and on-the-ground observations to keep young travellers motivated.</p>
-        </article>
-        <article class="landing-gamify__item">
-          <span class="landing-gamify__icon" aria-hidden="true"><i class="fa-solid fa-notes-medical"></i></span>
-          <h3>Rapid response log</h3>
-          <p>Capture incident reports, upload media and assign follow-up tasks without leaving the RouteFlow workspace.</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="landing-devices" aria-label="Cross-platform layouts">
-      <div class="landing-devices__card card">
-        <h2>Beautiful on desktop, bold on mobile.</h2>
-        <p>Adaptive panels reshape into vertical stories on phones and detailed grids on tablets or widescreen monitors. Dark mode and reduced-motion modes are only a tap away.</p>
-        <ul class="landing-devices__list">
-          <li><i class="fa-solid fa-display" aria-hidden="true"></i> Command desks with wall displays</li>
-          <li><i class="fa-solid fa-tablet-screen-button" aria-hidden="true"></i> Tablets for on-the-go inspections</li>
-          <li><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i> Quick-glance mobile summaries</li>
-        </ul>
-      </div>
-      <div class="landing-devices__mock card" aria-hidden="true">
-        <div class="landing-devices__screen">
-          <span>Live mission layout</span>
-          <div class="landing-devices__dots">
-            <span></span><span></span><span></span>
-          </div>
-          <div class="landing-devices__grid">
-            <div>
-              <strong>Alerts lane</strong>
-              <p>Timeline tiles glow red when thresholds cross, keeping attention on what matters.</p>
-            </div>
-            <div>
-              <strong>People view</strong>
-              <p>Monitor guardians, staff and students with quick messaging shortcuts and safety flags.</p>
-            </div>
-            <div>
-              <strong>Performance cards</strong>
-              <p>Compare modal reliability, average dwell times and crowding to improve your plans.</p>
-            </div>
+            </dl>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <section class="landing-tools card" aria-label="Core tools">
-      <header class="landing-tools__header">
-        <p class="landing-tools__eyebrow">Pick your toolkit</p>
-        <h2>Every screen speaks to the same RouteFlow database.</h2>
-        <p class="landing-tools__lead">Journeys, fleet updates and classroom activities stay in sync on desktop dashboards, tablets and mobile checklists.</p>
-      </header>
-      <div class="landing-tools__grid">
-        <article class="landing-tool landing-tool--accent">
-          <div class="landing-tool__icon" aria-hidden="true"><i class="fa-solid fa-bus"></i></div>
-          <h3>Live tracking</h3>
-          <p>Filter arrivals by stop, line or fleet number and attach quick notes for your community.</p>
-          <a class="landing-tool__link" href="tracking.html">Monitor arrivals</a>
-        </article>
-        <article class="landing-tool">
-          <div class="landing-tool__icon" aria-hidden="true"><i class="fa-solid fa-map-location-dot"></i></div>
-          <h3>Journey studio</h3>
-          <p>Plan multi-modal trips with step-free, quiet-route and dwell-time options at your fingertips.</p>
-          <a class="landing-tool__link" href="planning.html">Plan a journey</a>
-        </article>
-        <article class="landing-tool">
-          <div class="landing-tool__icon" aria-hidden="true"><i class="fa-solid fa-layer-group"></i></div>
-          <h3>Network intelligence</h3>
-          <p>Explore fleet breakdowns, disruption archives and success stories to inform your next move.</p>
-          <a class="landing-tool__link" href="routes.html">Explore the data</a>
-        </article>
-      </div>
-    </section>
+      <section class="section section--accent" id="profile">
+        <div class="profile-card" id="profileSummary" hidden>
+          <h2 class="profile-card__title">You&#39;re signed in</h2>
+          <p class="profile-card__meta" id="profileName">RouteFlow Explorer</p>
+          <p class="profile-card__meta" id="profileEmail"></p>
+          <p class="profile-card__meta" id="profileTeam"></p>
+          <button class="button button--ghost" data-action="signout">Sign out</button>
+        </div>
+        <div class="team-banner" id="teamBanner">
+          <div>
+            <h2>Admin workspace</h2>
+            <p data-team-message>
+              Join RouteFlow London Ops to unlock the admin dashboard and stack-connected missions.
+            </p>
+          </div>
+          <a class="button button--primary" href="admin.html" id="teamCta">Open admin dashboard</a>
+        </div>
+      </section>
 
-    <section class="landing-blog card" id="latest-blog">
-      <header class="landing-blog__header">
-        <p class="landing-blog__eyebrow">Knowledge transmissions</p>
-        <h2>Briefings, analysis and community success stories</h2>
-        <p>Everything you publish through the admin console updates instantly across the platform for both desktop and mobile readers.</p>
-      </header>
-      <div class="landing-blog__grid" data-blog-list data-blog-limit="3" data-blog-variant="card" data-blog-empty="Check back soon for new stories."></div>
-      <footer class="landing-blog__footer">
-        <a class="landing-blog__cta" href="info.html">Browse the knowledge base</a>
-        <span class="landing-blog__hint">Curate new articles, imagery and badges directly from the database-backed admin view.</span>
-      </footer>
-    </section>
+      <section class="section section--stack" id="auth">
+        <div class="section__intro">
+          <h2 class="section__title">Secure Stack Auth access</h2>
+          <p>Sign in instantly with email or your favourite provider. Joining the RouteFlow London team is one click away.</p>
+        </div>
+        <div class="auth-panel" id="authPanel">
+          <div class="auth-tabs">
+            <button class="auth-tabs__button auth-tabs__button--active" type="button" data-auth-tab="signin">Sign in</button>
+            <button class="auth-tabs__button" type="button" data-auth-tab="signup">Sign up</button>
+          </div>
+          <div class="auth-message" id="authMessage" hidden></div>
+          <form class="auth-form" id="signInForm" autocomplete="on">
+            <div class="auth-field">
+              <label for="signinEmail">Email</label>
+              <input type="email" id="signinEmail" name="email" placeholder="you@example.com" required />
+            </div>
+            <div class="auth-field">
+              <label for="signinPassword">Password</label>
+              <input type="password" id="signinPassword" name="password" placeholder="••••••••" required />
+            </div>
+            <button class="button button--primary" type="submit">Sign in</button>
+          </form>
 
-    <section class="landing-updates card" aria-label="Newsletter">
-      <div class="landing-updates__content">
-        <h2>Stay ahead of the next service change</h2>
-        <p>We only send high-signal updates: new datasets, layout upgrades and travel literacy packs.</p>
-      </div>
-      <div class="landing-updates__form">
-        <iframe data-w-token="3bb4115e41c545cc2d79" data-w-type="pop-in" frameborder="0" scrolling="yes" marginheight="0" marginwidth="0" src="https://1xl3t.mjt.lu/wgt/1xl3t/0pom/form?c=c8d5af69" width="100%" style="height: 0;"></iframe>
-        <iframe data-w-token="3bb4115e41c545cc2d79" data-w-type="trigger" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://1xl3t.mjt.lu/wgt/1xl3t/0pom/trigger?c=488ee8a4" width="100%" style="height: 0;"></iframe>
-        <script type="text/javascript" src="https://app.mailjet.com/pas-nc-pop-in-v1.js"></script>
-      </div>
-    </section>
-  </main>
+          <form class="auth-form" id="signUpForm" hidden autocomplete="off">
+            <div class="auth-field">
+              <label for="signupName">Display name</label>
+              <input type="text" id="signupName" name="displayName" placeholder="TfL Coordinator" required minlength="2" />
+            </div>
+            <div class="auth-field">
+              <label for="signupEmail">Email</label>
+              <input type="email" id="signupEmail" name="email" placeholder="you@example.com" required />
+            </div>
+            <div class="auth-field">
+              <label for="signupPassword">Password</label>
+              <input type="password" id="signupPassword" name="password" placeholder="Choose a secure passphrase" required />
+            </div>
+            <button class="button button--primary" type="submit">Create account</button>
+          </form>
 
-  <footer class="site-footer" aria-label="Footer">
-    <div class="site-footer__inner">
-      <div class="site-footer__brand">
-        <span class="site-footer__name">RouteFlow London</span>
-        <p class="site-footer__description">Real-time TfL intelligence for curious travellers.</p>
-      </div>
-      <nav class="site-footer__nav" aria-label="Explore">
-        <a href="index.html">Home</a>
-        <a href="dashboard.html">Dashboard</a>
-        <a href="tracking.html">Tracking</a>
-        <a href="planning.html">Planning</a>
-        <a href="routes.html">Routes</a>
-        <a href="info.html">Info hub</a>
-      </nav>
-      <nav class="site-footer__nav" aria-label="Support">
-        <a href="about.html">About</a>
-        <a href="contact.html">Contact</a>
-        <a href="privacy.html">Privacy</a>
-        <a href="terms.html">Terms</a>
-        <a href="settings.html">Settings</a>
-      </nav>
-      <div class="site-footer__social" aria-label="Social channels">
-        <a href="https://discord.gg/qVf3nN4Mgq" aria-label="RouteFlow London on Discord"><i class="fa-brands fa-discord"></i></a>
-        <a href="https://www.tiktok.com/@the_bus_father" aria-label="RouteFlow London on TikTok"><i class="fab fa-tiktok"></i></a>
-        <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo" aria-label="RouteFlow London on Instagram"><i class="fab fa-instagram"></i></a>
-      </div>
-    </div>
-    <div class="site-footer__meta">
-      <span>&copy; <span data-current-year></span> RouteFlow London. All rights reserved.</span>
-      <span>Built for Londoners, accessible everywhere.</span>
-    </div>
-  </footer>
+          <div class="provider-grid">
+            <button class="provider-grid__button" data-provider="google" data-provider-label="Google" style="background: #4285f4">
+              Continue with Google
+            </button>
+            <button class="provider-grid__button" data-provider="github" data-provider-label="GitHub" style="background: #24292f">
+              Continue with GitHub
+            </button>
+            <button class="provider-grid__button" data-provider="discord" data-provider-label="Discord" style="background: #5865f2">
+              Continue with Discord
+            </button>
+          </div>
+        </div>
 
-  <script src="navbar-loader.js"></script>
-  <script src="info.js" type="module"></script>
-  <script>
-    const form = document.getElementById('newsletter-form');
-    const responseMessage = document.getElementById('response-message');
+        <div class="checklist-card" id="onboardingChecklist">
+          <h3>Stack onboarding checklist</h3>
+          <ul class="checklist">
+            <li class="checklist__item" data-checklist-item="create-account">Create your RouteFlow account</li>
+            <li class="checklist__item" data-checklist-item="join-team">Join the RouteFlow London Ops team</li>
+            <li class="checklist__item" data-checklist-item="open-dashboard">Launch the admin dashboard</li>
+          </ul>
+        </div>
+      </section>
+    </main>
 
-    form.addEventListener('submit', (event) => {
-      event.preventDefault();
-      const emailInput = document.getElementById('email');
-      const email = emailInput.value.trim();
+    <footer class="site-footer">
+      <p>© RouteFlow London. Made for dispatchers, educators and curious explorers. Built with Stack Auth.</p>
+    </footer>
 
-      if (!email) {
-        responseMessage.textContent = 'Please enter your email address.';
-        return;
-      }
-
-      responseMessage.textContent = 'Thanks for subscribing! We\'ll keep you posted.';
-      emailInput.value = '';
-    });
-  </script>
-</body>
+    <script src="stack-auth.js"></script>
+    <script src="app.js"></script>
+  </body>
 </html>

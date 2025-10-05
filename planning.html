@@ -1,146 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Journey Planning | RouteFlow London</title>
-  <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png">
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="style.css">
-  <script src="theme.js" defer></script>
-  <script src="site.js" defer></script>
-</head>
-<body>
-  <div id="navbar-container"></div>
-
-  <main id="main-content" class="planning-shell" aria-labelledby="planningTitle">
-    <section class="planning-hero">
-      <div class="planning-hero__content">
-        <p class="planning-hero__eyebrow">Journey planner</p>
-        <h1 id="planningTitle">Design playful journeys powered by TfL data.</h1>
-        <p>Create missions for school trips, family days out or solo adventures. Mix modes, add challenge cards and make sure every explorer can travel comfortably.</p>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Service planning · RouteFlow London</title>
+    <meta
+      name="description"
+      content="Discover how RouteFlow London models schedules, diversions and classroom scenarios with collaborative tools."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="is-signed-out">
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="site-brand" href="index.html">
+          <img class="site-brand__mark" src="images/routeflow-logo.svg" alt="RouteFlow London logo" />
+          <span class="site-brand__text">RouteFlow London</span>
+        </a>
+        <button class="site-nav__toggle" type="button" aria-expanded="false" aria-controls="primaryNav">
+          Menu
+        </button>
+        <nav class="site-nav" id="primaryNav">
+          <a class="site-nav__link" href="routes.html">Routes</a>
+          <a class="site-nav__link" href="disruptions.html">Disruptions</a>
+          <a class="site-nav__link" href="tracking.html">Live tracking</a>
+          <a class="site-nav__cta" href="admin.html">Admin dashboard</a>
+          <button class="site-nav__signout" data-action="signout" type="button" hidden>Sign out</button>
+        </nav>
       </div>
-      <dl class="planning-hero__meta">
-        <div>
-          <dt>Live modes</dt>
-          <dd>Bus, Tube, DLR, Tram &amp; River</dd>
+    </header>
+
+    <main class="page" id="planning">
+      <section class="page-hero">
+        <p class="page-hero__eyebrow">Scenario lab</p>
+        <h1 class="page-hero__title">Model diversions, events and duty changes in minutes.</h1>
+        <p class="page-hero__subtitle">
+          Our planning studio combines open-data overlays with operator knowledge. Build, compare and publish network plans
+          that respond to real-world pressure.
+        </p>
+      </section>
+
+      <section class="page-section">
+        <h2 class="page-section__title">Planning modules</h2>
+        <div class="content-grid">
+          <article class="info-card">
+            <h3>Timetable composer</h3>
+            <p>Drag and drop blocks, balance layover time and sync with duty rosters.</p>
+          </article>
+          <article class="info-card">
+            <h3>Event toolkit</h3>
+            <p>Coordinate marathons, parades and maintenance works with ready-made templates.</p>
+          </article>
+          <article class="info-card">
+            <h3>Classroom missions</h3>
+            <p>Generate interactive planning games that turn students into dispatchers for the day.</p>
+          </article>
         </div>
-        <div>
-          <dt>Refresh rate</dt>
-          <dd>Every 30 seconds</dd>
+      </section>
+
+      <section class="page-section page-section--split">
+        <div class="page-section__content">
+          <h2 class="page-section__title">How it works</h2>
+          <ol class="numbered-list">
+            <li>Pick a base route or upload your own GTFS feed.</li>
+            <li>Layer disruptions and target metrics with simple toggles.</li>
+            <li>Share a Stack Auth invitation to collaborate in real time.</li>
+          </ol>
         </div>
-        <div>
-          <dt>Accessibility filters</dt>
-          <dd>Step-free, lifts, no stairs</dd>
+        <div class="page-section__media">
+          <div class="glow-card">
+            <h3>Scenario performance</h3>
+            <dl>
+              <div>
+                <dt>Average delay saved</dt>
+                <dd>6m 20s</dd>
+              </div>
+              <div>
+                <dt>Rosters updated</dt>
+                <dd>28 per day</dd>
+              </div>
+              <div>
+                <dt>Classroom missions</dt>
+                <dd>45 active</dd>
+              </div>
+            </dl>
+          </div>
         </div>
-      </dl>
-    </section>
+      </section>
+    </main>
 
-    <section class="planning-layout">
-      <form id="journey-form" class="planning-form" aria-labelledby="plannerFormTitle">
-        <h2 id="plannerFormTitle">Build your journey</h2>
-        <div class="planning-form__row">
-          <div class="planning-input">
-            <label for="from">From</label>
-            <input type="text" id="from" placeholder="Start point" required>
-          </div>
-          <div class="planning-input">
-            <label for="to">To</label>
-            <input type="text" id="to" placeholder="Destination" required>
-          </div>
-        </div>
-
-        <fieldset class="planning-fieldset" aria-labelledby="modesLegend">
-          <legend id="modesLegend">Modes</legend>
-          <div class="planning-checkboxes">
-            <label><input type="checkbox" name="mode" value="bus" checked> Bus</label>
-            <label><input type="checkbox" name="mode" value="tube" checked> Tube</label>
-            <label><input type="checkbox" name="mode" value="dlr" checked> DLR</label>
-            <label><input type="checkbox" name="mode" value="overground" checked> Overground</label>
-            <label><input type="checkbox" name="mode" value="tram" checked> Tram</label>
-            <label><input type="checkbox" name="mode" value="river-bus" checked> River Bus</label>
-          </div>
-        </fieldset>
-
-        <fieldset class="planning-fieldset" aria-labelledby="accessLegend">
-          <legend id="accessLegend">Accessibility</legend>
-          <div class="planning-checkboxes">
-            <label><input type="checkbox" name="accessibility" value="NoSolidStairs"> No solid stairs</label>
-            <label><input type="checkbox" name="accessibility" value="NoEscalators"> No escalators</label>
-            <label><input type="checkbox" name="accessibility" value="NoElevators"> No elevators</label>
-            <label><input type="checkbox" name="accessibility" value="StepFreeToVehicle"> Step-free to vehicle</label>
-            <label><input type="checkbox" name="accessibility" value="StepFreeToPlatform"> Step-free to platform</label>
-          </div>
-        </fieldset>
-
-        <button type="submit" class="planning-submit">Search journeys</button>
-      </form>
-
-      <aside class="planning-side">
-        <article class="planning-side__card">
-          <h2>Need inspiration?</h2>
-          <ul>
-            <li>Try landmarks such as “London Eye” to see multi-modal options.</li>
-            <li>Switch on “Step-free to vehicle” when travelling with mobility aids.</li>
-            <li>Save favourite results to revisit them instantly on the dashboard.</li>
-          </ul>
-        </article>
-        <article class="planning-side__card">
-          <h2>Good to know</h2>
-          <ul>
-            <li>Journey data is sourced directly from TfL Journey Planner APIs.</li>
-            <li>Results refresh automatically—no need to re-run the search.</li>
-            <li>Privacy-first: we only store the itineraries you choose to save.</li>
-          </ul>
-        </article>
-      </aside>
-    </section>
-
-    <section class="planning-results" aria-live="polite">
-      <header>
-        <h2>Results</h2>
-        <p class="planning-note">Choose the option that best fits your schedule and accessibility needs.</p>
-      </header>
-      <div id="error" class="planning-error" hidden></div>
-      <div id="results"></div>
-    </section>
-  </main>
-
-  <footer class="site-footer" aria-label="Footer">
-    <div class="site-footer__inner">
-      <div class="site-footer__brand">
-        <span class="site-footer__name">RouteFlow London</span>
-        <p class="site-footer__description">Playful transport guidance for explorers of every age.</p>
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <p>© RouteFlow London. A community-led exploration of the city&#39;s transport network.</p>
+        <nav>
+          <a href="privacy.html">Privacy</a>
+          <a href="terms.html">Terms</a>
+          <a href="contact.html">Contact</a>
+        </nav>
       </div>
-      <nav class="site-footer__nav" aria-label="Explore">
-        <a href="index.html">Home</a>
-        <a href="dashboard.html">Dashboard</a>
-        <a href="tracking.html">Tracking</a>
-        <a href="planning.html">Planning</a>
-        <a href="routes.html">Routes</a>
-        <a href="info.html">Info hub</a>
-      </nav>
-      <nav class="site-footer__nav" aria-label="Support">
-        <a href="about.html">About</a>
-        <a href="contact.html">Contact</a>
-        <a href="privacy.html">Privacy</a>
-        <a href="terms.html">Terms</a>
-        <a href="settings.html">Settings</a>
-      </nav>
-      <div class="site-footer__social" aria-label="Social channels">
-        <a href="https://discord.gg/qVf3nN4Mgq" aria-label="RouteFlow London on Discord"><i class="fa-brands fa-discord"></i></a>
-        <a href="https://www.tiktok.com/@the_bus_father" aria-label="RouteFlow London on TikTok"><i class="fab fa-tiktok"></i></a>
-        <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo" aria-label="RouteFlow London on Instagram"><i class="fab fa-instagram"></i></a>
-      </div>
-    </div>
-    <div class="site-footer__meta">
-      <span>&copy; <span data-current-year></span> RouteFlow London. All rights reserved.</span>
-      <span>Made for London. Accessible for everyone.</span>
-    </div>
-  </footer>
+    </footer>
 
-  <script src="planning.js"></script>
-  <script src="navbar-loader.js"></script>
-</body>
+    <script src="stack-auth.js"></script>
+    <script src="app.js" defer></script>
+  </body>
 </html>

@@ -1,340 +1,128 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tracking | RouteFlow London</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Live tracking · RouteFlow London</title>
+    <meta name="description" content="Follow buses, trains and trams across London with the RouteFlow live tracking board." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      rel="icon"
-      href="images/New_Routflow_London_Logo.png"
-      type="image/png"
-    />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
     />
     <link rel="stylesheet" href="style.css" />
-    <script src="theme.js" defer></script>
-    <script src="site.js" defer></script>
   </head>
-  <body>
-    <div id="navbar-container"></div>
+  <body class="is-signed-out">
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="site-brand" href="index.html">
+          <img class="site-brand__mark" src="images/routeflow-logo.svg" alt="RouteFlow London logo" />
+          <span class="site-brand__text">RouteFlow London</span>
+        </a>
+        <button class="site-nav__toggle" type="button" aria-expanded="false" aria-controls="primaryNav">
+          Menu
+        </button>
+        <nav class="site-nav" id="primaryNav">
+          <a class="site-nav__link" href="routes.html">Routes</a>
+          <a class="site-nav__link" href="planning.html">Planning</a>
+          <a class="site-nav__link" href="disruptions.html">Disruptions</a>
+          <a class="site-nav__cta" href="admin.html">Admin dashboard</a>
+          <button class="site-nav__signout" data-action="signout" type="button" hidden>Sign out</button>
+        </nav>
+      </div>
+    </header>
 
-    <main
-      id="main-content"
-      class="tracking-shell"
-      aria-labelledby="trackingTitle"
-    >
-      <section class="tracking-hero card">
-        <div class="tracking-hero__body">
-          <div class="tracking-hero__content">
-            <div class="tracking-hero__meta" aria-label="Hero badges">
-              <span class="tracking-hero__badge">
-                <i class="fa-solid fa-signal" aria-hidden="true"></i>
-                Live TfL feed
-              </span>
-              <span class="tracking-hero__badge tracking-hero__badge--accent">
-                <i class="fa-solid fa-star" aria-hidden="true"></i>
-                Perfect for explorers
-              </span>
-            </div>
-            <p class="tracking-hero__eyebrow">Live vehicle tracking</p>
-            <h1 id="trackingTitle">
-              Follow arrivals and rare workings in seconds.
-            </h1>
-            <p>
-              Search by stop and RouteFlow will surface real-time departures across every TfL mode. Pin your favourite services, spark scavenger hunts and celebrate discoveries together.
-            </p>
-          </div>
-          <div class="tracking-hero__visual" aria-hidden="true">
-            <div class="tracking-hero__visual-glow"></div>
-            <div class="tracking-hero__visual-card">
-              <header>
-                <span>Holborn Station</span>
-                <span>Live 24/7</span>
-              </header>
-              <ul>
-                <li class="tracking-hero__visual-row">
-                  <span class="tracking-hero__visual-badge" data-mode="bus"
-                    >25</span
-                  >
-                  <div>
-                    <span class="tracking-hero__visual-dest"
-                      >Oxford Circus</span
-                    >
-                    <span class="tracking-hero__visual-meta"
-                      >Due • Stand F</span
-                    >
-                  </div>
-                  <span class="tracking-hero__visual-eta">Due</span>
-                </li>
-                <li class="tracking-hero__visual-row">
-                  <span class="tracking-hero__visual-badge" data-mode="tube"
-                    >Central</span
-                  >
-                  <div>
-                    <span class="tracking-hero__visual-dest">West Ruislip</span>
-                    <span class="tracking-hero__visual-meta"
-                      >2 mins • Platform 3</span
-                    >
-                  </div>
-                  <span class="tracking-hero__visual-eta">2 min</span>
-                </li>
-                <li class="tracking-hero__visual-row">
-                  <span class="tracking-hero__visual-badge" data-mode="dlr"
-                    >DLR</span
-                  >
-                  <div>
-                    <span class="tracking-hero__visual-dest"
-                      >Bank via Canary Wharf</span
-                    >
-                    <span class="tracking-hero__visual-meta"
-                      >4 mins • Bay 1</span
-                    >
-                  </div>
-                  <span class="tracking-hero__visual-eta">4 min</span>
-                </li>
-              </ul>
-              <footer>
-                <span
-                  ><i class="fa-solid fa-wave-square" aria-hidden="true"></i
-                  >Auto refresh</span
-                >
-                <span>Every 30s</span>
-              </footer>
-            </div>
-            <span class="tracking-hero__spark tracking-hero__spark--one"></span>
-            <span class="tracking-hero__spark tracking-hero__spark--two"></span>
-          </div>
-        </div>
-        <ul class="tracking-hero__highlights" aria-label="Highlights">
-          <li>
-            <span class="tracking-hero__highlight-icon" aria-hidden="true"
-              ><i class="fa-solid fa-layer-group"></i
-            ></span>
-            <div>
-              <span>Coverage</span>
-              <strong>Bus, Tube, Tram, River, DLR</strong>
-            </div>
-          </li>
-          <li>
-            <span class="tracking-hero__highlight-icon" aria-hidden="true"
-              ><i class="fa-solid fa-arrows-rotate"></i
-            ></span>
-            <div>
-              <span>Refresh rate</span>
-              <strong>30 seconds</strong>
-            </div>
-          </li>
-          <li>
-            <span class="tracking-hero__highlight-icon" aria-hidden="true"
-              ><i class="fa-solid fa-bookmark"></i
-            ></span>
-            <div>
-              <span>Notebook</span>
-              <strong>Syncs to dashboard</strong>
-            </div>
-          </li>
-        </ul>
+    <main class="page" id="tracking">
+      <section class="page-hero">
+        <p class="page-hero__eyebrow">Control tower</p>
+        <h1 class="page-hero__title">Monitor the pulse of London&#39;s network.</h1>
+        <p class="page-hero__subtitle">
+          Switch between map, table and duty roster views. Every layer respects Stack Auth permissions so your teams see what
+          they need, when they need it.
+        </p>
       </section>
 
-      <section class="tracking-layout">
-        <article class="tracking-board card">
-          <header class="tracking-board__header">
-            <div class="tracking-board__intro">
-              <h2>Live departures</h2>
-              <p>
-                Search for a stop to see vehicles on the move right
-                now.
-              </p>
-              <div
-                class="tracking-board__status"
-                role="status"
-                aria-live="polite"
-              >
-                <span class="tracking-board__pill"
-                  ><i class="fa-solid fa-circle" aria-hidden="true"></i
-                  >Real-time feed</span
-                >
-                <span class="tracking-board__badge">Powered by TfL</span>
-              </div>
-            </div>
-            <div class="tracking-board__actions">
-              <span class="tracking-board__timestamp" id="trackingTimestamp"
-                >Updated just now</span
-              >
-              <button class="tracking-chip" type="button">
-                <i class="fa-solid fa-rotate" aria-hidden="true"></i>
-                <span>Refresh</span>
-              </button>
-            </div>
-          </header>
-          <div class="tracking-search" role="search">
-            <label for="trackingSearch"
-              >Search stops </label
-            >
-            <div class="tracking-search__field">
-              <input
-                id="trackingSearch"
-                type="search"
-                placeholder="e.g. Marble Arch Station"
-                aria-describedby="trackingSearchHint"
-              />
-              <button type="button">
-                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-                <span>Search</span>
-              </button>
-              <div
-                class="tracking-search__results"
-                id="trackingResultsList"
-              ></div>
-            </div>
-            <p id="trackingSearchHint" class="planning-note">
-              Use stop names.
-            </p>
+      <section class="page-section page-section--split">
+        <div class="page-section__media">
+          <div class="map-placeholder">
+            <span>Live map preview</span>
           </div>
-          <div class="tracking-board__rows" id="trackingRows">
-            <div class="empty" aria-live="polite">
-              Enter a stop to load departures.
+        </div>
+        <div class="page-section__content">
+          <h2 class="page-section__title">Live service board</h2>
+          <div class="service-board">
+            <div class="service-board__row service-board__row--head">
+              <span>Route</span>
+              <span>Vehicle</span>
+              <span>Next stop</span>
+              <span>Status</span>
+            </div>
+            <div class="service-board__row">
+              <span>25</span>
+              <span>LTZ 1148</span>
+              <span>Bank Station</span>
+              <span class="status-pill status-pill--good">On time</span>
+            </div>
+            <div class="service-board__row">
+              <span>Jubilee</span>
+              <span>96081</span>
+              <span>Canary Wharf</span>
+              <span class="status-pill status-pill--warning">+4 min</span>
+            </div>
+            <div class="service-board__row">
+              <span>Tram 3</span>
+              <span>2560</span>
+              <span>Wimbledon</span>
+              <span class="status-pill status-pill--alert">Delayed</span>
             </div>
           </div>
-        </article>
+        </div>
+      </section>
 
-        <aside class="tracking-side">
-          <article class="card tracking-side__card">
-            <h2>Tips for enthusiasts</h2>
+      <section class="page-section">
+        <h2 class="page-section__title">Shift overview</h2>
+        <div class="shift-grid">
+          <article class="shift-card">
+            <h3>Morning dispatch</h3>
+            <p>Lead: Priya · Channels 1 &amp; 4</p>
             <ul>
-              <li class="tracking-side__item">
-                <span class="tracking-side__icon" aria-hidden="true"
-                  ><i class="fa-solid fa-sliders"></i
-                ></span>
-                <span
-                  >Toggle your favourite operators in
-                  <a class="tracking-side__link" href="settings.html"
-                    >Settings</a
-                  >
-                  to colour-code departures.</span
-                >
-              </li>
-              <li class="tracking-side__item">
-                <span class="tracking-side__icon" aria-hidden="true"
-                  ><i class="fa-solid fa-thumbtack"></i
-                ></span>
-                <span
-                  >Pin interesting workings straight to your
-                  <a class="tracking-side__link" href="dashboard.html"
-                    >dashboard notebook</a
-                  >.</span
-                >
-              </li>
-              <li class="tracking-side__item">
-                <span class="tracking-side__icon" aria-hidden="true"
-                  ><i class="fa-solid fa-filter"></i
-                ></span>
-                <span
-                  >Use the filters above to switch between bus-only or all
-                  modes.</span
-                >
-              </li>
+              <li>09:00 — Wembley Park shuttle activation</li>
+              <li>09:45 — Accessibility call-out at Victoria</li>
             </ul>
           </article>
-          <article class="card tracking-side__card">
-            <h2>Want more context?</h2>
+          <article class="shift-card">
+            <h3>Midday analyst</h3>
+            <p>Lead: Jordan · Channel 3</p>
             <ul>
-              <li class="tracking-side__item">
-                <span class="tracking-side__icon" aria-hidden="true"
-                  ><i class="fa-solid fa-route"></i
-                ></span>
-                <span
-                  ><a class="tracking-side__link" href="routes.html"
-                    >Browse route summaries</a
-                  >
-                  for allocations and frequencies.</span
-                >
-              </li>
-              <li class="tracking-side__item">
-                <span class="tracking-side__icon" aria-hidden="true"
-                  ><i class="fa-solid fa-bus"></i
-                ></span>
-                <span
-                  ><a class="tracking-side__link" href="withdrawn.html"
-                    >See withdrawn vehicles</a
-                  >
-                  to track heritage appearances.</span
-                >
-              </li>
-              <li class="tracking-side__item">
-                <span class="tracking-side__icon" aria-hidden="true"
-                  ><i class="fa-solid fa-triangle-exclamation"></i
-                ></span>
-                <span
-                  ><a class="tracking-side__link" href="disruptions.html"
-                    >Review current disruptions</a
-                  >
-                  before you travel.</span
-                >
-              </li>
+              <li>12:10 — Croydon tram dwell review</li>
+              <li>12:40 — School mission data export</li>
             </ul>
           </article>
-        </aside>
+          <article class="shift-card">
+            <h3>Nightline</h3>
+            <p>Lead: Hana · Channel 5</p>
+            <ul>
+              <li>01:20 — Brixton road closure sweep</li>
+              <li>02:00 — Safety companion check-in</li>
+            </ul>
+          </article>
+        </div>
       </section>
     </main>
 
-    <footer class="site-footer" aria-label="Footer">
+    <footer class="site-footer">
       <div class="site-footer__inner">
-        <div class="site-footer__brand">
-          <span class="site-footer__name">RouteFlow London</span>
-          <p class="site-footer__description">
-            Playful transport guidance for explorers of every age.
-          </p>
-        </div>
-        <nav class="site-footer__nav" aria-label="Explore">
-          <a href="index.html">Home</a>
-          <a href="dashboard.html">Dashboard</a>
-          <a href="tracking.html">Tracking</a>
-          <a href="planning.html">Planning</a>
-          <a href="routes.html">Routes</a>
-          <a href="info.html">Info hub</a>
-        </nav>
-        <nav class="site-footer__nav" aria-label="Support">
-          <a href="about.html">About</a>
-          <a href="contact.html">Contact</a>
+        <p>© RouteFlow London. A community-led exploration of the city&#39;s transport network.</p>
+        <nav>
           <a href="privacy.html">Privacy</a>
           <a href="terms.html">Terms</a>
-          <a href="settings.html">Settings</a>
+          <a href="contact.html">Contact</a>
         </nav>
-        <div class="site-footer__social" aria-label="Social channels">
-          <a
-            href="https://discord.gg/qVf3nN4Mgq"
-            aria-label="RouteFlow London on Discord"
-            ><i class="fa-brands fa-discord"></i
-          ></a>
-          <a
-            href="https://www.tiktok.com/@the_bus_father"
-            aria-label="RouteFlow London on TikTok"
-            ><i class="fab fa-tiktok"></i
-          ></a>
-          <a
-            href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo"
-            aria-label="RouteFlow London on Instagram"
-            ><i class="fab fa-instagram"></i
-          ></a>
-        </div>
-      </div>
-      <div class="site-footer__meta">
-        <span
-          >&copy; <span data-current-year></span> RouteFlow London. All rights
-          reserved.</span
-        >
-        <span>Made for London. Accessible for everyone.</span>
       </div>
     </footer>
 
-    <script src="tracking.js" defer></script>
-    <script src="navbar-loader.js"></script>
+    <script src="stack-auth.js"></script>
+    <script src="app.js" defer></script>
   </body>
 </html>

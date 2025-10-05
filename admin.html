@@ -1,53 +1,120 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin | RouteFlow London</title>
-  <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png">
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="style.css">
-  <script src="theme.js" defer></script>
-  <script src="main.js" defer></script>
-  <script src="site.js" defer></script>
-</head>
-<body>
-  <div id="navbar-container"></div>
-  <main id="adminContent" class="admin-page" aria-live="polite"></main>
-  <footer class="site-footer" aria-label="Footer">
-    <div class="site-footer__inner">
-      <div class="site-footer__brand">
-        <span class="site-footer__name">RouteFlow London</span>
-        <p class="site-footer__description">Playful transport guidance for explorers of every age.</p>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RouteFlow London · Admin dashboard</title>
+    <meta
+      name="description"
+      content="Manage RouteFlow London Stack Auth teams, invitations and operational access from the admin dashboard."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body
+    class="admin-page"
+    data-stack-project="routeflow-london"
+    data-stack-client="web"
+    data-stack-team="routeflow-admins"
+    data-stack-team-name="RouteFlow London Ops"
+    data-stack-team-description="Trusted operators that coordinate London transport."
+  >
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="site-brand" href="index.html">
+          <img class="site-brand__mark" src="images/routeflow-logo.svg" alt="RouteFlow London logo" />
+          <span class="site-brand__text">RouteFlow London</span>
+        </a>
+        <button class="site-nav__toggle" type="button" aria-expanded="false" aria-controls="primaryNav">
+          Menu
+        </button>
+        <nav class="site-nav" id="primaryNav">
+          <a class="site-nav__link" href="index.html#solutions">Solutions</a>
+          <a class="site-nav__link" href="index.html#platform">Platform</a>
+          <a class="site-nav__link" href="index.html#auth">Access</a>
+          <button class="site-nav__signout" data-action="signout" type="button" hidden>Sign out</button>
+        </nav>
       </div>
-      <nav class="site-footer__nav" aria-label="Explore">
-        <a href="index.html">Home</a>
-        <a href="dashboard.html">Dashboard</a>
-        <a href="tracking.html">Tracking</a>
-        <a href="planning.html">Planning</a>
-        <a href="routes.html">Routes</a>
-        <a href="info.html">Info hub</a>
-      </nav>
-      <nav class="site-footer__nav" aria-label="Support">
-        <a href="about.html">About</a>
-        <a href="contact.html">Contact</a>
-        <a href="privacy.html">Privacy</a>
-        <a href="terms.html">Terms</a>
-        <a href="settings.html">Settings</a>
-      </nav>
-      <div class="site-footer__social" aria-label="Social channels">
-        <a href="https://discord.gg/qVf3nN4Mgq" aria-label="RouteFlow London on Discord"><i class="fa-brands fa-discord"></i></a>
-        <a href="https://www.tiktok.com/@the_bus_father" aria-label="RouteFlow London on TikTok"><i class="fab fa-tiktok"></i></a>
-        <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo" aria-label="RouteFlow London on Instagram"><i class="fab fa-instagram"></i></a>
-      </div>
-    </div>
-    <div class="site-footer__meta">
-      <span>&copy; <span data-current-year></span> RouteFlow London. All rights reserved.</span>
-      <span>Made for London. Accessible for everyone.</span>
-    </div>
-  </footer>
-  <script src="navbar-loader.js" defer></script>
-  <script type="module" src="admin.js"></script>
-</body>
+    </header>
+
+    <main class="site-main">
+      <section class="page-hero">
+        <p class="hero__eyebrow">RouteFlow London Ops</p>
+        <h1 class="hero__title">Admin control tower</h1>
+        <p class="hero__subtitle">
+          Keep your Stack Auth team aligned, manage membership in seconds and broadcast updates to the crews keeping London
+          moving.
+        </p>
+      </section>
+
+      <section class="admin-guard" id="adminSignedOut">
+        <h2>Sign in required</h2>
+        <p>Sign in from the home page to open the admin dashboard and manage RouteFlow London Ops.</p>
+      </section>
+
+      <section class="admin-guard" id="adminNoTeam" hidden>
+        <h2>Team access pending</h2>
+        <p>
+          You are signed in but not yet part of the RouteFlow London Ops Stack team. Ask an owner to add you or accept their
+          invitation.
+        </p>
+      </section>
+
+      <section class="admin-dashboard" id="adminDashboard" hidden data-session-guard>
+        <article class="admin-overview">
+          <h2>Hello, <span id="adminProfileName">RouteFlow Admin</span></h2>
+          <p id="adminProfileEmail"></p>
+          <p>
+            Managing <strong id="adminTeamName">RouteFlow London Ops</strong>. Use Stack Auth to keep access secure across
+            dispatchers, planners and moderators.
+          </p>
+          <p class="admin-status" id="adminStatus" hidden></p>
+        </article>
+
+        <article class="team-section">
+          <div class="team-section__header">
+            <div>
+              <h2>Team members</h2>
+              <p class="hero__subtitle">Refresh to pull the latest Stack roster or invite someone new below.</p>
+            </div>
+            <button class="button button--ghost" type="button" id="refreshTeam">Refresh roster</button>
+          </div>
+          <div class="team-members" id="teamMembers"></div>
+        </article>
+
+        <article class="team-section">
+          <h2>Invite to RouteFlow London Ops</h2>
+          <form class="invite-form" id="inviteForm">
+            <div class="invite-form__row">
+              <label>
+                Email address
+                <input type="email" id="inviteEmail" placeholder="crew.member@example.com" required />
+              </label>
+              <label>
+                Role
+                <select id="inviteRole">
+                  <option value="member">Member</option>
+                  <option value="admin">Admin</option>
+                  <option value="owner">Owner</option>
+                </select>
+              </label>
+            </div>
+            <button class="button button--primary" type="submit">Send invite</button>
+          </form>
+        </article>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>© RouteFlow London. Built for the teams that keep the capital moving.</p>
+    </footer>
+
+    <script src="stack-auth.js"></script>
+    <script src="admin.js"></script>
+  </body>
 </html>

@@ -1,114 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Disruptions | RouteFlow London</title>
-  <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png" />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
-  <script src="theme.js" defer></script>
-  <script src="site.js" defer></script>
-</head>
-<body>
-  <div id="navbar-container"></div>
-  <main id="main-content" class="network-shell">
-    <section class="network-hero">
-      <div>
-        <h1>Live disruptions</h1>
-        <p>Monitor active incidents across London&apos;s network. Severe issues are highlighted so you can adjust journeys quickly.</p>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Disruptions · RouteFlow London</title>
+    <meta name="description" content="Monitor live incidents, planned works and community alerts with RouteFlow London." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="is-signed-out">
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="site-brand" href="index.html">
+          <img class="site-brand__mark" src="images/routeflow-logo.svg" alt="RouteFlow London logo" />
+          <span class="site-brand__text">RouteFlow London</span>
+        </a>
+        <button class="site-nav__toggle" type="button" aria-expanded="false" aria-controls="primaryNav">
+          Menu
+        </button>
+        <nav class="site-nav" id="primaryNav">
+          <a class="site-nav__link" href="routes.html">Routes</a>
+          <a class="site-nav__link" href="planning.html">Planning</a>
+          <a class="site-nav__link" href="tracking.html">Tracking</a>
+          <a class="site-nav__cta" href="admin.html">Admin dashboard</a>
+          <button class="site-nav__signout" data-action="signout" type="button" hidden>Sign out</button>
+        </nav>
       </div>
-      <div class="network-hero__stats">
-        <div class="network-stat">
-          <span>Active incidents</span>
-          <strong id="disruptionsActive">0</strong>
+    </header>
+
+    <main class="page" id="disruptions">
+      <section class="page-hero">
+        <p class="page-hero__eyebrow">Real-time resilience</p>
+        <h1 class="page-hero__title">See the incidents that matter, faster.</h1>
+        <p class="page-hero__subtitle">
+          Diversions, closures and signal failures roll into a unified stream. RouteFlow London blends TfL feeds with
+          eyewitness reports, all moderated through Stack Auth roles.
+        </p>
+      </section>
+
+      <section class="page-section page-section--split">
+        <div class="page-section__content">
+          <h2 class="page-section__title">Live incidents</h2>
+          <div class="incident-list">
+            <article>
+              <header>
+                <h3>Signal failure · Baker Street</h3>
+                <span class="tag tag--accent">Severe</span>
+              </header>
+              <p>Metropolitan line suspended between Baker Street and Aldgate. Replacement buses activated via Route 205 core.</p>
+              <footer>Updated 4 mins ago · Source: TfL feed</footer>
+            </article>
+            <article>
+              <header>
+                <h3>Bus congestion · Brixton Road</h3>
+                <span class="tag">Moderate</span>
+              </header>
+              <p>Routes 2, 3, 59 experiencing 10 minute delays due to demonstration. Community marshals deployed.</p>
+              <footer>Updated 9 mins ago · Source: Community guild</footer>
+            </article>
+            <article>
+              <header>
+                <h3>Track maintenance · Stratford</h3>
+                <span class="tag tag--outline">Planned</span>
+              </header>
+              <p>DLR single-tracking after 21:00 with remote announcer support. Accessible alternatives recommended.</p>
+              <footer>Updated 18 mins ago · Source: Operations desk</footer>
+            </article>
+          </div>
         </div>
-        <div class="network-stat">
-          <span>Good service lines</span>
-          <strong id="disruptionsGood">0</strong>
+        <div class="page-section__media">
+          <div class="glow-card">
+            <h3>Response readiness</h3>
+            <ul class="list">
+              <li>Incident commanders on shift: <strong>5</strong></li>
+              <li>Escalations handled today: <strong>32</strong></li>
+              <li>Average resolution time: <strong>14m</strong></li>
+            </ul>
+          </div>
         </div>
-        <div class="network-stat">
-          <span>Bus routes affected</span>
-          <strong id="disruptionsRoutes">0</strong>
+      </section>
+
+      <section class="page-section">
+        <h2 class="page-section__title">Upcoming works</h2>
+        <div class="schedule-table">
+          <div class="schedule-table__row schedule-table__row--head">
+            <span>Date</span>
+            <span>Location</span>
+            <span>Impact</span>
+            <span>Notes</span>
+          </div>
+          <div class="schedule-table__row">
+            <span>12 Apr</span>
+            <span>Waterloo Bridge</span>
+            <span class="tag">Lane closure</span>
+            <span>Northbound traffic diverted via Strand.</span>
+          </div>
+          <div class="schedule-table__row">
+            <span>18 Apr</span>
+            <span>Camden Town</span>
+            <span class="tag tag--outline">Station works</span>
+            <span>Evening exits restricted. Staff redeployed from Kentish Town.</span>
+          </div>
+          <div class="schedule-table__row">
+            <span>23 Apr</span>
+            <span>Croydon</span>
+            <span class="tag tag--accent">Tram closure</span>
+            <span>Shuttle buses operate between Reeves Corner and Sandilands.</span>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </main>
 
-    <section class="network-toolbar" aria-label="Disruption filters">
-      <div class="network-search">
-        <label for="busSearch">Filter bus routes</label>
-        <input type="search" id="busSearch" placeholder="Search by route number" autocomplete="off" />
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <p>© RouteFlow London. A community-led exploration of the city&#39;s transport network.</p>
+        <nav>
+          <a href="privacy.html">Privacy</a>
+          <a href="terms.html">Terms</a>
+          <a href="contact.html">Contact</a>
+        </nav>
       </div>
-      <div class="network-filters" id="disruptionFilters" role="group" aria-label="Show services">
-        <button type="button" class="network-chip" data-filter="issues" data-active="true">With issues</button>
-        <button type="button" class="network-chip" data-filter="good">Good service</button>
-      </div>
-    </section>
+    </footer>
 
-    <section class="network-section">
-      <h2 class="network-section__title">Rail &amp; Underground</h2>
-      <div class="network-grid" id="railGrid" aria-live="polite"></div>
-    </section>
-
-    <section class="network-section">
-      <h2 class="network-section__title">Bus network</h2>
-      <div class="network-grid" id="busGrid" aria-live="polite"></div>
-    </section>
-  </main>
-
-  <footer class="site-footer" aria-label="Footer">
-    <div class="site-footer__inner">
-      <div class="site-footer__brand">
-        <span class="site-footer__name">RouteFlow London</span>
-        <p class="site-footer__description">Playful transport guidance for explorers of every age.</p>
-      </div>
-      <nav class="site-footer__nav" aria-label="Explore">
-        <a href="index.html">Home</a>
-        <a href="dashboard.html">Dashboard</a>
-        <a href="tracking.html">Tracking</a>
-        <a href="planning.html">Planning</a>
-        <a href="routes.html">Routes</a>
-        <a href="info.html">Info hub</a>
-      </nav>
-      <nav class="site-footer__nav" aria-label="Support">
-        <a href="about.html">About</a>
-        <a href="contact.html">Contact</a>
-        <a href="privacy.html">Privacy</a>
-        <a href="terms.html">Terms</a>
-        <a href="settings.html">Settings</a>
-      </nav>
-      <div class="site-footer__social" aria-label="Social channels">
-        <a href="https://discord.gg/qVf3nN4Mgq" aria-label="RouteFlow London on Discord"><i class="fa-brands fa-discord"></i></a>
-        <a href="https://www.tiktok.com/@the_bus_father" aria-label="RouteFlow London on TikTok"><i class="fab fa-tiktok"></i></a>
-        <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo" aria-label="RouteFlow London on Instagram"><i class="fab fa-instagram"></i></a>
-      </div>
-    </div>
-    <div class="site-footer__meta">
-      <span>&copy; <span data-current-year></span> RouteFlow London. All rights reserved.</span>
-      <span>Made for London. Accessible for everyone.</span>
-    </div>
-  </footer>
-
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-  <script src="config.js"></script>
-  <script>
-    (function initialiseFirebase() {
-      const firebaseConfig = window.__ROUTEFLOW_CONFIG__?.firebase;
-      if (!firebaseConfig?.apiKey) {
-        console.error('Firebase configuration is missing. Disruptions page authentication will be disabled.');
-        return;
-      }
-      if (typeof firebase === 'undefined') {
-        console.error('Firebase SDK not loaded. Disruptions page authentication will be disabled.');
-        return;
-      }
-      if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-      }
-    })();
-  </script>
-  <script src="navbar-loader.js" defer></script>
-  <script type="module" src="disruptions.js"></script>
-</body>
+    <script src="stack-auth.js"></script>
+    <script src="app.js" defer></script>
+  </body>
 </html>
