@@ -90,14 +90,17 @@
     const fallbackName = email ? email.split('@')[0] : '';
     const rawName = preferredName || fallbackName;
     const displayName = rawName || 'Explorer';
-    const greeting = `Welcome, ${displayName}`;
+    const srLabel = summary
+      ? `Account menu for ${displayName}. View profile or adjust settings.`
+      : 'Account menu. Sign in or create an account.';
+    const headerLabel = summary ? displayName : 'Account';
 
     navRoot.querySelectorAll('[data-profile-label]').forEach((label) => {
-      label.textContent = greeting;
+      label.textContent = srLabel;
     });
 
     navRoot.querySelectorAll('[data-profile-name]').forEach((label) => {
-      label.textContent = greeting;
+      label.textContent = headerLabel;
     });
 
     navRoot.querySelectorAll('[data-profile-email]').forEach((emailEl) => {
@@ -316,7 +319,7 @@
       const toggle = event.target.closest('[data-profile-toggle]');
       if (!toggle) return;
       event.preventDefault();
-      const profile = toggle.closest('[data-auth-state="signed-in"]');
+      const profile = toggle.closest('[data-auth-state]');
       const menu = profile?.querySelector('[data-profile-menu]');
       const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
       closeProfileMenus();

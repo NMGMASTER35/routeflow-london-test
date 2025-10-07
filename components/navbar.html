@@ -39,21 +39,38 @@
 
     <div class="navbar__actions">
       <div class="navbar__auth" data-auth-container>
-        <div class="navbar__auth-guest" data-auth-state="signed-out">
-          <button type="button" class="navbar__btn navbar__btn--ghost" data-auth-action="login">Login</button>
-          <button type="button" class="navbar__btn navbar__btn--primary" data-auth-action="signup">Sign Up</button>
+        <div class="navbar__profile navbar__profile--guest" data-auth-state="signed-out">
+          <button type="button" class="navbar__profile-toggle" data-profile-toggle aria-haspopup="true" aria-expanded="false">
+            <span class="navbar__profile-avatar" aria-hidden="true">
+              <i class="fa-regular fa-circle-user"></i>
+            </span>
+            <span class="sr-only" data-profile-label>Account menu. Sign in or create an account.</span>
+          </button>
+          <div class="navbar__profile-menu" data-profile-menu aria-hidden="true" data-open="false" hidden>
+            <header class="navbar__profile-header">
+              <span class="navbar__profile-name" data-profile-name>Account</span>
+              <span class="navbar__profile-subtitle">Sign in to sync journeys and saved routes.</span>
+            </header>
+            <nav class="navbar__profile-panel" aria-label="Account actions" role="menu">
+              <button type="button" class="navbar__profile-item" data-auth-action="login" role="menuitem">
+                <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
+                <span>Sign in</span>
+              </button>
+              <button type="button" class="navbar__profile-item" data-auth-action="signup" role="menuitem">
+                <i class="fa-solid fa-user-plus" aria-hidden="true"></i>
+                <span>Create account</span>
+              </button>
+            </nav>
+          </div>
         </div>
         <div class="navbar__profile" data-auth-state="signed-in" hidden>
           <button type="button" class="navbar__profile-toggle" data-profile-toggle aria-haspopup="true" aria-expanded="false">
             <span class="navbar__profile-avatar" aria-hidden="true">
               <i class="fa-regular fa-circle-user"></i>
             </span>
-            <span class="navbar__profile-label" data-profile-label>Welcome</span>
-            <span class="navbar__profile-chevron" aria-hidden="true">
-              <i class="fa-solid fa-chevron-down"></i>
-            </span>
+            <span class="sr-only" data-profile-label>Account menu</span>
           </button>
-          <div class="navbar__profile-menu" data-profile-menu aria-hidden="true" data-open="false">
+          <div class="navbar__profile-menu" data-profile-menu aria-hidden="true" data-open="false" hidden>
             <header class="navbar__profile-header">
               <span class="navbar__profile-name" data-profile-name>Welcome</span>
               <span class="navbar__profile-email" data-profile-email hidden aria-hidden="true"></span>
@@ -63,21 +80,9 @@
                 <i class="fa-solid fa-id-badge" aria-hidden="true"></i>
                 <span>Profile</span>
               </a>
-              <a href="dashboard.html" class="navbar__profile-item" data-auth-action="dashboard" data-profile-nav role="menuitem">
-                <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
-                <span>Dashboard</span>
-              </a>
-              <a href="fleet.html" class="navbar__profile-item" data-auth-action="fleet" data-profile-nav role="menuitem">
-                <i class="fa-solid fa-bus" aria-hidden="true"></i>
-                <span>Fleet</span>
-              </a>
               <a href="settings.html" class="navbar__profile-item" data-auth-action="settings" role="menuitem">
                 <i class="fa-solid fa-sliders" aria-hidden="true"></i>
                 <span>Settings</span>
-              </a>
-              <a href="admin.html" class="navbar__profile-item" data-auth-action="admin" data-requires-admin hidden aria-hidden="true" role="menuitem">
-                <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
-                <span>Admin</span>
               </a>
               <button type="button" class="navbar__profile-item navbar__profile-item--destructive" data-auth-action="logout" role="menuitem">
                 <i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
