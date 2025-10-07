@@ -31,10 +31,10 @@
     <div class="auth-gate__panel">
       <p class="auth-gate__eyebrow">Progress locked</p>
       <h2 class="auth-gate__title" id="dashboardGateTitle">Log in to activate the RouteFlow dashboard</h2>
-      <p class="auth-gate__message" data-auth-gate-message>Sign in to unlock this area.</p>
+      <p class="auth-gate__message" data-auth-gate-message>Log in for full console access.</p>
       <button type="button" class="auth-gate__cta" data-auth-gate-login>
         <i class="fa-solid fa-lock-open" aria-hidden="true"></i>
-        <span>Sign in to continue</span>
+        <span>Log in to continue</span>
       </button>
       <p class="auth-gate__hint">Routes, disruptions and the Info hub remain public for everyone.</p>
     </div>
@@ -679,7 +679,7 @@
       root: rootElement,
       overlay: overlayElement,
       lockedSections,
-      lockedMessage: 'Sign in to work through missions and unlock challenging rewards.',
+      lockedMessage: 'Log in to work through missions and tackle challenging rewards.',
       errorMessage: 'Authentication is temporarily unavailable. Please try again later.',
       onLock: handleLock,
       onUnlock: handleUnlock
@@ -1557,7 +1557,7 @@
       if (!uid || uid === 'guest') {
         const emptyState = document.createElement('p');
         emptyState.className = 'dashboard-empty';
-        emptyState.textContent = 'Sign in to manage favourites.';
+        emptyState.textContent = 'Log in to manage favourites.';
         grid.appendChild(emptyState);
         return;
       }
@@ -1624,14 +1624,14 @@
       ensureDailyState(gamificationState);
       updateDiscordConnection(getDiscordStatus(), { save: false, log: false, renderAll: false });
       if (titleElement) titleElement.textContent = 'Welcome';
-      if (infoElement) infoElement.textContent = 'Sign in to save favourites and unlock missions, roles and streak bonuses.';
+      if (infoElement) infoElement.textContent = 'Log in to save favourites and track missions, roles and streak bonuses.';
       if (avatarElement) avatarElement.src = 'user-icon.png';
       renderAll();
       loadActivity('guest');
       loadRecents('guest');
       const favouritesGrid = document.getElementById('favouritesGrid');
       if (favouritesGrid) {
-        favouritesGrid.innerHTML = '<p class="dashboard-empty">Sign in to manage favourites.</p>';
+        favouritesGrid.innerHTML = '<p class="dashboard-empty">Log in to manage favourites.</p>';
       }
     }
 

@@ -40,11 +40,11 @@
     >
       <div class="auth-gate__panel">
         <p class="auth-gate__eyebrow">Fleet tools locked</p>
-        <h2 class="auth-gate__title" id="fleetGateTitle">Sign in to browse RouteFlow fleet intelligence</h2>
-        <p class="auth-gate__message" data-auth-gate-message>Sign in to unlock this area.</p>
+        <h2 class="auth-gate__title" id="fleetGateTitle">Log in to browse RouteFlow fleet intelligence</h2>
+        <p class="auth-gate__message" data-auth-gate-message>Log in for full access.</p>
         <button type="button" class="auth-gate__cta" data-auth-gate-login>
           <i class="fa-solid fa-lock-open" aria-hidden="true"></i>
-          <span>Sign in to continue</span>
+          <span>Log in to continue</span>
         </button>
         <p class="auth-gate__hint">Routes, disruptions and the Info hub remain open to everyone.</p>
       </div>
@@ -535,11 +535,11 @@
           root: pageRoot,
           overlay,
           lockedSections,
-          lockedMessage: 'Sign in to unlock fleet analytics, submissions and history archives.',
+          lockedMessage: 'Log in for fleet analytics, submissions and history archives.',
           errorMessage: 'Authentication is temporarily unavailable. Please try again later.',
           onLock: () => {
             if (heroLead) {
-              heroLead.textContent = 'Create a free account to unlock missions, carousels and role-linked fleet submissions.';
+              heroLead.textContent = 'Create a free account to explore missions, carousels and role-linked fleet submissions.';
             }
           },
           onUnlock: () => {
@@ -551,7 +551,7 @@
 
         gate?.unlock({ reason: 'public', force: true });
         if (heroLead) {
-          heroLead.textContent = 'Explore the full RouteFlow fleet catalogue. Sign in to contribute updates and manage submissions.';
+          heroLead.textContent = 'Explore the full RouteFlow fleet catalogue. Log in to contribute updates and manage submissions.';
         }
 
         const handleAuthStateChange = (user) => {
@@ -560,7 +560,7 @@
           } else {
             gate?.unlock({ reason: 'public', force: true });
             if (heroLead) {
-              heroLead.textContent = 'Explore the full RouteFlow fleet catalogue. Sign in to contribute updates and manage submissions.';
+              heroLead.textContent = 'Explore the full RouteFlow fleet catalogue. Log in to contribute updates and manage submissions.';
             }
           }
         };

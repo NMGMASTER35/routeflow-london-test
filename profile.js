@@ -149,7 +149,7 @@ const renderConnections = (user) => {
   });
 
   if (!user) {
-    showConnectionStatus('Sign in to manage your Stack Auth connections.');
+    showConnectionStatus('Log in to manage your Stack Auth connections.');
   } else if (!linkedProviders.size) {
     showConnectionStatus('Link a provider to sign in faster next time.');
   } else {
@@ -160,7 +160,7 @@ const renderConnections = (user) => {
 const manageStackConnection = async (providerId, action, button) => {
   const meta = getStackProviderMeta(providerId) || { label: providerId };
   if (!state.user) {
-    showConnectionStatus('Sign in to manage linked providers.', { variant: 'error' });
+    showConnectionStatus('Log in to manage linked providers.', { variant: 'error' });
     return;
   }
 
@@ -538,7 +538,7 @@ const handleNoteModalKeydown = (event) => {
 
 const openNoteModal = () => {
   if (!state.user) {
-    alert('Sign in to add notes to your profile.');
+    alert('Log in to add notes to your profile.');
     return;
   }
   if (!noteModalElements.container) return;
@@ -567,7 +567,7 @@ const handleNoteFormSubmit = async (event) => {
   clearNoteModalError();
 
   if (!state.user) {
-    showNoteModalError('Sign in to save notes to your profile.');
+    showNoteModalError('Log in to save notes to your profile.');
     return;
   }
 
@@ -1074,16 +1074,16 @@ const renderStats = (uid, favourites = [], notes = [], recents = []) => {
 
 const renderAllSections = async () => {
   if (!state.user) {
-    resetList(listElements.favourites, 'Sign in to start saving favourites.');
-    resetList(listElements.recents, 'Sign in to see your recent lookups.');
-    resetList(listElements.notes, 'Sign in to write notes.');
+    resetList(listElements.favourites, 'Log in to start saving favourites.');
+    resetList(listElements.recents, 'Log in to see your recent lookups.');
+    resetList(listElements.notes, 'Log in to write notes.');
     if (listElements.preferences) {
       listElements.preferences.innerHTML = '';
     }
     statsElements.favourites.textContent = '0';
     statsElements.notes.textContent = '0';
     statsElements.recents.textContent = '0';
-    statsElements.message.textContent = 'Sign in to unlock personalised insights across RouteFlow London.';
+    statsElements.message.textContent = 'Log in for personalised insights across RouteFlow London.';
     return;
   }
 
@@ -1140,7 +1140,7 @@ const refreshHero = () => {
       heroElements.username.textContent = '';
       heroElements.username.hidden = true;
     }
-    if (heroElements.email) heroElements.email.textContent = 'Sign in to personalise your RouteFlow London experience.';
+    if (heroElements.email) heroElements.email.textContent = 'Log in to personalise your RouteFlow London experience.';
     if (heroElements.displayName) heroElements.displayName.textContent = '—';
     if (heroElements.handle) heroElements.handle.textContent = '—';
     if (heroElements.memberSince) heroElements.memberSince.textContent = '—';
@@ -1272,7 +1272,7 @@ const attachEventHandlers = () => {
   if (heroElements.edit) {
     heroElements.edit.addEventListener('click', () => {
       if (!state.user) {
-        alert('Sign in to edit your profile.');
+        alert('Log in to edit your profile.');
         return;
       }
       openProfileEditor();

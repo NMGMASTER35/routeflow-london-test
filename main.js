@@ -16,6 +16,17 @@ const LAST_USER_SUMMARY_KEY = 'routeflow:auth:last-user';
 const profileCache = new Map();
 const normaliseTextValue = (value) => (typeof value === 'string' ? value.trim() : '');
 const normaliseEmailValue = (value) => normaliseTextValue(value).toLowerCase();
+const deriveProfileInitial = (primary, fallback = '') => {
+  const source = normaliseTextValue(primary) || normaliseTextValue(fallback);
+  if (!source) {
+    return '';
+  }
+  const [first] = Array.from(source);
+  if (!first) {
+    return '';
+  }
+  return first.toUpperCase();
+};
 
 const cloneProfileData = (value) => {
   if (value === null || value === undefined) {
@@ -782,7 +793,7 @@ function createLocalAuth() {
     },
     async linkWithPopup(provider) {
       if (!state.currentRecord) {
-        throw new Error('Sign in to link additional providers.');
+        throw new Error('Log in to link additional providers.');
       }
       const providerId = normaliseProviderIdValue(provider?.providerId || provider);
       if (!providerId) {
@@ -800,7 +811,7 @@ function createLocalAuth() {
     },
     async unlinkProvider(provider) {
       if (!state.currentRecord) {
-        throw new Error('Sign in to manage linked providers.');
+        throw new Error('Log in to manage linked providers.');
       }
       const providerId = normaliseProviderIdValue(provider?.providerId || provider);
       if (!providerId) {
@@ -1602,10 +1613,6 @@ function applyAuthUi(summary, user) {
   signedOutSections.forEach((section) => setElementHidden(section, !!user));
   signedInSections.forEach((section) => setElementHidden(section, !user));
 
-  document.querySelectorAll('[data-profile-toggle]').forEach((toggle) => {
-    toggle.setAttribute('aria-expanded', 'false');
-  });
-
   document.querySelectorAll('[data-profile-menu]').forEach((menu) => {
     menu.setAttribute('data-open', 'false');
     menu.setAttribute('aria-hidden', 'true');
@@ -1617,12 +1624,41 @@ function applyAuthUi(summary, user) {
     || resolvedSummary?.email
     || 'Account';
 
+  const email = user?.email || resolvedSummary?.email || '';
+  const preferredName = resolvedSummary?.displayName || user?.displayName || '';
+  const initial = deriveProfileInitial(preferredName, email);
+
+  const accessibleToggleLabel = user
+    ? `Open account menu for ${displayName}`
+    : 'Open account menu';
+
+  document.querySelectorAll('[data-profile-toggle]').forEach((toggle) => {
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.setAttribute('data-profile-active', user ? 'true' : 'false');
+    toggle.setAttribute('aria-label', accessibleToggleLabel);
+    toggle.setAttribute('title', user ? `${displayName} — account` : 'Account menu');
+  });
+
   document.querySelectorAll('[data-profile-label]').forEach((label) => {
-    label.textContent = user ? displayName : 'Account';
+    label.textContent = accessibleToggleLabel;
   });
 
   document.querySelectorAll('[data-profile-name]').forEach((nameEl) => {
     nameEl.textContent = user ? displayName : 'Account';
+  });
+
+  document.querySelectorAll('[data-profile-avatar]').forEach((avatar) => {
+    if (!avatar) return;
+    if (initial) {
+      avatar.setAttribute('data-has-initial', 'true');
+    } else {
+      avatar.setAttribute('data-has-initial', 'false');
+    }
+  });
+
+  document.querySelectorAll('[data-profile-initial]').forEach((initialEl) => {
+    if (!initialEl) return;
+    initialEl.textContent = initial || '';
   });
 
   document.querySelectorAll('[data-profile-email]').forEach((emailEl) => {

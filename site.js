@@ -29,6 +29,8 @@
   ];
 
   let appDockInitialised = false;
+  const NAV_SCROLL_THRESHOLD = 18;
+  const navScrollBindings = new WeakSet();
 
   const MOBILE_DOCK_QUERY = window.matchMedia('(max-width: 900px)');
   const PREFERS_REDUCED_MOTION = typeof window.matchMedia === 'function'
@@ -259,6 +261,33 @@
     requestAnimationFrame(() => updateDockActiveState(dock));
   });
 
+  const bindNavbarScroll = (nav) => {
+    if (!nav || navScrollBindings.has(nav)) {
+      return;
+    }
+    navScrollBindings.add(nav);
+
+    let rafId = null;
+
+    const commit = () => {
+      rafId = null;
+      const scrolled = window.scrollY > NAV_SCROLL_THRESHOLD;
+      nav.dataset.scrolled = scrolled ? 'true' : 'false';
+    };
+
+    const schedule = () => {
+      if (rafId !== null) {
+        return;
+      }
+      rafId = requestAnimationFrame(commit);
+    };
+
+    schedule();
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    document.addEventListener('routeflow:page-changed', schedule);
+  };
+
   const initialiseAmbientPointer = () => {
     if (PREFERS_REDUCED_MOTION) {
       return;
@@ -318,4 +347,18 @@
   };
 
   initialiseAmbientPointer();
+
+  const attemptNavbarBind = () => {
+    const nav = document.querySelector('.navbar');
+    if (nav) {
+      bindNavbarScroll(nav);
+    }
+  };
+
+  attemptNavbarBind();
+
+  document.addEventListener('navbar:ready', (event) => {
+    const nav = event?.detail?.root || document.querySelector('.navbar');
+    bindNavbarScroll(nav);
+  });
 })();

@@ -44,14 +44,20 @@
           <button type="button" class="navbar__btn navbar__btn--primary" data-auth-action="signup">Sign Up</button>
         </div>
         <div class="navbar__profile" data-auth-state="signed-in" hidden>
-          <button type="button" class="navbar__profile-toggle" data-profile-toggle aria-haspopup="true" aria-expanded="false">
-            <span class="navbar__profile-avatar" aria-hidden="true">
-              <i class="fa-regular fa-circle-user"></i>
+          <button
+            type="button"
+            class="navbar__profile-toggle"
+            data-profile-toggle
+            aria-haspopup="true"
+            aria-expanded="false"
+            aria-label="Open account menu"
+          >
+            <span class="sr-only" data-profile-label>Open account menu</span>
+            <span class="navbar__profile-avatar" aria-hidden="true" data-profile-avatar>
+              <span class="navbar__profile-initial" data-profile-initial aria-hidden="true"></span>
+              <i class="fa-regular fa-circle-user" data-profile-icon aria-hidden="true"></i>
             </span>
-            <span class="navbar__profile-label" data-profile-label>Welcome</span>
-            <span class="navbar__profile-chevron" aria-hidden="true">
-              <i class="fa-solid fa-chevron-down"></i>
-            </span>
+            <span class="navbar__profile-indicator" aria-hidden="true"></span>
           </button>
           <div class="navbar__profile-menu" data-profile-menu aria-hidden="true" data-open="false">
             <header class="navbar__profile-header">
@@ -63,21 +69,9 @@
                 <i class="fa-solid fa-id-badge" aria-hidden="true"></i>
                 <span>Profile</span>
               </a>
-              <a href="dashboard.html" class="navbar__profile-item" data-auth-action="dashboard" data-profile-nav role="menuitem">
-                <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
-                <span>Dashboard</span>
-              </a>
-              <a href="fleet.html" class="navbar__profile-item" data-auth-action="fleet" data-profile-nav role="menuitem">
-                <i class="fa-solid fa-bus" aria-hidden="true"></i>
-                <span>Fleet</span>
-              </a>
-              <a href="settings.html" class="navbar__profile-item" data-auth-action="settings" role="menuitem">
+              <a href="settings.html" class="navbar__profile-item" data-auth-action="settings" data-profile-nav role="menuitem">
                 <i class="fa-solid fa-sliders" aria-hidden="true"></i>
                 <span>Settings</span>
-              </a>
-              <a href="admin.html" class="navbar__profile-item" data-auth-action="admin" data-requires-admin hidden aria-hidden="true" role="menuitem">
-                <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
-                <span>Admin</span>
               </a>
               <button type="button" class="navbar__profile-item navbar__profile-item--destructive" data-auth-action="logout" role="menuitem">
                 <i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
@@ -152,7 +146,7 @@
       <section class="navbar__drawer-actions" data-auth-container aria-label="Account actions">
         <div class="navbar__drawer-section" data-auth-state="signed-out">
           <h2 class="navbar__drawer-section-title">Your RouteFlow account</h2>
-          <p class="navbar__drawer-copy">Sign in to sync favourites, badges and saved trips everywhere.</p>
+          <p class="navbar__drawer-copy">Create a RouteFlow account to sync favourites, missions and saved trips everywhere.</p>
           <div class="navbar__drawer-buttons">
             <button type="button" class="navbar__drawer-action navbar__drawer-button navbar__drawer-button--ghost" data-auth-action="login">Login</button>
             <button type="button" class="navbar__drawer-action navbar__drawer-button navbar__drawer-button--primary" data-auth-action="signup">Sign Up</button>
@@ -161,10 +155,8 @@
         <div class="navbar__drawer-section" data-auth-state="signed-in" hidden>
           <h2 class="navbar__drawer-section-title">Quick actions</h2>
           <div class="navbar__drawer-buttons navbar__drawer-buttons--stacked">
-            <a href="dashboard.html" class="navbar__drawer-action navbar__drawer-button" data-auth-action="dashboard">Dashboard</a>
-            <a href="fleet.html" class="navbar__drawer-action navbar__drawer-button" data-auth-action="fleet">Fleet</a>
+            <a href="profile.html" class="navbar__drawer-action navbar__drawer-button" data-auth-action="profile">Profile</a>
             <a href="settings.html" class="navbar__drawer-action navbar__drawer-button" data-auth-action="settings">Settings</a>
-            <a href="admin.html" class="navbar__drawer-action navbar__drawer-button" data-auth-action="admin" data-requires-admin hidden aria-hidden="true">Admin</a>
             <button type="button" class="navbar__drawer-action navbar__drawer-button navbar__drawer-button--destructive" data-auth-action="logout">Log out</button>
           </div>
         </div>

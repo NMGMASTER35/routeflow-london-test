@@ -83,6 +83,17 @@
     }
   }
 
+  const toInitial = (primary, fallback = '') => {
+    const base = typeof primary === 'string' && primary.trim()
+      ? primary.trim()
+      : (typeof fallback === 'string' ? fallback.trim() : '');
+    if (!base) {
+      return '';
+    }
+    const [first] = Array.from(base);
+    return first ? first.toUpperCase() : '';
+  };
+
   function applySummaryToNavbar(navRoot, summary) {
     if (!navRoot) return;
     const email = typeof summary?.email === 'string' ? summary.email.trim() : '';
@@ -90,14 +101,38 @@
     const fallbackName = email ? email.split('@')[0] : '';
     const rawName = preferredName || fallbackName;
     const displayName = rawName || 'Explorer';
-    const greeting = `Welcome, ${displayName}`;
+    const accessibleToggleLabel = summary
+      ? `Open account menu for ${displayName}`
+      : 'Open account menu';
+    const initial = toInitial(preferredName, email);
 
     navRoot.querySelectorAll('[data-profile-label]').forEach((label) => {
-      label.textContent = greeting;
+      label.textContent = accessibleToggleLabel;
+    });
+
+    navRoot.querySelectorAll('[data-profile-toggle]').forEach((toggle) => {
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.setAttribute('aria-label', accessibleToggleLabel);
+      toggle.setAttribute('title', summary ? `${displayName} — account` : 'Account menu');
+      toggle.setAttribute('data-profile-active', summary ? 'true' : 'false');
     });
 
     navRoot.querySelectorAll('[data-profile-name]').forEach((label) => {
-      label.textContent = greeting;
+      label.textContent = displayName;
+    });
+
+    navRoot.querySelectorAll('[data-profile-avatar]').forEach((avatar) => {
+      if (!avatar) return;
+      if (initial) {
+        avatar.setAttribute('data-has-initial', 'true');
+      } else {
+        avatar.setAttribute('data-has-initial', 'false');
+      }
+    });
+
+    navRoot.querySelectorAll('[data-profile-initial]').forEach((initialEl) => {
+      if (!initialEl) return;
+      initialEl.textContent = initial || '';
     });
 
     navRoot.querySelectorAll('[data-profile-email]').forEach((emailEl) => {
@@ -510,5 +545,11 @@
       }
     };
     window.openModal = window.openModal || function () {};
+
+    try {
+      document.dispatchEvent(new CustomEvent('navbar:ready', { detail: { root: navRoot } }));
+    } catch (error) {
+      console.warn('RouteFlow navbar: failed to announce ready state.', error);
+    }
   }
 })();

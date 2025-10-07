@@ -600,6 +600,7 @@ button.button:hover,
 [class*="__button"]:focus-visible,
 [class*="__cta"]:focus-visible,
 .navbar__btn:focus-visible,
+.navbar__profile-toggle:focus-visible,
 .navbar__drawer-button:focus-visible,
 .tracking-chip:focus-visible,
 .fleet-operators__tab:focus-visible {
@@ -651,11 +652,32 @@ button.button:hover,
   backdrop-filter: blur(20px);
 }
 
+.navbar[data-scrolled="true"] {
+  background: rgba(255, 255, 255, 0.98);
+  border-bottom-color: rgba(15, 23, 42, 0.12);
+  box-shadow: 0 24px 46px rgba(15, 23, 42, 0.14);
+  transform: translateY(-2px);
+}
+
+.navbar[data-scrolled="true"] .navbar__profile-toggle {
+  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.18);
+}
+
 body.dark-mode .navbar {
   background: rgba(15, 23, 42, 0.94);
   color: var(--foreground-dark);
   border-bottom-color: rgba(96, 165, 250, 0.24);
   box-shadow: 0 22px 44px rgba(2, 6, 23, 0.5);
+}
+
+body.dark-mode .navbar[data-scrolled="true"] {
+  background: rgba(15, 23, 42, 0.97);
+  border-bottom-color: rgba(148, 163, 184, 0.24);
+  box-shadow: 0 28px 58px rgba(2, 6, 23, 0.72);
+}
+
+body.dark-mode .navbar[data-scrolled="true"] .navbar__profile-toggle {
+  box-shadow: 0 24px 40px rgba(2, 6, 23, 0.78);
 }
 
 body.dark-mode .navbar__brand-tagline,
@@ -675,23 +697,38 @@ body.dark-mode .navbar__link[aria-current="page"] {
 }
 
 body.dark-mode .navbar__profile-toggle {
-  border-color: rgba(148, 163, 184, 0.3);
-  background: rgba(51, 65, 85, 0.4);
+  border-color: rgba(148, 163, 184, 0.42);
+  background: linear-gradient(155deg, rgba(30, 41, 59, 0.88), rgba(15, 23, 42, 0.72));
   color: var(--foreground-dark);
+  box-shadow: 0 16px 30px rgba(2, 6, 23, 0.65);
+}
+
+body.dark-mode .navbar__profile-toggle:hover,
+body.dark-mode .navbar__profile-toggle:focus-visible {
+  border-color: rgba(96, 165, 250, 0.6);
+  background: linear-gradient(155deg, rgba(96, 165, 250, 0.32), rgba(30, 64, 175, 0.4));
 }
 
 body.dark-mode .navbar__profile-avatar {
-  background: rgba(96, 165, 250, 0.2);
+  background: linear-gradient(160deg, rgba(96, 165, 250, 0.32), rgba(30, 41, 59, 0.52));
   color: var(--foreground-dark);
 }
 
+body.dark-mode .navbar__profile-avatar[data-has-initial="true"] {
+  background: linear-gradient(150deg, rgba(129, 140, 248, 0.42), rgba(37, 99, 235, 0.62));
+}
+
+body.dark-mode .navbar__profile-indicator {
+  border-color: rgba(15, 23, 42, 0.92);
+}
+
 body.dark-mode .navbar__profile-item i {
-  color: var(--foreground-dark);
+  color: rgba(96, 165, 250, 0.92);
 }
 
 body.dark-mode .navbar__profile-item:hover,
 body.dark-mode .navbar__profile-item:focus-visible {
-  background: rgba(96, 165, 250, 0.2);
+  background: rgba(96, 165, 250, 0.22);
   color: var(--foreground-dark);
 }
 
@@ -820,25 +857,84 @@ body.dark-mode .navbar__drawer-link:focus-visible {
 .navbar__profile { position: relative; }
 
 .navbar__profile-toggle {
+  --profile-toggle-size: 44px;
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
-  padding: 0.65rem 1rem;
+  justify-content: center;
+  width: var(--profile-toggle-size);
+  height: var(--profile-toggle-size);
+  padding: 0;
   border-radius: 999px;
   border: 1px solid rgba(var(--calm-blue-rgb), 0.22);
-  background: rgba(var(--calm-blue-light-rgb), 0.7);
+  background: linear-gradient(145deg, rgba(var(--calm-blue-rgb), 0.16), rgba(var(--accent-blue-dark-rgb), 0.12));
   color: var(--calm-blue);
-  font-weight: 700;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+  transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition), background var(--transition);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.navbar__profile-toggle:hover,
+.navbar__profile-toggle:focus-visible {
+  transform: translateY(-1px) scale(1.02);
+  border-color: rgba(var(--accent-blue-dark-rgb), 0.4);
+  background: linear-gradient(145deg, rgba(var(--calm-blue-rgb), 0.24), rgba(var(--accent-blue-dark-rgb), 0.28));
+  color: var(--calm-blue);
 }
 
 .navbar__profile-avatar {
-  width: 36px;
-  height: 36px;
+  position: relative;
+  width: calc(var(--profile-toggle-size) - 6px);
+  height: calc(var(--profile-toggle-size) - 6px);
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: rgba(var(--calm-blue-rgb), 0.12);
+  background: linear-gradient(160deg, rgba(var(--calm-blue-rgb), 0.16), rgba(var(--calm-blue-light-rgb), 0.22));
   color: var(--calm-blue);
+  transition: background var(--transition), color var(--transition);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  pointer-events: none;
+  user-select: none;
+}
+
+.navbar__profile-avatar[data-has-initial="true"] {
+  background: linear-gradient(150deg, rgba(var(--accent-blue-dark-rgb), 0.24), rgba(var(--calm-blue-rgb), 0.36));
+  color: #fff;
+}
+
+.navbar__profile-initial {
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+  display: none;
+}
+
+.navbar__profile-avatar[data-has-initial="true"] .navbar__profile-initial {
+  display: block;
+}
+
+.navbar__profile-avatar[data-has-initial="true"] [data-profile-icon] {
+  display: none;
+}
+
+.navbar__profile-indicator {
+  position: absolute;
+  inset: auto 4px 4px auto;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-blue), var(--primary));
+  border: 2px solid var(--navbar-accent);
+  box-shadow: 0 4px 10px rgba(var(--accent-blue-rgb), 0.45);
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity var(--transition), transform var(--transition);
+}
+
+.navbar__profile-toggle[data-profile-active="true"] .navbar__profile-indicator {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .navbar__profile-menu {
@@ -877,14 +973,15 @@ body.dark-mode .navbar__drawer-link:focus-visible {
   padding-top: 0.4rem;
 }
 
+
 .navbar__profile-item {
   display: flex;
   align-items: center;
   gap: 0.7rem;
-  padding: 0.65rem 1.2rem;
+  padding: 0.65rem 1.1rem;
   color: var(--text-muted-light);
   font-weight: 600;
-  transition: background var(--transition), color var(--transition);
+  transition: background var(--transition), color var(--transition), transform var(--transition);
 }
 
 .navbar__profile-item i { color: var(--calm-blue); }
@@ -894,6 +991,7 @@ body.dark-mode .navbar__drawer-link:focus-visible {
   background: rgba(var(--calm-blue-light-rgb), 0.9);
   color: var(--calm-blue);
   text-decoration: none;
+  transform: translateX(2px);
 }
 
 .navbar__toggle {

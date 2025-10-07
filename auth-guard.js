@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  const DEFAULT_LOCK_MESSAGE = 'Sign in to unlock this area.';
+  const DEFAULT_LOCK_MESSAGE = 'Log in for full access.';
   const DEFAULT_ERROR_MESSAGE = 'Authentication is unavailable right now. Please try again later.';
 
   function getLoginButton(overlay) {
