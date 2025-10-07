@@ -14,40 +14,76 @@
 </head>
 <body class="site-body">
   <a href="#adminContent" class="skip-link">Skip to main content</a>
-  <div id="navbar-container"></div>
-  <main id="adminContent" class="site-main admin-page" aria-live="polite"></main>
-  <footer class="site-footer" aria-label="Footer">
-    <div class="site-footer__inner">
-      <div class="site-footer__brand">
-        <span class="site-footer__name">RouteFlow London</span>
-        <p class="site-footer__description">Playful transport guidance for explorers of every age.</p>
-      </div>
-      <nav class="site-footer__nav" aria-label="Explore">
-        <a href="index.html">Home</a>
-        <a href="dashboard.html">Dashboard</a>
-        <a href="tracking.html">Tracking</a>
-        <a href="planning.html">Planning</a>
-        <a href="routes.html">Routes</a>
-        <a href="info.html">Info hub</a>
-      </nav>
-      <nav class="site-footer__nav" aria-label="Support">
-        <a href="about.html">About</a>
-        <a href="contact.html">Contact</a>
-        <a href="privacy.html">Privacy</a>
-        <a href="terms.html">Terms</a>
-        <a href="settings.html">Settings</a>
-      </nav>
-      <div class="site-footer__social" aria-label="Social channels">
-        <a href="https://discord.gg/qVf3nN4Mgq" aria-label="RouteFlow London on Discord"><i class="fa-brands fa-discord"></i></a>
-        <a href="https://www.tiktok.com/@the_bus_father" aria-label="RouteFlow London on TikTok"><i class="fab fa-tiktok"></i></a>
-        <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo" aria-label="RouteFlow London on Instagram"><i class="fab fa-instagram"></i></a>
-      </div>
+  <div class="site-shell">
+    <header class="site-shell__header">
+      <div id="navbar-container" class="site-shell__navbar"></div>
+    </header>
+
+    <div class="site-shell__main">
+      <main id="adminContent" class="site-main admin-page" aria-live="polite"></main>
     </div>
-    <div class="site-footer__meta">
-      <span>&copy; <span data-current-year></span> RouteFlow London. All rights reserved.</span>
-      <span>Made for London. Accessible for everyone.</span>
-    </div>
-  </footer>
+
+    <footer class="site-footer" aria-label="RouteFlow London footer">
+      <div class="site-footer__inner">
+        <div class="site-footer__brand">
+          <img src="images/New_Routflow_London_Logo.png" alt="RouteFlow London logo">
+          <div>
+            <h2>Stay curious about London’s transport</h2>
+            <p>RouteFlow London turns TfL feeds into playful guidance so planners, families and classrooms can travel with calm confidence.</p>
+            <div class="site-footer__social" role="list">
+              <a href="https://discord.gg/qVf3nN4Mgq" aria-label="RouteFlow London on Discord"><i class="fa-brands fa-discord"></i></a>
+              <a href="https://www.tiktok.com/@the_bus_father" aria-label="RouteFlow London on TikTok"><i class="fa-brands fa-tiktok"></i></a>
+              <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo" aria-label="RouteFlow London on Instagram"><i class="fa-brands fa-instagram"></i></a>
+            </div>
+          </div>
+        </div>
+        <div class="site-footer__grid">
+          <div>
+            <h3 class="site-footer__heading">Plan journeys</h3>
+            <ul class="site-footer__links">
+              <li><a href="index.html">Home</a></li>
+              <li><a href="planning.html">Planning</a></li>
+              <li><a href="tracking.html">Tracking</a></li>
+            </ul>
+          </div>
+          <div>
+            <h3 class="site-footer__heading">Live insight</h3>
+            <ul class="site-footer__links">
+              <li><a href="dashboard.html">Dashboard</a></li>
+              <li><a href="routes.html">Routes</a></li>
+              <li><a href="disruptions.html">Disruptions</a></li>
+            </ul>
+          </div>
+          <div>
+            <h3 class="site-footer__heading">Community data</h3>
+            <ul class="site-footer__links">
+              <li><a href="info.html">Info hub</a></li>
+              <li><a href="fleet.html">Fleet</a></li>
+              <li><a href="withdrawn.html">Withdrawn</a></li>
+            </ul>
+          </div>
+          <div>
+            <h3 class="site-footer__heading">Company</h3>
+            <ul class="site-footer__links">
+              <li><a href="about.html">About</a></li>
+              <li><a href="contact.html">Contact</a></li>
+              <li><a href="privacy.html">Privacy</a></li>
+              <li><a href="terms.html">Terms</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="site-footer__bottom">
+          <p class="site-footer__legal">© <span data-current-year></span> RouteFlow London. Crafted for curious travellers.</p>
+          <div class="site-footer__meta">
+            <a href="privacy.html">Privacy</a>
+            <a href="terms.html">Terms</a>
+            <a href="contact.html">Contact</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
   <script src="navbar-loader.js" defer></script>
   <script type="module" src="admin.js"></script>
 </body>

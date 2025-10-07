@@ -13,163 +13,183 @@
 </head>
 <body class="site-body">
   <a href="#main-content" class="skip-link">Skip to main content</a>
-  <div id="navbar-container"></div>
+  <div class="site-shell">
+    <header class="site-shell__header">
+      <div id="navbar-container" class="site-shell__navbar"></div>
+    </header>
 
-  <main id="main-content" class="site-main landing" aria-labelledby="landing-title">
+    <div class="site-shell__main">
+      <main id="main-content" class="site-main landing" aria-labelledby="landing-title">
     <section id="section-overview" class="landing-hero card landing-section" data-section="overview" data-animate>
       <div class="landing-hero__content">
-        <p class="landing-hero__eyebrow">London network command deck</p>
-        <h1 id="landing-title">RouteFlow Control keeps every journey aligned.</h1>
+        <p class="landing-hero__eyebrow">Everyday network companion</p>
+        <h1 id="landing-title">RouteFlow Horizon keeps London moving with calm, living maps.</h1>
         <p class="landing-hero__lead">
-          Bring TfL feeds, household plans and classroom challenges into a single command deck. RouteFlow London blends
-          operational clarity with playful storytelling so mobile and desktop dashboards feel like a live control room.
+          Swap panic for clarity. Horizon blends arrivals, disruption notes and community highlights into a warm, collaborative dashboard for planners, families and classroom missions alike.
         </p>
         <div class="landing-hero__actions" role="group">
           <a class="landing-hero__button landing-hero__button--primary" href="dashboard.html">
-            <i class="fa-solid fa-wave-square"></i>
-            Launch control room
+            <i class="fa-regular fa-compass"></i>
+            Start Horizon workspace
           </a>
           <a class="landing-hero__button" href="tracking.html">
-            <i class="fa-solid fa-satellite-dish"></i>
-            Track live arrivals
+            <i class="fa-solid fa-signal"></i>
+            View live network
           </a>
         </div>
-        <dl class="landing-hero__metrics" aria-label="RouteFlow stats">
+        <dl class="landing-hero__metrics" aria-label="RouteFlow Horizon highlights">
           <div>
-            <dt>Live feeds captured</dt>
-            <dd>18 TfL datasets</dd>
+            <dt>Live journeys</dt>
+            <dd>42,800 refreshed nightly</dd>
           </div>
           <div>
-            <dt>Journeys in sync</dt>
-            <dd>52,400 shared plans</dd>
+            <dt>Neighbourhood signals</dt>
+            <dd>18 borough spotlights</dd>
           </div>
           <div>
-            <dt>Community notes</dt>
-            <dd>Updated every hour</dd>
+            <dt>Safety check-ins</dt>
+            <dd>1,240 this week</dd>
           </div>
         </dl>
       </div>
       <div class="landing-hero__preview" aria-hidden="true">
         <div class="landing-preview">
           <header class="landing-preview__header">
-            <span class="landing-preview__label">Evening briefing</span>
-            <span class="landing-preview__level">Network amber</span>
+            <span class="landing-preview__label">Horizon signal</span>
+            <span class="landing-preview__level">Calm &amp; clear</span>
           </header>
           <div class="landing-preview__status">
-            <span class="landing-preview__badge">4 alerts tracking</span>
-            <span class="landing-preview__meta">Next sweep in 6 mins</span>
+            <span class="landing-preview__badge">2 mindful diversions</span>
+            <span class="landing-preview__meta">Next refresh in 05:00</span>
+          </div>
+          <div class="landing-preview__clusters">
+            <div class="landing-preview__cluster">
+              <span class="landing-preview__cluster-label">Live watchers</span>
+              <span class="landing-preview__cluster-value">162 planners</span>
+              <span class="landing-preview__cluster-trend"><i class="fa-solid fa-arrow-trend-up" aria-hidden="true"></i> +22 this hour</span>
+            </div>
+            <div class="landing-preview__cluster">
+              <span class="landing-preview__cluster-label">Community notes</span>
+              <span class="landing-preview__cluster-value">31 stories</span>
+              <span class="landing-preview__cluster-trend"><i class="fa-solid fa-sparkles" aria-hidden="true"></i> 9 school updates</span>
+            </div>
+            <div class="landing-preview__cluster">
+              <span class="landing-preview__cluster-label">Access checks</span>
+              <span class="landing-preview__cluster-value">54 verified</span>
+              <span class="landing-preview__cluster-trend"><i class="fa-solid fa-wheelchair-move" aria-hidden="true"></i> zero blockers</span>
+            </div>
           </div>
           <ol class="landing-preview__timeline">
             <li>
-              <span class="landing-preview__time">16:05</span>
-              <div>
-                <strong>Route 29 extras</strong>
-                <p>Duplicate allocation covers Camden Town crowding window.</p>
-              </div>
-            </li>
-            <li>
-              <span class="landing-preview__time">16:11</span>
+              <span class="landing-preview__time">07:42</span>
               <div>
                 <strong>Victoria line</strong>
-                <p>Minor dwell increases at Oxford Circus &mdash; reroute suggestion active.</p>
+                <p>Southbound dwell easing &mdash; Brixton hold cleared after two calm cycles.</p>
               </div>
             </li>
             <li>
-              <span class="landing-preview__time">16:18</span>
+              <span class="landing-preview__time">08:05</span>
               <div>
-                <strong>Learning badge</strong>
-                <p>Year 8 travel club logged two accessibility spot checks.</p>
+                <strong>Route 390 relief</strong>
+                <p>Extra decker dispatched; Holloway crowding back below threshold.</p>
+              </div>
+            </li>
+            <li>
+              <span class="landing-preview__time">08:18</span>
+              <div>
+                <strong>Learning mission</strong>
+                <p>Year 8 crew logged lift status video from King&#39;s Cross for morning briefings.</p>
               </div>
             </li>
           </ol>
           <footer class="landing-preview__footer">
-            <a class="landing-preview__cta" href="dashboard.html">Review operations board</a>
+            <a class="landing-preview__cta" href="dashboard.html">Open Horizon console</a>
           </footer>
         </div>
       </div>
     </section>
 
     <nav class="landing-quicknav card" aria-label="Page quick navigation" data-quicknav data-animate>
-      <h2 class="landing-quicknav__title">Jump to a mission segment</h2>
+      <h2 class="landing-quicknav__title">Explore Horizon</h2>
       <ul class="landing-quicknav__list" role="list">
-        <li><a href="#section-overview">Overview</a></li>
-        <li><a href="#section-pillars">Pillars</a></li>
-        <li><a href="#section-modes">Modes</a></li>
-        <li><a href="#section-devices">Devices</a></li>
-        <li><a href="#section-tools">Tools</a></li>
-        <li><a href="#section-briefings">Briefings</a></li>
-        <li><a href="#section-updates">Updates</a></li>
+        <li><a href="#section-overview">Horizon overview</a></li>
+        <li><a href="#section-pillars">Guiding principles</a></li>
+        <li><a href="#section-modes">Mission modes</a></li>
+        <li><a href="#section-devices">Device mesh</a></li>
+        <li><a href="#section-tools">Toolchain</a></li>
+        <li><a href="#section-briefings">Story studio</a></li>
+        <li><a href="#section-updates">Signal updates</a></li>
       </ul>
     </nav>
 
     <section id="section-pillars" class="landing-panels landing-section" aria-label="RouteFlow pillars" data-section="pillars" data-animate>
       <article class="landing-panel">
         <div class="landing-panel__icon" aria-hidden="true">
-          <i class="fa-solid fa-compass-drafting"></i>
+          <i class="fa-solid fa-wave-square"></i>
         </div>
         <div class="landing-panel__content">
-          <h2>Responsive mission views</h2>
-          <p>Switch between map, timeline and status boards that flex perfectly between widescreen desktops and handheld devices.</p>
+          <h2>Unified control loops</h2>
+          <p>Blend arrivals, dwell analytics and manual overrides without switching tabs &mdash; Horizon keeps planners and on-the-ground stewards in rhythm.</p>
         </div>
       </article>
       <article class="landing-panel">
         <div class="landing-panel__icon" aria-hidden="true">
-          <i class="fa-solid fa-people-group"></i>
+          <i class="fa-solid fa-layer-group"></i>
         </div>
         <div class="landing-panel__content">
-          <h2>Shared planning rituals</h2>
-          <p>Invite families, classrooms and teams to co-create itineraries, leaving comments that sync back to your RouteFlow database.</p>
+          <h2>Scenario layering</h2>
+          <p>Stack evacuation drills, school trips and community meetups to stress-test journeys before anyone taps in.</p>
         </div>
       </article>
       <article class="landing-panel">
         <div class="landing-panel__icon" aria-hidden="true">
-          <i class="fa-solid fa-lightbulb"></i>
+          <i class="fa-solid fa-sparkles"></i>
         </div>
         <div class="landing-panel__content">
-          <h2>Insightful storytelling</h2>
-          <p>Surface TfL performance trends with narrative cards tailored for assemblies, newsletters or on-the-go travel briefings.</p>
+          <h2>Story-driven analytics</h2>
+          <p>Transform cold metrics into narrative slides that celebrate achievements and highlight equity gaps.</p>
         </div>
       </article>
     </section>
 
     <section id="section-modes" class="landing-gamify card landing-section" aria-label="Operations modes" data-section="modes" data-animate>
       <header class="landing-gamify__header">
-        <p class="landing-gamify__eyebrow">From control room to classroom</p>
-        <h2>Translate live transport data into confident action.</h2>
-        <p>Use RouteFlow London to orchestrate departures, test emergency plans and celebrate learning milestones &mdash; all backed by the same database.</p>
+        <p class="landing-gamify__eyebrow">Mission control for humans</p>
+        <h2>Design rehearsals, resilience drills and playful briefings from one hub.</h2>
+        <p>Horizon converts raw feeds into cinematic surfaces for network controllers, teachers and community leads.</p>
       </header>
       <div class="landing-gamify__grid">
         <article class="landing-gamify__item">
-          <span class="landing-gamify__icon" aria-hidden="true"><i class="fa-solid fa-signal"></i></span>
-          <h3>Operations pulse</h3>
-          <p>Overlay live arrivals with service health and vehicle allocations so you know when to hold, dispatch or reroute.</p>
+          <span class="landing-gamify__icon" aria-hidden="true"><i class="fa-solid fa-diagram-project"></i></span>
+          <h3>Network rehearsals</h3>
+          <p>Simulate closures and crowding waves, then auto-generate holding patterns and depot alerts.</p>
         </article>
         <article class="landing-gamify__item">
           <span class="landing-gamify__icon" aria-hidden="true"><i class="fa-solid fa-shield-heart"></i></span>
-          <h3>Care journeys</h3>
-          <p>Custom access notes, assistance reminders and safeguarding prompts follow every saved route.</p>
+          <h3>Care guardianship</h3>
+          <p>Surface accessibility notes, quiet carriage options and wellbeing check-ins for every traveller.</p>
         </article>
         <article class="landing-gamify__item">
-          <span class="landing-gamify__icon" aria-hidden="true"><i class="fa-solid fa-chalkboard-user"></i></span>
-          <h3>Learning missions</h3>
-          <p>Gamified modules reward research, travel etiquette and on-the-ground observations to keep young travellers motivated.</p>
+          <span class="landing-gamify__icon" aria-hidden="true"><i class="fa-solid fa-trophy"></i></span>
+          <h3>Playful missions</h3>
+          <p>Reward curiosity with badges, quizzes and evidence uploads tied to the routes you approve.</p>
         </article>
         <article class="landing-gamify__item">
-          <span class="landing-gamify__icon" aria-hidden="true"><i class="fa-solid fa-notes-medical"></i></span>
-          <h3>Rapid response log</h3>
-          <p>Capture incident reports, upload media and assign follow-up tasks without leaving the RouteFlow workspace.</p>
+          <span class="landing-gamify__icon" aria-hidden="true"><i class="fa-solid fa-file-circle-check"></i></span>
+          <h3>Incident chronicles</h3>
+          <p>Capture voice notes, photos and follow-up tasks while keeping everyone aligned on next actions.</p>
         </article>
       </div>
     </section>
 
     <section id="section-devices" class="landing-devices landing-section" aria-label="Cross-platform layouts" data-section="devices" data-animate>
       <div class="landing-devices__card card">
-        <h2>Beautiful on desktop, bold on mobile.</h2>
-        <p>Adaptive panels reshape into vertical stories on phones and detailed grids on tablets or widescreen monitors. Dark mode and reduced-motion modes are only a tap away.</p>
+        <h2>Responsive canvases on every device.</h2>
+        <p>From war-room displays to student tablets, Horizon morphs panels into focused stories with dark mode, readable fonts and reduced motion ready to go.</p>
         <ul class="landing-devices__list">
-          <li><i class="fa-solid fa-display" aria-hidden="true"></i> Command desks with wall displays</li>
-          <li><i class="fa-solid fa-tablet-screen-button" aria-hidden="true"></i> Tablets for on-the-go inspections</li>
-          <li><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i> Quick-glance mobile summaries</li>
+          <li><i class="fa-solid fa-display" aria-hidden="true"></i> Wall-scale situation rooms</li>
+          <li><i class="fa-solid fa-tablet-screen-button" aria-hidden="true"></i> Field inspections with offline caching</li>
+          <li><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i> Pocket summaries for duty managers</li>
         </ul>
       </div>
       <div class="landing-devices__mock card" aria-hidden="true">
@@ -181,15 +201,15 @@
           <div class="landing-devices__grid">
             <div>
               <strong>Alerts lane</strong>
-              <p>Timeline tiles glow red when thresholds cross, keeping attention on what matters.</p>
+              <p>Pulse tiles glow when service health shifts or intervention scripts trigger.</p>
             </div>
             <div>
               <strong>People view</strong>
-              <p>Monitor guardians, staff and students with quick messaging shortcuts and safety flags.</p>
+              <p>Map guardians, staff and pupils with instant messaging and safeguarding signals.</p>
             </div>
             <div>
               <strong>Performance cards</strong>
-              <p>Compare modal reliability, average dwell times and crowding to improve your plans.</p>
+              <p>Compare reliability, crowding and sentiment to inform your next briefing.</p>
             </div>
           </div>
         </div>
@@ -198,27 +218,27 @@
 
     <section id="section-tools" class="landing-tools card landing-section" aria-label="Core tools" data-section="tools" data-animate>
       <header class="landing-tools__header">
-        <p class="landing-tools__eyebrow">Pick your toolkit</p>
-        <h2>Every screen speaks to the same RouteFlow database.</h2>
-        <p class="landing-tools__lead">Journeys, fleet updates and classroom activities stay in sync on desktop dashboards, tablets and mobile checklists.</p>
+        <p class="landing-tools__eyebrow">Choose your control surface</p>
+        <h2>The Horizon toolchain keeps fleet, journeys and stories in sync.</h2>
+        <p class="landing-tools__lead">Every module speaks to the same datastore, so insights flow from dispatchers to classrooms without duplication.</p>
       </header>
       <div class="landing-tools__grid">
         <article class="landing-tool landing-tool--accent">
           <div class="landing-tool__icon" aria-hidden="true"><i class="fa-solid fa-bus"></i></div>
           <h3>Live tracking</h3>
-          <p>Filter arrivals by stop, line or fleet number and attach quick notes for your community.</p>
+          <p>Filter arrivals by stop, line or fleet number and annotate movements for your network family.</p>
           <a class="landing-tool__link" href="tracking.html">Monitor arrivals</a>
         </article>
         <article class="landing-tool">
           <div class="landing-tool__icon" aria-hidden="true"><i class="fa-solid fa-map-location-dot"></i></div>
           <h3>Journey studio</h3>
-          <p>Plan multi-modal trips with step-free, quiet-route and dwell-time options at your fingertips.</p>
+          <p>Design multi-modal trips with step-free, quiet route and dwell-time constraints baked in.</p>
           <a class="landing-tool__link" href="planning.html">Plan a journey</a>
         </article>
         <article class="landing-tool">
           <div class="landing-tool__icon" aria-hidden="true"><i class="fa-solid fa-layer-group"></i></div>
           <h3>Network intelligence</h3>
-          <p>Explore fleet breakdowns, disruption archives and success stories to inform your next move.</p>
+          <p>Explore fleet breakdowns, disruption archives and success stories to guide your next move.</p>
           <a class="landing-tool__link" href="routes.html">Explore the data</a>
         </article>
       </div>
@@ -226,21 +246,21 @@
 
     <section id="section-briefings" class="landing-blog card landing-section" aria-label="Latest briefings" data-section="briefings" data-animate>
       <header class="landing-blog__header">
-        <p class="landing-blog__eyebrow">Knowledge transmissions</p>
-        <h2>Briefings, analysis and community success stories</h2>
-        <p>Everything you publish through the admin console updates instantly across the platform for both desktop and mobile readers.</p>
+        <p class="landing-blog__eyebrow">Story studio transmissions</p>
+        <h2>Briefings, deep dives and community spotlights</h2>
+        <p>Curate dispatches once inside the admin console and watch them shimmer across dashboards, mobile digests and classroom screens.</p>
       </header>
       <div class="landing-blog__grid" data-blog-list data-blog-limit="3" data-blog-variant="card" data-blog-empty="Check back soon for new stories."></div>
       <footer class="landing-blog__footer">
         <a class="landing-blog__cta" href="info.html">Browse the knowledge base</a>
-        <span class="landing-blog__hint">Curate new articles, imagery and badges directly from the database-backed admin view.</span>
+        <span class="landing-blog__hint">Publish new articles, artwork and mission badges directly from Horizon Studio.</span>
       </footer>
     </section>
 
     <section id="section-updates" class="landing-updates card landing-section" aria-label="Newsletter" data-section="updates" data-animate>
       <div class="landing-updates__content">
         <h2>Stay ahead of the next service change</h2>
-        <p>We only send high-signal updates: new datasets, layout upgrades and travel literacy packs.</p>
+        <p>Receive high-signal updates on dataset releases, interface upgrades and travel literacy kits.</p>
       </div>
       <div class="landing-updates__form">
         <form id="newsletter-form" class="landing-updates__newsletter" novalidate data-newsletter-form>
@@ -254,45 +274,74 @@
               </button>
             </div>
           </div>
-          <p class="landing-updates__privacy">We respect your inbox. Expect at most one mission briefing per week.</p>
+          <p class="landing-updates__privacy">Only handcrafted dispatches &mdash; at most one luminous update per week.</p>
           <p class="landing-updates__message" data-newsletter-message aria-live="polite"></p>
         </form>
       </div>
     </section>
-  </main>
+      </main>
+    </div>
 
-  <footer class="site-footer" aria-label="Footer">
-    <div class="site-footer__inner">
-      <div class="site-footer__brand">
-        <span class="site-footer__name">RouteFlow London</span>
-        <p class="site-footer__description">Real-time TfL intelligence for curious travellers.</p>
+    <footer class="site-footer" aria-label="RouteFlow London footer">
+      <div class="site-footer__inner">
+        <div class="site-footer__brand">
+          <img src="images/New_Routflow_London_Logo.png" alt="RouteFlow London logo">
+          <div>
+            <h2>Stay curious about London’s transport</h2>
+            <p>RouteFlow London turns TfL feeds into playful guidance so planners, families and classrooms can travel with calm confidence.</p>
+            <div class="site-footer__social" role="list">
+              <a href="https://discord.gg/qVf3nN4Mgq" aria-label="RouteFlow London on Discord"><i class="fa-brands fa-discord"></i></a>
+              <a href="https://www.tiktok.com/@the_bus_father" aria-label="RouteFlow London on TikTok"><i class="fa-brands fa-tiktok"></i></a>
+              <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo" aria-label="RouteFlow London on Instagram"><i class="fa-brands fa-instagram"></i></a>
+            </div>
+          </div>
+        </div>
+        <div class="site-footer__grid">
+          <div>
+            <h3 class="site-footer__heading">Plan journeys</h3>
+            <ul class="site-footer__links">
+              <li><a href="index.html">Home</a></li>
+              <li><a href="planning.html">Planning</a></li>
+              <li><a href="tracking.html">Tracking</a></li>
+            </ul>
+          </div>
+          <div>
+            <h3 class="site-footer__heading">Live insight</h3>
+            <ul class="site-footer__links">
+              <li><a href="dashboard.html">Dashboard</a></li>
+              <li><a href="routes.html">Routes</a></li>
+              <li><a href="disruptions.html">Disruptions</a></li>
+            </ul>
+          </div>
+          <div>
+            <h3 class="site-footer__heading">Community data</h3>
+            <ul class="site-footer__links">
+              <li><a href="info.html">Info hub</a></li>
+              <li><a href="fleet.html">Fleet</a></li>
+              <li><a href="withdrawn.html">Withdrawn</a></li>
+            </ul>
+          </div>
+          <div>
+            <h3 class="site-footer__heading">Company</h3>
+            <ul class="site-footer__links">
+              <li><a href="about.html">About</a></li>
+              <li><a href="contact.html">Contact</a></li>
+              <li><a href="privacy.html">Privacy</a></li>
+              <li><a href="terms.html">Terms</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="site-footer__bottom">
+          <p class="site-footer__legal">© <span data-current-year></span> RouteFlow London. Crafted for curious travellers.</p>
+          <div class="site-footer__meta">
+            <a href="privacy.html">Privacy</a>
+            <a href="terms.html">Terms</a>
+            <a href="contact.html">Contact</a>
+          </div>
+        </div>
       </div>
-      <nav class="site-footer__nav" aria-label="Explore">
-        <a href="index.html">Home</a>
-        <a href="dashboard.html">Dashboard</a>
-        <a href="tracking.html">Tracking</a>
-        <a href="planning.html">Planning</a>
-        <a href="routes.html">Routes</a>
-        <a href="info.html">Info hub</a>
-      </nav>
-      <nav class="site-footer__nav" aria-label="Support">
-        <a href="about.html">About</a>
-        <a href="contact.html">Contact</a>
-        <a href="privacy.html">Privacy</a>
-        <a href="terms.html">Terms</a>
-        <a href="settings.html">Settings</a>
-      </nav>
-      <div class="site-footer__social" aria-label="Social channels">
-        <a href="https://discord.gg/qVf3nN4Mgq" aria-label="RouteFlow London on Discord"><i class="fa-brands fa-discord"></i></a>
-        <a href="https://www.tiktok.com/@the_bus_father" aria-label="RouteFlow London on TikTok"><i class="fab fa-tiktok"></i></a>
-        <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo" aria-label="RouteFlow London on Instagram"><i class="fab fa-instagram"></i></a>
-      </div>
-    </div>
-    <div class="site-footer__meta">
-      <span>&copy; <span data-current-year></span> RouteFlow London. All rights reserved.</span>
-      <span>Built for Londoners, accessible everywhere.</span>
-    </div>
-  </footer>
+    </footer>
+  </div>
 
   <script src="navbar-loader.js"></script>
   <script src="info.js" type="module"></script>

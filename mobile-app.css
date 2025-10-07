@@ -1,7 +1,7 @@
 :root {
   --app-dock-height: 76px;
-  --app-dock-border: rgba(15, 76, 129, 0.14);
-  --app-dock-shadow: 0 24px 46px rgba(15, 76, 129, 0.18);
+  --app-dock-border: rgba(37, 99, 235, 0.18);
+  --app-dock-shadow: 0 24px 40px rgba(37, 99, 235, 0.18);
 }
 
 body[data-has-app-dock="true"] {
@@ -14,7 +14,7 @@ body[data-has-app-dock="true"] {
   bottom: max(1.2rem, env(safe-area-inset-bottom));
   transform: translateX(-50%);
   width: min(480px, calc(100% - 2.6rem));
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 24px;
   border: 1px solid var(--app-dock-border);
   box-shadow: var(--app-dock-shadow);
@@ -44,7 +44,7 @@ body[data-has-app-dock="true"] {
   gap: 0.3rem;
   padding: 0.6rem 0.25rem;
   border-radius: 18px;
-  color: rgba(32, 19, 25, 0.72);
+  color: rgba(11, 18, 32, 0.74);
   font-weight: 600;
   font-size: 0.82rem;
   letter-spacing: 0.01em;
@@ -54,7 +54,7 @@ body[data-has-app-dock="true"] {
 
 .app-dock__icon {
   font-size: 1.2rem;
-  color: var(--calm-blue);
+  color: #2563eb;
   display: inline-flex;
 }
 
@@ -64,19 +64,19 @@ body[data-has-app-dock="true"] {
 
 .app-dock__link:hover,
 .app-dock__link:focus-visible {
-  color: var(--calm-blue);
-  background: rgba(15, 76, 129, 0.08);
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.14);
   transform: translateY(-2px);
   outline: none;
 }
 
 .app-dock__link.is-active {
-  color: var(--primary);
-  background: rgba(208, 0, 37, 0.12);
+  color: #1d4ed8;
+  background: rgba(37, 99, 235, 0.18);
 }
 
 .app-dock__link.is-active .app-dock__icon {
-  color: var(--primary);
+  color: #1d4ed8;
 }
 
 body.dark-mode[data-has-app-dock="true"] {
@@ -84,23 +84,23 @@ body.dark-mode[data-has-app-dock="true"] {
 }
 
 body.dark-mode .app-dock {
-  background: rgba(20, 12, 22, 0.92);
-  border-color: rgba(251, 247, 248, 0.12);
-  box-shadow: 0 24px 46px rgba(0, 0, 0, 0.38);
+  background: rgba(15, 23, 42, 0.9);
+  border-color: rgba(96, 165, 250, 0.24);
+  box-shadow: 0 24px 46px rgba(2, 6, 23, 0.5);
 }
 
 body.dark-mode .app-dock__link {
-  color: rgba(251, 247, 248, 0.72);
+  color: rgba(226, 232, 240, 0.78);
 }
 
 body.dark-mode .app-dock__link:hover,
 body.dark-mode .app-dock__link:focus-visible {
-  background: rgba(122, 185, 255, 0.18);
+  background: rgba(96, 165, 250, 0.24);
   color: #ffffff;
 }
 
 body.dark-mode .app-dock__link.is-active {
-  background: rgba(208, 0, 37, 0.32);
+  background: rgba(96, 165, 250, 0.3);
   color: #ffffff;
 }
 
