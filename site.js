@@ -31,6 +31,12 @@
   let appDockInitialised = false;
 
   const MOBILE_DOCK_QUERY = window.matchMedia('(max-width: 900px)');
+  const PREFERS_REDUCED_MOTION = typeof window.matchMedia === 'function'
+    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    : false;
+  const POINTER_QUERY = typeof window.matchMedia === 'function'
+    ? window.matchMedia('(pointer: fine)')
+    : null;
 
   const ensureMobileStylesheet = () => {
     if (document.getElementById(MOBILE_STYLESHEET_ID)) {
@@ -252,4 +258,64 @@
     }
     requestAnimationFrame(() => updateDockActiveState(dock));
   });
+
+  const initialiseAmbientPointer = () => {
+    if (PREFERS_REDUCED_MOTION) {
+      return;
+    }
+    if (POINTER_QUERY && typeof POINTER_QUERY.matches === 'boolean' && !POINTER_QUERY.matches) {
+      return;
+    }
+
+    const root = document.documentElement;
+    if (!root) {
+      return;
+    }
+
+    let rafId = null;
+    let pending = null;
+
+    const commit = () => {
+      if (!pending) {
+        rafId = null;
+        return;
+      }
+      const { x, y, opacity } = pending;
+      root.style.setProperty('--pointer-x', `${x}px`);
+      root.style.setProperty('--pointer-y', `${y}px`);
+      root.style.setProperty('--pointer-opacity', opacity);
+      pending = null;
+      rafId = null;
+    };
+
+    const schedule = (x, y, active) => {
+      const opacity = active ? '0.85' : '0';
+      pending = { x, y, opacity };
+      if (rafId !== null) {
+        return;
+      }
+      rafId = requestAnimationFrame(commit);
+    };
+
+    const handleMove = (event) => {
+      if (event.pointerType === 'touch') {
+        schedule(event.clientX, event.clientY, false);
+        return;
+      }
+      schedule(event.clientX, event.clientY, true);
+    };
+
+    const reset = () => {
+      const x = window.innerWidth / 2;
+      const y = window.innerHeight / 2;
+      schedule(x, y, false);
+    };
+
+    window.addEventListener('pointermove', handleMove, { passive: true });
+    window.addEventListener('pointerleave', reset);
+    window.addEventListener('blur', reset);
+    reset();
+  };
+
+  initialiseAmbientPointer();
 })();

@@ -79,6 +79,8 @@ const initialiseQuickNav = () => {
     return () => {};
   }
 
+  nav.style.setProperty('--quicknav-count', String(sections.length));
+
   const setActive = (id) => {
     sections.forEach(({ link, id: entryId }) => {
       const isActive = entryId === id;
@@ -89,6 +91,13 @@ const initialiseQuickNav = () => {
         link.removeAttribute('aria-current');
       }
     });
+    const index = sections.findIndex((entry) => entry.id === id);
+    if (index >= 0) {
+      const ratio = sections.length ? (index + 1) / sections.length : 0;
+      nav.style.setProperty('--quicknav-index', String(index));
+      nav.style.setProperty('--quicknav-progress', ratio.toFixed(4));
+      nav.dataset.activeSection = id;
+    }
   };
 
   if (sections[0]) {
