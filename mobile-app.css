@@ -1,0 +1,119 @@
+:root {
+  --app-dock-height: 76px;
+  --app-dock-border: rgba(15, 76, 129, 0.14);
+  --app-dock-shadow: 0 24px 46px rgba(15, 76, 129, 0.18);
+}
+
+body[data-has-app-dock="true"] {
+  padding-bottom: calc(var(--app-dock-height) + max(1.6rem, env(safe-area-inset-bottom)));
+}
+
+.app-dock {
+  position: fixed;
+  left: 50%;
+  bottom: max(1.2rem, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: min(480px, calc(100% - 2.6rem));
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 24px;
+  border: 1px solid var(--app-dock-border);
+  box-shadow: var(--app-dock-shadow);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  padding: 0.35rem;
+  z-index: 1200;
+}
+
+.app-dock__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--app-dock-count, 4), minmax(0, 1fr));
+  gap: 0.25rem;
+}
+
+.app-dock__item {
+  display: contents;
+}
+
+.app-dock__link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.6rem 0.25rem;
+  border-radius: 18px;
+  color: rgba(32, 19, 25, 0.72);
+  font-weight: 600;
+  font-size: 0.82rem;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  transition: color var(--transition), transform var(--transition), background var(--transition);
+}
+
+.app-dock__icon {
+  font-size: 1.2rem;
+  color: var(--calm-blue);
+  display: inline-flex;
+}
+
+.app-dock__label {
+  line-height: 1;
+}
+
+.app-dock__link:hover,
+.app-dock__link:focus-visible {
+  color: var(--calm-blue);
+  background: rgba(15, 76, 129, 0.08);
+  transform: translateY(-2px);
+  outline: none;
+}
+
+.app-dock__link.is-active {
+  color: var(--primary);
+  background: rgba(208, 0, 37, 0.12);
+}
+
+.app-dock__link.is-active .app-dock__icon {
+  color: var(--primary);
+}
+
+body.dark-mode[data-has-app-dock="true"] {
+  padding-bottom: calc(var(--app-dock-height) + max(1.6rem, env(safe-area-inset-bottom)));
+}
+
+body.dark-mode .app-dock {
+  background: rgba(20, 12, 22, 0.92);
+  border-color: rgba(251, 247, 248, 0.12);
+  box-shadow: 0 24px 46px rgba(0, 0, 0, 0.38);
+}
+
+body.dark-mode .app-dock__link {
+  color: rgba(251, 247, 248, 0.72);
+}
+
+body.dark-mode .app-dock__link:hover,
+body.dark-mode .app-dock__link:focus-visible {
+  background: rgba(122, 185, 255, 0.18);
+  color: #ffffff;
+}
+
+body.dark-mode .app-dock__link.is-active {
+  background: rgba(208, 0, 37, 0.32);
+  color: #ffffff;
+}
+
+body.high-contrast .app-dock {
+  background: #ffffff;
+  border-color: #000000;
+  box-shadow: none;
+}
+
+body.high-contrast .app-dock__link {
+  color: #000000;
+}
+
+body.high-contrast .app-dock__link.is-active {
+  background: rgba(0, 0, 0, 0.12);
+}
