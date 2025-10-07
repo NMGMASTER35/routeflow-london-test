@@ -11,7 +11,8 @@
   <script src="theme.js" defer></script>
   <script src="site.js" defer></script>
 </head>
-<body>
+<body class="site-body">
+  <a href="#main-content" class="skip-link">Skip to main content</a>
   <div id="navbar-container"></div>
   <section
     class="auth-gate"
@@ -33,7 +34,7 @@
       <p class="auth-gate__hint">Routes, disruptions and the Info hub remain public for everyone.</p>
     </div>
   </section>
-  <main id="main-content" class="dashboard" aria-labelledby="dashboard-title" data-auth-locked="true">
+  <main id="main-content" class="site-main dashboard" aria-labelledby="dashboard-title" data-auth-locked="true">
     <section class="dashboard-hero card" data-animate="fade-up" data-locked-section data-lock-label="Sign in">
       <div class="dashboard-hero__profile">
         <img src="user-icon.png" alt="User Avatar" id="profileAvatar" />

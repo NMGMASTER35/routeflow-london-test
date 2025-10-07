@@ -11,11 +11,12 @@
   <script src="theme.js" defer></script>
   <script src="site.js" defer></script>
 </head>
-<body>
+<body class="site-body">
+  <a href="#main-content" class="skip-link">Skip to main content</a>
   <div id="navbar-container"></div>
 
-  <main id="main-content" class="landing" aria-labelledby="landing-title">
-    <section class="landing-hero card">
+  <main id="main-content" class="site-main landing" aria-labelledby="landing-title">
+    <section id="section-overview" class="landing-hero card landing-section" data-section="overview" data-animate>
       <div class="landing-hero__content">
         <p class="landing-hero__eyebrow">London network command deck</p>
         <h1 id="landing-title">RouteFlow Control keeps every journey aligned.</h1>
@@ -88,7 +89,20 @@
       </div>
     </section>
 
-    <section class="landing-panels" aria-label="RouteFlow pillars">
+    <nav class="landing-quicknav card" aria-label="Page quick navigation" data-quicknav data-animate>
+      <h2 class="landing-quicknav__title">Jump to a mission segment</h2>
+      <ul class="landing-quicknav__list" role="list">
+        <li><a href="#section-overview">Overview</a></li>
+        <li><a href="#section-pillars">Pillars</a></li>
+        <li><a href="#section-modes">Modes</a></li>
+        <li><a href="#section-devices">Devices</a></li>
+        <li><a href="#section-tools">Tools</a></li>
+        <li><a href="#section-briefings">Briefings</a></li>
+        <li><a href="#section-updates">Updates</a></li>
+      </ul>
+    </nav>
+
+    <section id="section-pillars" class="landing-panels landing-section" aria-label="RouteFlow pillars" data-section="pillars" data-animate>
       <article class="landing-panel">
         <div class="landing-panel__icon" aria-hidden="true">
           <i class="fa-solid fa-compass-drafting"></i>
@@ -118,7 +132,7 @@
       </article>
     </section>
 
-    <section class="landing-gamify card" aria-label="Operations modes">
+    <section id="section-modes" class="landing-gamify card landing-section" aria-label="Operations modes" data-section="modes" data-animate>
       <header class="landing-gamify__header">
         <p class="landing-gamify__eyebrow">From control room to classroom</p>
         <h2>Translate live transport data into confident action.</h2>
@@ -148,7 +162,7 @@
       </div>
     </section>
 
-    <section class="landing-devices" aria-label="Cross-platform layouts">
+    <section id="section-devices" class="landing-devices landing-section" aria-label="Cross-platform layouts" data-section="devices" data-animate>
       <div class="landing-devices__card card">
         <h2>Beautiful on desktop, bold on mobile.</h2>
         <p>Adaptive panels reshape into vertical stories on phones and detailed grids on tablets or widescreen monitors. Dark mode and reduced-motion modes are only a tap away.</p>
@@ -182,7 +196,7 @@
       </div>
     </section>
 
-    <section class="landing-tools card" aria-label="Core tools">
+    <section id="section-tools" class="landing-tools card landing-section" aria-label="Core tools" data-section="tools" data-animate>
       <header class="landing-tools__header">
         <p class="landing-tools__eyebrow">Pick your toolkit</p>
         <h2>Every screen speaks to the same RouteFlow database.</h2>
@@ -210,7 +224,7 @@
       </div>
     </section>
 
-    <section class="landing-blog card" id="latest-blog">
+    <section id="section-briefings" class="landing-blog card landing-section" aria-label="Latest briefings" data-section="briefings" data-animate>
       <header class="landing-blog__header">
         <p class="landing-blog__eyebrow">Knowledge transmissions</p>
         <h2>Briefings, analysis and community success stories</h2>
@@ -223,15 +237,26 @@
       </footer>
     </section>
 
-    <section class="landing-updates card" aria-label="Newsletter">
+    <section id="section-updates" class="landing-updates card landing-section" aria-label="Newsletter" data-section="updates" data-animate>
       <div class="landing-updates__content">
         <h2>Stay ahead of the next service change</h2>
         <p>We only send high-signal updates: new datasets, layout upgrades and travel literacy packs.</p>
       </div>
       <div class="landing-updates__form">
-        <iframe data-w-token="3bb4115e41c545cc2d79" data-w-type="pop-in" frameborder="0" scrolling="yes" marginheight="0" marginwidth="0" src="https://1xl3t.mjt.lu/wgt/1xl3t/0pom/form?c=c8d5af69" width="100%" style="height: 0;"></iframe>
-        <iframe data-w-token="3bb4115e41c545cc2d79" data-w-type="trigger" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://1xl3t.mjt.lu/wgt/1xl3t/0pom/trigger?c=488ee8a4" width="100%" style="height: 0;"></iframe>
-        <script type="text/javascript" src="https://app.mailjet.com/pas-nc-pop-in-v1.js"></script>
+        <form id="newsletter-form" class="landing-updates__newsletter" novalidate data-newsletter-form>
+          <div class="landing-updates__fields">
+            <label class="landing-updates__label" for="newsletter-email">Email address</label>
+            <div class="landing-updates__input-row">
+              <input type="email" id="newsletter-email" name="email" placeholder="you@example.com" autocomplete="email" required>
+              <button type="submit" class="landing-updates__submit">
+                <span>Join briefing list</span>
+                <i class="fa-solid fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+          <p class="landing-updates__privacy">We respect your inbox. Expect at most one mission briefing per week.</p>
+          <p class="landing-updates__message" data-newsletter-message aria-live="polite"></p>
+        </form>
       </div>
     </section>
   </main>
@@ -271,23 +296,6 @@
 
   <script src="navbar-loader.js"></script>
   <script src="info.js" type="module"></script>
-  <script>
-    const form = document.getElementById('newsletter-form');
-    const responseMessage = document.getElementById('response-message');
-
-    form.addEventListener('submit', (event) => {
-      event.preventDefault();
-      const emailInput = document.getElementById('email');
-      const email = emailInput.value.trim();
-
-      if (!email) {
-        responseMessage.textContent = 'Please enter your email address.';
-        return;
-      }
-
-      responseMessage.textContent = 'Thanks for subscribing! We\'ll keep you posted.';
-      emailInput.value = '';
-    });
-  </script>
+  <script src="landing.js" type="module"></script>
 </body>
 </html>
