@@ -1,7 +1,7 @@
 :root {
   --app-dock-height: 76px;
-  --app-dock-border: rgba(15, 76, 129, 0.14);
-  --app-dock-shadow: 0 24px 46px rgba(15, 76, 129, 0.18);
+  --app-dock-border: rgba(15, 98, 254, 0.18);
+  --app-dock-shadow: 0 26px 48px rgba(11, 66, 206, 0.2);
 }
 
 body[data-has-app-dock="true"] {
@@ -14,7 +14,7 @@ body[data-has-app-dock="true"] {
   bottom: max(1.2rem, env(safe-area-inset-bottom));
   transform: translateX(-50%);
   width: min(480px, calc(100% - 2.6rem));
-  background: rgba(255, 255, 255, 0.92);
+  background: linear-gradient(140deg, rgba(255, 255, 255, 0.92), rgba(222, 236, 255, 0.9));
   border-radius: 24px;
   border: 1px solid var(--app-dock-border);
   box-shadow: var(--app-dock-shadow);
@@ -44,7 +44,7 @@ body[data-has-app-dock="true"] {
   gap: 0.3rem;
   padding: 0.6rem 0.25rem;
   border-radius: 18px;
-  color: rgba(32, 19, 25, 0.72);
+  color: rgba(15, 27, 61, 0.78);
   font-weight: 600;
   font-size: 0.82rem;
   letter-spacing: 0.01em;
@@ -54,7 +54,7 @@ body[data-has-app-dock="true"] {
 
 .app-dock__icon {
   font-size: 1.2rem;
-  color: var(--calm-blue);
+  color: var(--primary);
   display: inline-flex;
 }
 
@@ -64,19 +64,19 @@ body[data-has-app-dock="true"] {
 
 .app-dock__link:hover,
 .app-dock__link:focus-visible {
-  color: var(--calm-blue);
-  background: rgba(15, 76, 129, 0.08);
+  color: var(--primary);
+  background: rgba(var(--calm-blue-rgb), 0.12);
   transform: translateY(-2px);
   outline: none;
 }
 
 .app-dock__link.is-active {
-  color: var(--primary);
-  background: rgba(208, 0, 37, 0.12);
+  color: #ffffff;
+  background: linear-gradient(130deg, var(--primary), var(--accent-blue));
 }
 
 .app-dock__link.is-active .app-dock__icon {
-  color: var(--primary);
+  color: #ffffff;
 }
 
 body.dark-mode[data-has-app-dock="true"] {
@@ -84,23 +84,23 @@ body.dark-mode[data-has-app-dock="true"] {
 }
 
 body.dark-mode .app-dock {
-  background: rgba(20, 12, 22, 0.92);
-  border-color: rgba(251, 247, 248, 0.12);
-  box-shadow: 0 24px 46px rgba(0, 0, 0, 0.38);
+  background: linear-gradient(150deg, rgba(12, 18, 42, 0.94), rgba(18, 28, 62, 0.88));
+  border-color: rgba(232, 239, 255, 0.14);
+  box-shadow: 0 26px 48px rgba(2, 6, 18, 0.6);
 }
 
 body.dark-mode .app-dock__link {
-  color: rgba(251, 247, 248, 0.72);
+  color: rgba(232, 239, 255, 0.78);
 }
 
 body.dark-mode .app-dock__link:hover,
 body.dark-mode .app-dock__link:focus-visible {
-  background: rgba(122, 185, 255, 0.18);
+  background: rgba(var(--calm-blue-rgb), 0.22);
   color: #ffffff;
 }
 
 body.dark-mode .app-dock__link.is-active {
-  background: rgba(208, 0, 37, 0.32);
+  background: linear-gradient(130deg, var(--primary), var(--accent-blue));
   color: #ffffff;
 }
 

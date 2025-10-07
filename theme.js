@@ -14,35 +14,37 @@
   };
 
   const DEFAULT_TOKENS = {
-    '--primary': '#ff7ad9',
-    '--primary-dark': '#ff4fb6',
-    '--accent-blue': '#857cff',
-    '--accent-blue-dark': '#6b63ff',
-    '--accent-blue-rgb': '133, 124, 255',
-    '--accent-blue-dark-rgb': '107, 99, 255',
-    '--accent-blue-tint-rgb': '176, 166, 255',
-    '--accent-red': '#ff3b30',
-    '--accent-red-dark': '#d12a22',
-    '--accent-red-rgb': '255, 59, 48',
-    '--background-light': '#fef7ff',
-    '--foreground-light': '#1a214f',
-    '--background-dark': '#070a20',
-    '--foreground-dark': '#f8f8ff',
-    '--card-bg-light': 'rgba(255, 255, 255, 0.98)',
-    '--card-bg-dark': 'rgba(13, 18, 42, 0.95)',
-    '--ink-rgb': '26, 33, 79',
-    '--ink-soft-rgb': '45, 57, 112',
-    '--transition': '0.26s cubic-bezier(.25,.8,.25,1)'
+    '--primary': '#0f62fe',
+    '--primary-dark': '#0043ce',
+    '--accent-blue': '#30a0ff',
+    '--accent-blue-dark': '#0f6ede',
+    '--accent-blue-rgb': '48, 160, 255',
+    '--accent-blue-dark-rgb': '15, 110, 222',
+    '--accent-blue-tint-rgb': '186, 229, 255',
+    '--accent-red': '#ff8b5f',
+    '--accent-red-dark': '#ff6a3d',
+    '--accent-red-rgb': '255, 139, 95',
+    '--background-light': '#f2f7ff',
+    '--foreground-light': '#0a1f3f',
+    '--background-dark': '#020f24',
+    '--foreground-dark': '#e6f0ff',
+    '--card-bg-light': 'rgba(255, 255, 255, 0.92)',
+    '--card-bg-dark': 'rgba(13, 23, 53, 0.92)',
+    '--ink-rgb': '10, 31, 63',
+    '--ink-soft-rgb': '36, 66, 118',
+    '--transition': '0.32s cubic-bezier(.22,.83,.38,.99)'
   };
 
   const ACCENTS = {
     routeflow: {
-      label: 'RouteFlow Bubblegum & Midnight',
-      accent: '#ff7ad9',
-      accentDark: '#ff4fb6',
-      accentTint: '#ffc5f3',
-      red: '#ff7ad9',
-      redDark: '#ff4fb6'
+      label: 'RouteFlow Horizon Blue',
+      accent: '#30a0ff',
+      accentDark: '#0f6ede',
+      accentTint: '#bae5ff',
+      primary: '#0f62fe',
+      primaryDark: '#0043ce',
+      red: '#ff8b5f',
+      redDark: '#ff6a3d'
     }
   };
 
@@ -176,12 +178,15 @@
     const palette = accent ?? ACCENTS[state.accent] ?? ACCENTS[DEFAULT_PREFERENCES.accent];
     if (!palette) return;
 
+    const primary = palette.primary ?? palette.accent;
+    const primaryDark = palette.primaryDark ?? palette.accentDark;
+
     root.style.setProperty('--accent-blue', palette.accent);
     root.style.setProperty('--accent-blue-dark', palette.accentDark);
-    root.style.setProperty('--primary', palette.accent);
-    root.style.setProperty('--primary-dark', palette.accentDark);
-    root.style.setProperty('--navbar-accent', palette.accent);
-    root.style.setProperty('--navbar-accent-dark', palette.accentDark);
+    root.style.setProperty('--primary', primary);
+    root.style.setProperty('--primary-dark', primaryDark);
+    root.style.setProperty('--navbar-accent', primary);
+    root.style.setProperty('--navbar-accent-dark', primaryDark);
 
     const accentRgb = hexToRgb(palette.accent) ?? DEFAULT_TOKENS['--accent-blue-rgb'];
     const accentDarkRgb = hexToRgb(palette.accentDark) ?? DEFAULT_TOKENS['--accent-blue-dark-rgb'];

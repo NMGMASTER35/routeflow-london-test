@@ -1612,13 +1612,19 @@ function applyAuthUi(summary, user) {
     menu.setAttribute('hidden', '');
   });
 
-  const displayName = resolvedSummary?.displayName
-    || user?.email
-    || resolvedSummary?.email
-    || 'Account';
+  const email = typeof (user?.email || resolvedSummary?.email) === 'string'
+    ? (user?.email || resolvedSummary?.email).trim()
+    : '';
+  const fallbackName = email ? email.split('@')[0] : '';
+  const rawDisplayName = (resolvedSummary?.displayName || user?.displayName || '').trim();
+  const displayName = rawDisplayName || fallbackName || 'Explorer';
+
+  const srLabelText = user
+    ? `Account menu for ${displayName}. View profile or adjust settings.`
+    : 'Account menu. Sign in or create an account.';
 
   document.querySelectorAll('[data-profile-label]').forEach((label) => {
-    label.textContent = user ? displayName : 'Account';
+    label.textContent = srLabelText;
   });
 
   document.querySelectorAll('[data-profile-name]').forEach((nameEl) => {
