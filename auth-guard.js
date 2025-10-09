@@ -34,8 +34,9 @@
     }
   }
 
-  function toggleLockedState(root, sections, locked) {
-    if (root) {
+  function toggleLockedState(root, sections, locked, options = {}) {
+    const { softLock = false } = options;
+    if (root && !softLock) {
       if (locked) {
         root.setAttribute('data-auth-locked', 'true');
       } else {
@@ -45,7 +46,7 @@
     if (Array.isArray(sections)) {
       sections.forEach((section) => {
         if (!section) return;
-        if (locked) {
+        if (locked && !softLock) {
           section.setAttribute('data-locked', 'true');
         } else {
           section.removeAttribute('data-locked');
@@ -74,6 +75,8 @@
     const lockedSections = Array.from(options.lockedSections || []);
     const onLock = typeof options.onLock === 'function' ? options.onLock : null;
     const onUnlock = typeof options.onUnlock === 'function' ? options.onUnlock : null;
+    const overlayMode = options.overlayMode || 'soft';
+    const lockStyle = options.lockStyle || 'soft';
 
     ensureLoginHandler(overlay);
 
@@ -86,9 +89,9 @@
           return;
         }
         lastState = true;
-        toggleLockedState(root, lockedSections, true);
+        toggleLockedState(root, lockedSections, true, { softLock: lockStyle === 'soft' });
         updateMessage(overlay, meta, options);
-        showOverlay(overlay, true);
+        showOverlay(overlay, overlayMode === 'modal');
         const loginButton = getLoginButton(overlay);
         if (loginButton) {
           setTimeout(() => {
@@ -110,7 +113,7 @@
           return;
         }
         lastState = false;
-        toggleLockedState(root, lockedSections, false);
+        toggleLockedState(root, lockedSections, false, { softLock: lockStyle === 'soft' });
         showOverlay(overlay, false);
         if (onUnlock) {
           try {
@@ -121,8 +124,6 @@
         }
       }
     };
-
-    api.lock({ initial: true });
 
     return api;
   }

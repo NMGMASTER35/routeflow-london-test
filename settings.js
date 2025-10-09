@@ -67,6 +67,13 @@
     const highContrastToggle = document.getElementById('prefHighContrast');
     const readableFontToggle = document.getElementById('prefReadableFont');
     const reduceMotionToggle = document.getElementById('prefReduceMotion');
+    const focusHighlightToggle = document.getElementById('prefFocusHighlight');
+    const dyslexiaToggle = document.getElementById('prefDyslexiaFriendly');
+    const underlineLinksToggle = document.getElementById('prefUnderlineLinks');
+    const textSpacingToggle = document.getElementById('prefTextSpacing');
+    const monochromeToggle = document.getElementById('prefMonochrome');
+    const largeCursorToggle = document.getElementById('prefLargeCursor');
+    const simplifiedLayoutToggle = document.getElementById('prefSimplifiedLayout');
     const textScaleSlider = document.getElementById('prefTextScale');
     const textScaleLabel = document.getElementById('textScaleValue');
     const accentPalette = document.getElementById('accentPalette');
@@ -96,6 +103,13 @@
     bindSwitch(highContrastToggle, (checked) => ({ highContrast: checked }))(prefsApi);
     bindSwitch(readableFontToggle, (checked) => ({ readableFont: checked }))(prefsApi);
     bindSwitch(reduceMotionToggle, (checked) => ({ reduceMotion: checked }))(prefsApi);
+    bindSwitch(focusHighlightToggle, (checked) => ({ focusHighlight: checked }))(prefsApi);
+    bindSwitch(dyslexiaToggle, (checked) => ({ dyslexiaFriendly: checked }))(prefsApi);
+    bindSwitch(underlineLinksToggle, (checked) => ({ underlineLinks: checked }))(prefsApi);
+    bindSwitch(textSpacingToggle, (checked) => ({ textSpacing: checked }))(prefsApi);
+    bindSwitch(monochromeToggle, (checked) => ({ monochrome: checked }))(prefsApi);
+    bindSwitch(largeCursorToggle, (checked) => ({ largeCursor: checked }))(prefsApi);
+    bindSwitch(simplifiedLayoutToggle, (checked) => ({ simplifiedLayout: checked }))(prefsApi);
 
     if (resetButton) {
       resetButton.addEventListener('click', () => {
@@ -115,6 +129,27 @@
       }
       if (reduceMotionToggle) {
         reduceMotionToggle.checked = preferences.reduceMotion;
+      }
+      if (focusHighlightToggle) {
+        focusHighlightToggle.checked = preferences.focusHighlight;
+      }
+      if (dyslexiaToggle) {
+        dyslexiaToggle.checked = preferences.dyslexiaFriendly;
+      }
+      if (underlineLinksToggle) {
+        underlineLinksToggle.checked = preferences.underlineLinks;
+      }
+      if (textSpacingToggle) {
+        textSpacingToggle.checked = preferences.textSpacing;
+      }
+      if (monochromeToggle) {
+        monochromeToggle.checked = preferences.monochrome;
+      }
+      if (largeCursorToggle) {
+        largeCursorToggle.checked = preferences.largeCursor;
+      }
+      if (simplifiedLayoutToggle) {
+        simplifiedLayoutToggle.checked = preferences.simplifiedLayout;
       }
       if (textScaleSlider) {
         const scaleValue = Math.round(clamp(preferences.textScale, 0.9, 1.3) * 100);

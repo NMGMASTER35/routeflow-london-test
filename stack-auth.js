@@ -1,5 +1,7 @@
 (function initialiseStackAuth() {
   const STACK_STORAGE_PREFIX = 'routeflow:stack-auth:identity:';
+  const STACK_AUTH_PROJECT_ID = 'fdcbaf0e-9dac-4347-93d2-ea467ec0c38f';
+  const STACK_AUTH_ADMIN_TEAM_ID = 'f7bf35c6-afc7-45c6-8f1f-b120f6de8d37';
 
   const PROVIDERS = Object.freeze({
     'google.com': {
@@ -178,6 +180,8 @@
 
   window.RouteflowStackAuth = Object.freeze({
     ...(window.RouteflowStackAuth || {}),
-    ...api
+    ...api,
+    projectId: STACK_AUTH_PROJECT_ID,
+    adminTeamId: STACK_AUTH_ADMIN_TEAM_ID
   });
 })();

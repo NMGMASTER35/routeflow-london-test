@@ -6,43 +6,66 @@
   const STORAGE_KEY = 'routeflow:preferences';
   const DEFAULT_PREFERENCES = {
     theme: 'light',
-    accent: 'routeflow',
+    accent: 'horizon',
     textScale: 1,
     highContrast: false,
     readableFont: false,
-    reduceMotion: false
+    reduceMotion: false,
+    dyslexiaFriendly: false,
+    focusHighlight: true,
+    underlineLinks: false,
+    textSpacing: false,
+    monochrome: false,
+    largeCursor: false,
+    simplifiedLayout: false
   };
 
   const DEFAULT_TOKENS = {
-    '--primary': '#ff7ad9',
-    '--primary-dark': '#ff4fb6',
-    '--accent-blue': '#857cff',
-    '--accent-blue-dark': '#6b63ff',
-    '--accent-blue-rgb': '133, 124, 255',
-    '--accent-blue-dark-rgb': '107, 99, 255',
-    '--accent-blue-tint-rgb': '176, 166, 255',
-    '--accent-red': '#ff3b30',
-    '--accent-red-dark': '#d12a22',
-    '--accent-red-rgb': '255, 59, 48',
-    '--background-light': '#fef7ff',
-    '--foreground-light': '#1a214f',
-    '--background-dark': '#070a20',
-    '--foreground-dark': '#f8f8ff',
-    '--card-bg-light': 'rgba(255, 255, 255, 0.98)',
-    '--card-bg-dark': 'rgba(13, 18, 42, 0.95)',
-    '--ink-rgb': '26, 33, 79',
-    '--ink-soft-rgb': '45, 57, 112',
-    '--transition': '0.26s cubic-bezier(.25,.8,.25,1)'
+    '--primary': '#2563eb',
+    '--primary-dark': '#1d4ed8',
+    '--accent-blue': '#2563eb',
+    '--accent-blue-dark': '#1e40af',
+    '--accent-blue-rgb': '37, 99, 235',
+    '--accent-blue-dark-rgb': '30, 64, 175',
+    '--accent-blue-tint-rgb': '147, 197, 253',
+    '--accent-red': '#1e3a8a',
+    '--accent-red-dark': '#172554',
+    '--accent-red-rgb': '30, 58, 138',
+    '--background-light': '#f5f7ff',
+    '--foreground-light': '#0b1220',
+    '--background-dark': '#020617',
+    '--foreground-dark': '#e2e8f0',
+    '--card-bg-light': 'rgba(255, 255, 255, 0.96)',
+    '--card-bg-dark': 'rgba(2, 6, 23, 0.86)',
+    '--ink-rgb': '11, 18, 32',
+    '--ink-soft-rgb': '56, 70, 97',
+    '--transition': '0.28s cubic-bezier(.25,.8,.25,1)'
   };
 
   const ACCENTS = {
-    routeflow: {
-      label: 'RouteFlow Bubblegum & Midnight',
-      accent: '#ff7ad9',
-      accentDark: '#ff4fb6',
-      accentTint: '#ffc5f3',
-      red: '#ff7ad9',
-      redDark: '#ff4fb6'
+    horizon: {
+      label: 'Horizon Blue',
+      accent: '#2563eb',
+      accentDark: '#1d4ed8',
+      accentTint: '#93c5fd',
+      red: '#1e3a8a',
+      redDark: '#1d4ed8'
+    },
+    skyline: {
+      label: 'Skyline Indigo',
+      accent: '#3730a3',
+      accentDark: '#312e81',
+      accentTint: '#c7d2fe',
+      red: '#4338ca',
+      redDark: '#312e81'
+    },
+    lagoon: {
+      label: 'Lagoon Teal',
+      accent: '#0ea5e9',
+      accentDark: '#0369a1',
+      accentTint: '#7dd3fc',
+      red: '#1e3a8a',
+      redDark: '#0f172a'
     }
   };
 
@@ -133,6 +156,34 @@
       if (Object.prototype.hasOwnProperty.call(partial, 'reduceMotion')) {
         result.reduceMotion = Boolean(partial.reduceMotion);
       }
+
+      if (Object.prototype.hasOwnProperty.call(partial, 'dyslexiaFriendly')) {
+        result.dyslexiaFriendly = Boolean(partial.dyslexiaFriendly);
+      }
+
+      if (Object.prototype.hasOwnProperty.call(partial, 'focusHighlight')) {
+        result.focusHighlight = Boolean(partial.focusHighlight);
+      }
+
+      if (Object.prototype.hasOwnProperty.call(partial, 'underlineLinks')) {
+        result.underlineLinks = Boolean(partial.underlineLinks);
+      }
+
+      if (Object.prototype.hasOwnProperty.call(partial, 'textSpacing')) {
+        result.textSpacing = Boolean(partial.textSpacing);
+      }
+
+      if (Object.prototype.hasOwnProperty.call(partial, 'monochrome')) {
+        result.monochrome = Boolean(partial.monochrome);
+      }
+
+      if (Object.prototype.hasOwnProperty.call(partial, 'largeCursor')) {
+        result.largeCursor = Boolean(partial.largeCursor);
+      }
+
+      if (Object.prototype.hasOwnProperty.call(partial, 'simplifiedLayout')) {
+        result.simplifiedLayout = Boolean(partial.simplifiedLayout);
+      }
     }
 
     return result;
@@ -144,7 +195,14 @@
     textScale: updates.textScale ?? base.textScale,
     highContrast: updates.highContrast ?? base.highContrast,
     readableFont: updates.readableFont ?? base.readableFont,
-    reduceMotion: updates.reduceMotion ?? base.reduceMotion
+    reduceMotion: updates.reduceMotion ?? base.reduceMotion,
+    dyslexiaFriendly: updates.dyslexiaFriendly ?? base.dyslexiaFriendly,
+    focusHighlight: updates.focusHighlight ?? base.focusHighlight,
+    underlineLinks: updates.underlineLinks ?? base.underlineLinks,
+    textSpacing: updates.textSpacing ?? base.textSpacing,
+    monochrome: updates.monochrome ?? base.monochrome,
+    largeCursor: updates.largeCursor ?? base.largeCursor,
+    simplifiedLayout: updates.simplifiedLayout ?? base.simplifiedLayout
   });
 
   const loadPreferences = () => {
@@ -256,10 +314,25 @@
     document.documentElement.dataset.theme = 'light';
     document.documentElement.dataset.accent = state.accent;
     document.documentElement.dataset.highContrast = String(state.highContrast);
+    document.documentElement.dataset.readableFont = String(state.readableFont);
+    document.documentElement.dataset.dyslexiaFriendly = String(state.dyslexiaFriendly);
+    document.documentElement.dataset.focusHighlight = String(state.focusHighlight);
+    document.documentElement.dataset.underlineLinks = String(state.underlineLinks);
+    document.documentElement.dataset.textSpacing = String(state.textSpacing);
     document.documentElement.dataset.reduceMotion = String(state.reduceMotion);
+    document.documentElement.dataset.monochrome = String(state.monochrome);
+    document.documentElement.dataset.largeCursor = String(state.largeCursor);
+    document.documentElement.dataset.simplifiedLayout = String(state.simplifiedLayout);
 
     applyHighContrast(root, body, state.highContrast);
     body.classList.toggle('readable-font', state.readableFont);
+    body.classList.toggle('dyslexia-font', state.dyslexiaFriendly);
+    body.classList.toggle('focus-highlight', state.focusHighlight);
+    body.classList.toggle('underline-links', state.underlineLinks);
+    body.classList.toggle('text-spacing', state.textSpacing);
+    body.classList.toggle('monochrome', state.monochrome);
+    body.classList.toggle('large-cursor', state.largeCursor);
+    body.classList.toggle('simplified-layout', state.simplifiedLayout);
     applyReduceMotion(root, body, state.reduceMotion);
 
     const fontScale = clamp(Number(state.textScale) || DEFAULT_PREFERENCES.textScale, 0.9, 1.3);
@@ -273,6 +346,13 @@
     body.dataset.highContrast = String(state.highContrast);
     body.dataset.readableFont = String(state.readableFont);
     body.dataset.reduceMotion = String(state.reduceMotion);
+    body.dataset.dyslexiaFriendly = String(state.dyslexiaFriendly);
+    body.dataset.focusHighlight = String(state.focusHighlight);
+    body.dataset.underlineLinks = String(state.underlineLinks);
+    body.dataset.textSpacing = String(state.textSpacing);
+    body.dataset.monochrome = String(state.monochrome);
+    body.dataset.largeCursor = String(state.largeCursor);
+    body.dataset.simplifiedLayout = String(state.simplifiedLayout);
     body.dataset.textScale = fontScale.toFixed(2);
   };
 
