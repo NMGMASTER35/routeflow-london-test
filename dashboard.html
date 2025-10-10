@@ -19,28 +19,8 @@
     </header>
 
     <div class="site-shell__main">
-  <section
-    class="auth-gate"
-    id="dashboardAuthGate"
-    role="alertdialog"
-    aria-modal="true"
-    aria-labelledby="dashboardGateTitle"
-    aria-live="assertive"
-    hidden
-  >
-    <div class="auth-gate__panel">
-      <p class="auth-gate__eyebrow">Progress locked</p>
-      <h2 class="auth-gate__title" id="dashboardGateTitle">Log in to activate the RouteFlow dashboard</h2>
-      <p class="auth-gate__message" data-auth-gate-message>Sign in to unlock this area.</p>
-      <button type="button" class="auth-gate__cta" data-auth-gate-login>
-        <i class="fa-solid fa-lock-open" aria-hidden="true"></i>
-        <span>Sign in to continue</span>
-      </button>
-      <p class="auth-gate__hint">Routes, disruptions and the Info hub remain public for everyone.</p>
-    </div>
-  </section>
   <main id="main-content" class="site-main dashboard" aria-labelledby="dashboard-title">
-    <section class="dashboard-hero card" data-animate="fade-up" data-locked-section data-lock-label="Sign in">
+    <section class="dashboard-hero card" data-animate="fade-up">
       <div class="dashboard-hero__profile">
         <img src="user-icon.png" alt="User Avatar" id="profileAvatar" />
         <div>
@@ -87,7 +67,7 @@
     </section>
 
     <section class="dashboard-grid">
-      <article class="card dashboard-card" id="tasksCard" data-locked-section data-lock-label="Sign in">
+      <article class="card dashboard-card" id="tasksCard">
         <header class="dashboard-card__header">
           <div>
             <p class="dashboard-card__eyebrow">Daily boosters</p>
@@ -98,7 +78,7 @@
         <ul class="dashboard-task-list" id="taskList"></ul>
       </article>
 
-      <article class="card dashboard-card" id="badgesCard" data-locked-section data-lock-label="Sign in">
+      <article class="card dashboard-card" id="badgesCard">
         <header class="dashboard-card__header">
           <div>
             <p class="dashboard-card__eyebrow">Badge cabinet</p>
@@ -109,7 +89,7 @@
         <div class="dashboard-badge-grid" id="badgeGrid"></div>
       </article>
 
-      <article class="card dashboard-card" id="rolesCard" data-locked-section data-lock-label="Sign in">
+      <article class="card dashboard-card" id="rolesCard">
         <header class="dashboard-card__header">
           <div>
             <p class="dashboard-card__eyebrow">Role sync</p>
@@ -120,7 +100,7 @@
         <div class="dashboard-role-grid" id="roleList"></div>
       </article>
 
-      <article class="card dashboard-card" id="miniGamesCard" data-locked-section data-lock-label="Sign in">
+      <article class="card dashboard-card" id="miniGamesCard">
         <header class="dashboard-card__header">
           <div>
             <p class="dashboard-card__eyebrow">Mini games</p>
@@ -131,7 +111,7 @@
         <div class="dashboard-mini-grid" id="miniGameList"></div>
       </article>
 
-      <article class="card dashboard-card" id="challengesCard" data-locked-section data-lock-label="Sign in">
+      <article class="card dashboard-card" id="challengesCard">
         <header class="dashboard-card__header">
           <div>
             <p class="dashboard-card__eyebrow">Challenges</p>
@@ -151,7 +131,7 @@
         </div>
       </article>
 
-      <article class="card dashboard-card" id="missionsCard" data-locked-section data-lock-label="Sign in">
+      <article class="card dashboard-card" id="missionsCard">
         <header class="dashboard-card__header">
           <div>
             <p class="dashboard-card__eyebrow">Missions</p>
@@ -162,7 +142,7 @@
         <ul class="dashboard-mission-list" id="missionList"></ul>
       </article>
 
-      <article class="card dashboard-card" id="activityCard" data-locked-section data-lock-label="Sign in">
+      <article class="card dashboard-card" id="activityCard">
         <header class="dashboard-card__header">
           <div>
             <p class="dashboard-card__eyebrow">Timeline</p>
@@ -172,7 +152,7 @@
         <ul id="activityList" class="activity-list"></ul>
       </article>
 
-      <article class="card dashboard-card" data-locked-section data-lock-label="Sign in">
+      <article class="card dashboard-card">
         <header class="dashboard-card__header">
           <div>
             <p class="dashboard-card__eyebrow">Saved stops</p>
@@ -182,7 +162,7 @@
         <div id="favouritesGrid" class="favourites-grid"></div>
       </article>
 
-      <article class="card dashboard-card" data-locked-section data-lock-label="Sign in">
+      <article class="card dashboard-card">
         <header class="dashboard-card__header">
           <div>
             <p class="dashboard-card__eyebrow">Quick access</p>
@@ -675,15 +655,17 @@
       ]
     });
 
-    const guard = window.RouteflowAuthGate?.create({
-      root: rootElement,
-      overlay: overlayElement,
-      lockedSections,
-      lockedMessage: 'Sign in to work through missions and unlock challenging rewards.',
-      errorMessage: 'Authentication is temporarily unavailable. Please try again later.',
-      onLock: handleLock,
-      onUnlock: handleUnlock
-    });
+    const guard = overlayElement && typeof window.RouteflowAuthGate?.create === 'function'
+      ? window.RouteflowAuthGate.create({
+        root: rootElement,
+        overlay: overlayElement,
+        lockedSections,
+        lockedMessage: 'Sign in to work through missions and unlock challenging rewards.',
+        errorMessage: 'Authentication is temporarily unavailable. Please try again later.',
+        onLock: handleLock,
+        onUnlock: handleUnlock
+      })
+      : null;
 
     function storageKey(uid) {
       return `${STORAGE_PREFIX}:${uid || 'guest'}`;

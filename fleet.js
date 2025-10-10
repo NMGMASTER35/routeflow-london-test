@@ -1,4 +1,14 @@
 (function initialiseFleetGrid() {
+  const authOverlay = document.getElementById('fleetAuthGate');
+  if (authOverlay) {
+    authOverlay.remove();
+  }
+  document.body?.removeAttribute('data-auth-locked');
+  document.querySelectorAll('[data-locked]').forEach((section) => {
+    section.removeAttribute('data-locked');
+    section.removeAttribute('data-lock-label');
+  });
+
   const DATA = [
     {
       id: 'LTZ1234',
