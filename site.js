@@ -17,6 +17,12 @@
       matches: ['tracking.html', 'disruptions.html']
     },
     {
+      href: 'fleet.html',
+      label: 'Fleet',
+      icon: 'fa-solid fa-bus',
+      matches: ['fleet.html', 'withdrawn.html']
+    },
+    {
       href: 'planning.html',
       label: 'Plan',
       icon: 'fa-solid fa-route',
