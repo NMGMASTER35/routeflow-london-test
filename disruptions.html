@@ -3,147 +3,139 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Disruptions | RouteFlow London</title>
+  <title>Disruptions – RouteFlow London</title>
   <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png" />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <link rel="stylesheet" href="style.css" />
   <script src="theme.js" defer></script>
   <script src="site.js" defer></script>
 </head>
-<body class="site-body">
+<body class="metro-app app app--disruptions">
   <a href="#main-content" class="skip-link">Skip to main content</a>
-  <div class="site-shell">
-    <header class="site-shell__header">
-      <div id="navbar-container" class="site-shell__navbar"></div>
+  <div class="app__wrapper">
+    <header class="app-header" aria-label="RouteFlow London navigation">
+      <div class="app-header__bar">
+        <div id="navbar-container" class="app-header__mount"></div>
+      </div>
+      <div class="app-header__ticker" role="status" aria-live="polite">
+        <span class="app-header__ticker-label">Network status</span>
+        <p class="app-header__ticker-text">Monitor live incidents across rail, underground, and bus services with calm severity cues.</p>
+      </div>
     </header>
 
-    <div class="site-shell__main">
-  <main id="main-content" class="site-main network-shell">
-    <section class="network-hero">
-      <div>
-        <h1>Live disruptions</h1>
-        <p>Monitor active incidents across London&apos;s network. Severe issues are highlighted so you can adjust journeys quickly.</p>
-      </div>
-      <div class="network-hero__stats">
-        <div class="network-stat">
-          <span>Active incidents</span>
-          <strong id="disruptionsActive">0</strong>
+    <main id="main-content" class="app-main data-page" aria-labelledby="disruptions-title">
+      <header class="page-hero page-hero--data">
+        <div class="page-hero__content">
+          <p class="eyebrow">Live disruptions</p>
+          <h1 id="disruptions-title">Stay ahead of incidents across London&apos;s transport network.</h1>
+          <p class="lead">Filter by bus route or service condition, then dive into curated cards showing severity, advice, and live resolution progress.</p>
         </div>
-        <div class="network-stat">
-          <span>Good service lines</span>
-          <strong id="disruptionsGood">0</strong>
-        </div>
-        <div class="network-stat">
-          <span>Bus routes affected</span>
-          <strong id="disruptionsRoutes">0</strong>
-        </div>
-      </div>
-    </section>
+        <dl class="stats stats--inline" aria-label="Disruption summary">
+          <div class="stat">
+            <dt>Active incidents</dt>
+            <dd id="disruptionsActive">0</dd>
+          </div>
+          <div class="stat">
+            <dt>Good service lines</dt>
+            <dd id="disruptionsGood">0</dd>
+          </div>
+          <div class="stat">
+            <dt>Bus routes affected</dt>
+            <dd id="disruptionsRoutes">0</dd>
+          </div>
+        </dl>
+      </header>
 
-    <section class="network-toolbar" aria-label="Disruption filters">
-      <div class="network-search">
-        <label for="busSearch">Filter bus routes</label>
-        <input type="search" id="busSearch" placeholder="Search by route number" autocomplete="off" />
-      </div>
-      <div class="network-filters" id="disruptionFilters" role="group" aria-label="Show services">
-        <button type="button" class="network-chip" data-filter="issues" data-active="true">With issues</button>
-        <button type="button" class="network-chip" data-filter="good">Good service</button>
-      </div>
-    </section>
-
-    <section class="network-section">
-      <h2 class="network-section__title">Rail &amp; Underground</h2>
-      <div class="network-grid" id="railGrid" aria-live="polite"></div>
-    </section>
-
-    <section class="network-section">
-      <h2 class="network-section__title">Bus network</h2>
-      <div class="network-grid" id="busGrid" aria-live="polite"></div>
-    </section>
-  </main>
-
-    </div>
-
-    <footer class="site-footer" aria-label="RouteFlow London footer">
-      <div class="site-footer__inner">
-        <div class="site-footer__brand">
-          <img src="images/New_Routflow_London_Logo.png" alt="RouteFlow London logo">
-          <div>
-            <h2>Stay curious about London’s transport</h2>
-            <p>RouteFlow London turns TfL feeds into playful guidance so planners, families and classrooms can travel with calm confidence.</p>
-            <div class="site-footer__social" role="list">
-              <a href="https://discord.gg/qVf3nN4Mgq" aria-label="RouteFlow London on Discord"><i class="fa-brands fa-discord"></i></a>
-              <a href="https://www.tiktok.com/@the_bus_father" aria-label="RouteFlow London on TikTok"><i class="fa-brands fa-tiktok"></i></a>
-              <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo" aria-label="RouteFlow London on Instagram"><i class="fa-brands fa-instagram"></i></a>
+      <section class="page-section page-section--surface" aria-label="Filters">
+        <div class="toolbar">
+          <div class="input-group">
+            <label for="busSearch">Filter bus routes</label>
+            <input type="search" id="busSearch" placeholder="Search by route number" autocomplete="off" />
+          </div>
+          <div class="filter-stack" aria-label="Service state">
+            <p class="filter-stack__label">Show services</p>
+            <div class="filter-chips" id="disruptionFilters" role="group">
+              <button type="button" class="chip-filter" data-filter="issues" data-active="true">With issues</button>
+              <button type="button" class="chip-filter" data-filter="good">Good service</button>
             </div>
           </div>
         </div>
-        <div class="site-footer__grid">
+      </section>
+
+      <section class="page-section" aria-label="Rail and underground incidents">
+        <header class="section__header">
+          <p class="eyebrow">Rail &amp; Underground</p>
+          <h2>Severe incidents appear first, followed by lines running smoothly.</h2>
+        </header>
+        <div class="network-grid" id="railGrid" aria-live="polite"></div>
+      </section>
+
+      <section class="page-section" aria-label="Bus network incidents">
+        <header class="section__header">
+          <p class="eyebrow">Bus network</p>
+          <h2>Focus on routes your team relies on and plan diversions with confidence.</h2>
+        </header>
+        <div class="network-grid" id="busGrid" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <footer class="app-footer" aria-label="RouteFlow London footer">
+      <div class="app-footer__inner">
+        <div class="app-footer__brand">
+          <img src="images/New_Routflow_London_Logo.png" alt="RouteFlow London logo" loading="lazy" />
           <div>
-            <h3 class="site-footer__heading">Plan journeys</h3>
-            <ul class="site-footer__links">
+            <h2>RouteFlow London</h2>
+            <p>We transform real-time feeds into a delightful studio for planners, operators, and curious families.</p>
+          </div>
+        </div>
+        <div class="app-footer__grid">
+          <div>
+            <h3>Platform</h3>
+            <ul>
               <li><a href="index.html">Home</a></li>
-              <li><a href="planning.html">Planning</a></li>
-              <li><a href="tracking.html">Tracking</a></li>
+              <li><a href="tracking.html">Live tracking</a></li>
+              <li><a href="planning.html">Planning studio</a></li>
             </ul>
           </div>
           <div>
-            <h3 class="site-footer__heading">Live insight</h3>
-            <ul class="site-footer__links">
-              <li><a href="dashboard.html">Dashboard</a></li>
-              <li><a href="routes.html">Routes</a></li>
-              <li><a href="disruptions.html">Disruptions</a></li>
+            <h3>Data</h3>
+            <ul>
+              <li><a href="routes.html">Route directory</a></li>
+              <li><a href="fleet.html">Fleet health</a></li>
+              <li><a href="withdrawn.html">Withdrawn stock</a></li>
             </ul>
           </div>
           <div>
-            <h3 class="site-footer__heading">Community data</h3>
-            <ul class="site-footer__links">
+            <h3>Community</h3>
+            <ul>
               <li><a href="info.html">Info hub</a></li>
-              <li><a href="fleet.html">Fleet</a></li>
-              <li><a href="withdrawn.html">Withdrawn</a></li>
+              <li><a href="contact.html">Contact</a></li>
+              <li><a href="about.html">About</a></li>
             </ul>
           </div>
           <div>
-            <h3 class="site-footer__heading">Company</h3>
-            <ul class="site-footer__links">
-              <li><a href="about.html">About</a></li>
-              <li><a href="contact.html">Contact</a></li>
+            <h3>Policies</h3>
+            <ul>
               <li><a href="privacy.html">Privacy</a></li>
               <li><a href="terms.html">Terms</a></li>
+              <li><a href="settings.html">Accessibility</a></li>
             </ul>
           </div>
         </div>
-        <div class="site-footer__bottom">
-          <p class="site-footer__legal">© <span data-current-year></span> RouteFlow London. Crafted for curious travellers.</p>
-          <div class="site-footer__meta">
-            <a href="privacy.html">Privacy</a>
-            <a href="terms.html">Terms</a>
-            <a href="contact.html">Contact</a>
+        <div class="app-footer__meta">
+          <p>© <span data-current-year></span> RouteFlow London. Crafted in Camden with a love for buses.</p>
+          <div class="app-footer__social" role="list">
+            <a href="https://discord.gg/qVf3nN4Mgq" aria-label="RouteFlow London on Discord"><i class="fa-brands fa-discord"></i></a>
+            <a href="https://www.tiktok.com/@the_bus_father" aria-label="RouteFlow London on TikTok"><i class="fa-brands fa-tiktok"></i></a>
+            <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo" aria-label="RouteFlow London on Instagram"><i class="fa-brands fa-instagram"></i></a>
           </div>
         </div>
       </div>
     </footer>
   </div>
 
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script src="config.js"></script>
-  <script>
-    (function initialiseFirebase() {
-      const firebaseConfig = window.__ROUTEFLOW_CONFIG__?.firebase;
-      if (!firebaseConfig?.apiKey) {
-        console.error('Firebase configuration is missing. Disruptions page authentication will be disabled.');
-        return;
-      }
-      if (typeof firebase === 'undefined') {
-        console.error('Firebase SDK not loaded. Disruptions page authentication will be disabled.');
-        return;
-      }
-      if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-      }
-    })();
-  </script>
   <script src="navbar-loader.js" defer></script>
   <script type="module" src="disruptions.js"></script>
 </body>

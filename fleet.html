@@ -1,696 +1,113 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Fleet | RouteFlow London</title>
-    <link
-      rel="icon"
-      href="images/New_Routflow_London_Logo.png"
-      type="image/png"
-    />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
-    <link rel="stylesheet" href="style.css" />
-    <script src="theme.js" defer></script>
-    <script src="site.js" defer></script>
-  </head>
-  <body class="site-body">
-    <a href="#fleetMain" class="skip-link">Skip to main content</a>
-    <div class="site-shell">
-      <header class="site-shell__header">
-        <div id="navbar-container" class="site-shell__navbar"></div>
-      </header>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fleets | RouteFlow London</title>
+  <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="theme.js" defer></script>
+  <script src="site.js" defer></script>
+  <script src="fleet.js" defer></script>
+  <script src="navbar-loader.js" defer></script>
+</head>
+<body class="metro-app metro-app--fleets">
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <header class="metro-app__header" aria-label="RouteFlow London navigation">
+    <div id="navbar-container" class="metro-app__navbar"></div>
+  </header>
 
-      <div class="site-shell__main">
-    <section
-      class="auth-gate"
-      id="fleetAuthGate"
-      role="alertdialog"
-      aria-modal="true"
-      aria-labelledby="fleetGateTitle"
-      aria-live="assertive"
-      hidden
-    >
-      <div class="auth-gate__panel">
-        <p class="auth-gate__eyebrow">Fleet tools locked</p>
-        <h2 class="auth-gate__title" id="fleetGateTitle">Sign in to browse RouteFlow fleet intelligence</h2>
-        <p class="auth-gate__message" data-auth-gate-message>Sign in to unlock this area.</p>
-        <button type="button" class="auth-gate__cta" data-auth-gate-login>
-          <i class="fa-solid fa-lock-open" aria-hidden="true"></i>
-          <span>Sign in to continue</span>
-        </button>
-        <p class="auth-gate__hint">Routes, disruptions and the Info hub remain open to everyone.</p>
+  <main id="main-content" class="metro-app__main" aria-labelledby="fleetTitle">
+    <section class="fleet-hero" aria-labelledby="fleetTitle">
+      <div class="fleet-hero__badge">Fleet encyclopedia</div>
+      <h1 id="fleetTitle">Every bus feels like a collectible.</h1>
+      <p>RouteFlow’s Fleet database captures registrations, garages, wraps, and community notes — built for enthusiasts and planners who chase the rare workings.</p>
+      <div class="fleet-hero__stats">
+        <div>
+          <span class="fleet-hero__stat" id="fleetCount">2564</span>
+          <p>Vehicles indexed</p>
+        </div>
+        <div>
+          <span class="fleet-hero__stat" id="fleetRare">312</span>
+          <p>Rare workings tracked</p>
+        </div>
+        <div>
+          <span class="fleet-hero__stat" id="fleetNew">58</span>
+          <p>New deliveries</p>
+        </div>
       </div>
     </section>
 
-    <main id="fleetMain" class="site-main fleet-page">
-      <section class="fleet-card fleet-hero" data-locked-section data-lock-label="Sign in">
-        <div class="fleet-hero__heading">
-          <p class="fleet-hero__eyebrow">Fleet database</p>
-          <h1>London buses organised by registration</h1>
-          <p class="fleet-hero__lead">
-            Build and maintain a live catalogue of the London fleet. New
-            registrations automatically generate profiles, while enthusiast
-            changes stay in review until an admin approves them.
-          </p>
-          <p class="fleet-hero__note">
-            Every vehicle profile supports fleet numbers, liveries, engineering
-            details and enthusiast tags including new buses and rare workings.
-          </p>
-        </div>
-        <dl class="fleet-stats" aria-label="Fleet summary">
-          <div class="fleet-stats__item">
-            <dt>Total vehicles</dt>
-            <dd id="fleetTotal">0</dd>
-          </div>
-          <div class="fleet-stats__item">
-            <dt>New buses</dt>
-            <dd id="fleetNew">0</dd>
-          </div>
-          <div class="fleet-stats__item">
-            <dt>Rare workings</dt>
-            <dd id="fleetRare">0</dd>
-          </div>
-          <div class="fleet-stats__item">
-            <dt>Pending reviews</dt>
-            <dd id="fleetPending">0</dd>
-          </div>
-        </dl>
-      </section>
-
-      <section class="fleet-card fleet-controls" data-locked-section data-lock-label="Sign in" aria-labelledby="fleetFilters">
-        <div class="fleet-controls__intro">
-          <div>
-            <h2 id="fleetFilters">Search and filter</h2>
-            <p>
-              Look up any registration and focus the table on new additions or
-              rare workings.
-            </p>
-          </div>
-          <button id="resetFilters" class="button-secondary" type="button">
-            Reset filters
-          </button>
-        </div>
-        <div class="fleet-controls__grid">
-          <label class="fleet-controls__search" for="searchReg">
-            <span>Registration</span>
-            <input
-              id="searchReg"
-              type="search"
-              placeholder="e.g. LTZ1000"
-              autocomplete="off"
-            />
-          </label>
-          <div
-            class="fleet-controls__toggles"
-            role="group"
-            aria-label="Highlight filters"
-          >
-            <label class="fleet-checkbox">
-              <input type="checkbox" id="filterNew" />
-              <span>New buses only</span>
-            </label>
-            <label class="fleet-checkbox">
-              <input type="checkbox" id="filterRare" />
-              <span>Rare workings only</span>
-            </label>
-          </div>
-        </div>
-      </section>
-
-      <section
-        class="fleet-card fleet-operators"
-        data-locked-section
-        data-lock-label="Sign in"
-        aria-labelledby="operatorExplorerHeading"
-      >
-        <header class="fleet-operators__header">
-          <div>
-            <p class="fleet-hero__eyebrow">Operator explorer</p>
-            <h2 id="operatorExplorerHeading">Scan the network by operator focus</h2>
-            <p>Switch tabs to compare allocations, engineering notes and upcoming expansions across the biggest London operators.</p>
-          </div>
-          <nav class="fleet-operators__tabs" role="tablist" aria-label="Operator focus">
-            <button type="button" class="fleet-operators__tab is-active" id="operatorTabAbellio" data-operator-tab="abellio" role="tab" aria-selected="true" aria-controls="operatorPanelAbellio">Abellio London</button>
-            <button type="button" class="fleet-operators__tab" id="operatorTabGoAhead" data-operator-tab="goahead" role="tab" aria-selected="false" aria-controls="operatorPanelGoAhead">Go-Ahead London</button>
-            <button type="button" class="fleet-operators__tab" id="operatorTabStagecoach" data-operator-tab="stagecoach" role="tab" aria-selected="false" aria-controls="operatorPanelStagecoach">Stagecoach London</button>
-          </nav>
-        </header>
-        <div class="fleet-operators__panels">
-          <div class="fleet-operators__panel is-active" id="operatorPanelAbellio" data-operator-panel="abellio" role="tabpanel" aria-labelledby="operatorTabAbellio">
-            <ul class="fleet-operators__stats">
-              <li><strong>Electric hubs:</strong> Battersea and Walworth lead zero-emission rollouts.</li>
-              <li><strong>Fleet refresh:</strong> 47 new Enviro400EVs scheduled through Q3.</li>
-              <li><strong>Research missions:</strong> Focus on cross-river services and night allocations.</li>
-            </ul>
-          </div>
-          <div class="fleet-operators__panel" id="operatorPanelGoAhead" data-operator-panel="goahead" role="tabpanel" aria-labelledby="operatorTabGoAhead" hidden>
-            <ul class="fleet-operators__stats">
-              <li><strong>Network reach:</strong> River Road and Camberwell hubs feed express corridors.</li>
-              <li><strong>Hybrid conversions:</strong> Retrofits underway on 25 Gemini 3 units.</li>
-              <li><strong>Badge synergy:</strong> Missions prioritise river services and Thames tunnel diversions.</li>
-            </ul>
-          </div>
-          <div class="fleet-operators__panel" id="operatorPanelStagecoach" data-operator-panel="stagecoach" role="tabpanel" aria-labelledby="operatorTabStagecoach" hidden>
-            <ul class="fleet-operators__stats">
-              <li><strong>Route reshapes:</strong> East London restructures after Superloop launches.</li>
-              <li><strong>Heritage tracking:</strong> Withdrawn Tridents archived with gallery links.</li>
-              <li><strong>Challenge tip:</strong> Combo missions reward engineering note submissions.</li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <section
-        class="fleet-card fleet-highlights"
-        data-locked-section
-        data-lock-label="Sign in"
-        aria-labelledby="fleetHighlightsHeading"
-      >
-        <header class="fleet-highlights__header">
-          <div>
-            <p class="fleet-hero__eyebrow">Highlights</p>
-            <h2 id="fleetHighlightsHeading">
-              Spotlight on new buses and rare workings
-            </h2>
-            <p>Recently updated profiles tagged by the community.</p>
-          </div>
-        </header>
-        <div class="fleet-highlight-grid">
-          <article class="fleet-highlight" aria-labelledby="newBusHighlight">
-            <h3 id="newBusHighlight">New buses</h3>
-            <ul id="newBusList" class="fleet-highlight__list"></ul>
-          </article>
-          <article
-            class="fleet-highlight"
-            aria-labelledby="rareWorkingHighlight"
-          >
-            <h3 id="rareWorkingHighlight">Rare workings</h3>
-            <ul id="rareWorkingList" class="fleet-highlight__list"></ul>
-          </article>
-          <article class="fleet-highlight" aria-labelledby="withdrawnHighlight">
-            <h3 id="withdrawnHighlight">Withdrawn history</h3>
-            <ul id="withdrawnHighlightList" class="fleet-highlight__list"></ul>
-          </article>
-        </div>
-      </section>
-
-      <section
-        class="fleet-card fleet-showcase"
-        data-locked-section
-        data-lock-label="Sign in"
-        aria-labelledby="fleetShowcaseHeading"
-      >
-        <header class="fleet-showcase__header">
-          <div>
-            <p class="fleet-hero__eyebrow">Gallery missions</p>
-            <h2 id="fleetShowcaseHeading">Carousel snapshots of notable fleet stories</h2>
-            <p>Swipe through bus model profiles, rare liveries and withdrawn legends. Completing gallery missions boosts your XP and badge progress.</p>
-          </div>
-        </header>
-        <div class="fleet-carousel" aria-live="polite">
-          <button type="button" class="fleet-carousel__control" data-carousel-prev aria-label="Show previous fleet story">
-            <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
-          </button>
-          <div class="fleet-carousel__viewport" id="fleetCarouselViewport">
-            <article class="fleet-carousel__item is-active" data-carousel-index="0">
-              <img src="bus1.jpg" alt="Go-Ahead London Enviro400EV in service" />
-              <div class="fleet-carousel__meta">
-                <h3>Enviro400EV expansion</h3>
-                <p>Zero-emission deckers roll out across south-west corridors with rapid charging at Battersea and Merton.</p>
-              </div>
-            </article>
-            <article class="fleet-carousel__item" data-carousel-index="1" hidden>
-              <img src="bus2.jpg" alt="Stagecoach London heritage Trident" />
-              <div class="fleet-carousel__meta">
-                <h3>Heritage Trident archive</h3>
-                <p>Withdrawn Tridents receive dedicated history cards, including final workings and enthusiast photography.</p>
-              </div>
-            </article>
-            <article class="fleet-carousel__item" data-carousel-index="2" hidden>
-              <img src="bus3.jpg" alt="Abellio London hydrogen bus" />
-              <div class="fleet-carousel__meta">
-                <h3>Hydrogen pioneers</h3>
-                <p>Hydrogen double-deckers trial new refuelling at Perivale, unlocking hidden badge pathways for data contributors.</p>
-              </div>
-            </article>
-          </div>
-          <button type="button" class="fleet-carousel__control" data-carousel-next aria-label="Show next fleet story">
-            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
-          </button>
-        </div>
-        <div class="fleet-carousel__dots" role="tablist" aria-label="Select fleet showcase slide">
-          <button type="button" class="fleet-carousel__dot is-active" data-carousel-dot="0" aria-label="Enviro400EV expansion"></button>
-          <button type="button" class="fleet-carousel__dot" data-carousel-dot="1" aria-label="Heritage Trident archive"></button>
-          <button type="button" class="fleet-carousel__dot" data-carousel-dot="2" aria-label="Hydrogen pioneers"></button>
-        </div>
-      </section>
-
-      <section
-        class="fleet-card fleet-table"
-        data-locked-section
-        data-lock-label="Sign in"
-        aria-labelledby="fleetTableHeading"
-      >
-        <div class="fleet-table__header">
-          <div>
-            <p class="fleet-hero__eyebrow">Fleet profiles</p>
-            <h2 id="fleetTableHeading">Complete database by registration</h2>
-          </div>
-          <p class="fleet-table__hint">
-            Submit a change request to update an existing vehicle. Admins review
-            pending updates.
-          </p>
-        </div>
-        <div class="fleet-table__scroll">
-          <table>
-            <thead>
-              <tr>
-                <th scope="col">Registration</th>
-                <th scope="col">Fleet number</th>
-                <th scope="col">Operator</th>
-                <th scope="col">Status</th>
-                <th scope="col">Vehicle type</th>
-                <th scope="col">Garage</th>
-                <th scope="col">Wrap</th>
-                <th scope="col">Doors</th>
-                <th scope="col">Engine type</th>
-                <th scope="col">Engine</th>
-                <th scope="col">Chassis</th>
-                <th scope="col">Body type</th>
-                <th scope="col">Registration date</th>
-                <th scope="col">Extras</th>
-                <th scope="col">Length</th>
-                <th scope="col">Last updated</th>
-              </tr>
-            </thead>
-            <tbody id="fleetTableBody"></tbody>
-          </table>
-        </div>
-        <p id="fleetEmpty" class="fleet-table__empty" hidden>
-          No vehicles match your filters yet.
-        </p>
-      </section>
-
-      <section class="fleet-card fleet-form" data-locked-section data-lock-label="Sign in" aria-labelledby="fleetFormHeading">
-        <div class="fleet-form__intro">
-          <div>
-            <p class="fleet-hero__eyebrow">Community updates</p>
-            <h2 id="fleetFormHeading">Add a new vehicle or request a change</h2>
-            <p>
-              Registrations that are new to the database generate a fresh
-              profile automatically. Updates to existing buses are held for
-              admin approval.
-            </p>
-          </div>
-          <p class="fleet-form__hint">
-            All vehicle attributes use dropdowns so admins can curate consistent
-            values.
-          </p>
-        </div>
-        <form id="fleetForm" autocomplete="off">
-          <div class="fleet-form__grid">
-            <label for="busRegistration">
-              <span>Registration<span aria-hidden="true">*</span></span>
-              <input
-                id="busRegistration"
-                name="registration"
-                type="text"
-                required
-                placeholder="Enter registration"
-                autocomplete="off"
-              />
-            </label>
-            <label for="fleetNumber">
-              <span>Fleet number</span>
-              <input
-                id="fleetNumber"
-                name="fleetNumber"
-                type="text"
-                placeholder="e.g. LT1"
-              />
-            </label>
-            <label for="operatorSelect">
-              <span>Operator</span>
-              <select id="operatorSelect" name="operator"></select>
-            </label>
-            <label for="statusSelect">
-              <span>Status</span>
-              <select id="statusSelect" name="status"></select>
-            </label>
-            <label for="wrapSelect">
-              <span>Wrap / livery</span>
-              <select id="wrapSelect" name="wrap"></select>
-            </label>
-            <label for="vehicleTypeSelect">
-              <span>Vehicle type</span>
-              <select id="vehicleTypeSelect" name="vehicleType"></select>
-            </label>
-            <label for="doorsSelect">
-              <span>Doors</span>
-              <select id="doorsSelect" name="doors"></select>
-            </label>
-            <label for="engineTypeSelect">
-              <span>Engine type</span>
-              <select id="engineTypeSelect" name="engineType"></select>
-            </label>
-            <label for="engineSelect">
-              <span>Engine</span>
-              <select id="engineSelect" name="engine"></select>
-            </label>
-            <label for="chassisSelect">
-              <span>Chassis</span>
-              <select id="chassisSelect" name="chassis"></select>
-            </label>
-            <label for="bodyTypeSelect">
-              <span>Body type</span>
-              <select id="bodyTypeSelect" name="bodyType"></select>
-            </label>
-            <label for="registrationDate">
-              <span>Registration date</span>
-              <input
-                id="registrationDate"
-                name="registrationDate"
-                type="date"
-              />
-            </label>
-            <label for="garageSelect">
-              <span>Garage</span>
-              <select id="garageSelect" name="garage"></select>
-            </label>
-            <label for="extrasSelect" class="fleet-form__extras">
-              <span>Extras (tags)</span>
-              <select
-                id="extrasSelect"
-                name="extras"
-                multiple
-                size="6"
-                aria-describedby="extrasHelp"
-              ></select>
-              <small id="extrasHelp"
-                >Hold Ctrl (Windows) or Command (Mac) to choose multiple
-                tags.</small
-              >
-            </label>
-            <label for="lengthSelect">
-              <span>Length</span>
-              <select id="lengthSelect" name="length"></select>
-            </label>
-            <label for="busImages" class="fleet-form__files">
-              <span>Gallery images</span>
-              <input
-                id="busImages"
-                name="images"
-                type="file"
-                accept="image/*"
-                multiple
-                aria-describedby="imageHelp"
-              />
-              <small id="imageHelp"
-                >Attach up to three images (max 2&nbsp;MB each). Uploads are sent for admin
-                approval.</small
-              >
-            </label>
-            <ul
-              id="imagePreviewList"
-              class="fleet-form__uploads"
-              aria-live="polite"
-            ></ul>
-          </div>
-          <div class="fleet-form__toggles">
-            <label class="fleet-checkbox">
-              <input type="checkbox" id="isNewBus" name="isNewBus" />
-              <span>Mark as new bus</span>
-            </label>
-            <label class="fleet-checkbox">
-              <input type="checkbox" id="isRareWorking" name="isRareWorking" />
-              <span>Mark as rare working</span>
-            </label>
-          </div>
-          <div class="fleet-form__actions">
-            <button type="submit" class="button-primary">Submit update</button>
-            <button type="button" id="clearForm" class="button-tertiary">
-              Clear form
-            </button>
-          </div>
-          <p
-            id="formFeedback"
-            class="fleet-form__feedback"
-            role="status"
-            aria-live="polite"
-          ></p>
-        </form>
-      </section>
-
-    </main>
-
+    <section class="fleet-console" aria-label="Fleet database controls">
+      <div class="fleet-console__search">
+        <label class="sr-only" for="fleetSearch">Search registrations</label>
+        <input id="fleetSearch" type="search" placeholder="Search by registration, fleet number, or garage" autocomplete="off" />
+        <button type="button" id="fleetSearchButton" data-xp-action="0.03">
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+          <span>Search</span>
+        </button>
       </div>
+      <div class="fleet-console__filters">
+        <button type="button" class="fleet-filter is-active" data-fleet-filter="all">All</button>
+        <button type="button" class="fleet-filter" data-fleet-filter="active">Active</button>
+        <button type="button" class="fleet-filter" data-fleet-filter="new">New</button>
+        <button type="button" class="fleet-filter" data-fleet-filter="withdrawn">Withdrawn</button>
+        <button type="button" class="fleet-filter" data-fleet-filter="rare">Rare working</button>
+      </div>
+    </section>
 
-      <footer class="site-footer" aria-label="RouteFlow London footer">
-        <div class="site-footer__inner">
-          <div class="site-footer__brand">
-            <img src="images/New_Routflow_London_Logo.png" alt="RouteFlow London logo">
-            <div>
-              <h2>Stay curious about London’s transport</h2>
-              <p>RouteFlow London turns TfL feeds into playful guidance so planners, families and classrooms can travel with calm confidence.</p>
-              <div class="site-footer__social" role="list">
-                <a href="https://discord.gg/qVf3nN4Mgq" aria-label="RouteFlow London on Discord"><i class="fa-brands fa-discord"></i></a>
-                <a href="https://www.tiktok.com/@the_bus_father" aria-label="RouteFlow London on TikTok"><i class="fa-brands fa-tiktok"></i></a>
-                <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo" aria-label="RouteFlow London on Instagram"><i class="fa-brands fa-instagram"></i></a>
-              </div>
-            </div>
-          </div>
-          <div class="site-footer__grid">
-            <div>
-              <h3 class="site-footer__heading">Plan journeys</h3>
-              <ul class="site-footer__links">
-                <li><a href="index.html">Home</a></li>
-                <li><a href="planning.html">Planning</a></li>
-                <li><a href="tracking.html">Tracking</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 class="site-footer__heading">Live insight</h3>
-              <ul class="site-footer__links">
-                <li><a href="dashboard.html">Dashboard</a></li>
-                <li><a href="routes.html">Routes</a></li>
-                <li><a href="disruptions.html">Disruptions</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 class="site-footer__heading">Community data</h3>
-              <ul class="site-footer__links">
-                <li><a href="info.html">Info hub</a></li>
-                <li><a href="fleet.html">Fleet</a></li>
-                <li><a href="withdrawn.html">Withdrawn</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 class="site-footer__heading">Company</h3>
-              <ul class="site-footer__links">
-                <li><a href="about.html">About</a></li>
-                <li><a href="contact.html">Contact</a></li>
-                <li><a href="privacy.html">Privacy</a></li>
-                <li><a href="terms.html">Terms</a></li>
-              </ul>
-            </div>
-          </div>
-          <div class="site-footer__bottom">
-            <p class="site-footer__legal">© <span data-current-year></span> RouteFlow London. Crafted for curious travellers.</p>
-            <div class="site-footer__meta">
-              <a href="privacy.html">Privacy</a>
-              <a href="terms.html">Terms</a>
-              <a href="contact.html">Contact</a>
-            </div>
-          </div>
-        </div>
-      </footer>
+    <section class="fleet-grid" aria-label="Fleet results" id="fleetGrid"></section>
+  </main>
+
+  <aside class="fleet-profile" id="fleetProfile" aria-hidden="true">
+    <div class="fleet-profile__inner" role="dialog" aria-modal="true" aria-labelledby="fleetProfileTitle">
+      <button class="fleet-profile__close" type="button" id="fleetProfileClose" aria-label="Close profile">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <div class="fleet-profile__media">
+        <img src="bus1.jpg" alt="Fleet vehicle" id="fleetProfileImage" />
+        <span class="fleet-profile__tag" id="fleetProfileStatus">Active</span>
+      </div>
+      <header class="fleet-profile__header">
+        <h2 id="fleetProfileTitle">Vehicle profile</h2>
+        <p id="fleetProfileSubtitle">Registration placeholder</p>
+      </header>
+      <dl class="fleet-profile__details" id="fleetProfileDetails"></dl>
+      <section class="fleet-profile__history" aria-label="Service history">
+        <h3>Service history</h3>
+        <ul id="fleetProfileHistory"></ul>
+      </section>
+      <section class="fleet-profile__community" aria-label="Community notes">
+        <h3>Community notes</h3>
+        <p id="fleetProfileNotes">Spot something? Add it from the dashboard once you’ve unlocked Fleet Expert.</p>
+      </section>
     </div>
+  </aside>
 
-    <div
-      id="fleetToast"
-      class="fleet-toast"
-      role="status"
-      aria-live="polite"
-    ></div>
-
-    <script src="navbar-loader.js"></script>
-    <script src="main.js"></script>
-    <script src="auth-guard.js"></script>
-    <script>
-      document.addEventListener('DOMContentLoaded', () => {
-        const pageRoot = document.querySelector('.fleet-page');
-        const overlay = document.getElementById('fleetAuthGate');
-        const lockedSections = document.querySelectorAll('[data-locked-section]');
-        const heroLead = document.querySelector('.fleet-hero__lead');
-
-        const gate = window.RouteflowAuthGate?.create({
-          root: pageRoot,
-          overlay,
-          lockedSections,
-          lockedMessage: 'Sign in to unlock fleet analytics, submissions and history archives.',
-          errorMessage: 'Authentication is temporarily unavailable. Please try again later.',
-          onLock: () => {
-            if (heroLead) {
-              heroLead.textContent = 'Create a free account to unlock missions, carousels and role-linked fleet submissions.';
-            }
-          },
-          onUnlock: () => {
-            if (heroLead) {
-              heroLead.textContent = 'Build and maintain a live catalogue of the London fleet. New registrations automatically generate profiles, while enthusiast changes stay in review until an admin approves them.';
-            }
-          }
-        });
-
-        gate?.unlock({ reason: 'public', force: true });
-        if (heroLead) {
-          heroLead.textContent = 'Explore the full RouteFlow fleet catalogue. Sign in to contribute updates and manage submissions.';
-        }
-
-        const handleAuthStateChange = (user) => {
-          if (user) {
-            gate?.unlock({ user });
-          } else {
-            gate?.unlock({ reason: 'public', force: true });
-            if (heroLead) {
-              heroLead.textContent = 'Explore the full RouteFlow fleet catalogue. Sign in to contribute updates and manage submissions.';
-            }
-          }
-        };
-
-        const routeflowAuth = window.RouteflowAuth;
-        const ensure = routeflowAuth?.ensure || window.ensureFirebaseAuth;
-
-        if (routeflowAuth?.getCurrentUser) {
-          try {
-            handleAuthStateChange(routeflowAuth.getCurrentUser());
-          } catch (error) {
-            console.error('RouteFlow fleet: failed to read initial auth state.', error);
-          }
-        }
-
-        if (routeflowAuth?.subscribe) {
-          routeflowAuth.subscribe(handleAuthStateChange);
-        } else if (typeof ensure === 'function') {
-          ensure()
-            .then((authInstance) => {
-              if (!authInstance || typeof authInstance.onAuthStateChanged !== 'function') {
-                handleAuthStateChange(null);
-                return;
-              }
-              authInstance.onAuthStateChanged(handleAuthStateChange);
-            })
-            .catch((error) => {
-              console.error('RouteFlow fleet: failed to observe authentication state.', error);
-              handleAuthStateChange(null);
-            });
-        } else {
-          handleAuthStateChange(null);
-        }
-
-        const tabs = Array.from(document.querySelectorAll('[data-operator-tab]'));
-        const panels = Array.from(document.querySelectorAll('[data-operator-panel]'));
-        const activateTab = (tab) => {
-          if (!tab) return;
-          const key = tab.dataset.operatorTab;
-          tabs.forEach((candidate) => {
-            const isActive = candidate === tab;
-            candidate.classList.toggle('is-active', isActive);
-            candidate.setAttribute('aria-selected', isActive ? 'true' : 'false');
-            candidate.setAttribute('tabindex', isActive ? '0' : '-1');
-          });
-          panels.forEach((panel) => {
-            const isActive = panel.dataset.operatorPanel === key;
-            panel.classList.toggle('is-active', isActive);
-            panel.toggleAttribute('hidden', !isActive);
-          });
-        };
-
-        tabs.forEach((tab) => {
-          tab.addEventListener('click', () => activateTab(tab));
-        });
-
-        const tablist = document.querySelector('.fleet-operators__tabs');
-        if (tablist) {
-          tablist.addEventListener('keydown', (event) => {
-            if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-            event.preventDefault();
-            const currentIndex = tabs.findIndex((tab) => tab.classList.contains('is-active'));
-            if (event.key === 'Home') {
-              activateTab(tabs[0]);
-              tabs[0]?.focus();
-              return;
-            }
-            if (event.key === 'End') {
-              const lastTab = tabs[tabs.length - 1];
-              activateTab(lastTab);
-              lastTab?.focus();
-              return;
-            }
-            const direction = event.key === 'ArrowLeft' ? -1 : 1;
-            const nextIndex = (currentIndex + direction + tabs.length) % tabs.length;
-            const nextTab = tabs[nextIndex];
-            activateTab(nextTab);
-            nextTab?.focus();
-          });
-        }
-
-        if (!tabs.some((tab) => tab.classList.contains('is-active'))) {
-          activateTab(tabs[0]);
-        } else {
-          tabs.forEach((tab) => {
-            tab.setAttribute('tabindex', tab.classList.contains('is-active') ? '0' : '-1');
-          });
-        }
-
-        const items = Array.from(document.querySelectorAll('.fleet-carousel__item'));
-        const dots = Array.from(document.querySelectorAll('[data-carousel-dot]'));
-        let activeIndex = 0;
-
-        const showSlide = (index) => {
-          if (!items.length) return;
-          const total = items.length;
-          const targetIndex = (index + total) % total;
-          activeIndex = targetIndex;
-          items.forEach((item, itemIndex) => {
-            const isActive = itemIndex === targetIndex;
-            item.classList.toggle('is-active', isActive);
-            item.toggleAttribute('hidden', !isActive);
-          });
-          dots.forEach((dot, dotIndex) => {
-            const isActive = dotIndex === targetIndex;
-            dot.classList.toggle('is-active', isActive);
-            dot.setAttribute('aria-selected', isActive ? 'true' : 'false');
-          });
-        };
-
-        document.querySelector('[data-carousel-prev]')?.addEventListener('click', () => {
-          showSlide(activeIndex - 1);
-        });
-
-        document.querySelector('[data-carousel-next]')?.addEventListener('click', () => {
-          showSlide(activeIndex + 1);
-        });
-
-        dots.forEach((dot) => {
-          dot.addEventListener('click', () => {
-            const next = Number(dot.dataset.carouselDot);
-            if (Number.isInteger(next)) {
-              showSlide(next);
-            }
-          });
-        });
-
-        showSlide(0);
-      });
-    </script>
-    <script src="fleet.js"></script>
-  </body>
+  <footer class="metro-footer" aria-label="RouteFlow London footer">
+    <div class="metro-footer__inner">
+      <div class="metro-footer__brand">
+        <span class="metro-footer__roundel" aria-hidden="true">
+          <img src="images/New_Routflow_London_Logo.png" alt="" />
+        </span>
+        <div>
+          <p>© RouteFlow London <span data-current-year>2025</span></p>
+          <p>Clean. Dynamic. London.</p>
+        </div>
+      </div>
+      <div class="metro-footer__status">
+        <span class="metro-footer__status-indicator" aria-hidden="true"></span>
+        <span>Connected to TfL API <strong>✅</strong></span>
+      </div>
+      <nav class="metro-footer__links" aria-label="Social links">
+        <a href="https://discord.com" target="_blank" rel="noreferrer">Discord</a>
+        <a href="https://github.com" target="_blank" rel="noreferrer">GitHub</a>
+        <a href="https://instagram.com" target="_blank" rel="noreferrer">Instagram</a>
+        <a href="https://x.com" target="_blank" rel="noreferrer">X</a>
+      </nav>
+    </div>
+  </footer>
+</body>
 </html>

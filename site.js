@@ -1,4 +1,6 @@
 (function initialiseSite() {
+  window.__ROUTEFLOW_PUBLIC_MODE__ = true;
+  const XP_PROGRESS_KEY = 'routeflow:xp-progress';
   const MOBILE_STYLESHEET_ID = 'routeflow-mobile-shell';
   const APP_DOCK_ID = 'routeflow-app-dock';
   const APP_DOCK_ITEMS = [
@@ -54,6 +56,91 @@
     const year = new Date().getFullYear();
     document.querySelectorAll('[data-current-year]').forEach((node) => {
       node.textContent = year;
+    });
+  };
+
+  const readXpProgress = () => {
+    if (typeof localStorage === 'undefined') {
+      return null;
+    }
+    try {
+      const raw = localStorage.getItem(XP_PROGRESS_KEY);
+      if (!raw) {
+        return null;
+      }
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') {
+        return null;
+      }
+      const level = Number(parsed.level) || 1;
+      const progress = Math.min(1, Math.max(0, Number(parsed.progress) || 0));
+      return { level, progress };
+    } catch (error) {
+      console.warn('RouteFlow XP: failed to parse stored progress.', error);
+      return null;
+    }
+  };
+
+  const seedXpProgress = () => {
+    const now = new Date();
+    const hours = now.getHours();
+    const baseline = 0.32 + ((hours % 5) * 0.09);
+    return {
+      level: 5 + (hours % 4),
+      progress: Math.min(1, Math.max(0.18, baseline))
+    };
+  };
+
+  const writeXpProgress = (value) => {
+    if (typeof localStorage === 'undefined') {
+      return value;
+    }
+    try {
+      localStorage.setItem(XP_PROGRESS_KEY, JSON.stringify(value));
+    } catch (error) {
+      console.warn('RouteFlow XP: failed to persist progress.', error);
+    }
+    return value;
+  };
+
+  const ensureXpProgress = () => {
+    const stored = readXpProgress();
+    if (stored) {
+      return stored;
+    }
+    return writeXpProgress(seedXpProgress());
+  };
+
+  const notifyXpProgress = (xp) => {
+    try {
+      document.dispatchEvent(new CustomEvent('routeflow:xp-update', { detail: xp }));
+    } catch (error) {
+      console.warn('RouteFlow XP: unable to broadcast update.', error);
+    }
+  };
+
+  const grantXpForAction = (amount = 0.04) => {
+    const current = ensureXpProgress();
+    const added = Math.min(1.2, Math.max(0, current.progress + amount));
+    const didLevelUp = added >= 1;
+    const normalised = didLevelUp ? added - 1 : added;
+    const next = writeXpProgress({
+      level: didLevelUp ? current.level + 1 : current.level,
+      progress: Number(normalised.toFixed(3))
+    });
+    notifyXpProgress(next);
+  };
+
+  const initialiseXp = () => {
+    const xp = ensureXpProgress();
+    notifyXpProgress(xp);
+    document.addEventListener('click', (event) => {
+      const trigger = event.target.closest('[data-xp-action]');
+      if (!trigger) {
+        return;
+      }
+      const amount = Number(trigger.dataset.xpAction) || 0.05;
+      grantXpForAction(amount);
     });
   };
 
@@ -219,18 +306,66 @@
     updateDockActiveState(dock);
   };
 
-  ensureMobileStylesheet();
-  ensureAppDock();
+  const initScrollState = () => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return;
+    }
+
+    let ticking = false;
+
+    const updateScrollState = () => {
+      const scrolled = window.scrollY > 24;
+      document.body?.classList.toggle('is-scrolled', scrolled);
+      ticking = false;
+    };
+
+    updateScrollState();
+
+    window.addEventListener('scroll', () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(updateScrollState);
+    }, { passive: true });
+  };
+
+  const initRevealObserver = () => {
+    if (typeof IntersectionObserver === 'undefined') {
+      document.querySelectorAll('[data-reveal]').forEach((node) => {
+        node.classList.add('is-visible');
+      });
+      return;
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, {
+      rootMargin: '0px 0px -10% 0px',
+      threshold: 0.2
+    });
+
+    document.querySelectorAll('[data-reveal]').forEach((node) => {
+      observer.observe(node);
+    });
+  };
+
+  const onReady = () => {
+    ensureMobileStylesheet();
+    setCurrentYear();
+    initialiseXp();
+    ensureAppDock();
+    initScrollState();
+    initRevealObserver();
+  };
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      ensureMobileStylesheet();
-      setCurrentYear();
-      ensureAppDock();
-    }, { once: true });
+    document.addEventListener('DOMContentLoaded', onReady, { once: true });
   } else {
-    setCurrentYear();
-    ensureAppDock();
+    onReady();
   }
 
   window.addEventListener('hashchange', handleLocationChange);

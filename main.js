@@ -1,17 +1,24 @@
-// Firebase config
+// Legacy hook retained for compatibility; Firebase has been removed.
 function resolveFirebaseConfig() {
-  const config = window.__ROUTEFLOW_CONFIG__?.firebase;
-  if (!config?.apiKey) {
-    return null;
-  }
-  return config;
+  return null;
 }
 
 const LOCAL_AUTH_STORAGE_KEY = 'routeflow:local-auth:users';
 const LOCAL_AUTH_SESSION_KEY = 'routeflow:local-auth:session';
+const LOCAL_PROFILE_STORAGE_KEY = 'routeflow:profile-docs';
 const AUTH_MODAL_SOURCE = 'components/auth-modal.html';
 const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const LAST_USER_SUMMARY_KEY = 'routeflow:auth:last-user';
+
+const AUTH_DISABLED = window.__ROUTEFLOW_PUBLIC_MODE__ !== false;
+
+const PUBLIC_USER_TEMPLATE = Object.freeze({
+  uid: 'public-guest',
+  email: null,
+  displayName: 'Guest Explorer',
+  providerId: 'public',
+  isAnonymous: true
+});
 
 const profileCache = new Map();
 const normaliseTextValue = (value) => (typeof value === 'string' ? value.trim() : '');
@@ -66,6 +73,13 @@ const mergeProfileCache = (uid, data) => {
   return setCachedProfile(uid, merged);
 };
 
+const createPublicUser = () => ({ ...PUBLIC_USER_TEMPLATE });
+
+const createPublicSummary = () => ({
+  ...PUBLIC_USER_TEMPLATE,
+  timestamp: Date.now()
+});
+
 let ensureAuthModalPromise = null;
 let summaryUpdateDeferred = false;
 
@@ -111,6 +125,9 @@ const createUserSummary = (user) => {
 };
 
 function persistUserSummary(summary) {
+  if (AUTH_DISABLED) {
+    return;
+  }
   if (typeof localStorage === 'undefined') return;
   try {
     if (summary) {
@@ -124,6 +141,9 @@ function persistUserSummary(summary) {
 }
 
 function loadPersistedUserSummary() {
+  if (AUTH_DISABLED) {
+    return createPublicSummary();
+  }
   if (typeof localStorage === 'undefined') return null;
   try {
     const raw = localStorage.getItem(LAST_USER_SUMMARY_KEY);
@@ -138,6 +158,33 @@ function loadPersistedUserSummary() {
 
 function applySummaryToDocument(summary) {
   if (typeof document === 'undefined') {
+    return;
+  }
+  if (AUTH_DISABLED) {
+    const publicSummary = summary || createPublicSummary();
+    const root = document.documentElement;
+    root?.setAttribute('data-auth-state', 'public');
+    const body = document.body;
+    if (!body) {
+      if (!summaryUpdateDeferred) {
+        summaryUpdateDeferred = true;
+        document.addEventListener('DOMContentLoaded', () => {
+          summaryUpdateDeferred = false;
+          applySummaryToDocument(createPublicSummary());
+        }, { once: true });
+      }
+      return;
+    }
+    body.setAttribute('data-auth-state', 'public');
+    body.setAttribute('data-auth-mode', 'public');
+    if (publicSummary.displayName) {
+      body.setAttribute('data-auth-name', publicSummary.displayName);
+    }
+    if (publicSummary.email) {
+      body.setAttribute('data-auth-email', publicSummary.email);
+    } else {
+      body.removeAttribute('data-auth-email');
+    }
     return;
   }
   const state = summary ? 'signed-in' : 'signed-out';
@@ -170,6 +217,11 @@ function applySummaryToDocument(summary) {
 }
 
 function syncUserSummary(user) {
+  if (AUTH_DISABLED) {
+    const summary = createPublicSummary();
+    applySummaryToDocument(summary);
+    return summary;
+  }
   const summary = createUserSummary(user);
   persistUserSummary(summary);
   applySummaryToDocument(summary);
@@ -458,6 +510,9 @@ function createLocalAuth() {
       local: true,
       isAnonymous: false,
       photoURL: record.photoURL || null,
+      async getIdToken() {
+        return `local.${record.uid}.${record.updatedAt || Date.now()}`;
+      },
       getIdTokenResult: async () => ({ claims: { local: true } }),
       updateProfile: async (updates = {}) => {
         const nextName = normaliseTextValue(updates.displayName);
@@ -914,11 +969,6 @@ window.RouteflowAdmin = Object.freeze({
 });
 
 const CONFIG_SCRIPT_SRC = 'config.js';
-const FIREBASE_SCRIPT_SRCS = [
-  'https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js',
-  'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js',
-  'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js'
-];
 
 const loadedScriptPromises = new Map();
 
@@ -952,7 +1002,7 @@ function loadExternalScript(src) {
 }
 
 async function ensureConfigLoaded() {
-  if (window.__ROUTEFLOW_CONFIG__?.firebase?.apiKey) {
+  if (window.__ROUTEFLOW_CONFIG__) {
     return;
   }
   try {
@@ -962,15 +1012,53 @@ async function ensureConfigLoaded() {
   }
 }
 
-async function ensureFirebaseScriptsLoaded() {
-  for (const src of FIREBASE_SCRIPT_SRCS) {
-    await loadExternalScript(src);
-  }
-}
-
 let auth = null;
 let authInitPromise = null;
 const authSubscribers = new Set();
+
+function createPublicAuthShim() {
+  const listeners = new Set();
+  const user = createPublicUser();
+
+  const subscribe = (callback) => {
+    if (typeof callback !== 'function') {
+      return () => {};
+    }
+    listeners.add(callback);
+    try {
+      callback(user);
+    } catch (error) {
+      console.error('Routeflow public auth: subscriber callback failed', error);
+    }
+    return () => {
+      listeners.delete(callback);
+    };
+  };
+
+  return {
+    get currentUser() {
+      return user;
+    },
+    async signOut() {
+      return user;
+    },
+    async signInWithEmailAndPassword() {
+      throw new Error('Authentication is disabled in the public preview.');
+    },
+    async signInWithPopup() {
+      throw new Error('Authentication is disabled in the public preview.');
+    },
+    async linkWithPopup() {
+      throw new Error('Authentication is disabled in the public preview.');
+    },
+    onAuthStateChanged(callback) {
+      return subscribe(callback);
+    },
+    async updateCurrentUser() {
+      return user;
+    }
+  };
+}
 
 function getAuthEventDetail(user) {
   if (!user) {
@@ -997,11 +1085,13 @@ function notifyAuthSubscribers(user) {
     }
   });
   try {
+    const summary = AUTH_DISABLED ? createPublicSummary() : createUserSummary(user);
+    const state = AUTH_DISABLED ? 'public' : (user ? 'signed-in' : 'signed-out');
     document.dispatchEvent(new CustomEvent('routeflow:auth-state', {
       detail: {
         user: getAuthEventDetail(user),
-        summary: createUserSummary(user),
-        state: user ? 'signed-in' : 'signed-out'
+        summary,
+        state
       }
     }));
   } catch (error) {
@@ -1010,34 +1100,11 @@ function notifyAuthSubscribers(user) {
 }
 
 async function initialiseAuthInstance() {
+  if (AUTH_DISABLED) {
+    return createPublicAuthShim();
+  }
   await ensureConfigLoaded();
-  const firebaseConfig = resolveFirebaseConfig();
-  if (!firebaseConfig) {
-    return createLocalAuth();
-  }
-
-  try {
-    await ensureFirebaseScriptsLoaded();
-  } catch (error) {
-    console.error('Failed to load Firebase SDK:', error);
-    return createLocalAuth();
-  }
-
-  if (typeof firebase === 'undefined') {
-    console.error('Firebase SDK not loaded; authentication is unavailable.');
-    return createLocalAuth();
-  }
-
-  if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-  }
-
-  if (!firebase.apps.length || !firebase.auth) {
-    console.error('Firebase SDK loaded but authentication is unavailable.');
-    return createLocalAuth();
-  }
-
-  return firebase.auth();
+  return createLocalAuth();
 }
 
 function ensureFirebaseAuth() {
@@ -1053,7 +1120,7 @@ function ensureFirebaseAuth() {
       return instance;
     })
     .catch(error => {
-      console.error('Failed to initialise Firebase authentication:', error);
+      console.error('Failed to initialise Routeflow authentication:', error);
       return null;
     })
     .finally(() => {
@@ -1062,70 +1129,36 @@ function ensureFirebaseAuth() {
   return authInitPromise;
 }
 
-const FIRESTORE_COLLECTION_PROFILES = 'profiles';
-let firestoreInstance = null;
-let firestoreInitPromise = null;
-
 function getServerTimestampValue() {
-  try {
-    if (typeof firebase !== 'undefined' && firebase.firestore?.FieldValue?.serverTimestamp) {
-      return firebase.firestore.FieldValue.serverTimestamp();
-    }
-  } catch (error) {
-    console.warn('Routeflow Firebase: server timestamp unavailable, falling back to client time.', error);
-  }
   return new Date().toISOString();
 }
 
-async function ensureFirestore() {
-  if (firestoreInstance) {
-    return firestoreInstance;
+function loadLocalProfileStore() {
+  if (typeof localStorage === 'undefined') {
+    return {};
   }
-  if (firestoreInitPromise) {
-    return firestoreInitPromise;
+  try {
+    const raw = localStorage.getItem(LOCAL_PROFILE_STORAGE_KEY);
+    if (!raw) {
+      return {};
+    }
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch (error) {
+    console.warn('Routeflow profiles: unable to parse stored profiles.', error);
+    return {};
   }
-  firestoreInitPromise = ensureFirebaseAuth()
-    .then((authInstance) => {
-      if (!authInstance) {
-        return null;
-      }
-      if (typeof firebase === 'undefined' || typeof firebase.firestore !== 'function') {
-        console.warn('Firebase Firestore SDK is not available.');
-        return null;
-      }
-      if (!firebase.apps.length) {
-        const firebaseConfig = resolveFirebaseConfig();
-        if (firebaseConfig) {
-          firebase.initializeApp(firebaseConfig);
-        }
-      }
-      firestoreInstance = firebase.firestore();
-      try {
-        firestoreInstance.settings({ ignoreUndefinedProperties: true });
-      } catch (error) {
-        // Ignore settings errors (SDK already initialised elsewhere)
-      }
-      return firestoreInstance;
-    })
-    .catch((error) => {
-      console.error('Failed to initialise Firebase Firestore:', error);
-      return null;
-    })
-    .finally(() => {
-      firestoreInitPromise = null;
-    });
-  return firestoreInitPromise;
 }
 
-async function getProfileDocRef(uid) {
-  if (!uid) {
-    return null;
+function saveLocalProfileStore(store) {
+  if (typeof localStorage === 'undefined') {
+    return;
   }
-  const instance = await ensureFirestore();
-  if (!instance) {
-    return null;
+  try {
+    localStorage.setItem(LOCAL_PROFILE_STORAGE_KEY, JSON.stringify(store));
+  } catch (error) {
+    console.warn('Routeflow profiles: unable to persist profiles.', error);
   }
-  return instance.collection(FIRESTORE_COLLECTION_PROFILES).doc(uid);
 }
 
 async function loadProfileDocument(uid, { forceRefresh = false } = {}) {
@@ -1138,39 +1171,32 @@ async function loadProfileDocument(uid, { forceRefresh = false } = {}) {
       return cached;
     }
   }
-  const docRef = await getProfileDocRef(uid);
-  if (!docRef) {
-    return getCachedProfile(uid);
+  const store = loadLocalProfileStore();
+  const entry = store?.[uid] && typeof store[uid] === 'object' ? store[uid] : null;
+  if (!entry) {
+    setCachedProfile(uid, {});
+    return null;
   }
-  try {
-    const snapshot = await docRef.get();
-    if (!snapshot.exists) {
-      setCachedProfile(uid, {});
-      return null;
-    }
-    const data = snapshot.data() || {};
-    setCachedProfile(uid, data);
-    return getCachedProfile(uid);
-  } catch (error) {
-    console.warn('Routeflow Firebase: failed to load profile document.', error);
-    return getCachedProfile(uid);
-  }
+  setCachedProfile(uid, entry);
+  return getCachedProfile(uid);
 }
 
 async function writeProfileDocument(uid, payload, { merge = true, refresh = true } = {}) {
   if (!uid) {
     return null;
   }
-  const docRef = await getProfileDocRef(uid);
-  if (!docRef) {
-    return null;
-  }
-  try {
-    await docRef.set(payload, { merge });
-  } catch (error) {
-    console.error('Routeflow Firebase: failed to write profile document.', error);
-    throw error;
-  }
+  const store = loadLocalProfileStore();
+  const current = store?.[uid] && typeof store[uid] === 'object' ? store[uid] : {};
+  const next = merge ? { ...current, ...cloneProfileData(payload) } : cloneProfileData(payload);
+  const normalised = Object.keys(next).reduce((acc, key) => {
+    const value = next[key];
+    if (value !== undefined) {
+      acc[key] = value;
+    }
+    return acc;
+  }, {});
+  store[uid] = normalised;
+  saveLocalProfileStore(store);
   if (refresh) {
     return loadProfileDocument(uid, { forceRefresh: true });
   }
@@ -1182,22 +1208,7 @@ async function ensureUserProfileRecord(user, overrides = {}) {
   if (!user?.uid) {
     return null;
   }
-  const docRef = await getProfileDocRef(user.uid);
-  if (!docRef) {
-    return null;
-  }
-
-  let existing = null;
-  try {
-    const snapshot = await docRef.get();
-    existing = snapshot.exists ? snapshot.data() || {} : {};
-    if (!snapshot.exists) {
-      existing = {};
-    }
-  } catch (error) {
-    console.warn('Routeflow Firebase: unable to inspect profile document.', error);
-    existing = {};
-  }
+  const existing = (await loadProfileDocument(user.uid, { forceRefresh: true })) || {};
 
   const updates = {};
   const displayNameValue = normaliseTextValue(overrides.displayName ?? existing.displayName ?? user.displayName);
@@ -1231,17 +1242,10 @@ async function ensureUserProfileRecord(user, overrides = {}) {
   }
   if (Object.keys(updates).length) {
     updates.updatedAt = getServerTimestampValue();
-    await docRef.set(updates, { merge: true });
+    await writeProfileDocument(user.uid, updates, { merge: true, refresh: false });
   }
 
-  try {
-    const refreshed = await docRef.get();
-    const data = refreshed.exists ? refreshed.data() || {} : {};
-    return setCachedProfile(user.uid, data);
-  } catch (error) {
-    console.warn('Routeflow Firebase: failed to refresh profile document.', error);
-    return getCachedProfile(user.uid);
-  }
+  return loadProfileDocument(user.uid, { forceRefresh: true });
 }
 
 async function setRoleState(uid, roleName, enabled, meta = {}) {
@@ -1287,50 +1291,28 @@ async function findProfileByEmail(email) {
   if (!emailValue) {
     return null;
   }
-  const instance = await ensureFirestore();
-  if (!instance) {
-    return null;
-  }
-  try {
-    const snapshot = await instance
-      .collection(FIRESTORE_COLLECTION_PROFILES)
-      .where('email', '==', emailValue)
-      .limit(1)
-      .get();
-    if (snapshot.empty) {
-      return null;
+  const store = loadLocalProfileStore();
+  for (const [uid, record] of Object.entries(store)) {
+    if (!record || typeof record !== 'object') continue;
+    if (normaliseEmailValue(record.email) === emailValue) {
+      setCachedProfile(uid, record);
+      return { uid, ...cloneProfileData(record) };
     }
-    const doc = snapshot.docs[0];
-    const data = doc.data() || {};
-    setCachedProfile(doc.id, data);
-    return { uid: doc.id, ...cloneProfileData(data) };
-  } catch (error) {
-    console.error('Routeflow Firebase: failed to locate profile by email.', error);
-    return null;
   }
+  return null;
 }
 
 async function listAdminProfiles() {
-  const instance = await ensureFirestore();
-  if (!instance) {
-    return [];
-  }
-  try {
-    const snapshot = await instance
-      .collection(FIRESTORE_COLLECTION_PROFILES)
-      .where('roles.admin', '==', true)
-      .get();
-    const results = [];
-    snapshot.forEach((doc) => {
-      const data = doc.data() || {};
-      setCachedProfile(doc.id, data);
-      results.push({ uid: doc.id, ...cloneProfileData(data) });
-    });
-    return results;
-  } catch (error) {
-    console.error('Routeflow Firebase: failed to list administrators.', error);
-    return [];
-  }
+  const store = loadLocalProfileStore();
+  const results = [];
+  Object.entries(store).forEach(([uid, record]) => {
+    if (!record || typeof record !== 'object') return;
+    if (record.roles?.admin) {
+      setCachedProfile(uid, record);
+      results.push({ uid, ...cloneProfileData(record) });
+    }
+  });
+  return results;
 }
 
 async function updateDiscordLink(user, details = {}) {
@@ -1386,7 +1368,6 @@ async function syncDiscordRoles(uid, roles = [], meta = {}) {
 
 const routeflowFirebaseApi = {
   ensureAuth: ensureFirebaseAuth,
-  ensureFirestore,
   loadProfile: loadProfileDocument,
   writeProfile: writeProfileDocument,
   ensureProfile: ensureUserProfileRecord,
@@ -1461,6 +1442,9 @@ function resetAuthForms() {
 }
 
 async function ensureAuthModalElement() {
+  if (AUTH_DISABLED) {
+    return null;
+  }
   const existing = document.getElementById('authModal');
   if (existing) {
     return existing;
@@ -1530,6 +1514,11 @@ function setActiveAuthView(mode) {
 }
 
 async function showAuthModal(mode = 'login') {
+  if (AUTH_DISABLED) {
+    const fallback = mode === 'reset' ? 'password-reset.html' : 'profile.html';
+    window.location.href = fallback;
+    return;
+  }
   try {
     let modal = document.getElementById('authModal');
     if (!modal) {
@@ -1563,6 +1552,12 @@ async function updateAdminVisibility(user, options = {}) {
     return;
   }
 
+  if (AUTH_DISABLED) {
+    window.__lastAuthIsAdmin = true;
+    adminTargets.forEach(target => setElementHidden(target, false));
+    return;
+  }
+
   if (!user) {
     window.__lastAuthIsAdmin = false;
     adminTargets.forEach(target => setElementHidden(target, true));
@@ -1593,6 +1588,40 @@ async function updateAdminVisibility(user, options = {}) {
 }
 
 function applyAuthUi(summary, user) {
+  if (AUTH_DISABLED) {
+    const resolvedSummary = summary || createPublicSummary();
+    const displayName = resolvedSummary.displayName || 'Guest Explorer';
+
+    document.querySelectorAll('[data-auth-state="signed-out"]').forEach((section) => setElementHidden(section, true));
+    document.querySelectorAll('[data-auth-state="signed-in"]').forEach((section) => setElementHidden(section, false));
+
+    document.querySelectorAll('[data-profile-toggle]').forEach((toggle) => {
+      toggle.setAttribute('aria-expanded', 'false');
+    });
+
+    document.querySelectorAll('[data-profile-menu]').forEach((menu) => {
+      menu.setAttribute('data-open', 'false');
+      menu.setAttribute('aria-hidden', 'true');
+      menu.setAttribute('hidden', '');
+    });
+
+    document.querySelectorAll('[data-profile-label]').forEach((label) => {
+      label.textContent = displayName;
+    });
+
+    document.querySelectorAll('[data-profile-name]').forEach((nameEl) => {
+      nameEl.textContent = displayName;
+    });
+
+    document.querySelectorAll('[data-profile-email]').forEach((emailEl) => {
+      if (!emailEl) return;
+      emailEl.textContent = '';
+      emailEl.setAttribute('hidden', '');
+      emailEl.setAttribute('aria-hidden', 'true');
+    });
+
+    return;
+  }
   const resolvedSummary = summary || loadPersistedUserSummary();
   applySummaryToDocument(resolvedSummary);
 
@@ -1641,6 +1670,15 @@ function applyAuthUi(summary, user) {
 }
 
 function renderDropdown(user) {
+  if (AUTH_DISABLED) {
+    const publicUser = createPublicUser();
+    window.__lastAuthUser = publicUser;
+    const summary = createPublicSummary();
+    applyAuthUi(summary, publicUser);
+    window.__lastAuthIsAdmin = true;
+    notifyAuthSubscribers(publicUser);
+    return;
+  }
   const previousUser = window.__lastAuthUser ?? null;
   window.__lastAuthUser = user ?? null;
 
@@ -1734,6 +1772,29 @@ window.RouteflowAuth = Object.freeze({
 });
 
 async function handleAuthAction(action) {
+  if (AUTH_DISABLED) {
+    window.dispatchEvent(new Event('navbar:close-overlays'));
+    if (!action) return;
+    if (action === 'logout') {
+      alert('You are viewing the public preview—no sign out is required.');
+      return;
+    }
+    const routeMap = {
+      login: 'profile.html',
+      signup: 'profile.html',
+      reset: 'password-reset.html',
+      profile: 'profile.html',
+      dashboard: 'dashboard.html',
+      fleet: 'fleet.html',
+      settings: 'settings.html',
+      admin: 'admin.html'
+    };
+    const target = routeMap[action];
+    if (target) {
+      window.location.href = target;
+    }
+    return;
+  }
   switch (action) {
     case 'login':
       window.dispatchEvent(new Event('navbar:close-overlays'));

@@ -1,232 +1,238 @@
-const QUICKNAV_SELECTOR = '[data-quicknav]';
-const ANIMATE_SELECTOR = '[data-animate]';
-const NEWSLETTER_SELECTOR = '[data-newsletter-form]';
-const NEWSLETTER_STORAGE_KEY = 'routeflow:newsletter-signups';
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const SELECTORS = {
+  canvas: '#landingMap',
+  carousel: '[data-carousel]',
+  slides: '[data-carousel-slide]',
+  track: '[data-carousel-track]',
+  dots: '[data-carousel-dots]',
+  prev: '[data-carousel-prev]',
+  next: '[data-carousel-next]'
+};
 
-const html = document.documentElement;
-if (html) {
-  html.classList.add('landing-js');
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function initialiseCanvas() {
+  const canvas = document.querySelector(SELECTORS.canvas);
+  if (!canvas || prefersReducedMotion || !canvas.getContext) {
+    return () => {};
+  }
+
+  const context = canvas.getContext('2d');
+  const buses = Array.from({ length: 32 }, () => ({
+    x: Math.random(),
+    y: Math.random(),
+    speed: 0.0006 + Math.random() * 0.0008,
+    angle: Math.random() * Math.PI * 2
+  }));
+
+  const redraw = () => {
+    const { width, height } = canvas;
+    context.setTransform(1, 0, 0, 1, 0, 0);
+    context.clearRect(0, 0, width, height);
+
+    const gradient = context.createRadialGradient(
+      width * 0.3,
+      height * 0.4,
+      Math.min(width, height) * 0.1,
+      width * 0.5,
+      height * 0.6,
+      Math.max(width, height) * 0.8
+    );
+    gradient.addColorStop(0, 'rgba(12, 26, 43, 0.9)');
+    gradient.addColorStop(1, 'rgba(9, 12, 20, 0.2)');
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, width, height);
+
+    context.lineWidth = 1;
+    context.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+    for (let i = 0; i < 18; i += 1) {
+      context.beginPath();
+      context.moveTo(Math.random() * width, Math.random() * height);
+      context.lineTo(Math.random() * width, Math.random() * height);
+      context.stroke();
+    }
+
+    buses.forEach((bus) => {
+      bus.x += Math.cos(bus.angle) * bus.speed;
+      bus.y += Math.sin(bus.angle) * bus.speed;
+      if (bus.x < 0 || bus.x > 1 || bus.y < 0 || bus.y > 1) {
+        bus.angle = Math.random() * Math.PI * 2;
+        bus.x = Math.random();
+        bus.y = Math.random();
+      }
+      const x = bus.x * width;
+      const y = bus.y * height;
+      const glow = context.createRadialGradient(x, y, 0, x, y, 12);
+      glow.addColorStop(0, 'rgba(255, 70, 66, 0.9)');
+      glow.addColorStop(1, 'rgba(255, 70, 66, 0)');
+      context.fillStyle = glow;
+      context.beginPath();
+      context.arc(x, y, 12, 0, Math.PI * 2);
+      context.fill();
+      context.fillStyle = '#ff4642';
+      context.beginPath();
+      context.arc(x, y, 2.2, 0, Math.PI * 2);
+      context.fill();
+    });
+  };
+
+  const setCanvasSize = () => {
+    const { clientWidth, clientHeight } = canvas.parentElement || canvas;
+    const ratio = window.devicePixelRatio || 1;
+    canvas.width = Math.floor(clientWidth * ratio);
+    canvas.height = Math.floor(clientHeight * ratio);
+    canvas.style.width = `${clientWidth}px`;
+    canvas.style.height = `${clientHeight}px`;
+    context.setTransform(ratio, 0, 0, ratio, 0, 0);
+    redraw();
+  };
+
+  let frameId;
+  const tick = () => {
+    redraw();
+    frameId = requestAnimationFrame(tick);
+  };
+
+  const handleResize = () => {
+    setCanvasSize();
+  };
+
+  window.addEventListener('resize', handleResize);
+  setCanvasSize();
+  if (!prefersReducedMotion) {
+    frameId = requestAnimationFrame(tick);
+  }
+
+  return () => {
+    window.removeEventListener('resize', handleResize);
+    if (frameId) {
+      cancelAnimationFrame(frameId);
+    }
+  };
 }
 
-const prefersReducedMotion = typeof window.matchMedia === 'function'
-  ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  : false;
-
-const initialiseAnimations = () => {
-  const animateTargets = Array.from(document.querySelectorAll(ANIMATE_SELECTOR));
-  if (!animateTargets.length) {
+function initialiseCarousel() {
+  const root = document.querySelector(SELECTORS.carousel);
+  if (!root) {
     return () => {};
   }
 
-  if (prefersReducedMotion || !('IntersectionObserver' in window)) {
-    animateTargets.forEach((target) => target.classList.add('is-visible'));
+  const slides = Array.from(root.querySelectorAll(SELECTORS.slides));
+  const dotsHost = root.querySelector(SELECTORS.dots);
+  const prevButton = root.querySelector(SELECTORS.prev);
+  const nextButton = root.querySelector(SELECTORS.next);
+  if (!slides.length || !dotsHost) {
     return () => {};
   }
 
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('is-visible');
-        observer.unobserve(entry.target);
-      }
-    });
-  }, {
-    rootMargin: '0px 0px -5% 0px',
-    threshold: 0.2
+  let index = slides.findIndex((slide) => slide.classList.contains('is-active'));
+  if (index < 0) {
+    index = 0;
+  }
+
+  const dots = slides.map((_, slideIndex) => {
+    const dot = document.createElement('button');
+    dot.type = 'button';
+    dot.className = 'carousel__dot';
+    dot.setAttribute('role', 'tab');
+    dot.setAttribute('aria-label', `Go to slide ${slideIndex + 1}`);
+    dot.dataset.index = String(slideIndex);
+    dotsHost.appendChild(dot);
+    return dot;
   });
 
-  animateTargets.forEach((target) => observer.observe(target));
-  return () => observer.disconnect();
-};
+  const setActive = (nextIndex) => {
+    const bounded = (nextIndex + slides.length) % slides.length;
+    slides.forEach((slide, slideIndex) => {
+      const isActive = slideIndex === bounded;
+      slide.classList.toggle('is-active', isActive);
+      slide.setAttribute('aria-hidden', String(!isActive));
+    });
+    dots.forEach((dot, dotIndex) => {
+      const isActive = dotIndex === bounded;
+      dot.classList.toggle('is-active', isActive);
+      if (isActive) {
+        dot.setAttribute('aria-current', 'true');
+      } else {
+        dot.removeAttribute('aria-current');
+      }
+    });
+    index = bounded;
+  };
 
-const normaliseHash = (value) => {
-  if (typeof value !== 'string') {
-    return '';
-  }
-  try {
-    return decodeURIComponent(value.trim());
-  } catch (error) {
-    return value.trim();
-  }
-};
+  setActive(index);
 
-const scrollToSection = (section) => {
-  if (!section) {
+  dots.forEach((dot) => {
+    dot.addEventListener('click', () => {
+      const targetIndex = Number(dot.dataset.index) || 0;
+      setActive(targetIndex);
+    });
+  });
+
+  prevButton?.addEventListener('click', () => setActive(index - 1));
+  nextButton?.addEventListener('click', () => setActive(index + 1));
+
+  let intervalId;
+  const autoplay = () => {
+    intervalId = window.setInterval(() => {
+      setActive(index + 1);
+    }, 6000);
+  };
+
+  const stop = () => {
+    if (intervalId) {
+      window.clearInterval(intervalId);
+      intervalId = null;
+    }
+  };
+
+  root.addEventListener('mouseenter', stop);
+  root.addEventListener('mouseleave', () => {
+    stop();
+    autoplay();
+  });
+
+  autoplay();
+
+  return () => {
+    stop();
+    root.removeEventListener('mouseenter', stop);
+    root.removeEventListener('mouseleave', autoplay);
+  };
+}
+
+function initialiseSearch() {
+  const form = document.querySelector('.landing-search');
+  if (!form) {
     return;
   }
-  section.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
-};
-
-const initialiseQuickNav = () => {
-  const nav = document.querySelector(QUICKNAV_SELECTOR);
-  if (!nav) {
-    return () => {};
-  }
-
-  const links = Array.from(nav.querySelectorAll('a[href^="#"]'));
-  if (!links.length) {
-    return () => {};
-  }
-
-  const sections = links.map((link) => {
-    const id = normaliseHash(link.getAttribute('href') || '').replace('#', '');
-    const section = id ? document.getElementById(id) : null;
-    return { link, section, id };
-  }).filter((entry) => entry.section);
-
-  if (!sections.length) {
-    return () => {};
-  }
-
-  nav.style.setProperty('--quicknav-count', String(sections.length));
-
-  const setActive = (id) => {
-    sections.forEach(({ link, id: entryId }) => {
-      const isActive = entryId === id;
-      link.classList.toggle('is-active', isActive);
-      if (isActive) {
-        link.setAttribute('aria-current', 'true');
-      } else {
-        link.removeAttribute('aria-current');
-      }
-    });
-    const index = sections.findIndex((entry) => entry.id === id);
-    if (index >= 0) {
-      const ratio = sections.length ? (index + 1) / sections.length : 0;
-      nav.style.setProperty('--quicknav-index', String(index));
-      nav.style.setProperty('--quicknav-progress', ratio.toFixed(4));
-      nav.dataset.activeSection = id;
-    }
-  };
-
-  if (sections[0]) {
-    setActive(sections[0].id);
-  }
-
-  links.forEach((link) => {
-    link.addEventListener('click', (event) => {
-      const targetId = normaliseHash(link.getAttribute('href') || '').replace('#', '');
-      const targetSection = sections.find((entry) => entry.id === targetId)?.section;
-      if (!targetSection) {
-        return;
-      }
-      event.preventDefault();
-      scrollToSection(targetSection);
-      setActive(targetId);
-    });
-  });
-
-  if (prefersReducedMotion || !('IntersectionObserver' in window)) {
-    const current = sections[0];
-    if (current) {
-      setActive(current.id);
-    }
-    return () => {};
-  }
-
-  const observer = new IntersectionObserver((entries) => {
-    const visible = entries
-      .filter((entry) => entry.isIntersecting)
-      .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-    if (!visible.length) {
-      return;
-    }
-    const topEntry = visible[0];
-    const matched = sections.find((entry) => entry.section === topEntry.target);
-    if (matched) {
-      setActive(matched.id);
-    }
-  }, {
-    threshold: [0.2, 0.4, 0.6, 0.8],
-    rootMargin: '-10% 0px -35% 0px'
-  });
-
-  sections.forEach(({ section }) => observer.observe(section));
-  return () => observer.disconnect();
-};
-
-const readStoredEmails = () => {
-  try {
-    const raw = window.localStorage?.getItem(NEWSLETTER_STORAGE_KEY);
-    if (!raw) {
-      return new Set();
-    }
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) {
-      return new Set();
-    }
-    return new Set(parsed.map((value) => String(value || '').toLowerCase()));
-  } catch (error) {
-    console.warn('RouteFlow newsletter: unable to read stored signups', error);
-    return new Set();
-  }
-};
-
-const persistEmails = (emails) => {
-  try {
-    window.localStorage?.setItem(NEWSLETTER_STORAGE_KEY, JSON.stringify(Array.from(emails)));
-  } catch (error) {
-    console.warn('RouteFlow newsletter: unable to persist signups', error);
-  }
-};
-
-const initialiseNewsletter = () => {
-  const form = document.querySelector(NEWSLETTER_SELECTOR);
-  if (!form) {
-    return () => {};
-  }
-
-  const emailField = form.querySelector('input[type="email"]');
-  const responseField = form.querySelector('[data-newsletter-message]');
-  const submitButton = form.querySelector('button[type="submit"]');
-  const storedEmails = readStoredEmails();
-
-  const setMessage = (message, tone = 'info') => {
-    if (!responseField) {
-      return;
-    }
-    responseField.textContent = message;
-    responseField.dataset.tone = tone;
-  };
 
   form.addEventListener('submit', (event) => {
     event.preventDefault();
-    const value = emailField?.value.trim() || '';
+    const field = form.querySelector('input[type="search"]');
+    const value = field?.value.trim();
     if (!value) {
-      setMessage('Please enter your email address to subscribe.', 'warning');
-      emailField?.focus();
+      field?.focus();
       return;
     }
-    if (!EMAIL_PATTERN.test(value)) {
-      setMessage('That email address looks incorrect. Try again?', 'warning');
-      emailField?.focus();
-      return;
-    }
-
-    const email = value.toLowerCase();
-    if (storedEmails.has(email)) {
-      setMessage('You are already on the mission briefing list. Great to have you back!', 'success');
-      form.reset();
-      submitButton?.focus({ preventScroll: true });
-      return;
-    }
-
-    storedEmails.add(email);
-    persistEmails(storedEmails);
-    setMessage('Thanks for joining the mission briefing — check your inbox for the welcome pack.', 'success');
-    form.reset();
-    submitButton?.focus({ preventScroll: true });
+    const url = new URL('tracking.html', window.location.href);
+    url.searchParams.set('query', value);
+    window.location.href = url.toString();
   });
+}
 
-  return () => {
-    form.reset();
-  };
-};
+function init() {
+  const destroyCanvas = initialiseCanvas();
+  const destroyCarousel = initialiseCarousel();
+  initialiseSearch();
 
-const cleanups = [initialiseAnimations(), initialiseQuickNav(), initialiseNewsletter()]
-  .filter((cleanup) => typeof cleanup === 'function');
+  window.addEventListener('beforeunload', () => {
+    destroyCanvas?.();
+    destroyCarousel?.();
+  }, { once: true });
+}
 
-window.addEventListener('beforeunload', () => {
-  cleanups.forEach((cleanup) => cleanup());
-});
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}

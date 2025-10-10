@@ -271,8 +271,6 @@ const noteModalElements = {
   cancelButton: document.getElementById('profileNoteCancel')
 };
 
-const PROFILE_ENDPOINT =
-  (typeof window !== 'undefined' && window.RouteflowProfile?.endpoint) || '/api/profile';
 const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024;
 
 const createDefaultProfileExtras = () => ({
@@ -355,14 +353,6 @@ const getCurrentAuthUser = () => {
     } catch (error) {
       console.error('RouteFlow profile: unable to read user from RouteflowAuth.', error);
     }
-  }
-  try {
-    if (typeof firebase !== 'undefined' && typeof firebase.auth === 'function') {
-      const auth = firebase.auth();
-      return auth?.currentUser || null;
-    }
-  } catch (error) {
-    console.error('RouteFlow profile: unable to resolve Firebase auth user.', error);
   }
   return null;
 };
@@ -635,79 +625,64 @@ const validateProfileEditor = (values) => {
 
 const uploadAvatar = async (user, file) => {
   if (!user || !file) return user?.photoURL || '';
-  await ensureAuth();
-  const storage = (typeof firebase !== 'undefined' && typeof firebase.storage === 'function')
-    ? firebase.storage()
-    : null;
-  if (!storage) {
-    throw new Error('Firebase storage is not available.');
-  }
-  const safeName = (file.name || 'avatar')
-    .toLowerCase()
-    .replace(/[^a-z0-9.]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-  const resolvedName = safeName || `avatar-${Date.now()}`;
-  const path = `avatars/${user.uid}/${Date.now()}-${resolvedName}`;
-  const metadata = { cacheControl: 'public,max-age=3600' };
-  if (file.type) {
-    metadata.contentType = file.type;
-  }
-  const storageRef = storage.ref(path);
-  const snapshot = await storageRef.put(file, metadata);
-  return snapshot.ref.getDownloadURL();
+  const toDataUrl = (blob) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error || new Error('Unable to read avatar file.'));
+    reader.readAsDataURL(blob);
+  });
+  const dataUrl = await toDataUrl(file);
+  return typeof dataUrl === 'string' ? dataUrl : '';
 };
 
 const persistProfileExtras = async (user, extras) => {
-  if (!user?.getIdToken) return null;
-  const token = await user.getIdToken();
-  const payload = {
-    displayName: normaliseProfileText(extras.displayName) || null,
-    photoURL: normaliseProfileText(extras.photoURL) || null,
-    gender: normaliseProfileText(extras.gender) || null
-  };
-  const response = await fetch(PROFILE_ENDPOINT, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`
-    },
-    body: JSON.stringify(payload)
-  });
-  if (response.status === 204) {
-    return null;
+  if (!user?.uid) {
+    return createDefaultProfileExtras();
   }
-  if (!response.ok) {
-    throw new Error(`Failed to update profile extras (${response.status})`);
+  const api = getFirebaseProfileApi();
+  const resolved = normaliseProfileExtras(extras);
+  resolved.updatedAt = new Date().toISOString();
+  if (!api?.writeProfile) {
+    return resolved;
   }
-  const contentType = response.headers.get('content-type') || '';
-  if (contentType.includes('application/json')) {
-    const data = await response.json();
-    return normaliseProfileExtras(data);
+  try {
+    const payload = {
+      extras: resolved,
+      displayName: resolved.displayName || user.displayName || null,
+      photoURL: resolved.photoURL || null,
+      gender: resolved.gender || null,
+      updatedAt: resolved.updatedAt
+    };
+    const response = await api.writeProfile(user.uid, payload, { merge: true, refresh: true });
+    const profile = response && typeof response === 'object' ? response : payload;
+    const mergedExtras = profile.extras && typeof profile.extras === 'object'
+      ? { ...resolved, ...profile.extras }
+      : { ...resolved };
+    mergedExtras.updatedAt = profile.updatedAt || resolved.updatedAt;
+    return normaliseProfileExtras(mergedExtras);
+  } catch (error) {
+    console.warn('RouteFlow profile: unable to persist local profile extras.', error);
+    return resolved;
   }
-  return null;
 };
 
 const fetchProfileExtras = async (user) => {
-  if (!user?.getIdToken) return createDefaultProfileExtras();
+  if (!user?.uid) {
+    return createDefaultProfileExtras();
+  }
+  const api = getFirebaseProfileApi();
+  if (!api?.loadProfile) {
+    return createDefaultProfileExtras();
+  }
   try {
-    const token = await user.getIdToken();
-    const response = await fetch(PROFILE_ENDPOINT, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-    if (response.status === 404) {
+    const profile = await api.loadProfile(user.uid, { forceRefresh: true });
+    if (!profile) {
       return createDefaultProfileExtras();
     }
-    if (!response.ok) {
-      throw new Error(`Failed to load profile extras (${response.status})`);
+    if (profile.extras && typeof profile.extras === 'object') {
+      return normaliseProfileExtras(profile.extras);
     }
-    const contentType = response.headers.get('content-type') || '';
-    if (!contentType.includes('application/json')) {
-      return createDefaultProfileExtras();
-    }
-    const data = await response.json();
-    return normaliseProfileExtras(data);
+    return normaliseProfileExtras(profile);
   } catch (error) {
     console.warn('Unable to fetch extended profile details.', error);
     return createDefaultProfileExtras();

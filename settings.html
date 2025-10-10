@@ -11,7 +11,7 @@
   <script src="site.js" defer></script>
   <script src="settings.js" defer></script>
 </head>
-<body class="site-body">
+<body class="metro-app site-body">
   <a href="#main-content" class="skip-link">Skip to main content</a>
   <div class="site-shell">
     <header class="site-shell__header">
@@ -236,25 +236,7 @@
     </footer>
   </div>
 
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-  <script src="config.js"></script>
-  <script>
-    (function initialiseFirebase() {
-      const firebaseConfig = window.__ROUTEFLOW_CONFIG__?.firebase;
-      if (!firebaseConfig?.apiKey) {
-        console.error('Firebase configuration is missing. Settings page authentication will be disabled.');
-        return;
-      }
-      if (typeof firebase === 'undefined') {
-        console.error('Firebase SDK not loaded. Settings page authentication will be disabled.');
-        return;
-      }
-      if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-      }
-    })();
-  </script>
+      <script src="config.js"></script>
   <script src="navbar-loader.js" defer></script>
 </body>
 </html>

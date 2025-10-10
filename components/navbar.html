@@ -1,147 +1,98 @@
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" data-navbar-dependency>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" data-navbar-dependency>
 <link rel="stylesheet" href="style.css" data-navbar-dependency>
 
-<nav class="navbar" aria-label="Primary navigation">
-  <div class="navbar__container">
-    <a href="index.html" class="navbar__logo" aria-label="RouteFlow London home">
-      <span class="navbar__logo-mark" aria-hidden="true">
+<nav class="metro-nav" aria-label="Primary navigation">
+  <div class="metro-nav__container">
+    <a href="index.html" class="metro-nav__logo" aria-label="RouteFlow London home">
+      <span class="metro-nav__roundel" aria-hidden="true">
         <img src="images/New_Routflow_London_Logo.png" alt="" loading="lazy">
       </span>
-      <span class="navbar__logo-text">
-        <span class="navbar__logo-title">RouteFlow London</span>
-        <span class="navbar__logo-subtitle">Network Studio</span>
-      </span>
+      <span class="metro-nav__title">RouteFlow London</span>
     </a>
 
-    <div class="navbar__links" data-navbar-desktop>
-      <a class="navbar__link" data-nav-link href="index.html">Home</a>
-      <a class="navbar__link" data-nav-link href="tracking.html">Live</a>
-      <a class="navbar__link" data-nav-link href="planning.html">Planning</a>
-      <a class="navbar__link" data-nav-link href="routes.html">Routes</a>
-      <a class="navbar__link" data-nav-link href="disruptions.html">Disruptions</a>
-      <a class="navbar__link" data-nav-link href="fleet.html">Fleet</a>
-      <a class="navbar__link" data-nav-link href="withdrawn.html">Withdrawn</a>
-      <a class="navbar__link" data-nav-link href="info.html">Info</a>
+    <button class="metro-nav__toggle" id="navbarToggle" type="button" aria-expanded="false" aria-controls="navbarDrawer">
+      <span class="sr-only">Toggle navigation menu</span>
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <div class="metro-nav__links" data-navbar-desktop>
+      <a class="metro-nav__link" data-nav-link href="index.html">Home</a>
+      <a class="metro-nav__link" data-nav-link href="tracking.html">Live</a>
+      <a class="metro-nav__link" data-nav-link href="fleet.html">Fleets</a>
+      <a class="metro-nav__link" data-nav-link href="info.html">Info</a>
+      <a class="metro-nav__link" data-nav-link href="dashboard.html">Dashboard</a>
+      <a class="metro-nav__link" data-nav-link href="settings.html">Settings</a>
     </div>
 
-    <div class="navbar__controls">
-      <div class="navbar__auth" data-auth-container>
-        <div class="navbar__auth-guest" data-auth-state="signed-out">
-          <button type="button" class="navbar__btn navbar__btn--ghost" data-auth-action="login">Login</button>
-          <button type="button" class="navbar__btn navbar__btn--primary" data-auth-action="signup">Join</button>
+    <div class="metro-nav__meta">
+      <div class="metro-nav__xp" role="meter" aria-label="Explorer XP" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <span class="metro-nav__xp-label" data-xp-label>Level 1</span>
+        <span class="metro-nav__xp-track">
+          <span class="metro-nav__xp-fill" data-xp-fill></span>
+        </span>
+      </div>
+      <div class="metro-nav__profile" data-auth-container>
+        <div class="metro-nav__auth-guest" data-auth-state="signed-out">
+          <a class="metro-nav__action" href="dashboard.html">Open dashboard</a>
         </div>
-        <div class="navbar__profile" data-auth-state="signed-in" hidden>
-          <button type="button" class="navbar__profile-toggle" data-profile-toggle aria-haspopup="true" aria-expanded="false">
-            <span class="navbar__profile-avatar" aria-hidden="true">
+        <div class="metro-nav__auth-signed" data-auth-state="signed-in" hidden>
+          <button type="button" class="metro-nav__avatar" data-profile-toggle aria-haspopup="true" aria-expanded="false">
+            <span class="metro-nav__avatar-icon" aria-hidden="true">
               <i class="fa-regular fa-circle-user"></i>
             </span>
-            <span class="navbar__profile-label" data-profile-label>Welcome</span>
-            <span class="navbar__profile-chevron" aria-hidden="true">
+            <span class="metro-nav__avatar-name" data-profile-label>Welcome</span>
+            <span class="metro-nav__avatar-caret" aria-hidden="true">
               <i class="fa-solid fa-chevron-down"></i>
             </span>
           </button>
-          <div class="navbar__profile-menu" data-profile-menu aria-hidden="true" data-open="false">
-            <header class="navbar__profile-header">
-              <span class="navbar__profile-name" data-profile-name>Welcome</span>
-              <span class="navbar__profile-email" data-profile-email hidden aria-hidden="true"></span>
+          <div class="metro-nav__dropdown" data-profile-menu aria-hidden="true" data-open="false" hidden>
+            <header class="metro-nav__dropdown-header">
+              <span class="metro-nav__dropdown-name" data-profile-name>Welcome</span>
+              <span class="metro-nav__dropdown-email" data-profile-email hidden aria-hidden="true"></span>
             </header>
-            <nav class="navbar__profile-panel" aria-label="Account menu" role="menu">
-              <a href="profile.html" class="navbar__profile-item" data-auth-action="profile" data-profile-nav role="menuitem">
-                <i class="fa-solid fa-id-badge" aria-hidden="true"></i>
-                <span>Profile</span>
-              </a>
-              <a href="dashboard.html" class="navbar__profile-item" data-auth-action="dashboard" data-profile-nav role="menuitem">
-                <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
-                <span>Dashboard</span>
-              </a>
-              <a href="settings.html" class="navbar__profile-item" data-auth-action="settings" role="menuitem">
-                <i class="fa-solid fa-sliders" aria-hidden="true"></i>
-                <span>Settings</span>
-              </a>
-              <a href="admin.html" class="navbar__profile-item" data-auth-action="admin" data-requires-admin hidden aria-hidden="true" role="menuitem">
-                <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
-                <span>Admin</span>
-              </a>
-              <button type="button" class="navbar__profile-item navbar__profile-item--destructive" data-auth-action="logout" role="menuitem">
-                <i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
-                <span>Log out</span>
-              </button>
+            <nav class="metro-nav__dropdown-nav" role="menu" aria-label="Account links">
+              <a class="metro-nav__dropdown-link" href="dashboard.html" role="menuitem" data-profile-nav>Dashboard</a>
+              <a class="metro-nav__dropdown-link" href="profile.html" role="menuitem" data-profile-nav>Profile</a>
+              <a class="metro-nav__dropdown-link" href="settings.html" role="menuitem">Settings</a>
+              <a class="metro-nav__dropdown-link" href="admin.html" role="menuitem" data-requires-admin data-auth-action="admin" hidden aria-hidden="true">Admin</a>
+              <button class="metro-nav__dropdown-link metro-nav__dropdown-link--danger" type="button" data-auth-action="logout" role="menuitem">Sign out</button>
             </nav>
           </div>
         </div>
       </div>
-
-      <button type="button" class="navbar__toggle" id="navbarToggle" aria-expanded="false" aria-controls="navbarDrawer">
-        <span class="sr-only">Toggle navigation menu</span>
-        <span class="navbar__toggle-line" aria-hidden="true"></span>
-        <span class="navbar__toggle-line" aria-hidden="true"></span>
-        <span class="navbar__toggle-line" aria-hidden="true"></span>
-      </button>
     </div>
   </div>
 
-  <aside class="navbar__drawer" id="navbarDrawer" aria-hidden="true" tabindex="-1" data-open="false">
-    <div class="navbar__drawer-header">
-      <span class="navbar__drawer-title">Navigate RouteFlow</span>
-      <button type="button" class="navbar__drawer-close" id="navbarDrawerClose" aria-label="Close menu">
-        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-      </button>
-    </div>
-    <div class="navbar__drawer-scroll">
-      <section class="navbar__drawer-profile" data-auth-state="signed-in" hidden>
-        <div class="navbar__drawer-profile-header">
-          <div class="navbar__drawer-avatar" aria-hidden="true">
-            <i class="fa-regular fa-circle-user"></i>
-          </div>
-          <div class="navbar__drawer-profile-text">
-            <span class="navbar__drawer-profile-name" data-profile-name>Welcome</span>
-            <span class="navbar__drawer-profile-email" data-profile-email hidden aria-hidden="true"></span>
-          </div>
-        </div>
-        <button type="button" class="navbar__drawer-profile-manage" data-auth-action="profile">
-          Manage account
+  <aside class="metro-nav__drawer" id="navbarDrawer" aria-hidden="true" data-open="false" tabindex="-1">
+    <div class="metro-nav__drawer-inner">
+      <header class="metro-nav__drawer-header">
+        <span>RouteFlow London</span>
+        <button type="button" class="metro-nav__drawer-close" id="navbarDrawerClose" aria-label="Close menu">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
         </button>
-      </section>
-
-      <nav class="navbar__drawer-nav" aria-label="Mobile navigation">
-        <ul class="navbar__drawer-list" role="list">
-          <li><a class="navbar__drawer-link" data-nav-link href="index.html">Home</a></li>
-          <li><a class="navbar__drawer-link" data-nav-link href="tracking.html">Live</a></li>
-          <li><a class="navbar__drawer-link" data-nav-link href="planning.html">Planning</a></li>
-          <li><a class="navbar__drawer-link" data-nav-link href="routes.html">Routes</a></li>
-          <li><a class="navbar__drawer-link" data-nav-link href="disruptions.html">Disruptions</a></li>
-          <li><a class="navbar__drawer-link" data-nav-link href="fleet.html">Fleet</a></li>
-          <li><a class="navbar__drawer-link" data-nav-link href="withdrawn.html">Withdrawn</a></li>
-          <li><a class="navbar__drawer-link" data-nav-link href="info.html">Info</a></li>
-          <li><a class="navbar__drawer-link" data-nav-link href="dashboard.html">Dashboard</a></li>
-          <li><a class="navbar__drawer-link" data-nav-link href="profile.html">Profile</a></li>
-          <li><a class="navbar__drawer-link" data-nav-link href="settings.html">Settings</a></li>
-        </ul>
+      </header>
+      <nav class="metro-nav__drawer-nav" aria-label="Mobile navigation">
+        <a class="metro-nav__drawer-link" data-nav-link href="index.html">Home</a>
+        <a class="metro-nav__drawer-link" data-nav-link href="tracking.html">Live</a>
+        <a class="metro-nav__drawer-link" data-nav-link href="fleet.html">Fleets</a>
+        <a class="metro-nav__drawer-link" data-nav-link href="info.html">Info</a>
+        <a class="metro-nav__drawer-link" data-nav-link href="dashboard.html">Dashboard</a>
+        <a class="metro-nav__drawer-link" data-nav-link href="settings.html">Settings</a>
       </nav>
-
-      <div class="navbar__drawer-divider" role="separator" aria-hidden="true"></div>
-
-      <section class="navbar__drawer-actions" data-auth-container aria-label="Account actions">
-        <div class="navbar__drawer-section" data-auth-state="signed-out">
-          <h2 class="navbar__drawer-section-title">Your RouteFlow account</h2>
-          <p class="navbar__drawer-copy">Sign in to sync favourites, accessibility presets and saved missions.</p>
-          <div class="navbar__drawer-buttons">
-            <button type="button" class="navbar__drawer-action navbar__drawer-button navbar__drawer-button--ghost" data-auth-action="login">Login</button>
-            <button type="button" class="navbar__drawer-action navbar__drawer-button navbar__drawer-button--primary" data-auth-action="signup">Join RouteFlow</button>
-          </div>
+      <div class="metro-nav__drawer-actions" data-auth-container>
+        <div class="metro-nav__drawer-guest" data-auth-state="signed-out">
+          <p>Sign in later — explore the dashboard instantly in guest mode.</p>
+          <a class="metro-nav__drawer-btn" href="dashboard.html">Open dashboard</a>
         </div>
-        <div class="navbar__drawer-section" data-auth-state="signed-in" hidden>
-          <h2 class="navbar__drawer-section-title">Account quick links</h2>
-          <ul class="navbar__drawer-list" role="list">
-            <li><a class="navbar__drawer-link" data-profile-nav href="dashboard.html">Dashboard</a></li>
-            <li><a class="navbar__drawer-link" data-profile-nav href="profile.html">Profile</a></li>
-            <li><a class="navbar__drawer-link" data-profile-nav href="settings.html">Settings</a></li>
-            <li><a class="navbar__drawer-link" data-profile-nav data-auth-action="logout" href="#">Sign out</a></li>
-          </ul>
+        <div class="metro-nav__drawer-signed" data-auth-state="signed-in" hidden>
+          <a class="metro-nav__drawer-btn" data-profile-nav href="dashboard.html">Dashboard</a>
+          <a class="metro-nav__drawer-btn" data-profile-nav href="profile.html">Profile</a>
+          <a class="metro-nav__drawer-btn" data-auth-action="logout" href="#">Sign out</a>
         </div>
-      </section>
+      </div>
     </div>
   </aside>
-
-  <div class="navbar__backdrop" id="navbarBackdrop" aria-hidden="true" data-visible="false"></div>
+  <div class="metro-nav__backdrop" id="navbarBackdrop" aria-hidden="true" data-visible="false"></div>
 </nav>

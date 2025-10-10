@@ -1,176 +1,206 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>About - RouteFlow London</title>
+  <title>About – RouteFlow London</title>
   <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png" />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link rel="stylesheet" href="style.css" />
   <script src="theme.js" defer></script>
   <script src="site.js" defer></script>
 </head>
-<body class="site-body">
+<body class="metro-app app app--about">
   <a href="#main-content" class="skip-link">Skip to main content</a>
-  <div class="site-shell">
-    <header class="site-shell__header">
-      <div id="navbar-container" class="site-shell__navbar"></div>
+  <div class="app__wrapper">
+    <header class="app-header" aria-label="RouteFlow London navigation">
+      <div class="app-header__bar">
+        <div id="navbar-container" class="app-header__mount"></div>
+      </div>
+      <div class="app-header__ticker" role="status" aria-live="polite">
+        <span class="app-header__ticker-label">Inside RouteFlow</span>
+        <p class="app-header__ticker-text">Built in London, powered by curiosity, crafted for everyone travelling the network.</p>
+      </div>
     </header>
 
-    <div class="site-shell__main">
-  <main id="main-content" class="site-main page-shell" aria-labelledby="aboutTitle">
-    <section class="page-hero">
-      <div class="page-hero__content">
-        <p class="page-hero__eyebrow">About RouteFlow London</p>
-        <h1 id="aboutTitle">Helping young Londoners learn the network through play.</h1>
-        <p class="page-hero__lead">
-          RouteFlow London mixes real Transport for London data with story-rich games, classroom packs and co-operative missions. We design every screen to be colourful, accessible and confidence boosting for children, families and educators.
-        </p>
-      </div>
-      <dl class="page-hero__meta">
-        <div>
-          <dt>Founded</dt>
-          <dd>2024</dd>
+    <main id="main-content" class="app-main page" aria-labelledby="about-title">
+      <header class="page-hero">
+        <div class="page-hero__content">
+          <p class="eyebrow">Our story</p>
+          <h1 id="about-title">RouteFlow London turns complex transport data into joyful guidance.</h1>
+          <p class="lead">What began as a weekend project to track rare bus workings has grown into an inclusive studio for planners, schools, and families. We blend real-time feeds with narrative design so everyone can understand London’s network.</p>
         </div>
-        <div>
-          <dt>Realtime sources</dt>
-          <dd>12+ live feeds</dd>
+        <dl class="stats stats--inline" aria-label="RouteFlow at a glance">
+          <div class="stat">
+            <dt>Founded</dt>
+            <dd>2024</dd>
+          </div>
+          <div class="stat">
+            <dt>Live feeds</dt>
+            <dd>12+ sources</dd>
+          </div>
+          <div class="stat">
+            <dt>Community notes</dt>
+            <dd>Updated daily</dd>
+          </div>
+        </dl>
+      </header>
+
+      <section class="page-section">
+        <div class="section__header">
+          <p class="eyebrow">Why we exist</p>
+          <h2>Transport knowledge should feel calm, colourful, and accessible.</h2>
+          <p class="section__lead">RouteFlow London is built on three promises that guide every release.</p>
         </div>
-        <div>
-          <dt>Community notes</dt>
-          <dd>Updated daily</dd>
+        <div class="feature-grid feature-grid--three">
+          <article class="feature-card feature-card--soft">
+            <h3>Clarity first</h3>
+            <p>We translate TfL feeds into friendly summaries, legible typography, and motion that supports rather than distracts.</p>
+          </article>
+          <article class="feature-card feature-card--soft">
+            <h3>Accessibility always</h3>
+            <p>Every screen supports dark mode, high contrast, dyslexia-friendly fonts, and keyboard navigation by default.</p>
+          </article>
+          <article class="feature-card feature-card--soft">
+            <h3>Community powered</h3>
+            <p>Fleet notes, withdrawn stock, and enthusiast insights are curated with credit to the people who share them.</p>
+          </article>
         </div>
-      </dl>
-    </section>
+      </section>
 
-    <section class="page-card">
-      <h2>What drives us</h2>
-      <p>
-        London moves fast, but information about it shouldn’t overwhelm. RouteFlow London started as a hobby project to tidy the dozens of tabs needed to follow rare workings, route changes, and planned closures. It has since grown into a platform focused on:
-      </p>
-      <ul class="page-list">
-        <li><strong>Clarity first:</strong> Live arrivals and route information are presented with legible typography, soft colour, and straightforward summaries.</li>
-        <li><strong>Accessibility built in:</strong> Dark mode, high-contrast palettes, readable fonts, and reduced motion are core features—not afterthoughts.</li>
-        <li><strong>Community knowledge:</strong> Fleet notes, withdrawn tables, and enthusiast insights are curated so specialists and newcomers alike can explore the network together.</li>
-      </ul>
-    </section>
+      <section class="page-section page-section--surface">
+        <div class="section__header">
+          <p class="eyebrow">Who we support</p>
+          <h2>Designed for commuters, enthusiasts, and classroom explorers alike.</h2>
+        </div>
+        <div class="page-grid">
+          <article class="profile-card profile-card--alt">
+            <h3>Daily travellers</h3>
+            <p>Pin favourite stops, compare routes, and receive calm notifications before disruption strikes.</p>
+            <ul class="checklist" role="list">
+              <li><i class="fa-solid fa-bolt" aria-hidden="true"></i> Instant live departures.</li>
+              <li><i class="fa-solid fa-route" aria-hidden="true"></i> Smart reroute planning.</li>
+              <li><i class="fa-solid fa-shield" aria-hidden="true"></i> Accessibility-first journeys.</li>
+            </ul>
+          </article>
+          <article class="profile-card profile-card--alt">
+            <h3>Transport enthusiasts</h3>
+            <p>Follow rare workings, archive fleet changes, and share discoveries with fellow fans.</p>
+            <ul class="checklist" role="list">
+              <li><i class="fa-solid fa-bus" aria-hidden="true"></i> Detailed fleet registry.</li>
+              <li><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> Withdrawn history timelines.</li>
+              <li><i class="fa-solid fa-book-open" aria-hidden="true"></i> Collaborative notes and archives.</li>
+            </ul>
+          </article>
+          <article class="profile-card profile-card--alt">
+            <h3>Educators & families</h3>
+            <p>Use interactive lesson ideas and simplified dashboards to make learning the network fun.</p>
+            <ul class="checklist" role="list">
+              <li><i class="fa-solid fa-people-roof" aria-hidden="true"></i> Classroom resource packs.</li>
+              <li><i class="fa-solid fa-comments" aria-hidden="true"></i> Story-led disruption explainers.</li>
+              <li><i class="fa-solid fa-heart" aria-hidden="true"></i> Inclusive content in every module.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
 
-    <section class="page-columns">
-      <article class="page-card">
-        <h3>For daily commuters</h3>
-        <p>Tools that remove friction when you simply need to get moving:</p>
-        <ul class="page-list">
-          <li>Pin favourite stops and see departures refresh automatically.</li>
-          <li>Compare journey plans with accessibility filters ready to go.</li>
-          <li>Receive calm alerts about disruptions so you can reroute quickly.</li>
-        </ul>
-      </article>
-      <article class="page-card">
-        <h3>For transport enthusiasts</h3>
-        <p>A home for the detail that rarely surfaces in standard travel apps:</p>
-        <ul class="page-list">
-          <li>Track rare workings, heritage runs, and fleet changes as they happen.</li>
-          <li>Explore historical withdrawal data with context-rich notes.</li>
-          <li>Capture observations that sync across devices through your account.</li>
-        </ul>
-      </article>
-    </section>
-
-    <section class="page-card">
-      <h2>How we build</h2>
-      <p>
-        Every feature is shaped by real rider feedback. We prototype quickly, test with the community, and release in manageable increments so updates feel steady rather than disruptive.
-      </p>
-      <div class="page-grid page-grid--compact">
-        <article class="page-mini-card">
-          <h3>Reliable data pipeline</h3>
-          <p>Live arrivals, planned works, and vehicle data are ingested from TfL and processed to keep the interface fast and resilient.</p>
-        </article>
-        <article class="page-mini-card">
-          <h3>Accessible by default</h3>
-          <p>Interfaces are audited against WCAG AA guidance with readable typography, keyboard-friendly navigation, and reduced-motion options.</p>
-        </article>
-        <article class="page-mini-card">
-          <h3>Community collaboration</h3>
-          <p>We publish changelogs and roadmaps so enthusiasts can suggest improvements, report quirks, and celebrate wins with us.</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="page-card page-card--highlight">
-      <h2>Join the journey</h2>
-      <p>
-        Have an idea that would make RouteFlow London even better? Whether you are a commuter, driver, controller, or enthusiast, we’d love to hear from you. <a href="contact.html">Send us a message</a> and help shape the next release.
-      </p>
-    </section>
-  </main>
-
-    </div>
-
-    <footer class="site-footer" aria-label="RouteFlow London footer">
-      <div class="site-footer__inner">
-        <div class="site-footer__brand">
-          <img src="images/New_Routflow_London_Logo.png" alt="RouteFlow London logo">
-          <div>
-            <h2>Stay curious about London’s transport</h2>
-            <p>RouteFlow London turns TfL feeds into playful guidance so planners, families and classrooms can travel with calm confidence.</p>
-            <div class="site-footer__social" role="list">
-              <a href="https://discord.gg/qVf3nN4Mgq" aria-label="RouteFlow London on Discord"><i class="fa-brands fa-discord"></i></a>
-              <a href="https://www.tiktok.com/@the_bus_father" aria-label="RouteFlow London on TikTok"><i class="fa-brands fa-tiktok"></i></a>
-              <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo" aria-label="RouteFlow London on Instagram"><i class="fa-brands fa-instagram"></i></a>
+      <section class="page-section">
+        <div class="section__header">
+          <p class="eyebrow">How we build</p>
+          <h2>Small teams, rapid experiments, and constant listening.</h2>
+        </div>
+        <div class="timeline" aria-label="RouteFlow build principles">
+          <article class="timeline__item">
+            <span class="timeline__marker">1</span>
+            <div class="timeline__content">
+              <h3>Prototype with purpose</h3>
+              <p>We release features in weekly sprints, validating them with a community group of planners, drivers, and enthusiasts.</p>
             </div>
+          </article>
+          <article class="timeline__item">
+            <span class="timeline__marker">2</span>
+            <div class="timeline__content">
+              <h3>Audit accessibility every sprint</h3>
+              <p>Each release is checked against WCAG guidelines and includes documented keyboard flows and motion alternatives.</p>
+            </div>
+          </article>
+          <article class="timeline__item">
+            <span class="timeline__marker">3</span>
+            <div class="timeline__content">
+              <h3>Share openly</h3>
+              <p>We publish changelogs, maintain a public roadmap, and invite Discord discussions so improvements stay collaborative.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="page-section page-section--highlight">
+        <div class="cta-card cta-card--inline">
+          <div>
+            <h2>Join the RouteFlow journey.</h2>
+            <p>Have an idea or want to collaborate on a new module? We love hearing from the people who keep London moving.</p>
+          </div>
+          <a class="btn btn--primary" href="contact.html">Contact the team</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer" aria-label="RouteFlow London footer">
+      <div class="app-footer__inner">
+        <div class="app-footer__brand">
+          <img src="images/New_Routflow_London_Logo.png" alt="RouteFlow London logo" loading="lazy" />
+          <div>
+            <h2>RouteFlow London</h2>
+            <p>We transform real-time feeds into a delightful studio for planners, operators, and curious families.</p>
           </div>
         </div>
-        <div class="site-footer__grid">
+        <div class="app-footer__grid">
           <div>
-            <h3 class="site-footer__heading">Plan journeys</h3>
-            <ul class="site-footer__links">
+            <h3>Platform</h3>
+            <ul>
               <li><a href="index.html">Home</a></li>
-              <li><a href="planning.html">Planning</a></li>
-              <li><a href="tracking.html">Tracking</a></li>
+              <li><a href="tracking.html">Live tracking</a></li>
+              <li><a href="planning.html">Planning studio</a></li>
             </ul>
           </div>
           <div>
-            <h3 class="site-footer__heading">Live insight</h3>
-            <ul class="site-footer__links">
-              <li><a href="dashboard.html">Dashboard</a></li>
-              <li><a href="routes.html">Routes</a></li>
-              <li><a href="disruptions.html">Disruptions</a></li>
+            <h3>Data</h3>
+            <ul>
+              <li><a href="routes.html">Route directory</a></li>
+              <li><a href="fleet.html">Fleet health</a></li>
+              <li><a href="withdrawn.html">Withdrawn stock</a></li>
             </ul>
           </div>
           <div>
-            <h3 class="site-footer__heading">Community data</h3>
-            <ul class="site-footer__links">
+            <h3>Community</h3>
+            <ul>
               <li><a href="info.html">Info hub</a></li>
-              <li><a href="fleet.html">Fleet</a></li>
-              <li><a href="withdrawn.html">Withdrawn</a></li>
+              <li><a href="contact.html">Contact</a></li>
+              <li><a href="about.html">About</a></li>
             </ul>
           </div>
           <div>
-            <h3 class="site-footer__heading">Company</h3>
-            <ul class="site-footer__links">
-              <li><a href="about.html">About</a></li>
-              <li><a href="contact.html">Contact</a></li>
+            <h3>Policies</h3>
+            <ul>
               <li><a href="privacy.html">Privacy</a></li>
               <li><a href="terms.html">Terms</a></li>
+              <li><a href="settings.html">Accessibility</a></li>
             </ul>
           </div>
         </div>
-        <div class="site-footer__bottom">
-          <p class="site-footer__legal">© <span data-current-year></span> RouteFlow London. Crafted for curious travellers.</p>
-          <div class="site-footer__meta">
-            <a href="privacy.html">Privacy</a>
-            <a href="terms.html">Terms</a>
-            <a href="contact.html">Contact</a>
+        <div class="app-footer__meta">
+          <p>© <span data-current-year></span> RouteFlow London. Crafted in Camden with a love for buses.</p>
+          <div class="app-footer__social" role="list">
+            <a href="https://discord.gg/qVf3nN4Mgq" aria-label="RouteFlow London on Discord"><i class="fa-brands fa-discord"></i></a>
+            <a href="https://www.tiktok.com/@the_bus_father" aria-label="RouteFlow London on TikTok"><i class="fa-brands fa-tiktok"></i></a>
+            <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo" aria-label="RouteFlow London on Instagram"><i class="fa-brands fa-instagram"></i></a>
           </div>
         </div>
       </div>
     </footer>
   </div>
 
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script src="main.js"></script>
   <script src="navbar-loader.js"></script>
 </body>
