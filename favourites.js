@@ -39,14 +39,6 @@ const getCurrentUser = () => {
       console.error('RouteFlow favourites: unable to read user from RouteflowAuth.', error);
     }
   }
-  try {
-    if (typeof firebase !== 'undefined' && typeof firebase.auth === 'function') {
-      const auth = firebase.auth();
-      return auth?.currentUser || null;
-    }
-  } catch (error) {
-    console.error('RouteFlow favourites: unable to resolve Firebase auth user.', error);
-  }
   return null;
 };
 

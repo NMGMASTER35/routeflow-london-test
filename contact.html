@@ -1,175 +1,181 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Contact - RouteFlow London</title>
+  <title>Contact – RouteFlow London</title>
   <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png" />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link rel="stylesheet" href="style.css" />
   <script src="theme.js" defer></script>
   <script src="site.js" defer></script>
 </head>
-<body class="site-body">
+<body class="metro-app app app--contact">
   <a href="#main-content" class="skip-link">Skip to main content</a>
-  <div class="site-shell">
-    <header class="site-shell__header">
-      <div id="navbar-container" class="site-shell__navbar"></div>
+  <div class="app__wrapper">
+    <header class="app-header" aria-label="RouteFlow London navigation">
+      <div class="app-header__bar">
+        <div id="navbar-container" class="app-header__mount"></div>
+      </div>
+      <div class="app-header__ticker" role="status" aria-live="polite">
+        <span class="app-header__ticker-label">Contact</span>
+        <p class="app-header__ticker-text">Message the RouteFlow London crew — we reply within two working days.</p>
+      </div>
     </header>
 
-    <div class="site-shell__main">
-  <main id="main-content" class="site-main page-shell" aria-labelledby="contactTitle">
-    <section class="page-hero">
-      <div class="page-hero__content">
-        <p class="page-hero__eyebrow">Get in touch</p>
-        <h1 id="contactTitle">We’re here to help you plan better journeys.</h1>
-        <p class="page-hero__lead">
-          Whether you’ve spotted a bug, have an idea for a new feature, or want to collaborate on data, drop us a line. We read every message and respond with practical next steps.
-        </p>
-      </div>
-      <dl class="page-hero__meta">
-        <div>
-          <dt>Average response</dt>
-          <dd>Under 2 days</dd>
+    <main id="main-content" class="app-main page" aria-labelledby="contact-title">
+      <header class="page-hero">
+        <div class="page-hero__content">
+          <p class="eyebrow">Get in touch</p>
+          <h1 id="contact-title">We love hearing how RouteFlow can support your journeys.</h1>
+          <p class="lead">Share a feature idea, flag a bug, or ask about collaboration opportunities. Every message reaches the core team.</p>
         </div>
-        <div>
-          <dt>Support hours</dt>
-          <dd>Mon–Sat</dd>
+        <dl class="stats stats--inline" aria-label="Support overview">
+          <div class="stat">
+            <dt>Response time</dt>
+            <dd>Under 48 hours</dd>
+          </div>
+          <div class="stat">
+            <dt>Support hours</dt>
+            <dd>Mon–Sat</dd>
+          </div>
+          <div class="stat">
+            <dt>Community</dt>
+            <dd>Discord & socials</dd>
+          </div>
+        </dl>
+      </header>
+
+      <section class="page-section page-section--surface page-section--two-column">
+        <form class="form-card" aria-labelledby="contact-form-heading">
+          <h2 id="contact-form-heading">Send us a message</h2>
+          <div class="form-grid">
+            <label for="contactName">Name</label>
+            <input type="text" id="contactName" name="name" autocomplete="name" placeholder="Ada Lovelace" required />
+
+            <label for="contactEmail">Email</label>
+            <input type="email" id="contactEmail" name="email" autocomplete="email" placeholder="you@example.com" required />
+
+            <label for="contactTopic">Topic</label>
+            <input type="text" id="contactTopic" name="topic" placeholder="Feature idea, bug report, data request…" />
+
+            <label for="contactMessage">Message</label>
+            <textarea id="contactMessage" name="message" placeholder="Share as much detail as you can" rows="5" required></textarea>
+          </div>
+          <button type="submit" class="btn btn--primary">Submit message</button>
+          <p class="form-note" aria-live="polite">We’ll send a confirmation email instantly and follow up with next steps.</p>
+        </form>
+
+        <aside class="support-card" aria-label="Other ways to reach us">
+          <h2>Prefer another channel?</h2>
+          <ul class="support-list" role="list">
+            <li>
+              <i class="fa-solid fa-envelope" aria-hidden="true"></i>
+              <span><strong>Email:</strong> <a href="mailto:hello@routeflow.london">hello@routeflow.london</a></span>
+            </li>
+            <li>
+              <i class="fa-brands fa-discord" aria-hidden="true"></i>
+              <span><strong>Discord:</strong> Join <a href="https://discord.gg/qVf3nN4Mgq">RouteFlow London HQ</a> for live chat.</span>
+            </li>
+            <li>
+              <i class="fa-brands fa-instagram" aria-hidden="true"></i>
+              <span><strong>Instagram:</strong> Follow <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo">@thebusfatherofficial</a>.</span>
+            </li>
+            <li>
+              <i class="fa-brands fa-tiktok" aria-hidden="true"></i>
+              <span><strong>TikTok:</strong> Watch highlights on <a href="https://www.tiktok.com/@the_bus_father">@the_bus_father</a>.</span>
+            </li>
+          </ul>
+        </aside>
+      </section>
+
+      <section class="page-section">
+        <div class="section__header">
+          <p class="eyebrow">How support works</p>
+          <h2>We share updates openly so you know what happens next.</h2>
         </div>
-        <div>
-          <dt>Community channels</dt>
-          <dd>Discord &amp; socials</dd>
-        </div>
-      </dl>
-    </section>
-
-    <section class="page-columns">
-      <form class="page-card page-form" aria-labelledby="contactHeading">
-        <h2 id="contactHeading">Send us a message</h2>
-        <label for="contactName">Your name</label>
-        <input type="text" id="contactName" name="name" autocomplete="name" placeholder="Ada Lovelace" required>
-
-        <label for="contactEmail">Email address</label>
-        <input type="email" id="contactEmail" name="email" autocomplete="email" placeholder="you@example.com" required>
-
-        <label for="contactTopic">Topic</label>
-        <input type="text" id="contactTopic" name="topic" placeholder="Feature idea, bug report, data request…">
-
-        <label for="contactMessage">Message</label>
-        <textarea id="contactMessage" name="message" placeholder="Share as much detail as you can" required></textarea>
-
-        <button type="submit">Submit message</button>
-        <p class="legal-updated" aria-live="polite">We’ll confirm receipt instantly and follow up by email.</p>
-      </form>
-
-      <aside class="page-card">
-        <h2>Prefer another channel?</h2>
-        <ul class="page-meta-list">
-          <li>
-            <i class="fa-solid fa-envelope"></i>
-            <span><strong>Email:</strong> <a href="mailto:hello@routeflow.london">hello@routeflow.london</a></span>
-          </li>
-          <li>
-            <i class="fa-brands fa-discord"></i>
-            <span><strong>Discord:</strong> Join <a href="https://discord.gg/qVf3nN4Mgq">RouteFlow London HQ</a> for live chat.</span>
-          </li>
-          <li>
-            <i class="fa-brands fa-instagram"></i>
-            <span><strong>Instagram:</strong> Follow <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo">@thebusfatherofficial</a> for behind-the-scenes updates.</span>
-          </li>
-          <li>
-            <i class="fa-brands fa-tiktok"></i>
-            <span><strong>TikTok:</strong> Catch quick highlights on <a href="https://www.tiktok.com/@the_bus_father">@the_bus_father</a>.</span>
-          </li>
-        </ul>
-      </aside>
-    </section>
-
-    <section class="page-card">
-      <h2>How we handle support</h2>
-      <div class="page-grid page-grid--compact">
-        <article class="page-mini-card">
-          <h3>Human replies</h3>
-          <p>Every response comes from the RouteFlow London team—no generic autoresponders beyond the initial receipt.</p>
-        </article>
-        <article class="page-mini-card">
-          <h3>Prioritised fixes</h3>
-          <p>Critical live data issues are triaged immediately and updates are published in our disruptions feed.</p>
-        </article>
-        <article class="page-mini-card">
-          <h3>Transparent roadmap</h3>
-          <p>Feature requests feed directly into our roadmap. We’ll let you know when something makes it into development.</p>
-        </article>
-      </div>
-    </section>
-  </main>
-
-    </div>
-
-    <footer class="site-footer" aria-label="RouteFlow London footer">
-      <div class="site-footer__inner">
-        <div class="site-footer__brand">
-          <img src="images/New_Routflow_London_Logo.png" alt="RouteFlow London logo">
-          <div>
-            <h2>Stay curious about London’s transport</h2>
-            <p>RouteFlow London turns TfL feeds into playful guidance so planners, families and classrooms can travel with calm confidence.</p>
-            <div class="site-footer__social" role="list">
-              <a href="https://discord.gg/qVf3nN4Mgq" aria-label="RouteFlow London on Discord"><i class="fa-brands fa-discord"></i></a>
-              <a href="https://www.tiktok.com/@the_bus_father" aria-label="RouteFlow London on TikTok"><i class="fa-brands fa-tiktok"></i></a>
-              <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo" aria-label="RouteFlow London on Instagram"><i class="fa-brands fa-instagram"></i></a>
+        <div class="timeline timeline--compact" aria-label="Support workflow">
+          <article class="timeline__item">
+            <span class="timeline__marker">1</span>
+            <div class="timeline__content">
+              <h3>Confirm your request</h3>
+              <p>You receive an email confirming your message, plus a reference so you can follow up anytime.</p>
             </div>
+          </article>
+          <article class="timeline__item">
+            <span class="timeline__marker">2</span>
+            <div class="timeline__content">
+              <h3>Prioritise and respond</h3>
+              <p>We triage live data issues first, then work through feature ideas and research invitations.</p>
+            </div>
+          </article>
+          <article class="timeline__item">
+            <span class="timeline__marker">3</span>
+            <div class="timeline__content">
+              <h3>Publish outcomes</h3>
+              <p>Fixes and new features appear in dashboard changelogs so you know exactly what changed.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer" aria-label="RouteFlow London footer">
+      <div class="app-footer__inner">
+        <div class="app-footer__brand">
+          <img src="images/New_Routflow_London_Logo.png" alt="RouteFlow London logo" loading="lazy" />
+          <div>
+            <h2>RouteFlow London</h2>
+            <p>We transform real-time feeds into a delightful studio for planners, operators, and curious families.</p>
           </div>
         </div>
-        <div class="site-footer__grid">
+        <div class="app-footer__grid">
           <div>
-            <h3 class="site-footer__heading">Plan journeys</h3>
-            <ul class="site-footer__links">
+            <h3>Platform</h3>
+            <ul>
               <li><a href="index.html">Home</a></li>
-              <li><a href="planning.html">Planning</a></li>
-              <li><a href="tracking.html">Tracking</a></li>
+              <li><a href="tracking.html">Live tracking</a></li>
+              <li><a href="planning.html">Planning studio</a></li>
             </ul>
           </div>
           <div>
-            <h3 class="site-footer__heading">Live insight</h3>
-            <ul class="site-footer__links">
-              <li><a href="dashboard.html">Dashboard</a></li>
-              <li><a href="routes.html">Routes</a></li>
-              <li><a href="disruptions.html">Disruptions</a></li>
+            <h3>Data</h3>
+            <ul>
+              <li><a href="routes.html">Route directory</a></li>
+              <li><a href="fleet.html">Fleet health</a></li>
+              <li><a href="withdrawn.html">Withdrawn stock</a></li>
             </ul>
           </div>
           <div>
-            <h3 class="site-footer__heading">Community data</h3>
-            <ul class="site-footer__links">
+            <h3>Community</h3>
+            <ul>
               <li><a href="info.html">Info hub</a></li>
-              <li><a href="fleet.html">Fleet</a></li>
-              <li><a href="withdrawn.html">Withdrawn</a></li>
+              <li><a href="contact.html">Contact</a></li>
+              <li><a href="about.html">About</a></li>
             </ul>
           </div>
           <div>
-            <h3 class="site-footer__heading">Company</h3>
-            <ul class="site-footer__links">
-              <li><a href="about.html">About</a></li>
-              <li><a href="contact.html">Contact</a></li>
+            <h3>Policies</h3>
+            <ul>
               <li><a href="privacy.html">Privacy</a></li>
               <li><a href="terms.html">Terms</a></li>
+              <li><a href="settings.html">Accessibility</a></li>
             </ul>
           </div>
         </div>
-        <div class="site-footer__bottom">
-          <p class="site-footer__legal">© <span data-current-year></span> RouteFlow London. Crafted for curious travellers.</p>
-          <div class="site-footer__meta">
-            <a href="privacy.html">Privacy</a>
-            <a href="terms.html">Terms</a>
-            <a href="contact.html">Contact</a>
+        <div class="app-footer__meta">
+          <p>© <span data-current-year></span> RouteFlow London. Crafted in Camden with a love for buses.</p>
+          <div class="app-footer__social" role="list">
+            <a href="https://discord.gg/qVf3nN4Mgq" aria-label="RouteFlow London on Discord"><i class="fa-brands fa-discord"></i></a>
+            <a href="https://www.tiktok.com/@the_bus_father" aria-label="RouteFlow London on TikTok"><i class="fa-brands fa-tiktok"></i></a>
+            <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo" aria-label="RouteFlow London on Instagram"><i class="fa-brands fa-instagram"></i></a>
           </div>
         </div>
       </div>
     </footer>
   </div>
 
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script src="main.js"></script>
   <script src="navbar-loader.js"></script>
 </body>

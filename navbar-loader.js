@@ -1,17 +1,15 @@
 (function () {
   const NAVBAR_SOURCE = 'components/navbar.html';
   const AUTH_MODAL_SOURCE = 'components/auth-modal.html';
-  const AUTH_SCRIPTS = [
-    'config.js',
-    'https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js',
-    'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js',
-    'stack-auth.js',
-    'main.js'
-  ];
+  const PUBLIC_MODE = window.__ROUTEFLOW_PUBLIC_MODE__ !== false;
+  const AUTH_SCRIPTS = PUBLIC_MODE
+    ? ['config.js', 'main.js']
+    : ['config.js', 'stack-auth.js', 'main.js'];
 
   const stylesheetPromises = new Map();
 
   const LAST_USER_SUMMARY_KEY = 'routeflow:auth:last-user';
+  const XP_PROGRESS_KEY = 'routeflow:xp-progress';
 
   const scriptPromises = new Map();
   let authModalLoaded = false;
@@ -71,6 +69,14 @@
   }
 
   function readStoredUserSummary() {
+    if (PUBLIC_MODE) {
+      return {
+        displayName: 'Guest Explorer',
+        providerId: 'public',
+        uid: 'public-guest',
+        timestamp: Date.now()
+      };
+    }
     if (typeof localStorage === 'undefined') return null;
     try {
       const raw = localStorage.getItem(LAST_USER_SUMMARY_KEY);
@@ -114,6 +120,58 @@
     });
   }
 
+  function readXpProgress() {
+    if (typeof localStorage === 'undefined') {
+      return null;
+    }
+    try {
+      const raw = localStorage.getItem(XP_PROGRESS_KEY);
+      if (!raw) {
+        return null;
+      }
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') {
+        return null;
+      }
+      const level = Number(parsed.level) || 1;
+      const progress = Math.min(1, Math.max(0, Number(parsed.progress) || 0));
+      return { level, progress };
+    } catch (error) {
+      console.warn('RouteFlow navbar: failed to parse XP progress.', error);
+      return null;
+    }
+  }
+
+  function deriveXpFallback() {
+    const now = new Date();
+    const seed = now.getDate() + now.getMonth();
+    const progress = ((seed % 7) + 3) / 10;
+    return {
+      level: 5 + (seed % 3),
+      progress: Math.min(1, Math.max(0, progress))
+    };
+  }
+
+  function applyXpProgress(navRoot, override) {
+    if (!navRoot) return;
+    const xp = override || readXpProgress() || deriveXpFallback();
+    const progress = Math.min(1, Math.max(0, Number(xp?.progress) || 0));
+    const level = Math.max(1, Number(xp?.level) || 1);
+
+    navRoot.querySelectorAll('[data-xp-label]').forEach((label) => {
+      label.textContent = `Level ${level}`;
+    });
+
+    navRoot.querySelectorAll('[data-xp-fill]').forEach((fill) => {
+      if (!fill) return;
+      fill.style.setProperty('--xp-progress', progress.toFixed(4));
+      const meter = fill.closest('[role="meter"]');
+      if (meter) {
+        meter.setAttribute('aria-valuenow', String(Math.round(progress * 100)));
+      }
+    });
+  }
+
   function deriveSummaryFromAuth(user, summary) {
     if (summary && typeof summary === 'object') {
       return summary;
@@ -143,6 +201,11 @@
   }
 
   function ensureAuthModal() {
+    if (PUBLIC_MODE) {
+      authModalLoaded = true;
+      dispatchAuthModalReady({ source: 'disabled' });
+      return Promise.resolve();
+    }
     const existingModal = document.getElementById('authModal');
     if (existingModal) {
       authModalLoaded = true;
@@ -180,9 +243,13 @@
       console.error('Failed to load authentication scripts:', error);
     });
 
-    ensureAuthModal().catch(error => {
-      console.error('Failed to load authentication modal:', error);
-    });
+    if (!PUBLIC_MODE) {
+      ensureAuthModal().catch(error => {
+        console.error('Failed to load authentication modal:', error);
+      });
+    } else {
+      authModalLoaded = true;
+    }
 
     let container = document.getElementById('navbar-container');
     if (!container) {
@@ -397,11 +464,26 @@
       if (event.key === LAST_USER_SUMMARY_KEY) {
         applySummaryToNavbar(navRoot, readStoredUserSummary());
       }
+      if (event.key === XP_PROGRESS_KEY) {
+        applyXpProgress(navRoot);
+      }
+    });
+
+    window.addEventListener('routeflow:xp-update', (event) => {
+      if (!event?.detail) {
+        applyXpProgress(navRoot);
+        return;
+      }
+      applyXpProgress(navRoot, event.detail);
     });
 
     const refreshAuthState = () => {
       if (typeof window.renderDropdown === 'function') {
-        const user = window.__lastAuthUser ?? window.firebase?.auth?.currentUser ?? null;
+        const routeflowAuth = window.RouteflowAuth;
+        const user = window.__lastAuthUser
+          ?? (routeflowAuth && typeof routeflowAuth.getCurrentUser === 'function'
+            ? routeflowAuth.getCurrentUser()
+            : null);
         window.renderDropdown(user);
       }
     };
@@ -473,6 +555,12 @@
 
     ensureAuthModal().catch(() => {});
 
+    applyXpProgress(navRoot);
+
+    document.dispatchEvent(new CustomEvent('routeflow:navbar-ready', {
+      detail: { root: navRoot }
+    }));
+
     const handleAuthEvent = (event) => {
       const detail = event?.detail || {};
       const summary = detail.summary
@@ -501,11 +589,25 @@
           });
         return;
       }
-      if (window.firebase?.auth) {
+      if (routeflowAuth?.ensure) {
         try {
-          window.firebase.auth().signOut();
+          const maybePromise = routeflowAuth.ensure();
+          const handleInstance = (authInstance) => {
+            if (authInstance?.signOut) {
+              Promise.resolve(authInstance.signOut()).catch((error) => {
+                console.error('RouteFlow navbar: failed to sign out via RouteflowAuth instance.', error);
+              });
+            }
+          };
+          if (maybePromise && typeof maybePromise.then === 'function') {
+            maybePromise.then(handleInstance).catch((error) => {
+              console.error('RouteFlow navbar: async sign-out fallback failed.', error);
+            });
+          } else {
+            handleInstance(maybePromise);
+          }
         } catch (error) {
-          console.error('RouteFlow navbar: direct Firebase sign-out failed.', error);
+          console.error('RouteFlow navbar: sign-out fallback failed.', error);
         }
       }
     };

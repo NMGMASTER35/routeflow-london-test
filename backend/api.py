@@ -48,12 +48,6 @@ def _env_int(name: str, default: int) -> int:
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
-FIREBASE_API_KEY = os.getenv("FIREBASE_API_KEY")
-FIREBASE_AUTH_DOMAIN = os.getenv("FIREBASE_AUTH_DOMAIN", "routeflow-london.firebaseapp.com")
-FIREBASE_PROJECT_ID = os.getenv("FIREBASE_PROJECT_ID", "routeflow-london")
-FIREBASE_STORAGE_BUCKET = os.getenv("FIREBASE_STORAGE_BUCKET", "routeflow-london.firebasestorage.app")
-FIREBASE_MESSAGING_SENDER_ID = os.getenv("FIREBASE_MESSAGING_SENDER_ID", "368346241440")
-FIREBASE_APP_ID = os.getenv("FIREBASE_APP_ID", "1:368346241440:web:7cc87d551420459251ecc5")
 MAX_CONNECTIONS = int(os.getenv("DB_MAX_CONNECTIONS", "5"))
 TFL_APP_ID = os.getenv("TFL_APP_ID")
 TFL_APP_KEY = os.getenv("TFL_APP_KEY") or os.getenv("TFL_API_KEY") or os.getenv("TFL_KEY")
@@ -223,10 +217,6 @@ ADMIN_EMAIL_ALLOWLIST.update(email.lower() for email in DEFAULT_ADMIN_EMAILS)
 
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL environment variable is required")
-
-if not FIREBASE_API_KEY:
-    raise RuntimeError("FIREBASE_API_KEY environment variable is required")
-
 
 def _ensure_sslmode(url: str) -> str:
     if "sslmode" in url:
@@ -441,17 +431,13 @@ def proxy_tfl_api(subpath: str) -> Response:
 
 @app.route("/config.js")
 def client_config() -> Response:
-    firebase_config = {
-        "apiKey": FIREBASE_API_KEY,
-        "authDomain": FIREBASE_AUTH_DOMAIN,
-        "projectId": FIREBASE_PROJECT_ID,
-        "storageBucket": FIREBASE_STORAGE_BUCKET,
-        "messagingSenderId": FIREBASE_MESSAGING_SENDER_ID,
-        "appId": FIREBASE_APP_ID,
-    }
-
     payload = {
-        "firebase": firebase_config,
+        "auth": {
+            "mode": "local",
+            "allowRegistration": True,
+            "allowGuest": True,
+        },
+        "firebase": {},
     }
 
     payload_json = json.dumps(payload, separators=(",", ":"))
@@ -762,11 +748,6 @@ class AuthError(ApiError):
         super().__init__(message, status_code)
 
 
-FIREBASE_LOOKUP_URL = (
-    "https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=" + FIREBASE_API_KEY
-)
-
-
 def _extract_bearer_token() -> str:
     auth_header = request.headers.get("Authorization", "")
     if not auth_header.startswith("Bearer "):
@@ -778,48 +759,52 @@ def _extract_bearer_token() -> str:
     return token
 
 
-def _lookup_firebase_user(token: str) -> Dict[str, Any]:
+def _decode_local_user(token: str) -> Dict[str, Any]:
     if not token:
         raise AuthError("Missing authentication token", status_code=401)
 
-    try:
-        response = requests.post(
-            FIREBASE_LOOKUP_URL,
-            json={"idToken": token},
-            timeout=10,
-        )
-    except requests.RequestException as exc:
-        raise AuthError("Unable to verify authentication token", status_code=503) from exc
-
-    if response.status_code != 200:
+    prefix, _, remainder = token.partition(".")
+    if prefix != "local" or not remainder:
         raise AuthError("Invalid authentication token", status_code=401)
 
-    payload = response.json()
-    users = payload.get("users") or []
-    if not users:
-        raise AuthError("Authentication token does not map to a user", status_code=401)
+    uid, _, stamp = remainder.partition(".")
+    uid = uid.strip()
+    if not uid:
+        raise AuthError("Invalid authentication token", status_code=401)
 
-    user_info = users[0]
-    if user_info.get("disabled"):
-        raise AuthError("Authenticated user account is disabled", status_code=403)
+    issued_at: Optional[int]
+    try:
+        issued_at = int(stamp) if stamp else None
+    except ValueError:
+        issued_at = None
 
-    return user_info
+    email = f"{uid}@local.routeflow"
+
+    return {
+        "uid": uid,
+        "localId": uid,
+        "email": email,
+        "displayName": uid,
+        "issuedAt": issued_at,
+        "customClaims": {"local": True},
+        "token": token,
+    }
 
 
-def authenticate_firebase_user(expected_uid: Optional[str] = None) -> Dict[str, Any]:
+def authenticate_user(expected_uid: Optional[str] = None) -> Dict[str, Any]:
     token = _extract_bearer_token()
-    user_info = _lookup_firebase_user(token)
+    user_info = _decode_local_user(token)
 
     if expected_uid is not None:
-        token_uid = user_info.get("localId")
+        token_uid = user_info.get("uid") or user_info.get("localId")
         if token_uid != expected_uid:
             raise AuthError("Authenticated user does not match requested profile", status_code=403)
 
     return user_info
 
 
-def verify_firebase_token(uid: str) -> Dict[str, Any]:
-    return authenticate_firebase_user(expected_uid=uid)
+def verify_user_token(uid: str) -> Dict[str, Any]:
+    return authenticate_user(expected_uid=uid)
 
 
 def _parse_custom_attributes(user_info: Dict[str, Any]) -> Dict[str, Any]:
@@ -858,7 +843,7 @@ def is_admin_user(user_info: Dict[str, Any]) -> bool:
     if email and email in ADMIN_EMAIL_ALLOWLIST:
         return True
 
-    uid = normalise_text(user_info.get("localId"))
+    uid = normalise_text(user_info.get("uid") or user_info.get("localId"))
     if uid and uid in ADMIN_UID_ALLOWLIST:
         return True
 
@@ -866,11 +851,11 @@ def is_admin_user(user_info: Dict[str, Any]) -> bool:
 
 
 def require_authenticated_user() -> Dict[str, Any]:
-    return authenticate_firebase_user()
+    return authenticate_user()
 
 
 def require_admin_user() -> Dict[str, Any]:
-    user_info = authenticate_firebase_user()
+    user_info = authenticate_user()
     if not is_admin_user(user_info):
         raise AuthError("Administrator access is required.", status_code=403)
     return user_info
@@ -5614,7 +5599,7 @@ def upsert_dashboard_progress(connection, uid: str, state: Dict[str, Any]):
 @app.route("/api/profile", methods=["GET", "PATCH"])
 def profile_extras_endpoint():
     user_info = require_authenticated_user()
-    uid = normalise_text(user_info.get("localId"))
+    uid = normalise_text(user_info.get("uid") or user_info.get("localId"))
     if not uid:
         raise AuthError("Authenticated user is missing an id", status_code=403)
 
@@ -5644,7 +5629,7 @@ def profile_extras_endpoint():
 
 @app.route("/api/profile/<uid>/dashboard", methods=["GET", "PUT", "PATCH"])
 def dashboard_progress_endpoint(uid: str):
-    verify_firebase_token(uid)
+    verify_user_token(uid)
 
     if request.method == "GET":
         with get_connection() as connection:
@@ -5665,7 +5650,7 @@ def dashboard_progress_endpoint(uid: str):
 
 @app.route("/api/profile/<uid>/notes", methods=["GET", "POST"])
 def notes_collection(uid: str):
-    verify_firebase_token(uid)
+    verify_user_token(uid)
 
     if request.method == "GET":
         with get_connection() as connection:
@@ -5710,7 +5695,7 @@ def notes_collection(uid: str):
 
 @app.route("/api/profile/<uid>/notes/<note_id>", methods=["PUT", "PATCH", "DELETE"])
 def notes_item(uid: str, note_id: str):
-    verify_firebase_token(uid)
+    verify_user_token(uid)
 
     if request.method in {"PUT", "PATCH"}:
         payload = request.get_json(silent=True) or {}
@@ -5754,7 +5739,7 @@ def notes_item(uid: str, note_id: str):
 
 @app.route("/api/profile/<uid>/favourites", methods=["GET", "POST"])
 def favourites_collection(uid: str):
-    verify_firebase_token(uid)
+    verify_user_token(uid)
 
     if request.method == "GET":
         with get_connection() as connection:
@@ -5803,7 +5788,7 @@ def favourites_collection(uid: str):
     methods=["DELETE", "PUT", "PATCH"],
 )
 def favourites_item(uid: str, favourite_id: str):
-    verify_firebase_token(uid)
+    verify_user_token(uid)
 
     if request.method in {"PUT", "PATCH"}:
         payload = request.get_json(silent=True) or {}
@@ -6258,7 +6243,7 @@ def fleet_add_option():
 def fleet_approve(change_id: str):
     admin_user = require_fleet_admin()
     reviewer = normalise_text(admin_user.get("email")) or normalise_text(
-        admin_user.get("localId")
+        admin_user.get("uid") or admin_user.get("localId")
     )
     change_key = normalise_text(change_id)
     if not change_key:

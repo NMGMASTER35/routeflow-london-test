@@ -6,12 +6,12 @@
   <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png" />
   <title>Withdrawn Routes | RouteFlow London</title>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <link rel="stylesheet" href="style.css" />
   <script src="theme.js" defer></script>
   <script src="site.js" defer></script>
 </head>
-<body class="site-body">
+<body class="metro-app site-body">
   <a href="#main-content" class="skip-link">Skip to main content</a>
   <div class="site-shell">
     <header class="site-shell__header">
@@ -3740,25 +3740,7 @@
     </footer>
   </div>
 
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-  <script src="config.js"></script>
-  <script>
-    (function initialiseFirebase() {
-      const firebaseConfig = window.__ROUTEFLOW_CONFIG__?.firebase;
-      if (!firebaseConfig?.apiKey) {
-        console.error('Firebase configuration is missing. Withdrawn routes authentication will be disabled.');
-        return;
-      }
-      if (typeof firebase === 'undefined') {
-        console.error('Firebase SDK not loaded. Withdrawn routes authentication will be disabled.');
-        return;
-      }
-      if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-      }
-    })();
-  </script>
+      <script src="config.js"></script>
   <script src="main.js"></script>
   <script src="navbar-loader.js" defer></script>
   <script type="module" src="withdrawn.js"></script>

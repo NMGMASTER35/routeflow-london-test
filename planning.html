@@ -1,174 +1,167 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Journey Planning | RouteFlow London</title>
-  <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png">
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Journey Planning – RouteFlow London</title>
+  <link rel="icon" href="images/New_Routflow_London_Logo.png" type="image/png" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link rel="stylesheet" href="style.css" />
   <script src="theme.js" defer></script>
   <script src="site.js" defer></script>
 </head>
-<body class="site-body">
+<body class="metro-app app app--planning">
   <a href="#main-content" class="skip-link">Skip to main content</a>
-  <div class="site-shell">
-    <header class="site-shell__header">
-      <div id="navbar-container" class="site-shell__navbar"></div>
+  <div class="app__wrapper">
+    <header class="app-header" aria-label="RouteFlow London navigation">
+      <div class="app-header__bar">
+        <div id="navbar-container" class="app-header__mount"></div>
+      </div>
+      <div class="app-header__ticker" role="status" aria-live="polite">
+        <span class="app-header__ticker-label">Journey planning</span>
+        <p class="app-header__ticker-text">Combine TfL modes, accessibility presets, and playful missions to craft perfect journeys.</p>
+      </div>
     </header>
 
-    <div class="site-shell__main">
-  <main id="main-content" class="site-main planning-shell" aria-labelledby="planningTitle">
-    <section class="planning-hero">
-      <div class="planning-hero__content">
-        <p class="planning-hero__eyebrow">Journey planner</p>
-        <h1 id="planningTitle">Design playful journeys powered by TfL data.</h1>
-        <p>Create missions for school trips, family days out or solo adventures. Mix modes, add challenge cards and make sure every explorer can travel comfortably.</p>
-      </div>
-      <dl class="planning-hero__meta">
-        <div>
-          <dt>Live modes</dt>
-          <dd>Bus, Tube, DLR, Tram &amp; River</dd>
+    <main id="main-content" class="app-main data-page" aria-labelledby="planning-title">
+      <header class="page-hero page-hero--data">
+        <div class="page-hero__content">
+          <p class="eyebrow">Plan adventures</p>
+          <h1 id="planning-title">Design colourful journeys powered by live TfL data.</h1>
+          <p class="lead">Mix modes, activate accessibility filters, and share itineraries with your team. RouteFlow keeps everything synced to your profile.</p>
         </div>
-        <div>
-          <dt>Refresh rate</dt>
-          <dd>Every 30 seconds</dd>
-        </div>
-        <div>
-          <dt>Accessibility filters</dt>
-          <dd>Step-free, lifts, no stairs</dd>
-        </div>
-      </dl>
-    </section>
-
-    <section class="planning-layout">
-      <form id="journey-form" class="planning-form" aria-labelledby="plannerFormTitle">
-        <h2 id="plannerFormTitle">Build your journey</h2>
-        <div class="planning-form__row">
-          <div class="planning-input">
-            <label for="from">From</label>
-            <input type="text" id="from" placeholder="Start point" required>
+        <dl class="stats stats--inline" aria-label="Planner highlights">
+          <div class="stat">
+            <dt>Supported modes</dt>
+            <dd>Bus, Tube, DLR, Tram, River</dd>
           </div>
-          <div class="planning-input">
-            <label for="to">To</label>
-            <input type="text" id="to" placeholder="Destination" required>
+          <div class="stat">
+            <dt>Refresh rate</dt>
+            <dd>30 seconds</dd>
           </div>
-        </div>
-
-        <fieldset class="planning-fieldset" aria-labelledby="modesLegend">
-          <legend id="modesLegend">Modes</legend>
-          <div class="planning-checkboxes">
-            <label><input type="checkbox" name="mode" value="bus" checked> Bus</label>
-            <label><input type="checkbox" name="mode" value="tube" checked> Tube</label>
-            <label><input type="checkbox" name="mode" value="dlr" checked> DLR</label>
-            <label><input type="checkbox" name="mode" value="overground" checked> Overground</label>
-            <label><input type="checkbox" name="mode" value="tram" checked> Tram</label>
-            <label><input type="checkbox" name="mode" value="river-bus" checked> River Bus</label>
+          <div class="stat">
+            <dt>Accessibility</dt>
+            <dd>5 presets</dd>
           </div>
-        </fieldset>
-
-        <fieldset class="planning-fieldset" aria-labelledby="accessLegend">
-          <legend id="accessLegend">Accessibility</legend>
-          <div class="planning-checkboxes">
-            <label><input type="checkbox" name="accessibility" value="NoSolidStairs"> No solid stairs</label>
-            <label><input type="checkbox" name="accessibility" value="NoEscalators"> No escalators</label>
-            <label><input type="checkbox" name="accessibility" value="NoElevators"> No elevators</label>
-            <label><input type="checkbox" name="accessibility" value="StepFreeToVehicle"> Step-free to vehicle</label>
-            <label><input type="checkbox" name="accessibility" value="StepFreeToPlatform"> Step-free to platform</label>
-          </div>
-        </fieldset>
-
-        <button type="submit" class="planning-submit">Search journeys</button>
-      </form>
-
-      <aside class="planning-side">
-        <article class="planning-side__card">
-          <h2>Need inspiration?</h2>
-          <ul>
-            <li>Try landmarks such as “London Eye” to see multi-modal options.</li>
-            <li>Switch on “Step-free to vehicle” when travelling with mobility aids.</li>
-            <li>Save favourite results to revisit them instantly on the dashboard.</li>
-          </ul>
-        </article>
-        <article class="planning-side__card">
-          <h2>Good to know</h2>
-          <ul>
-            <li>Journey data is sourced directly from TfL Journey Planner APIs.</li>
-            <li>Results refresh automatically—no need to re-run the search.</li>
-            <li>Privacy-first: we only store the itineraries you choose to save.</li>
-          </ul>
-        </article>
-      </aside>
-    </section>
-
-    <section class="planning-results" aria-live="polite">
-      <header>
-        <h2>Results</h2>
-        <p class="planning-note">Choose the option that best fits your schedule and accessibility needs.</p>
+        </dl>
       </header>
-      <div id="error" class="planning-error" hidden></div>
-      <div id="results"></div>
-    </section>
-  </main>
 
-    </div>
+      <section class="page-section page-section--surface page-section--two-column">
+        <form id="journey-form" class="form-card form-card--wide" aria-labelledby="planner-form-title">
+          <h2 id="planner-form-title">Build your journey</h2>
+          <div class="form-grid form-grid--split">
+            <label for="from">From</label>
+            <input type="text" id="from" placeholder="Start point" required />
 
-    <footer class="site-footer" aria-label="RouteFlow London footer">
-      <div class="site-footer__inner">
-        <div class="site-footer__brand">
-          <img src="images/New_Routflow_London_Logo.png" alt="RouteFlow London logo">
-          <div>
-            <h2>Stay curious about London’s transport</h2>
-            <p>RouteFlow London turns TfL feeds into playful guidance so planners, families and classrooms can travel with calm confidence.</p>
-            <div class="site-footer__social" role="list">
-              <a href="https://discord.gg/qVf3nN4Mgq" aria-label="RouteFlow London on Discord"><i class="fa-brands fa-discord"></i></a>
-              <a href="https://www.tiktok.com/@the_bus_father" aria-label="RouteFlow London on TikTok"><i class="fa-brands fa-tiktok"></i></a>
-              <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo" aria-label="RouteFlow London on Instagram"><i class="fa-brands fa-instagram"></i></a>
+            <label for="to">To</label>
+            <input type="text" id="to" placeholder="Destination" required />
+          </div>
+
+          <fieldset class="form-fieldset" aria-labelledby="modesLegend">
+            <legend id="modesLegend">Modes</legend>
+            <div class="chip-group">
+              <label><input type="checkbox" name="mode" value="bus" checked /> Bus</label>
+              <label><input type="checkbox" name="mode" value="tube" checked /> Tube</label>
+              <label><input type="checkbox" name="mode" value="dlr" checked /> DLR</label>
+              <label><input type="checkbox" name="mode" value="overground" checked /> Overground</label>
+              <label><input type="checkbox" name="mode" value="tram" checked /> Tram</label>
+              <label><input type="checkbox" name="mode" value="river-bus" checked /> River bus</label>
             </div>
+          </fieldset>
+
+          <fieldset class="form-fieldset" aria-labelledby="accessLegend">
+            <legend id="accessLegend">Accessibility</legend>
+            <div class="chip-group">
+              <label><input type="checkbox" name="accessibility" value="NoSolidStairs" /> No solid stairs</label>
+              <label><input type="checkbox" name="accessibility" value="NoEscalators" /> No escalators</label>
+              <label><input type="checkbox" name="accessibility" value="NoElevators" /> No elevators</label>
+              <label><input type="checkbox" name="accessibility" value="StepFreeToVehicle" /> Step-free to vehicle</label>
+              <label><input type="checkbox" name="accessibility" value="StepFreeToPlatform" /> Step-free to platform</label>
+            </div>
+          </fieldset>
+
+          <button type="submit" class="btn btn--primary">Search journeys</button>
+          <p class="form-note">Results refresh in place — keep the page open to follow live adjustments.</p>
+        </form>
+
+        <aside class="support-card support-card--column" aria-label="Journey planning tips">
+          <h2>Ideas to explore</h2>
+          <ul class="checklist" role="list">
+            <li><i class="fa-solid fa-lightbulb" aria-hidden="true"></i> Try “London Eye” or “Science Museum” for multi-mode missions.</li>
+            <li><i class="fa-solid fa-universal-access" aria-hidden="true"></i> Enable step-free presets when travelling with wheelchairs or prams.</li>
+            <li><i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i> Save favourites to sync with your dashboard layouts.</li>
+          </ul>
+          <div class="support-card__divider" role="separator" aria-hidden="true"></div>
+          <h3>Good to know</h3>
+          <ul class="checklist" role="list">
+            <li><i class="fa-solid fa-database" aria-hidden="true"></i> Routes sourced from TfL Journey Planner APIs.</li>
+            <li><i class="fa-solid fa-rotate" aria-hidden="true"></i> Automatic refresh keeps your page up to date.</li>
+            <li><i class="fa-solid fa-lock" aria-hidden="true"></i> Only the itineraries you save are stored locally.</li>
+          </ul>
+        </aside>
+      </section>
+
+      <section class="page-section" aria-live="polite">
+        <header class="section__header">
+          <p class="eyebrow">Results</p>
+          <h2>Choose the itinerary that fits your travellers best.</h2>
+          <p class="section__lead">Each option summarises duration, interchanges, and the modes involved so you can plan with confidence.</p>
+        </header>
+        <div id="error" class="alert" role="alert" hidden></div>
+        <div id="results" class="journey-results"></div>
+      </section>
+    </main>
+
+    <footer class="app-footer" aria-label="RouteFlow London footer">
+      <div class="app-footer__inner">
+        <div class="app-footer__brand">
+          <img src="images/New_Routflow_London_Logo.png" alt="RouteFlow London logo" loading="lazy" />
+          <div>
+            <h2>RouteFlow London</h2>
+            <p>We transform real-time feeds into a delightful studio for planners, operators, and curious families.</p>
           </div>
         </div>
-        <div class="site-footer__grid">
+        <div class="app-footer__grid">
           <div>
-            <h3 class="site-footer__heading">Plan journeys</h3>
-            <ul class="site-footer__links">
+            <h3>Platform</h3>
+            <ul>
               <li><a href="index.html">Home</a></li>
-              <li><a href="planning.html">Planning</a></li>
-              <li><a href="tracking.html">Tracking</a></li>
+              <li><a href="tracking.html">Live tracking</a></li>
+              <li><a href="planning.html">Planning studio</a></li>
             </ul>
           </div>
           <div>
-            <h3 class="site-footer__heading">Live insight</h3>
-            <ul class="site-footer__links">
-              <li><a href="dashboard.html">Dashboard</a></li>
-              <li><a href="routes.html">Routes</a></li>
-              <li><a href="disruptions.html">Disruptions</a></li>
+            <h3>Data</h3>
+            <ul>
+              <li><a href="routes.html">Route directory</a></li>
+              <li><a href="fleet.html">Fleet health</a></li>
+              <li><a href="withdrawn.html">Withdrawn stock</a></li>
             </ul>
           </div>
           <div>
-            <h3 class="site-footer__heading">Community data</h3>
-            <ul class="site-footer__links">
+            <h3>Community</h3>
+            <ul>
               <li><a href="info.html">Info hub</a></li>
-              <li><a href="fleet.html">Fleet</a></li>
-              <li><a href="withdrawn.html">Withdrawn</a></li>
+              <li><a href="contact.html">Contact</a></li>
+              <li><a href="about.html">About</a></li>
             </ul>
           </div>
           <div>
-            <h3 class="site-footer__heading">Company</h3>
-            <ul class="site-footer__links">
-              <li><a href="about.html">About</a></li>
-              <li><a href="contact.html">Contact</a></li>
+            <h3>Policies</h3>
+            <ul>
               <li><a href="privacy.html">Privacy</a></li>
               <li><a href="terms.html">Terms</a></li>
+              <li><a href="settings.html">Accessibility</a></li>
             </ul>
           </div>
         </div>
-        <div class="site-footer__bottom">
-          <p class="site-footer__legal">© <span data-current-year></span> RouteFlow London. Crafted for curious travellers.</p>
-          <div class="site-footer__meta">
-            <a href="privacy.html">Privacy</a>
-            <a href="terms.html">Terms</a>
-            <a href="contact.html">Contact</a>
+        <div class="app-footer__meta">
+          <p>© <span data-current-year></span> RouteFlow London. Crafted in Camden with a love for buses.</p>
+          <div class="app-footer__social" role="list">
+            <a href="https://discord.gg/qVf3nN4Mgq" aria-label="RouteFlow London on Discord"><i class="fa-brands fa-discord"></i></a>
+            <a href="https://www.tiktok.com/@the_bus_father" aria-label="RouteFlow London on TikTok"><i class="fa-brands fa-tiktok"></i></a>
+            <a href="https://www.instagram.com/thebusfatherofficial/profilecard/?igsh=NXcybzV3cTA2azBo" aria-label="RouteFlow London on Instagram"><i class="fa-brands fa-instagram"></i></a>
           </div>
         </div>
       </div>

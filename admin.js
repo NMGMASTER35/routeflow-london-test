@@ -14,14 +14,6 @@ import {
 } from './data-store.js';
 
 const adminContent = document.getElementById('adminContent');
-function getFirebaseConfig() {
-  const config = window.__ROUTEFLOW_CONFIG__?.firebase;
-  if (!config?.apiKey) {
-    console.error('Firebase configuration is missing. Admin features are unavailable.');
-    return null;
-  }
-  return config;
-}
 
 const FALLBACK_ADMIN_OVERRIDES = new Map([
   [
@@ -2212,21 +2204,6 @@ function ensureAuthInstance() {
   if (typeof window.ensureFirebaseAuth === 'function') {
     try {
       return Promise.resolve(window.ensureFirebaseAuth());
-    } catch (error) {
-      return Promise.reject(error);
-    }
-  }
-  const fb = window.firebase;
-  if (fb && typeof fb.auth === 'function') {
-    try {
-      if (!fb.apps.length) {
-        const config = getFirebaseConfig();
-        if (!config) {
-          return Promise.reject(new Error('Firebase configuration not available.'));
-        }
-        fb.initializeApp(config);
-      }
-      return Promise.resolve(fb.auth());
     } catch (error) {
       return Promise.reject(error);
     }
