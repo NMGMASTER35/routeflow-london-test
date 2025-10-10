@@ -99,6 +99,36 @@ Tables created during `init_database()` include `operators`, `buses`,
 `bus_sightings`, `bus_history`, `edit_requests` and `planned_diversions` so the
 database is ready for Neon/Render style deployments.
 
+#### TfL URA stream ingestion
+
+For server-to-server ingestion of the TfL Unified (URA) bus stream, enable the
+dedicated worker by setting `FLEET_STREAM_ENABLED=true`. The listener maintains
+an HTTP Digest session against the `/interfaces/ura/stream` endpoint,
+incrementally parses predictions and updates the new reference tables:
+
+- `stops` and `lines` hold the latest metadata seen in the feed.
+- `vehicle_profiles`, `vehicle_alias` and `vehicles_active` track the current
+  running set (including last prediction timestamps and expiry markers).
+- `vehicle_history` captures every prediction for auditing and analytics.
+
+By default the worker requests the full ReturnList recommended by TfL. You can
+customise credentials or query options with the following environment
+variables:
+
+- `TFL_STREAM_URL` or `TFL_STREAM_PATH` – stream endpoint (defaults to
+  `interfaces/ura/stream`).
+- `TFL_STREAM_USERNAME` / `TFL_STREAM_PASSWORD` – HTTP Digest credentials.
+- `TFL_STREAM_RETURN_LIST` – comma separated ReturnList fields if you need a
+  narrower payload.
+- `FLEET_STREAM_BACKOFF_SECONDS`, `FLEET_STREAM_MAX_BACKOFF_SECONDS`,
+  `FLEET_STREAM_READ_TIMEOUT_SECONDS`, `FLEET_STREAM_HEARTBEAT_TIMEOUT_SECONDS`
+  and `FLEET_STREAM_CLEANUP_INTERVAL_SECONDS` – tune reconnect behaviour and
+  stale vehicle eviction.
+
+Every ingested prediction is also routed through `record_bus_sighting` so the
+existing `buses`, `bus_sightings` and badge logic stay current without running
+the polling worker.
+
 ### TfL API proxy endpoints
 
 - The backend exposes a read-only proxy at `/api/tfl/<path>` that forwards

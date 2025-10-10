@@ -17,6 +17,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set,
 from urllib.parse import parse_qsl, quote, urljoin, urlparse
 
 import requests
+from requests.auth import HTTPDigestAuth
 from dotenv import load_dotenv
 from flask import Flask, Response, jsonify, make_response, request
 from psycopg2.extras import Json, RealDictCursor
@@ -105,6 +106,66 @@ LIVE_TRACKING_STALE_SECONDS = max(
 LIVE_TRACKING_LOG_LIMIT = max(
     _env_int("FLEET_LIVE_TRACKING_LOG_LIMIT", 2000),
     100,
+)
+
+FLEET_STREAM_ENABLED = _as_bool(os.getenv("FLEET_STREAM_ENABLED"), default=False)
+FLEET_STREAM_BACKOFF_SECONDS = max(_env_int("FLEET_STREAM_BACKOFF_SECONDS", 5), 1)
+FLEET_STREAM_MAX_BACKOFF_SECONDS = max(
+    _env_int("FLEET_STREAM_MAX_BACKOFF_SECONDS", 300),
+    FLEET_STREAM_BACKOFF_SECONDS,
+)
+FLEET_STREAM_READ_TIMEOUT_SECONDS = max(
+    _env_int("FLEET_STREAM_READ_TIMEOUT_SECONDS", 90),
+    30,
+)
+FLEET_STREAM_HEARTBEAT_TIMEOUT_SECONDS = max(
+    _env_int("FLEET_STREAM_HEARTBEAT_TIMEOUT_SECONDS", 120),
+    30,
+)
+FLEET_STREAM_INACTIVE_MINUTES = max(
+    _env_int("FLEET_STREAM_INACTIVE_MINUTES", 10),
+    1,
+)
+FLEET_STREAM_CLEANUP_INTERVAL_SECONDS = max(
+    _env_int("FLEET_STREAM_CLEANUP_INTERVAL_SECONDS", 180),
+    30,
+)
+TFL_STREAM_PATH = (
+    os.getenv("TFL_STREAM_URL")
+    or os.getenv("TFL_STREAM_PATH")
+    or "interfaces/ura/stream"
+)
+TFL_STREAM_USERNAME = os.getenv("TFL_STREAM_USERNAME") or os.getenv("TFL_STREAM_USER")
+TFL_STREAM_PASSWORD = os.getenv("TFL_STREAM_PASSWORD") or os.getenv("TFL_STREAM_PASS")
+TFL_STREAM_RETURN_LIST = os.getenv(
+    "TFL_STREAM_RETURN_LIST",
+    ",".join(
+        [
+            "StopPointName",
+            "StopID",
+            "StopCode1",
+            "StopCode2",
+            "StopPointState",
+            "StopPointType",
+            "StopPointIndicator",
+            "Towards",
+            "Bearing",
+            "Latitude",
+            "Longitude",
+            "VisitNumber",
+            "TripID",
+            "VehicleID",
+            "RegistrationNumber",
+            "LineID",
+            "LineName",
+            "DirectionID",
+            "DestinationText",
+            "DestinationName",
+            "EstimatedTime",
+            "ExpireTime",
+            "BaseVersion",
+        ]
+    ),
 )
 
 LINE_CACHE_REFRESH_SECONDS = max(
@@ -1152,6 +1213,146 @@ def _perform_database_initialisation() -> None:
                 """
                 CREATE INDEX IF NOT EXISTS idx_planned_diversions_route
                 ON planned_diversions (route, start_at, end_at);
+                """
+            )
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS stops (
+                    stop_id TEXT PRIMARY KEY,
+                    stop_code1 TEXT,
+                    stop_code2 TEXT,
+                    name TEXT,
+                    state TEXT,
+                    type TEXT,
+                    indicator TEXT,
+                    towards TEXT,
+                    bearing INTEGER,
+                    lat DOUBLE PRECISION,
+                    lon DOUBLE PRECISION,
+                    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                );
+                """
+            )
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS lines (
+                    line_id TEXT PRIMARY KEY,
+                    line_name TEXT,
+                    mode TEXT,
+                    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                );
+                """
+            )
+            cursor.execute(
+                """
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_lines_name_lower
+                ON lines ((lower(line_name)));
+                """
+            )
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS vehicle_profiles (
+                    registration TEXT PRIMARY KEY,
+                    first_seen TIMESTAMPTZ NOT NULL,
+                    last_seen TIMESTAMPTZ NOT NULL,
+                    last_vehicle_id TEXT,
+                    operator TEXT,
+                    fleet_number TEXT,
+                    status TEXT DEFAULT 'active',
+                    wrap TEXT,
+                    engine_type TEXT,
+                    chassis TEXT,
+                    body_type TEXT,
+                    garage TEXT,
+                    notes JSONB NOT NULL DEFAULT '{}'::jsonb,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                );
+                """
+            )
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS vehicle_alias (
+                    vehicle_id TEXT PRIMARY KEY,
+                    registration TEXT NOT NULL REFERENCES vehicle_profiles(registration) ON DELETE CASCADE,
+                    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                );
+                """
+            )
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS vehicles_active (
+                    vehicle_id TEXT PRIMARY KEY,
+                    registration TEXT,
+                    line_id TEXT,
+                    line_name TEXT,
+                    direction INTEGER,
+                    destination TEXT,
+                    last_stop_id TEXT,
+                    last_stop_name TEXT,
+                    last_lat DOUBLE PRECISION,
+                    last_lon DOUBLE PRECISION,
+                    visit_number INTEGER,
+                    trip_id BIGINT,
+                    last_estimated_time TIMESTAMPTZ,
+                    last_expire_time TIMESTAMPTZ,
+                    last_seen TIMESTAMPTZ NOT NULL,
+                    base_version TEXT,
+                    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                );
+                """
+            )
+            cursor.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_vehicles_active_registration
+                ON vehicles_active (registration);
+                """
+            )
+            cursor.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_vehicles_active_line
+                ON vehicles_active (line_id);
+                """
+            )
+            cursor.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_vehicles_active_last_seen
+                ON vehicles_active (last_seen);
+                """
+            )
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS vehicle_history (
+                    history_id BIGSERIAL PRIMARY KEY,
+                    ts TIMESTAMPTZ NOT NULL,
+                    registration TEXT,
+                    vehicle_id TEXT NOT NULL,
+                    line_id TEXT,
+                    line_name TEXT,
+                    direction INTEGER,
+                    stop_id TEXT,
+                    stop_name TEXT,
+                    lat DOUBLE PRECISION,
+                    lon DOUBLE PRECISION,
+                    visit_number INTEGER,
+                    trip_id BIGINT,
+                    estimated_time TIMESTAMPTZ,
+                    expire_time TIMESTAMPTZ,
+                    base_version TEXT,
+                    destination TEXT
+                );
+                """
+            )
+            cursor.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_vehicle_history_registration
+                ON vehicle_history (registration, ts DESC);
+                """
+            )
+            cursor.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_vehicle_history_vehicle
+                ON vehicle_history (vehicle_id, ts DESC);
                 """
             )
         connection.commit()
@@ -2942,6 +3143,484 @@ def _parse_any_datetime(value: Any) -> Optional[datetime]:
     return None
 
 
+def _prediction_field(prediction: Dict[str, Any], *candidates: str) -> Any:
+    if not isinstance(prediction, dict):
+        return None
+    for candidate in candidates:
+        if candidate in prediction:
+            return prediction.get(candidate)
+        lowered = candidate.lower()
+        for key, value in prediction.items():
+            if isinstance(key, str) and key.lower() == lowered:
+                return value
+    return None
+
+
+def _prediction_as_float(value: Any) -> Optional[float]:
+    if value in (None, ""):
+        return None
+    if isinstance(value, (int, float)):
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
+    text = normalise_text(value)
+    if not text:
+        return None
+    try:
+        return float(text)
+    except (TypeError, ValueError):
+        return None
+
+
+def _prediction_as_int(value: Any) -> Optional[int]:
+    number = _prediction_as_float(value)
+    if number is None:
+        return None
+    try:
+        return int(round(number))
+    except (TypeError, ValueError, OverflowError):
+        return None
+
+
+def _prediction_as_datetime(value: Any) -> Optional[datetime]:
+    if value in (None, ""):
+        return None
+    parsed = _parse_any_datetime(value)
+    if parsed is not None:
+        return parsed
+    if isinstance(value, (int, float)) and float(value) == 0:
+        return None
+    text = normalise_text(value)
+    if text == "0":
+        return None
+    return None
+
+
+def _coalesce_registration(value: Any, fallback: str = "") -> str:
+    reg_key = normalise_reg_key(value)
+    if reg_key:
+        return reg_key
+    return normalise_reg_key(fallback)
+
+
+def _prepare_stream_prediction(
+    prediction: Dict[str, Any]
+) -> Optional[Dict[str, Any]]:
+    if not isinstance(prediction, dict):
+        return None
+
+    header_type = normalise_text(prediction.get("type") or prediction.get("Type"))
+    if header_type.lower() == "heartbeat":
+        return None
+
+    vehicle_id = normalise_text(
+        _prediction_field(prediction, "VehicleID", "VehicleId", "vehicleId", "VehicleRef")
+    )
+    if not vehicle_id:
+        payload = prediction.get("payload")
+        if isinstance(payload, dict):
+            vehicle_id = normalise_text(
+                _prediction_field(payload, "VehicleID", "VehicleId", "vehicleId")
+            )
+            if vehicle_id:
+                prediction = payload
+    if not vehicle_id:
+        return None
+
+    registration_text = _prediction_field(
+        prediction,
+        "RegistrationNumber",
+        "VehicleRegistrationNumber",
+        "VehicleReg",
+        "registration",
+    )
+    registration = _coalesce_registration(registration_text, vehicle_id)
+    if not registration:
+        registration = ""
+
+    timestamp_value = _prediction_field(
+        prediction,
+        "Timestamp",
+        "TimeStamp",
+        "RecordedAtTime",
+        "RecordedTime",
+        "ReportTime",
+        "GeneratedTime",
+        "MessageTimestamp",
+    )
+    timestamp = _prediction_as_datetime(timestamp_value)
+
+    stop_id = normalise_text(
+        _prediction_field(prediction, "StopID", "StopPointId", "StopCode", "StopPoint")
+    )
+    stop_name = normalise_text(
+        _prediction_field(prediction, "StopPointName", "StopName", "StationName")
+    )
+    stop_code1 = normalise_text(_prediction_field(prediction, "StopCode1", "SmsCode", "NaptanId"))
+    stop_code2 = normalise_text(_prediction_field(prediction, "StopCode2"))
+    stop_state = normalise_text(_prediction_field(prediction, "StopPointState"))
+    stop_type = normalise_text(_prediction_field(prediction, "StopPointType"))
+    stop_indicator = normalise_text(
+        _prediction_field(prediction, "StopPointIndicator", "Indicator", "PlatformName")
+    )
+    stop_towards = normalise_text(_prediction_field(prediction, "Towards"))
+    stop_bearing = _prediction_as_int(_prediction_field(prediction, "Bearing"))
+
+    line_id = normalise_text(_prediction_field(prediction, "LineID", "LineId", "RouteId", "Line"))
+    line_name = normalise_text(_prediction_field(prediction, "LineName", "Route", "RouteName"))
+    if not line_name:
+        line_name = line_id
+    line_mode = normalise_text(
+        _prediction_field(prediction, "Mode", "ModeName", "ModeId", "ServiceType")
+    ) or "bus"
+
+    direction = _prediction_as_int(_prediction_field(prediction, "DirectionID", "Direction"))
+    destination = normalise_text(
+        _prediction_field(prediction, "DestinationText", "DestinationName", "Destination")
+    )
+
+    visit_number = _prediction_as_int(_prediction_field(prediction, "VisitNumber", "Visit", "Sequence"))
+    trip_id = _prediction_as_int(_prediction_field(prediction, "TripID", "TripId", "JourneyId"))
+
+    latitude = _prediction_as_float(_prediction_field(prediction, "Latitude", "Lat"))
+    longitude = _prediction_as_float(_prediction_field(prediction, "Longitude", "Lon"))
+
+    estimated_time_value = _prediction_field(
+        prediction,
+        "EstimatedTime",
+        "ExpectedArrival",
+        "ExpectedTime",
+        "EstimatedArrivalTime",
+    )
+    estimated_time = _prediction_as_datetime(estimated_time_value)
+
+    expire_value = _prediction_field(prediction, "ExpireTime", "ExpiryTime", "Expiry")
+    expire_time = _prediction_as_datetime(expire_value)
+    expire_is_delete = False
+    if expire_value not in (None, ""):
+        text = normalise_text(expire_value)
+        if text == "0" or text.lower() == "false":
+            expire_time = None
+            expire_is_delete = True
+
+    base_version = normalise_text(_prediction_field(prediction, "BaseVersion", "baseVersion"))
+
+    return {
+        "vehicle_id": vehicle_id,
+        "registration": registration or None,
+        "line_id": line_id or None,
+        "line_name": line_name or None,
+        "line_mode": line_mode or "bus",
+        "direction": direction,
+        "destination": destination or None,
+        "stop_id": stop_id or None,
+        "stop_name": stop_name or None,
+        "stop_code1": stop_code1 or None,
+        "stop_code2": stop_code2 or None,
+        "stop_state": stop_state or None,
+        "stop_type": stop_type or None,
+        "stop_indicator": stop_indicator or None,
+        "stop_towards": stop_towards or None,
+        "stop_bearing": stop_bearing,
+        "latitude": latitude,
+        "longitude": longitude,
+        "visit_number": visit_number,
+        "trip_id": trip_id,
+        "estimated_time": estimated_time,
+        "expire_time": expire_time,
+        "expire_is_delete": expire_is_delete,
+        "base_version": base_version or None,
+        "timestamp": timestamp,
+        "raw": prediction,
+    }
+
+
+def _upsert_stop_record(connection, info: Dict[str, Any], now: datetime) -> None:
+    stop_id = info.get("stop_id")
+    if not stop_id:
+        return
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            INSERT INTO stops (
+                stop_id,
+                stop_code1,
+                stop_code2,
+                name,
+                state,
+                type,
+                indicator,
+                towards,
+                bearing,
+                lat,
+                lon,
+                updated_at
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (stop_id) DO UPDATE SET
+                stop_code1 = COALESCE(EXCLUDED.stop_code1, stops.stop_code1),
+                stop_code2 = COALESCE(EXCLUDED.stop_code2, stops.stop_code2),
+                name = COALESCE(EXCLUDED.name, stops.name),
+                state = COALESCE(EXCLUDED.state, stops.state),
+                type = COALESCE(EXCLUDED.type, stops.type),
+                indicator = COALESCE(EXCLUDED.indicator, stops.indicator),
+                towards = COALESCE(EXCLUDED.towards, stops.towards),
+                bearing = COALESCE(EXCLUDED.bearing, stops.bearing),
+                lat = COALESCE(EXCLUDED.lat, stops.lat),
+                lon = COALESCE(EXCLUDED.lon, stops.lon),
+                updated_at = EXCLUDED.updated_at
+            """,
+            (
+                stop_id,
+                info.get("stop_code1"),
+                info.get("stop_code2"),
+                info.get("stop_name"),
+                info.get("stop_state"),
+                info.get("stop_type"),
+                info.get("stop_indicator"),
+                info.get("stop_towards"),
+                info.get("stop_bearing"),
+                info.get("latitude"),
+                info.get("longitude"),
+                now,
+            ),
+        )
+
+
+def _upsert_line_record(connection, info: Dict[str, Any], now: datetime) -> None:
+    line_id = info.get("line_id")
+    line_name = info.get("line_name")
+    if not line_id and not line_name:
+        return
+    identifier = line_id or line_name
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            INSERT INTO lines (line_id, line_name, mode, updated_at)
+            VALUES (%s, %s, %s, %s)
+            ON CONFLICT (line_id) DO UPDATE SET
+                line_name = COALESCE(EXCLUDED.line_name, lines.line_name),
+                mode = COALESCE(EXCLUDED.mode, lines.mode),
+                updated_at = EXCLUDED.updated_at
+            """,
+            (
+                identifier,
+                line_name or line_id,
+                info.get("line_mode") or "bus",
+                now,
+            ),
+        )
+
+
+def _upsert_vehicle_profile(connection, info: Dict[str, Any], now: datetime) -> None:
+    registration = info.get("registration")
+    vehicle_id = info.get("vehicle_id")
+    if not registration:
+        return
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            INSERT INTO vehicle_profiles (registration, first_seen, last_seen, last_vehicle_id, status, updated_at)
+            VALUES (%s, %s, %s, %s, 'active', %s)
+            ON CONFLICT (registration) DO UPDATE SET
+                last_seen = EXCLUDED.last_seen,
+                last_vehicle_id = EXCLUDED.last_vehicle_id,
+                status = COALESCE(vehicle_profiles.status, 'active'),
+                updated_at = EXCLUDED.updated_at,
+                first_seen = LEAST(vehicle_profiles.first_seen, EXCLUDED.first_seen)
+            """,
+            (registration, now, now, vehicle_id, now),
+        )
+
+
+def _upsert_vehicle_alias(connection, info: Dict[str, Any], now: datetime) -> None:
+    registration = info.get("registration")
+    vehicle_id = info.get("vehicle_id")
+    if not registration or not vehicle_id:
+        return
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            INSERT INTO vehicle_alias (vehicle_id, registration, updated_at)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (vehicle_id) DO UPDATE SET
+                registration = EXCLUDED.registration,
+                updated_at = EXCLUDED.updated_at
+            """,
+            (vehicle_id, registration, now),
+        )
+
+
+def _upsert_active_vehicle(connection, info: Dict[str, Any], now: datetime) -> None:
+    expire_time = info.get("expire_time")
+    if info.get("expire_is_delete") and not expire_time:
+        expire_time = now
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            INSERT INTO vehicles_active (
+                vehicle_id,
+                registration,
+                line_id,
+                line_name,
+                direction,
+                destination,
+                last_stop_id,
+                last_stop_name,
+                last_lat,
+                last_lon,
+                visit_number,
+                trip_id,
+                last_estimated_time,
+                last_expire_time,
+                last_seen,
+                base_version,
+                updated_at
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (vehicle_id) DO UPDATE SET
+                registration = COALESCE(EXCLUDED.registration, vehicles_active.registration),
+                line_id = COALESCE(EXCLUDED.line_id, vehicles_active.line_id),
+                line_name = COALESCE(EXCLUDED.line_name, vehicles_active.line_name),
+                direction = COALESCE(EXCLUDED.direction, vehicles_active.direction),
+                destination = COALESCE(EXCLUDED.destination, vehicles_active.destination),
+                last_stop_id = COALESCE(EXCLUDED.last_stop_id, vehicles_active.last_stop_id),
+                last_stop_name = COALESCE(EXCLUDED.last_stop_name, vehicles_active.last_stop_name),
+                last_lat = COALESCE(EXCLUDED.last_lat, vehicles_active.last_lat),
+                last_lon = COALESCE(EXCLUDED.last_lon, vehicles_active.last_lon),
+                visit_number = COALESCE(EXCLUDED.visit_number, vehicles_active.visit_number),
+                trip_id = COALESCE(EXCLUDED.trip_id, vehicles_active.trip_id),
+                last_estimated_time = EXCLUDED.last_estimated_time,
+                last_expire_time = EXCLUDED.last_expire_time,
+                last_seen = EXCLUDED.last_seen,
+                base_version = COALESCE(EXCLUDED.base_version, vehicles_active.base_version),
+                updated_at = EXCLUDED.updated_at
+            """,
+            (
+                info.get("vehicle_id"),
+                info.get("registration"),
+                info.get("line_id"),
+                info.get("line_name"),
+                info.get("direction"),
+                info.get("destination"),
+                info.get("stop_id"),
+                info.get("stop_name"),
+                info.get("latitude"),
+                info.get("longitude"),
+                info.get("visit_number"),
+                info.get("trip_id"),
+                info.get("estimated_time"),
+                expire_time,
+                now,
+                info.get("base_version"),
+                now,
+            ),
+        )
+
+
+def _insert_vehicle_history(connection, info: Dict[str, Any], now: datetime) -> None:
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            INSERT INTO vehicle_history (
+                ts,
+                registration,
+                vehicle_id,
+                line_id,
+                line_name,
+                direction,
+                stop_id,
+                stop_name,
+                lat,
+                lon,
+                visit_number,
+                trip_id,
+                estimated_time,
+                expire_time,
+                base_version,
+                destination
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (
+                info.get("timestamp") or now,
+                info.get("registration"),
+                info.get("vehicle_id"),
+                info.get("line_id"),
+                info.get("line_name"),
+                info.get("direction"),
+                info.get("stop_id"),
+                info.get("stop_name"),
+                info.get("latitude"),
+                info.get("longitude"),
+                info.get("visit_number"),
+                info.get("trip_id"),
+                info.get("estimated_time"),
+                info.get("expire_time") or (now if info.get("expire_is_delete") else None),
+                info.get("base_version"),
+                info.get("destination"),
+            ),
+        )
+
+
+def _record_stream_sighting(connection, info: Dict[str, Any], now: datetime) -> None:
+    payload = {
+        "registration": info.get("registration") or info.get("vehicle_id"),
+        "vehicleId": info.get("vehicle_id"),
+        "lineId": info.get("line_id"),
+        "lineName": info.get("line_name"),
+        "route": info.get("line_name") or info.get("line_id"),
+        "direction": info.get("direction"),
+        "destination": info.get("destination"),
+        "destinationName": info.get("destination"),
+        "towards": info.get("stop_towards") or info.get("destination"),
+        "naptanId": info.get("stop_id"),
+        "stopCode": info.get("stop_id"),
+        "stationName": info.get("stop_name"),
+        "timestamp": (info.get("timestamp") or now).isoformat(),
+        "expectedArrival": info.get("estimated_time").isoformat()
+        if isinstance(info.get("estimated_time"), datetime)
+        else None,
+        "latitude": info.get("latitude"),
+        "longitude": info.get("longitude"),
+        "tripId": info.get("trip_id"),
+        "visitNumber": info.get("visit_number"),
+        "baseVersion": info.get("base_version"),
+        "modeName": info.get("line_mode") or "bus",
+    }
+    try:
+        record_bus_sighting(connection, payload, now=now)
+    except Exception as exc:
+        try:
+            connection.rollback()
+        except Exception:
+            pass
+        print(f"[tfl-stream] Failed to record bus sighting: {exc}", flush=True)
+
+
+def _prune_inactive_vehicles(connection, cutoff: datetime) -> int:
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            DELETE FROM vehicles_active
+            WHERE last_seen < %s
+               OR (last_expire_time IS NOT NULL AND last_expire_time < %s)
+            """,
+            (cutoff, cutoff),
+        )
+        return cursor.rowcount or 0
+
+
+def apply_stream_prediction(connection, info: Dict[str, Any], now: datetime) -> None:
+    _upsert_stop_record(connection, info, now)
+    _upsert_line_record(connection, info, now)
+    _upsert_active_vehicle(connection, info, now)
+    _upsert_vehicle_profile(connection, info, now)
+    _upsert_vehicle_alias(connection, info, now)
+    _insert_vehicle_history(connection, info, now)
+
+
 def _should_consider_datetime_key(key: str) -> bool:
     lower_key = key.lower()
     if any(skip in lower_key for skip in _DATETIME_SKIP_KEYWORDS):
@@ -4298,12 +4977,311 @@ class LiveArrivalsPoller:
             }
 
 
+class TfLStreamIngestor:
+    def __init__(
+        self,
+        *,
+        enabled: bool,
+        stream_path: str,
+        return_list: str,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+    ) -> None:
+        self._enabled = bool(enabled and stream_path)
+        self._stream_path = stream_path
+        self._return_list = return_list
+        self._username = username
+        self._password = password
+        self._thread: Optional[threading.Thread] = None
+        self._stop_event = threading.Event()
+        self._lock = threading.Lock()
+        self._decoder = json.JSONDecoder()
+        self._buffer = ""
+        self._cleanup_interval = timedelta(seconds=FLEET_STREAM_CLEANUP_INTERVAL_SECONDS)
+        self._last_cleanup = datetime.now(timezone.utc)
+        self._last_prediction_monotonic = time.monotonic()
+        self._stats: Dict[str, Any] = {
+            "connected": False,
+            "messages": 0,
+            "predictions": 0,
+            "failures": 0,
+            "pruned": 0,
+            "lastConnectAt": None,
+            "lastDisconnectAt": None,
+        }
+
+    @property
+    def enabled(self) -> bool:
+        return self._enabled
+
+    @property
+    def is_running(self) -> bool:
+        return bool(self._thread and self._thread.is_alive())
+
+    def start(self) -> bool:
+        if not self._enabled:
+            return False
+        if self.is_running():
+            return True
+        self._stop_event.clear()
+        self._thread = threading.Thread(target=self._run, name="tfl-stream", daemon=True)
+        self._thread.start()
+        return True
+
+    def stop(self, timeout: float = 5.0) -> None:
+        self._stop_event.set()
+        thread = self._thread
+        if thread and thread.is_alive():
+            thread.join(timeout=timeout)
+
+    def snapshot(self) -> Dict[str, Any]:
+        with self._lock:
+            return dict(self._stats)
+
+    def _resolve_url(self) -> str:
+        target = (self._stream_path or "").strip()
+        if not target:
+            return _build_tfl_api_url("interfaces/ura/stream")
+        if "://" in target:
+            return target
+        return _build_tfl_api_url(target)
+
+    def _build_request_kwargs(self) -> Tuple[Dict[str, Any], Dict[str, str]]:
+        base = build_tfl_request_kwargs()
+        params = dict(base.get("params") or {})
+        headers = dict(base.get("headers") or {})
+        if self._return_list and "ReturnList" not in params:
+            params["ReturnList"] = self._return_list
+        return params, headers
+
+    def _decode_chunk(self, chunk: str) -> List[Any]:
+        if not chunk:
+            return []
+        self._buffer += chunk
+        results: List[Any] = []
+        while True:
+            stripped = self._buffer.lstrip()
+            if not stripped:
+                self._buffer = ""
+                break
+            offset = len(self._buffer) - len(stripped)
+            if offset:
+                self._buffer = stripped
+            try:
+                value, index = self._decoder.raw_decode(self._buffer)
+            except ValueError:
+                break
+            results.append(value)
+            self._buffer = self._buffer[index:]
+        if len(self._buffer) > 1_000_000:
+            self._buffer = ""
+        return results
+
+    def _extract_predictions(self, message: Any) -> List[Dict[str, Any]]:
+        predictions: List[Dict[str, Any]] = []
+        if isinstance(message, list):
+            for entry in message:
+                predictions.extend(self._extract_predictions(entry))
+            return predictions
+        if not isinstance(message, dict):
+            return predictions
+
+        header = message.get("header")
+        if isinstance(header, dict):
+            header_type = normalise_text(header.get("type") or header.get("messageType"))
+            if header_type.lower() == "heartbeat":
+                return predictions
+
+        body = message.get("body")
+        if isinstance(body, dict):
+            body_type = normalise_text(body.get("type") or body.get("Type"))
+            if body_type.lower() == "heartbeat":
+                return predictions
+
+        container: Any = None
+        scope = body if isinstance(body, dict) else message
+        for key in ("Predictions", "Prediction", "predictions", "prediction"):
+            if isinstance(scope, dict) and key in scope:
+                container = scope.get(key)
+                break
+        if container is None and isinstance(scope, dict):
+            for key in ("updates", "Updates", "Update"):
+                value = scope.get(key)
+                if value is not None:
+                    container = value
+                    break
+        if container is None and isinstance(scope, dict):
+            vehicle_id = normalise_text(
+                _prediction_field(scope, "VehicleID", "VehicleId", "vehicleId", "VehicleRef")
+            )
+            stop_id = normalise_text(_prediction_field(scope, "StopID", "StopPointId"))
+            if vehicle_id or stop_id:
+                container = scope
+
+        if isinstance(container, list):
+            for entry in container:
+                if isinstance(entry, dict):
+                    predictions.append(entry)
+        elif isinstance(container, dict):
+            predictions.append(container)
+
+        return predictions
+
+    def _stats_increment(self, key: str, amount: int = 1) -> None:
+        if amount <= 0:
+            return
+        with self._lock:
+            current = self._stats.get(key)
+            if isinstance(current, int):
+                self._stats[key] = current + amount
+            else:
+                self._stats[key] = amount
+
+    def _mark_connected(self) -> None:
+        now_iso = datetime.now(timezone.utc).isoformat()
+        with self._lock:
+            self._stats["connected"] = True
+            self._stats["lastConnectAt"] = now_iso
+
+    def _mark_disconnected(self) -> None:
+        now_iso = datetime.now(timezone.utc).isoformat()
+        with self._lock:
+            self._stats["connected"] = False
+            self._stats["lastDisconnectAt"] = now_iso
+
+    def _record_failure(self, exc: Exception) -> None:
+        self._stats_increment("failures")
+        self._log(f"Stream error: {exc}")
+
+    def _log(self, message: str) -> None:
+        print(f"[tfl-stream] {message}", flush=True)
+
+    def _ingest_predictions(self, predictions: List[Dict[str, Any]]) -> None:
+        prepared: List[Dict[str, Any]] = []
+        for prediction in predictions:
+            info = _prepare_stream_prediction(prediction)
+            if info:
+                prepared.append(info)
+        if not prepared:
+            return
+
+        now = datetime.now(timezone.utc)
+        try:
+            with get_connection() as connection:
+                for info in prepared:
+                    apply_stream_prediction(connection, info, now)
+                if self._cleanup_interval:
+                    if now - self._last_cleanup >= self._cleanup_interval:
+                        cutoff = now - timedelta(minutes=FLEET_STREAM_INACTIVE_MINUTES)
+                        pruned = _prune_inactive_vehicles(connection, cutoff)
+                        if pruned:
+                            self._stats_increment("pruned", pruned)
+                        self._last_cleanup = now
+                connection.commit()
+        except Exception:
+            raise
+        else:
+            self._stats_increment("predictions", len(prepared))
+            self._last_prediction_monotonic = time.monotonic()
+
+        try:
+            with get_connection() as connection:
+                for info in prepared:
+                    _record_stream_sighting(connection, info, now)
+                connection.commit()
+        except Exception as exc:
+            self._log(f"Failed to persist derived sighting batch: {exc}")
+
+    def _stream_once(self) -> None:
+        url = self._resolve_url()
+        params, headers = self._build_request_kwargs()
+        request_params = {key: value for key, value in params.items() if value not in (None, "")}
+        request_headers = {key: value for key, value in headers.items() if value not in (None, "")}
+        auth = HTTPDigestAuth(self._username, self._password) if self._username and self._password else None
+
+        self._buffer = ""
+        with requests.Session() as session:
+            response = session.get(
+                url,
+                params=request_params or None,
+                headers=request_headers or None,
+                auth=auth,
+                stream=True,
+                timeout=(30, FLEET_STREAM_READ_TIMEOUT_SECONDS),
+            )
+            response.raise_for_status()
+            self._mark_connected()
+
+            try:
+                for chunk in response.iter_lines(decode_unicode=True, chunk_size=8192):
+                    if self._stop_event.is_set():
+                        break
+                    if chunk is None:
+                        continue
+                    decoded = self._decode_chunk(chunk)
+                    if not decoded:
+                        continue
+                    for message in decoded:
+                        self._stats_increment("messages")
+                        predictions = self._extract_predictions(message)
+                        if not predictions:
+                            continue
+                        self._ingest_predictions(predictions)
+            finally:
+                response.close()
+                self._mark_disconnected()
+
+    def _handle_idle_gap(self) -> None:
+        idle = time.monotonic() - self._last_prediction_monotonic
+        if idle >= FLEET_STREAM_HEARTBEAT_TIMEOUT_SECONDS:
+            self._log(
+                f"No predictions received for {int(idle)}s; cycling stream connection"
+            )
+            self._last_prediction_monotonic = time.monotonic()
+
+    def _run(self) -> None:
+        backoff = FLEET_STREAM_BACKOFF_SECONDS
+        while not self._stop_event.is_set():
+            try:
+                self._stream_once()
+                backoff = FLEET_STREAM_BACKOFF_SECONDS
+            except requests.exceptions.ReadTimeout:
+                self._log(
+                    f"Stream read timeout after {FLEET_STREAM_READ_TIMEOUT_SECONDS}s; reconnecting"
+                )
+                self._handle_idle_gap()
+                continue
+            except Exception as exc:
+                self._record_failure(exc)
+                wait_for = min(backoff, FLEET_STREAM_MAX_BACKOFF_SECONDS)
+                if self._stop_event.wait(wait_for):
+                    break
+                backoff = min(wait_for * 2, FLEET_STREAM_MAX_BACKOFF_SECONDS)
+            else:
+                self._handle_idle_gap()
+        self._mark_disconnected()
+
+
 live_tracker = LiveArrivalsPoller(enabled=LIVE_TRACKING_ENABLED)
 if LIVE_TRACKING_ENABLED:
     try:
         live_tracker.start()
     except Exception as exc:
         print(f"[live-tracker] Failed to start tracker thread: {exc}", flush=True)
+
+
+stream_listener = TfLStreamIngestor(
+    enabled=FLEET_STREAM_ENABLED,
+    stream_path=TFL_STREAM_PATH,
+    return_list=TFL_STREAM_RETURN_LIST,
+    username=TFL_STREAM_USERNAME,
+    password=TFL_STREAM_PASSWORD,
+)
+if stream_listener.enabled:
+    try:
+        stream_listener.start()
+    except Exception as exc:
+        print(f"[tfl-stream] Failed to start stream listener: {exc}", flush=True)
 
 
 def upsert_collection_item(
