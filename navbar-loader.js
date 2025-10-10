@@ -258,7 +258,7 @@
       document.body.insertBefore(container, document.body.firstChild);
     }
 
-    document.querySelectorAll('header.navbar, nav.navbar').forEach(el => el.remove());
+    document.querySelectorAll('header.metro-nav, nav.metro-nav').forEach(el => el.remove());
     document.getElementById('authModal')?.remove();
     document.querySelector('.mobile-drawer')?.remove();
     document.querySelector('.drawer-backdrop')?.remove();
@@ -309,7 +309,9 @@
   }
 
   function initNavbar(container, dependenciesReadyPromise = Promise.resolve()) {
-    const navRoot = container.querySelector('.navbar');
+    const navRoot = container.querySelector('.metro-nav')
+      || container.querySelector('nav[aria-label]')
+      || container.querySelector('nav');
     if (!navRoot) return;
 
     const stateStore = container;
@@ -337,9 +339,49 @@
       document.body.style.overflow = shouldLock ? 'hidden' : '';
     };
 
+    const closeProfileMenus = () => {
+      navRoot.querySelectorAll('[data-profile-toggle]').forEach(btn => {
+        btn.setAttribute('aria-expanded', 'false');
+      });
+      navRoot.querySelectorAll('[data-profile-menu]').forEach(menu => {
+        menu.setAttribute('data-open', 'false');
+        menu.setAttribute('aria-hidden', 'true');
+        menu.setAttribute('hidden', '');
+      });
+    };
+
+    const closeMegaMenus = () => {
+      navRoot.querySelectorAll('[data-menu-toggle]').forEach(btn => {
+        btn.setAttribute('aria-expanded', 'false');
+      });
+      navRoot.querySelectorAll('[data-menu-panel]').forEach(panel => {
+        panel.setAttribute('data-open', 'false');
+        panel.setAttribute('aria-hidden', 'true');
+        panel.setAttribute('hidden', '');
+      });
+    };
+
+    const openProfileMenu = (menu) => {
+      menu.setAttribute('data-open', 'true');
+      menu.setAttribute('aria-hidden', 'false');
+      menu.removeAttribute('hidden');
+    };
+
+    const openMegaMenu = (toggle, panel) => {
+      if (!toggle || !panel) return;
+      toggle.setAttribute('aria-expanded', 'true');
+      panel.setAttribute('data-open', 'true');
+      panel.setAttribute('aria-hidden', 'false');
+      panel.removeAttribute('hidden');
+    };
+
     const setDrawerOpen = (open) => {
       if (!drawer || !toggleButton || !backdrop) return;
       const wasOpen = drawer.getAttribute('data-open') === 'true';
+      if (open) {
+        closeProfileMenus();
+        closeMegaMenus();
+      }
       toggleButton.setAttribute('aria-expanded', String(open));
       drawer.setAttribute('data-open', String(open));
       drawer.setAttribute('aria-hidden', String(!open));
@@ -352,7 +394,11 @@
       }
     };
 
-    const closeDrawer = () => setDrawerOpen(false);
+    const closeDrawer = () => {
+      setDrawerOpen(false);
+      closeMegaMenus();
+      closeProfileMenus();
+    };
 
     toggleButton?.addEventListener('click', () => {
       const expanded = toggleButton.getAttribute('aria-expanded') === 'true';
@@ -362,23 +408,6 @@
     drawerClose?.addEventListener('click', closeDrawer);
     backdrop?.addEventListener('click', closeDrawer);
 
-    const closeProfileMenus = () => {
-      navRoot.querySelectorAll('[data-profile-toggle]').forEach(btn => {
-        btn.setAttribute('aria-expanded', 'false');
-      });
-      navRoot.querySelectorAll('[data-profile-menu]').forEach(menu => {
-        menu.setAttribute('data-open', 'false');
-        menu.setAttribute('aria-hidden', 'true');
-        menu.setAttribute('hidden', '');
-      });
-    };
-
-    const openProfileMenu = (menu) => {
-      menu.setAttribute('data-open', 'true');
-      menu.setAttribute('aria-hidden', 'false');
-      menu.removeAttribute('hidden');
-    };
-
     navRoot.addEventListener('click', (event) => {
       const toggle = event.target.closest('[data-profile-toggle]');
       if (!toggle) return;
@@ -386,6 +415,7 @@
       const profile = toggle.closest('[data-auth-state="signed-in"]');
       const menu = profile?.querySelector('[data-profile-menu]');
       const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+      closeMegaMenus();
       closeProfileMenus();
       if (!isExpanded && menu) {
         toggle.setAttribute('aria-expanded', 'true');
@@ -393,31 +423,68 @@
       }
     });
 
+    navRoot.addEventListener('click', (event) => {
+      const toggle = event.target.closest('[data-menu-toggle]');
+      if (!toggle) return;
+      event.preventDefault();
+      const menuKey = toggle.dataset.menuToggle;
+      const panel = menuKey
+        ? navRoot.querySelector(`[data-menu-panel="${menuKey}"]`)
+        : null;
+      const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+      closeProfileMenus();
+      if (isExpanded || !panel) {
+        closeMegaMenus();
+        return;
+      }
+      closeMegaMenus();
+      openMegaMenu(toggle, panel);
+    });
+
     document.addEventListener('click', (event) => {
       if (!navRoot.contains(event.target)) {
         closeProfileMenus();
+        closeMegaMenus();
       }
     });
 
     navRoot.addEventListener('focusout', (event) => {
       if (!navRoot.contains(event.relatedTarget)) {
         closeProfileMenus();
+        closeMegaMenus();
       }
     });
 
     const handleEscape = (event) => {
       if (event.key !== 'Escape') return;
       closeProfileMenus();
+      closeMegaMenus();
       closeDrawer();
     };
 
     document.addEventListener('keydown', handleEscape);
 
-    const currentPath = window.location.pathname.split('/').pop() || 'index.html';
+    const normalisePath = (value) => {
+      if (typeof value !== 'string') {
+        return '';
+      }
+      const trimmed = value.trim();
+      if (!trimmed) {
+        return '';
+      }
+      try {
+        return decodeURIComponent(trimmed).toLowerCase();
+      } catch (error) {
+        return trimmed.toLowerCase();
+      }
+    };
+
+    const currentPath = normalisePath(window.location.pathname.split('/').pop() || 'index.html');
     navRoot.querySelectorAll('[data-nav-link]').forEach(link => {
       const href = link.getAttribute('href');
-      if (!href) return;
-      const linkPath = href.split('/').pop();
+      if (!href || href.startsWith('#')) return;
+      const linkPath = normalisePath(href.split('/').pop() || href);
+      if (!linkPath) return;
       const isActive = linkPath === currentPath;
       link.classList.toggle('is-active', isActive);
       if (isActive) {
@@ -428,9 +495,17 @@
     });
 
     navRoot.addEventListener('click', (event) => {
-      const drawerLink = event.target.closest('.navbar__drawer-link');
+      const drawerLink = event.target.closest('.metro-nav__drawer-link');
       if (drawerLink) {
         closeDrawer();
+      }
+    });
+
+    navRoot.addEventListener('click', (event) => {
+      const navLink = event.target.closest('[data-nav-link]');
+      if (!navLink) return;
+      if (navLink.closest('[data-menu-panel]')) {
+        closeMegaMenus();
       }
     });
 
@@ -441,6 +516,7 @@
       if (!action) return;
       event.preventDefault();
       closeProfileMenus();
+      closeMegaMenus();
       closeDrawer();
       trigger.dispatchEvent(new CustomEvent('navbar:auth-action', {
         bubbles: true,
@@ -452,11 +528,13 @@
       const quickLink = event.target.closest('[data-profile-nav]');
       if (!quickLink) return;
       closeProfileMenus();
+      closeMegaMenus();
       closeDrawer();
     });
 
     window.addEventListener('navbar:close-overlays', () => {
       closeProfileMenus();
+      closeMegaMenus();
       closeDrawer();
     });
 
@@ -469,7 +547,9 @@
       }
     });
 
-    window.addEventListener('routeflow:xp-update', (event) => {
+    const xpEventTarget = typeof document !== 'undefined' ? document : window;
+
+    xpEventTarget.addEventListener('routeflow:xp-update', (event) => {
       if (!event?.detail) {
         applyXpProgress(navRoot);
         return;
