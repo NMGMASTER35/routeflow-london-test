@@ -9,6 +9,38 @@ const SELECTORS = {
 };
 
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const SEARCH_SUGGESTIONS = [
+  {
+    label: 'Track live network',
+    description: 'View arrivals, rare workings, and the map console.',
+    href: 'tracking.html',
+    shortcut: 'L'
+  },
+  {
+    label: 'Check disruptions',
+    description: 'See closures, diversions, and planned works.',
+    href: 'disruptions.html',
+    shortcut: '!'
+  },
+  {
+    label: 'Open fleet cards',
+    description: 'Browse vehicles, garages, and withdrawn units.',
+    href: 'fleet.html',
+    shortcut: 'F'
+  },
+  {
+    label: 'Plan a journey',
+    description: 'Start a trip across TfL modes with our planner.',
+    href: 'planning.html',
+    shortcut: 'P'
+  },
+  {
+    label: 'Dashboard & XP',
+    description: 'Jump back into your personal command room.',
+    href: 'dashboard.html',
+    shortcut: 'D'
+  }
+];
 
 function initialiseCanvas() {
   const canvas = document.querySelector(SELECTORS.canvas);
@@ -87,6 +119,7 @@ function initialiseCanvas() {
   };
 
   let frameId;
+  let paused = false;
   const tick = () => {
     redraw();
     frameId = requestAnimationFrame(tick);
@@ -96,7 +129,21 @@ function initialiseCanvas() {
     setCanvasSize();
   };
 
+  const handleVisibility = () => {
+    if (document.visibilityState === 'hidden') {
+      if (frameId) {
+        cancelAnimationFrame(frameId);
+        frameId = null;
+      }
+      paused = true;
+    } else if (paused && !prefersReducedMotion) {
+      paused = false;
+      frameId = requestAnimationFrame(tick);
+    }
+  };
+
   window.addEventListener('resize', handleResize);
+  document.addEventListener('visibilitychange', handleVisibility);
   setCanvasSize();
   if (!prefersReducedMotion) {
     frameId = requestAnimationFrame(tick);
@@ -104,6 +151,7 @@ function initialiseCanvas() {
 
   return () => {
     window.removeEventListener('resize', handleResize);
+    document.removeEventListener('visibilitychange', handleVisibility);
     if (frameId) {
       cancelAnimationFrame(frameId);
     }
@@ -172,7 +220,11 @@ function initialiseCarousel() {
   nextButton?.addEventListener('click', () => setActive(index + 1));
 
   let intervalId;
+  const shouldAutoplay = () => !prefersReducedMotion && document.visibilityState === 'visible';
   const autoplay = () => {
+    if (!shouldAutoplay()) {
+      return;
+    }
     intervalId = window.setInterval(() => {
       setActive(index + 1);
     }, 6000);
@@ -193,8 +245,19 @@ function initialiseCarousel() {
 
   autoplay();
 
+  const handleVisibility = () => {
+    if (document.visibilityState === 'hidden') {
+      stop();
+    } else {
+      autoplay();
+    }
+  };
+
+  document.addEventListener('visibilitychange', handleVisibility);
+
   return () => {
     stop();
+    document.removeEventListener('visibilitychange', handleVisibility);
     root.removeEventListener('mouseenter', stop);
     root.removeEventListener('mouseleave', autoplay);
   };
@@ -206,17 +269,142 @@ function initialiseSearch() {
     return;
   }
 
+  const field = form.querySelector('input[type="search"]');
+  const assist = form.querySelector('.landing-search__assist');
+  const suggestionsHost = form.querySelector('[data-suggestions]');
+  let activeIndex = -1;
+  let currentSuggestions = SEARCH_SUGGESTIONS.slice(0, 4);
+
+  const updateAssist = (message) => {
+    if (!assist) return;
+    assist.textContent = message;
+  };
+
+  const closeSuggestions = () => {
+    if (!suggestionsHost) return;
+    suggestionsHost.hidden = true;
+    suggestionsHost.innerHTML = '';
+    activeIndex = -1;
+  };
+
+  const openSuggestions = () => {
+    if (!suggestionsHost || !currentSuggestions.length) return;
+    suggestionsHost.hidden = false;
+  };
+
+  const renderSuggestions = (query = '') => {
+    if (!suggestionsHost) return;
+    const term = query.trim().toLowerCase();
+    currentSuggestions = SEARCH_SUGGESTIONS
+      .filter((item) => !term
+        || item.label.toLowerCase().includes(term)
+        || item.description.toLowerCase().includes(term))
+      .slice(0, 5);
+    suggestionsHost.innerHTML = '';
+
+    currentSuggestions.forEach((item, idx) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'landing-search__suggestion';
+      button.setAttribute('role', 'option');
+      button.setAttribute('aria-selected', idx === activeIndex ? 'true' : 'false');
+      button.dataset.index = String(idx);
+      button.innerHTML = `
+        <span class="landing-search__pill">${item.shortcut}</span>
+        <div>
+          <h4>${item.label}</h4>
+          <span>${item.description}</span>
+        </div>
+        <i class="fa-solid fa-arrow-turn-down-right" aria-hidden="true"></i>
+      `;
+      button.addEventListener('click', () => {
+        window.location.href = item.href;
+      });
+      button.addEventListener('mouseenter', () => {
+        activeIndex = idx;
+        applyActive();
+      });
+      suggestionsHost.appendChild(button);
+    });
+
+    suggestionsHost.hidden = currentSuggestions.length === 0;
+  };
+
+  const applyActive = () => {
+    if (!suggestionsHost) return;
+    suggestionsHost.querySelectorAll('.landing-search__suggestion').forEach((node, idx) => {
+      const isActive = idx === activeIndex;
+      node.classList.toggle('is-active', isActive);
+      node.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+    const activeItem = currentSuggestions[activeIndex];
+    if (activeItem) {
+      updateAssist(`Press Enter to jump to ${activeItem.label}.`);
+    }
+  };
+
+  renderSuggestions();
+  updateAssist('Try "63" for a bus or "Elizabeth line" for a mode.');
+  openSuggestions();
+
+  const handleNavigation = (delta) => {
+    if (!currentSuggestions.length) return;
+    const nextIndex = (activeIndex + delta + currentSuggestions.length) % currentSuggestions.length;
+    activeIndex = nextIndex;
+    openSuggestions();
+    applyActive();
+  };
+
   form.addEventListener('submit', (event) => {
     event.preventDefault();
-    const field = form.querySelector('input[type="search"]');
     const value = field?.value.trim();
+    const selected = currentSuggestions[activeIndex];
+    if (selected) {
+      window.location.href = selected.href;
+      return;
+    }
     if (!value) {
       field?.focus();
+      updateAssist('Type a route, stop, or choose a shortcut below.');
       return;
     }
     const url = new URL('tracking.html', window.location.href);
     url.searchParams.set('query', value);
     window.location.href = url.toString();
+  });
+
+  field?.addEventListener('input', (event) => {
+    const value = event.target.value || '';
+    activeIndex = -1;
+    renderSuggestions(value);
+    openSuggestions();
+    if (!value) {
+      updateAssist('Try "63" for a bus or "Elizabeth line" for a mode.');
+    }
+  });
+
+  field?.addEventListener('focus', () => {
+    renderSuggestions(field.value || '');
+    openSuggestions();
+  });
+
+  field?.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      handleNavigation(1);
+    }
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      handleNavigation(-1);
+    }
+    if (event.key === 'Escape') {
+      closeSuggestions();
+    }
+  });
+
+  form.addEventListener('focusout', (event) => {
+    if (form.contains(event.relatedTarget)) return;
+    closeSuggestions();
   });
 }
 
