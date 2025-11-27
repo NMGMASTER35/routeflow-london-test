@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 const stats = [
   { label: 'Live lines', value: '34', detail: 'Buses, Tube, DLR & rail' },
@@ -10,6 +10,45 @@ const stats = [
 const heroActions = [
   { label: 'Open live dashboard', href: '#live', primary: true },
   { label: 'Browse fleet index', href: '#fleet', primary: false }
+];
+
+const appShortcuts = [
+  {
+    label: 'Live tracking',
+    href: 'tracking.html',
+    detail: 'Arrivals, route radar, and nearby alerts.',
+    icon: '📡'
+  },
+  {
+    label: 'Plan journeys',
+    href: 'planning.html',
+    detail: 'Mobile-first planner with milestones and sharing.',
+    icon: '🧭'
+  },
+  {
+    label: 'Fleet studio',
+    href: 'fleet.html',
+    detail: 'Depot health, allocations, and VIN history.',
+    icon: '🚌'
+  },
+  {
+    label: 'Stories & info',
+    href: 'info.html',
+    detail: 'Blog posts, badges, and community updates.',
+    icon: '📰'
+  },
+  {
+    label: 'Account & privacy',
+    href: 'dashboard.html',
+    detail: 'Profile, accessibility, and settings unified.',
+    icon: '🔐'
+  },
+  {
+    label: 'Policies',
+    href: 'privacy.html',
+    detail: 'Terms, privacy, and accessibility shortcuts.',
+    icon: '📜'
+  }
 ];
 
 const modules = [
@@ -226,6 +265,35 @@ function Badge({ children, tone = 'accent' }) {
 
 function App() {
   const [highlightedRoute, setHighlightedRoute] = useState(liveRoutes[0].id);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [refreshState, setRefreshState] = useState('idle');
+  const [booting, setBooting] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setBooting(false), 450);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!isDrawerOpen) {
+      setIsDrawerOpen(true);
+    }
+  }, [highlightedRoute, isDrawerOpen]);
+
+  const handleRouteSelect = (routeId) => {
+    setHighlightedRoute(routeId);
+    setIsModalOpen(true);
+  };
+
+  const handleRefresh = () => {
+    if (refreshState === 'refreshing') return;
+    setRefreshState('refreshing');
+    setTimeout(() => setRefreshState('synced'), 520);
+    setTimeout(() => setRefreshState('idle'), 1400);
+  };
+
+  const closeModal = () => setIsModalOpen(false);
 
   const selectedRoute = useMemo(
     () => liveRoutes.find((route) => route.id === highlightedRoute),
@@ -234,28 +302,35 @@ function App() {
 
   return (
     <div className="app" style={{ backgroundImage: gradients.background }}>
-      <header className="shell">
-        <div className="nav">
-          <div className="brand">
-            <div className="brand-mark">RF</div>
-            <div>
-              <p className="eyebrow">RouteFlow London</p>
-              <p className="brand-sub">Transport intelligence platform</p>
-            </div>
-          </div>
-          <nav className="nav-links">
-            <a href="#live">Live</a>
-            <a href="#plan">Plan</a>
-            <a href="#fleet">Fleet</a>
-            <a href="#alerts">Alerts</a>
-            <a href="#stories">Stories</a>
-          </nav>
-          <div className="nav-actions">
-            <button className="ghost">Sign in</button>
-            <button className="primary">Launch app</button>
+      {booting && (
+        <div className="boot-screen" aria-live="polite">
+          <div className="boot-screen__glow" />
+          <p className="boot-screen__label">RouteFlow London is loading live signals…</p>
+        </div>
+      )}
+
+      <div className="floating-nav shell">
+        <div className="brand">
+          <div className="brand-mark">RF</div>
+          <div>
+            <p className="eyebrow">RouteFlow London</p>
+            <p className="brand-sub">Transport intelligence platform</p>
           </div>
         </div>
+        <nav className="floating-nav__links" aria-label="Primary">
+          <a href="#live">Live</a>
+          <a href="#plan">Plan</a>
+          <a href="#fleet">Fleet</a>
+          <a href="#alerts">Alerts</a>
+          <a href="#stories">Stories</a>
+        </nav>
+        <div className="floating-nav__actions">
+          <a className="ghost" href="dashboard.html">Dashboard</a>
+          <a className="primary" href="#live">Launch app</a>
+        </div>
+      </div>
 
+      <header className="shell hero-wrap">
         <div className="hero">
           <div className="hero-copy">
             <Badge>Powered by TfL APIs</Badge>
@@ -279,6 +354,16 @@ function App() {
                 </a>
               ))}
             </div>
+            <div className="refresh-control">
+              <button className="ghost" onClick={handleRefresh} aria-live="polite">
+                {refreshState === 'refreshing' ? 'Refreshing live data…' : 'Pull to refresh'}
+              </button>
+              <p className={`refresh-status refresh-${refreshState}`}>
+                {refreshState === 'idle' && 'Live arrivals sync automatically every 30 seconds.'}
+                {refreshState === 'refreshing' && 'Syncing telemetry, arrivals, and headways…'}
+                {refreshState === 'synced' && 'Latest vehicles pinned. Tap a card to open the drawer.'}
+              </p>
+            </div>
             <div className="hero-stats">
               {stats.map((stat) => (
                 <div key={stat.label} className="hero-stat">
@@ -297,12 +382,13 @@ function App() {
               </div>
               <Badge tone="ghost">Low latency</Badge>
             </div>
-            <div className="panel-grid">
+            <div className="panel-grid" aria-label="Swipe through live routes" role="list">
               {liveRoutes.map((route) => (
                 <button
                   key={route.id}
-                  onClick={() => setHighlightedRoute(route.id)}
+                  onClick={() => handleRouteSelect(route.id)}
                   className={`panel-card ${highlightedRoute === route.id ? 'panel-card-active' : ''}`}
+                  role="listitem"
                 >
                   <div className="panel-card-top">
                     <div>
@@ -336,6 +422,19 @@ function App() {
               </div>
             )}
           </div>
+        </div>
+
+        <div className="shortcut-dock" aria-label="RouteFlow apps">
+          {appShortcuts.map((shortcut) => (
+            <a key={shortcut.label} className="shortcut-card" href={shortcut.href}>
+              <div className="shortcut-icon" aria-hidden="true">{shortcut.icon}</div>
+              <div>
+                <p className="shortcut-label">{shortcut.label}</p>
+                <p className="shortcut-detail">{shortcut.detail}</p>
+              </div>
+              <span className="shortcut-arrow" aria-hidden="true">→</span>
+            </a>
+          ))}
         </div>
       </header>
 
@@ -515,6 +614,64 @@ function App() {
           </div>
         </Section>
       </main>
+
+      {selectedRoute && (
+        <aside
+          className={`route-drawer ${isDrawerOpen ? 'route-drawer-open' : ''}`}
+          aria-label="Route details drawer"
+        >
+          <div className="route-drawer__handle" aria-hidden="true" />
+          <div className="route-drawer__header">
+            <div>
+              <p className="eyebrow">Sliding drawer</p>
+              <h3>{selectedRoute.name}</h3>
+              <p className="panel-meta">{selectedRoute.status} · {selectedRoute.load}</p>
+            </div>
+            <Badge tone="accent">Tap cards to update</Badge>
+          </div>
+          <div className="route-drawer__body">
+            <div className="drawer-line">
+              <span>Next stop</span>
+              <strong>{selectedRoute.next}</strong>
+            </div>
+            <div className="drawer-line">
+              <span>ETA</span>
+              <strong>{selectedRoute.eta}</strong>
+            </div>
+            <div className="drawer-line">
+              <span>Route action</span>
+              <a className="chip" href={`tracking.html#${selectedRoute.id}`}>Open in live tracking</a>
+            </div>
+          </div>
+        </aside>
+      )}
+
+      {isModalOpen && selectedRoute && (
+        <div className="modal" role="dialog" aria-modal="true" aria-label="Live vehicle preview">
+          <div className="modal__backdrop" onClick={closeModal} />
+          <div className="modal__content">
+            <header className="modal__header">
+              <div>
+                <p className="eyebrow">Live vehicle</p>
+                <h3>{selectedRoute.name} on the map</h3>
+              </div>
+              <button className="ghost" type="button" onClick={closeModal} aria-label="Close modal">
+                Close
+              </button>
+            </header>
+            <p className="panel-meta">View live vehicle locations and arrivals without leaving the app shell.</p>
+            <div className="modal__map">
+              <div className="map-line" aria-hidden="true" />
+              <div className="map-dot" aria-label="Current vehicle" />
+              <div className="map-dot map-dot-secondary" aria-label="Next vehicle" />
+            </div>
+            <div className="modal__actions">
+              <a className="primary" href={`tracking.html#${selectedRoute.id}`}>Open live tracking</a>
+              <button className="ghost" type="button" onClick={closeModal}>Keep browsing</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <footer className="footer shell">
         <div>
